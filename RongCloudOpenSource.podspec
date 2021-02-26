@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'RongSticker' do |rs|
-  	rs.resources = "Sticker/Resource/ar.lproj/RongSticker.strings","Sticker/Resource/en.lproj/RongSticker.strings","Sticker/Resource/zh-Hans.lproj/RongSticker.strings",,"Sticker/Resource/RongSticker.bundle"
+  	rs.resources = "Sticker/Resource/ar.lproj/RongSticker.strings","Sticker/Resource/en.lproj/RongSticker.strings","Sticker/Resource/zh-Hans.lproj/RongSticker.strings","Sticker/Resource/RongSticker.bundle"
     rs.source_files = 'Sticker/RongSticker.h','Sticker/**/*.{h,m,c}'
     rs.dependency 'RongCloudOpenSource/IMKit'
   end
