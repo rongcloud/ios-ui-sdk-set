@@ -7,8 +7,8 @@
 #Release_Node=113
 
 ## 1. 更新 git 仓库
-git checkout dev
-git reset --hard origin/dev
+git checkout main
+git reset --hard origin/main
 git clean -dfx
 git pull
 
@@ -38,7 +38,7 @@ sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenS
 git status
 git add .
 git commit -m "Release RongCloud SourceCode Version ${Version}"
-git push origin dev -v
+git push origin main -v
 
 ## 5. 打 tag
 TAGS=`git tag`

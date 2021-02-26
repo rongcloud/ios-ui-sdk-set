@@ -1,7 +1,7 @@
 #!/bin/sh
 
-git checkout dev
-git reset --hard origin/dev
+git checkout main
+git reset --hard origin/main
 git clean -dfx
 git pull
 
