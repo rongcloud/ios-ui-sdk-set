@@ -16,7 +16,7 @@ git pull
 function update_sdk(){
 	src_name=$1
 	target_name=$2
-	cp /var/lib/jenkins/jobs/iOS-SDK-Release/builds/{Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
+	cp /var/lib/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
 	unzip ${src_name}_SourceCode_*.zip
 	rm -rf ${target_name}/
 	mv ${src_name}/${src_name} ${target_name}
