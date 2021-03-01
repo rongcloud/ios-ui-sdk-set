@@ -86,9 +86,9 @@
         self.ringFrame = CGRectZero;
         self.backgroundColor = [UIColor clearColor];
         NSUInteger canRecordMaxDurationTemp = [self sightRecordMaxDuration];
-        if (canRecordMaxDurationTemp > [[RCCoreClient sharedCoreClient] getVideoDurationLimit]) {
+        if (canRecordMaxDurationTemp > 300) {
             //这个值不能超过 [[RCCoreClient sharedCoreClient] getVideoDurationLimit]。
-            canRecordMaxDurationTemp = [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
+            canRecordMaxDurationTemp = 300;
         }
         self.canRecordMaxDuration = canRecordMaxDurationTemp;
         UILongPressGestureRecognizer *longPress =
