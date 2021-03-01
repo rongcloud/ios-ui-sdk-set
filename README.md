@@ -50,11 +50,11 @@ CallKit|可选|音视频 UI 库
 > podfile
 
 ```
-pod 'RongCloudIM/IMKit',5.0.0           # IMKit
-pod 'RongCloudIM/Sight',5.0.0           # 小视频
-pod 'RongCloudIM/RongSticker',5.0.0     # 表情
+pod 'RongCloudIM/IMKit','5.0.0'           # IMKit
+pod 'RongCloudIM/Sight','5.0.0'           # 小视频
+pod 'RongCloudIM/RongSticker','5.0.0'     # 表情
 
-pod 'RongCloudRTC/RongCallKit',5.0.0    # CallKit
+pod 'RongCloudRTC/RongCallKit','5.0.0'    # CallKit
 ```
 
 > 项目 import
@@ -69,13 +69,13 @@ pod 'RongCloudRTC/RongCallKit',5.0.0    # CallKit
 > podfile
 
 ```
-pod 'RongCloudOpenSource/IMKit',5.0.0           # IMKit
-pod 'RongCloudOpenSource/Sight',5.0.0           # 小视频
-pod 'RongCloudOpenSource/RongSticker',5.0.0     # 表情
-pod 'RongCloudOpenSource/IFly',5.0.0            # 语音输入
-pod 'RongCloudOpenSource/ContactCard',5.0.0     # 名片
+pod 'RongCloudOpenSource/IMKit','5.0.0'           # IMKit
+pod 'RongCloudOpenSource/Sight','5.0.0'           # 小视频
+pod 'RongCloudOpenSource/RongSticker','5.0.0'     # 表情
+pod 'RongCloudOpenSource/IFly','5.0.0'            # 语音输入
+pod 'RongCloudOpenSource/ContactCard','5.0.0'     # 名片
 
-pod 'RongCloudOpenSource/RongCallKit',5.0.0     # CallKit
+pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 ```
 
 > 项目 import
