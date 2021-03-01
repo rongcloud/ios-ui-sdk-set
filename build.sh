@@ -34,6 +34,10 @@ update_sdk RongCallKit CallKit
 ## 3. 更新 podspec 版本
 sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
 
+## 4. 删除重复存在的 .h
+
+python delete_existed_header.py
+
 ## 4. 提交代码
 git status
 git add .
