@@ -5,4 +5,4 @@ git reset --hard origin/main
 git clean -dfx
 git pull
 
-pod trunk push --verbose --allow-warnings --verbose
+pod trunk push --use-libraries --allow-warnings --verbose
