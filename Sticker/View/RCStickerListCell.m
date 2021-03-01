@@ -9,7 +9,7 @@
 #import "RCStickerListCell.h"
 #import "RCStickerUtility.h"
 #import "RCStickerDataManager.h"
-#import "RongIMKitHeader.h"
+#import "RongStickerAdaptiveHeader.h"
 #define ScreenWidth [UIScreen mainScreen].bounds.size.width
 
 @interface RCStickerListCell ()

@@ -7,7 +7,7 @@
 //
 
 #import "RCContactCardMessage.h"
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 @implementation RCContactCardMessage
 + (instancetype)messageWithUserInfo:(RCUserInfo *)userInfo {
     RCContactCardMessage *cardMessage = [[RCContactCardMessage alloc] init];

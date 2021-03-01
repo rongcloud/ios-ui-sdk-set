@@ -9,7 +9,7 @@
 #import "RCCCContactTableViewCell.h"
 #import "UIColor+RCCCColor.h"
 #import "RCCCUtilities.h"
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 @interface RCCCContactTableViewCell ()
 
 @end

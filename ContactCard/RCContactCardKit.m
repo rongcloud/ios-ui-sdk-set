@@ -7,7 +7,7 @@
 //
 
 #import "RCContactCardKit.h"
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 #import "RCSendCardMessageView.h"
 #import "RCSendCardMessageView+internal.h"
 

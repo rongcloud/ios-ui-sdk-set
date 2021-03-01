@@ -10,7 +10,7 @@
 #import "RCiFlyKitExtensionModule.h"
 #import "RCiFlyInputView.h"
 #import <iflyMSC/iflyMSC.h>
-#import "RongIMKitHeader.h"
+#import "RongiFlyAdaptiveHeader.h"
 //默认的讯飞输入sdk的appKey
 #define iFlyKey @"5a3cf660"
 @interface UIImage (RCDynamicImage)

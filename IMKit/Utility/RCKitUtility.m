@@ -150,15 +150,7 @@
     NSString *targetId = message.targetId;
     RCConversationType conversationType = message.conversationType;
     
-    if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
-        NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
-        //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
-        if (formatedMsg.length > 500) {
-            formatedMsg = [formatedMsg substringToIndex:500];
-            formatedMsg = [formatedMsg stringByAppendingString:@"..."];
-        }
-        return formatedMsg;
-    } else if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
+    if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
         return [RCKitUtility __formatDiscussionNotificationMessageContent:notification];
     } else if ([messageContent isMemberOfClass:RCGroupNotificationMessage.class]) {
@@ -179,6 +171,14 @@
     } else if ([messageContent isMemberOfClass:[RCPublicServiceRichContentMessage class]]) {
         RCPublicServiceRichContentMessage *notification = (RCPublicServiceRichContentMessage *)messageContent;
         return notification.richContent.title;
+    } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
+        NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
+        //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
+        if (formatedMsg.length > 500) {
+            formatedMsg = [formatedMsg substringToIndex:500];
+            formatedMsg = [formatedMsg stringByAppendingString:@"..."];
+        }
+        return formatedMsg;
     } else {
         return [RCKitUtility localizedDescription:messageContent];
     }
@@ -188,15 +188,7 @@
                    targetId:(NSString *)targetId
            conversationType:(RCConversationType)conversationType
                isAllMessage:(BOOL)isAllMessage {
-    if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
-        NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
-        //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
-        if (!isAllMessage && formatedMsg.length > 500) {
-            formatedMsg = [formatedMsg substringToIndex:500];
-            formatedMsg = [formatedMsg stringByAppendingString:@"..."];
-        }
-        return formatedMsg;
-    } else if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
+    if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
         return [RCKitUtility __formatDiscussionNotificationMessageContent:notification];
     } else if ([messageContent isMemberOfClass:RCGroupNotificationMessage.class]) {
@@ -217,7 +209,15 @@
     } else if ([messageContent isMemberOfClass:[RCPublicServiceRichContentMessage class]]) {
         RCPublicServiceRichContentMessage *notification = (RCPublicServiceRichContentMessage *)messageContent;
         return notification.richContent.title;
-    } else {
+    } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
+        NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
+        //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
+        if (!isAllMessage && formatedMsg.length > 500) {
+            formatedMsg = [formatedMsg substringToIndex:500];
+            formatedMsg = [formatedMsg stringByAppendingString:@"..."];
+        }
+        return formatedMsg;
+    }  else {
         return [RCKitUtility localizedDescription:messageContent];
     }
 }

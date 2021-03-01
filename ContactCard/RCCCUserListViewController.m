@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 #import "RCCCUserListViewController.h"
 #import "RCCCContactTableViewCell.h"
 #import "UIColor+RCCCColor.h"

@@ -93,28 +93,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     });
 }
 
-- (void)recallLocalNotification:(NSString *)messageUId {
-    if (@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        [center getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *_Nonnull notifications) {
-            if (notifications.count == 0) {
-                return;
-            }
-
-            for (UNNotification *notice in notifications) {
-                UNNotificationRequest *request = notice.request;
-                UNNotificationContent *content = request.content;
-                NSDictionary *userInfo1 = content.userInfo;
-                id localNotificationMessageUId = userInfo1[@"rc"][@"id"];
-                if ([messageUId isEqualToString:localNotificationMessageUId]) {
-                    [[UNUserNotificationCenter currentNotificationCenter]
-                        removeDeliveredNotificationsWithIdentifiers:@[ request.identifier ]];
-                }
-            }
-        }];
-    }
-}
-
 #pragma mark - Private Method
 - (void)postLocalNotification:(NSString *)senderName pushContent:(NSString *)pushContent message:(RCMessage *)message userInfo:(NSDictionary *)userInfo {
     RCMessagePushConfig *pushConfig = message.messagePushConfig;

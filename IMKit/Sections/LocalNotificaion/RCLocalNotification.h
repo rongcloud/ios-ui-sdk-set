@@ -24,7 +24,4 @@
 /// 加密会话使用
 - (void)postLocalNotification:(NSString *)formatMessage userInfo:(NSDictionary *)userInfo;
 
-/// 本方法需要在主线程调用
-- (void)recallLocalNotification:(NSString *)messageUId;
-
 @end

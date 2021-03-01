@@ -6,7 +6,7 @@
 //  Copyright © 2018年 RongCloud. All rights reserved.
 //
 
-#import "RongIMKitHeader.h"
+#import "RongStickerAdaptiveHeader.h"
 #import "RCAnimated.h"
 #import "RCAnimatedView.h"
 #import "RCStickerDataManager.h"

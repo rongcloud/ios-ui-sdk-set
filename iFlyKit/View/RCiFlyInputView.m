@@ -10,7 +10,7 @@
 #import "RCiFlyInputView.h"
 #import <iflyMSC/iflyMSC.h>
 #import "RCISRDataHelper.h"
-#import "RongIMKitHeader.h"
+#import "RongiFlyAdaptiveHeader.h"
 @interface RCVoicePlayer : NSObject
 + (RCVoicePlayer *)defaultPlayer;
 - (void)stopPlayVoice;

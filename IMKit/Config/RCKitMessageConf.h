@@ -159,9 +159,9 @@
 @property (nonatomic, assign) BOOL enableMessageResend;
 
 /*!
- 视频上传的时长限制，单位是秒，默认值是 300。
+ 视频上传的时长限制，单位是秒，等于 [RCCoreClient  getVideoDurationLimit]。
 */
-@property (nonatomic, assign) NSTimeInterval uploadVideoDurationLimit;
+@property (nonatomic, assign, readonly) NSTimeInterval uploadVideoDurationLimit;
 
 @end
 

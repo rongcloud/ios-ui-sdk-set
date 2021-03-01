@@ -10,7 +10,7 @@
 #import "RCStickerDownloadView.h"
 #import "RCStickerDataManager.h"
 #import "RCStickerUtility.h"
-#import "RongIMKitHeader.h"
+#import "RongStickerAdaptiveHeader.h"
 #define ScreenWidth [UIScreen mainScreen].bounds.size.width
 
 @interface RCStickerPackageView () <RCStickerDownloadViewDelegate>

@@ -9,7 +9,6 @@
 #import "RCSightActionButton.h"
 #import <RongIMLib/RongIMLib.h>
 #import "RCIM+sight.h"
-#import "RCNaviDataManager+sight.h"
 
 @interface RCSightActionButton ()
 
@@ -87,9 +86,9 @@
         self.ringFrame = CGRectZero;
         self.backgroundColor = [UIColor clearColor];
         NSUInteger canRecordMaxDurationTemp = [self sightRecordMaxDuration];
-        if (canRecordMaxDurationTemp > [RCNaviDataManager sharedInstance].naviData.uploadVideoDurationLimit) {
-            //用户可以设置这个值，但最大不能超过导航下发的，默认导航下发的是 2 分钟，所以最大不能超过 2 分钟。
-            canRecordMaxDurationTemp = [RCNaviDataManager sharedInstance].naviData.uploadVideoDurationLimit;
+        if (canRecordMaxDurationTemp > [[RCCoreClient sharedCoreClient] getVideoDurationLimit]) {
+            //这个值不能超过 [[RCCoreClient sharedCoreClient] getVideoDurationLimit]。
+            canRecordMaxDurationTemp = [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
         }
         self.canRecordMaxDuration = canRecordMaxDurationTemp;
         UILongPressGestureRecognizer *longPress =

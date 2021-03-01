@@ -6,7 +6,7 @@
 //  Copyright © 2018年 RongCloud. All rights reserved.
 //
 
-#import "RongIMKitHeader.h"
+#import "RongStickerAdaptiveHeader.h"
 
 /*!
  表情消息的类型名

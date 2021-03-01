@@ -453,10 +453,6 @@ static RCIM *__rongUIKit = nil;
         [self.receiveMessageDelegate messageDidRecall:message];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (@available(iOS 10.0, *)) {
-        } else {
-            [[RCLocalNotification defaultCenter] recallLocalNotification:message.messageUId];
-        }
         [self postLocalNotificationIfNeed:message];
     });
 }

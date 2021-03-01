@@ -12,7 +12,7 @@
 #import "RCContactCardMessage.h"
 #import "RCCCExtensionModule.h"
 #import "RCloudImageView.h"
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 
 @interface RCSendCardMessageView ()

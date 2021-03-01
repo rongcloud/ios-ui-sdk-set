@@ -33,7 +33,6 @@
         self.enableMessageReference = YES;
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
-        self.uploadVideoDurationLimit = 300;
     }
     return self;
 }
@@ -42,6 +41,9 @@
     [[NSUserDefaults standardUserDefaults] setBool:disableMessageAlertSound forKey:@"rcMessageBeep"];
     [[NSUserDefaults standardUserDefaults] synchronize];
     _disableMessageAlertSound = disableMessageAlertSound;
+}
+- (NSTimeInterval)uploadVideoDurationLimit {
+    return [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
 }
 
 @end

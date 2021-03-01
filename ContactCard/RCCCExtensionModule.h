@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RongIMKitHeader.h"
+#import "RongContactCardAdaptiveHeader.h"
 #import "RongContactCard.h"
 
 @interface RCCCExtensionModule : NSObject <RongIMKitExtensionModule>

@@ -8,7 +8,7 @@
 
 #import "RCStickerUtility.h"
 #import <CommonCrypto/CommonDigest.h>
-#import "RongIMKitHeader.h"
+#import "RongStickerAdaptiveHeader.h"
 @implementation RCStickerUtility
 
 + (NSString *)sha1:(NSString *)input {
