@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 
 
   s.name         = "RongCloudOpenSource"
-  s.version      = "5.0.0"
+  s.version      = "5.1.0"
   s.summary      = "RongCloud UI SDK SourceCode."
 
 
@@ -29,7 +29,7 @@ Pod::Spec.new do |s|
     kit.resources = "IMKit/Resource/ar.lproj/RongCloudKit.strings","IMKit/Resource/en.lproj/RongCloudKit.strings","IMKit/Resource/zh-Hans.lproj/RongCloudKit.strings","IMKit/Resource/Emoji.plist","IMKit/Resource/RCColor.plist","IMKit/Resource/RongCloud.bundle"
     kit.source_files = 'IMKit/RongIMKit.h','IMKit/**/*.{h,m,c}'
     kit.frameworks = "AssetsLibrary", "MapKit", "ImageIO", "CoreLocation", "SystemConfiguration", "QuartzCore", "OpenGLES", "CoreVideo", "CoreTelephony", "CoreMedia", "CoreAudio", "CFNetwork", "AudioToolbox", "AVFoundation", "UIKit", "CoreGraphics", "SafariServices"
-    kit.dependency 'RongCloudIM/IMLib','5.0.0'
+    kit.dependency 'RongCloudIM/IMLib','5.1.0'
   end
 
   s.subspec 'RongSticker' do |rs|
@@ -61,7 +61,7 @@ Pod::Spec.new do |s|
     ck.source_files = 'CallKit/RongCallKit.h','CallKit/**/*.{h,m,mm}'
     ck.resources = "CallKit/Resources/ar.lproj/RongCallKit.strings","CallKit/Resources/en.lproj/RongCallKit.strings","CallKit/Resources/zh-Hans.lproj/RongCallKit.strings","CallKit/Resources/RongCallKit.bundle"
     ck.dependency 'RongCloudOpenSource/IMKit'
-    ck.dependency 'RongCloudRTC/RongCallLib','5.0.0'
+    ck.dependency 'RongCloudRTC/RongCallLib','5.1.0'
   end
 
 end

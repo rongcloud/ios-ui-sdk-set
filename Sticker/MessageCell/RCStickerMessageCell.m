@@ -10,7 +10,6 @@
 #import "RCStickerMessage.h"
 #import "RCStickerUtility.h"
 #import "RCIMClient+sticker.h"
-#import "RCMessageCell+sticker.h"
 #define MAXHEIGHT 120.0f
 #define FAIELDIMAGEEHEIGHT 43.0f
 #define FAIELDLABLEWIDTHT 80.0f
@@ -22,6 +21,7 @@
 @property (nonatomic, strong) UIImageView *loadfailedBackImageview;
 @property (nonatomic, strong) UIImageView *loadfailedImageView;
 @property (nonatomic, strong) UILabel *loadFailedLable;
+@property (nonatomic, strong) UIView *destructView;
 
 - (void)initialize;
 @end

@@ -141,7 +141,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.dataSource = [[RCConversationDataSource alloc] init:self];
     self.util = [[RCConversationVCUtil alloc] init:self];
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
-    self.enableUnreadMentionedIcon = YES;
+    self.enableUnreadMentionedIcon = NO;
     self.defaultLocalHistoryMessageCount = 10;
     self.defaultRemoteHistoryMessageCount = 10;
 
@@ -2574,6 +2574,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         if (self.unReadButton) {
             [self.unReadButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
         }
+        if (self.unReadMentionedButton) {
+            [self.unReadMentionedButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
+        }
         [self.conversationMessageCollectionView reloadData];
     }
 }
@@ -3030,10 +3033,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             extraHeight = 24; // iphonex 的导航由20变成了44，需要额外加24
         }
         
-        _unReadMentionedButton.frame = CGRectMake(0, [RCKitUtility getWindowSafeAreaInsets].top + self.navigationController.navigationBar.frame.size.height + 14 +6, 0, 42);
-        [_unReadMentionedButton setBackgroundImage:[RCKitUtility imageNamed:@"up" ofBundle:@"RongCloud.bundle"]
-                                          forState:UIControlStateNormal];
-        
+        _unReadMentionedButton.frame = CGRectMake(0, CGRectGetMaxY(self.unReadButton.frame) + 15, 0, 48);
+        [_unReadMentionedButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
         [_unReadMentionedButton addTarget:self action:@selector(tapRightTopUnReadMentionedButton:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:_unReadMentionedButton];
         [_unReadMentionedButton addSubview:self.unReadMentionedLabel];

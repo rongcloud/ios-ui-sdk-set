@@ -385,9 +385,9 @@
     }else {
         senderButton = self.chatVC.unReadMentionedButton;
     }
-    CGRect temBut = self.chatVC.unReadButton.frame;
+    CGRect temBut = senderButton.frame;
 
-    CGRect rect = [sender.text boundingRectWithSize:CGSizeMake(2000, self.chatVC.unReadButton.frame.size.height)
+    CGRect rect = [sender.text boundingRectWithSize:CGSizeMake(2000, senderButton.frame.size.height)
                                             options:(NSStringDrawingUsesLineFragmentOrigin)
                                          attributes:@{
                                              NSFontAttributeName : [[RCKitConfig defaultConfig].font fontOfFourthLevel]

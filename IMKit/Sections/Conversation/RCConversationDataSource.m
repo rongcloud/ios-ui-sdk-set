@@ -679,10 +679,10 @@ static BOOL msgRoamingServiceAvailable = YES;
     for (RCMessage *message in tempUnreadMentionedMessages) {
         if (message.messageId == curMessageId) {
             [self.unreadMentionedMessages removeObject:message];
+            [self setupUnReadMentionedButton];
             break;
         }
     }
-    [self setupUnReadMentionedButton];
 }
 
 - (void)didReloadRecalledMessage:(long)recalledMsgId {
@@ -876,7 +876,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             [self.chatVC.util adaptUnreadButtonSize:self.chatVC.unReadMentionedLabel];
         }
     }else {
-        self.chatVC.unReadButton.hidden = YES;
+        self.chatVC.unReadMentionedButton.hidden = YES;
     }
 }
 

@@ -43,7 +43,7 @@
     _disableMessageAlertSound = disableMessageAlertSound;
 }
 - (NSTimeInterval)uploadVideoDurationLimit {
-    return 300;
+    return [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
 }
 
 @end

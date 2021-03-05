@@ -8,7 +8,7 @@
 
 #import "RCSightActionButton.h"
 #import <RongIMLib/RongIMLib.h>
-#import "RCIM+sight.h"
+#import "RongSightAdaptiveHeader.h"
 
 @interface RCSightActionButton ()
 
@@ -86,9 +86,9 @@
         self.ringFrame = CGRectZero;
         self.backgroundColor = [UIColor clearColor];
         NSUInteger canRecordMaxDurationTemp = [self sightRecordMaxDuration];
-        if (canRecordMaxDurationTemp > 300) {
+        if (canRecordMaxDurationTemp > [[RCCoreClient sharedCoreClient] getVideoDurationLimit]) {
             //这个值不能超过 [[RCCoreClient sharedCoreClient] getVideoDurationLimit]。
-            canRecordMaxDurationTemp = 300;
+            canRecordMaxDurationTemp = [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
         }
         self.canRecordMaxDuration = canRecordMaxDurationTemp;
         UILongPressGestureRecognizer *longPress =

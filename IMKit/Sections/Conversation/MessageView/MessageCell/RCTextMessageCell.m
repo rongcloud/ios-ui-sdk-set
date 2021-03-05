@@ -65,7 +65,7 @@
 }
 
 - (void)didTapMessageContentView{
-    if (self.textLabel.currentTextCheckingType == NSTextCheckingTypeLink || self.textLabel.currentTextCheckingType == NSTextCheckingTypeRegularExpression) {
+    if (self.textLabel.currentTextCheckingType == NSTextCheckingTypeLink) {
         // open url
         NSString *urlString =
             [self.textLabel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];

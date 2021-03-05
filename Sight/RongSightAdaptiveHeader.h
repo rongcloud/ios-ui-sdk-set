@@ -6,8 +6,8 @@
 //  Copyright © 2021 RongCloud. All rights reserved.
 //
 // 私有头文件，不能在 public 的 .h 中引用
-#ifndef RongIMKitHeader_h
-#define RongIMKitHeader_h
+#ifndef RongSightAdaptiveHeader_h
+#define RongSightAdaptiveHeader_h
 
 #if __has_include(<RongIMKit/RongIMKit.h>)
 

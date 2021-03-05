@@ -58,18 +58,8 @@
             NSUnderlineColorAttributeName : [UIColor yellowColor]
         };
     }
-        case NSTextCheckingTypeLink: {
+    case NSTextCheckingTypeLink: {
         _currentTextCheckingType = NSTextCheckingTypeLink;
-        return @{
-            NSForegroundColorAttributeName :
-                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
-            NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName :
-                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)]
-        };
-    }
-        case NSTextCheckingTypeRegularExpression: {
-        _currentTextCheckingType = NSTextCheckingTypeRegularExpression;
         return @{
             NSForegroundColorAttributeName :
                 [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
@@ -123,21 +113,6 @@
             };
         }
     }
-    case NSTextCheckingTypeRegularExpression: {
-            _currentTextCheckingType = NSTextCheckingTypeRegularExpression;
-            if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
-                return @{
-                    NSForegroundColorAttributeName : [UIColor greenColor],
-                    NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
-                };
-            } else {
-                return @{
-                    NSForegroundColorAttributeName : [UIColor greenColor],
-                    NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-                    NSUnderlineColorAttributeName : [UIColor greenColor]
-                };
-            }
-        }
     default:
         break;
     }
@@ -160,12 +135,9 @@
     }
 
     switch (result.resultType) {
-        case NSTextCheckingTypeLink: case NSTextCheckingTypeRegularExpression:
+    case NSTextCheckingTypeLink:
         if ([self.delegate respondsToSelector:@selector(attributedLabel:didSelectLinkWithURL:)]) {
-            if (!result.URL) {
-                 NSString * url = [self.originalString substringWithRange:result.range];
-                 [self.delegate attributedLabel:self didSelectLinkWithURL:[NSURL URLWithString:url]];
-             }
+            [self.delegate attributedLabel:self didSelectLinkWithURL:result.URL];
         }
         break;
     case NSTextCheckingTypePhoneNumber:
@@ -218,9 +190,7 @@
     if (!self.originalString) {
         return;
     }
-
     NSError *error = nil;
-      
     NSDataDetector *dataDetector = [[NSDataDetector alloc] initWithTypes:self.textCheckingTypes error:&error];
     if (error != nil) {
         DebugLog(@"data detector error %@", error.localizedDescription);
@@ -228,9 +198,7 @@
         return;
     }
     self.attributedStrings = [NSMutableArray array];
-    
-    NSString *regulaStr = @"((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|(www.[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)";
-    NSRegularExpression *pattern = [NSRegularExpression regularExpressionWithPattern:regulaStr options:NSRegularExpressionAnchorsMatchLines error:nil];
+
     __weak typeof(self) weakSelf = self;
     //文本少于 500 同步计算高亮结果，大于 500 异步计算
     if(self.originalString.length < 500) {
@@ -242,12 +210,6 @@
             strongSelf->_currentTextCheckingType = result.resultType;
             [strongSelf.attributedStrings addObject:result];
         }];
-        [pattern enumerateMatchesInString:self.originalString options:kNilOptions range:NSMakeRange(0, self.originalString.length) usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            strongSelf->_currentTextCheckingType = result.resultType;
-            [strongSelf.attributedStrings addObject:result];
-        }];
-        
     }else {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             [dataDetector enumerateMatchesInString:self.originalString
@@ -259,11 +221,6 @@
                     strongSelf->_currentTextCheckingType = result.resultType;
                     [strongSelf.attributedStrings addObject:result];
                 });
-            }];
-            [pattern enumerateMatchesInString:self.originalString options:kNilOptions range:NSMakeRange(0, self.originalString.length) usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-                __strong typeof(weakSelf) strongSelf = weakSelf;
-                strongSelf->_currentTextCheckingType = result.resultType;
-                [strongSelf.attributedStrings addObject:result];
             }];
         });
     }
@@ -433,6 +390,7 @@
     return idx;
 }
 
+
 - (NSTextCheckingResult *)linkAtPoint:(CGPoint)p {
     CFIndex idx = [self characterIndexAtPoint:p];
     return [self linkAtCharacterIndex:idx];
@@ -459,7 +417,6 @@
     [self.tapGestureRecognizer setDelegate:self];
     [self addGestureRecognizer:self.tapGestureRecognizer];
     self.userInteractionEnabled = YES;
-
 }
 
 - (void)setAttributeDictionary:(NSDictionary *)attributeDictionary {
@@ -491,6 +448,6 @@
     if (_textCheckingTypes) {
         return _textCheckingTypes;
     }
-    return NSTextCheckingTypePhoneNumber;
+    return NSTextCheckingTypeLink | NSTextCheckingTypePhoneNumber;
 }
 @end

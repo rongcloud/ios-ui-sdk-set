@@ -152,7 +152,7 @@
 @property (nonatomic, assign) NSUInteger sightRecordMaxDuration;
 
 /*!
- 是否开启消息自动重发功能，默认是 NO
+ 是否开启消息自动重发功能，默认是 YES
  
  @discussion 开启后，在消息发送失败时 SDK 会自动重发
 */

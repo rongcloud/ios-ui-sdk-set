@@ -115,12 +115,12 @@
 
 + (NSDictionary *)getTextLinkOrPhoneNumberAttributeDictionary:(RCMessageDirection)msgDirection{
     if (msgDirection == MessageDirection_SEND ) {
-        return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x005F9E)},@(NSTextCheckingTypeRegularExpression) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x005F9E)},
+        return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x005F9E)},
                  @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x005F9E)]
                  }
         };
     }else{
-        return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x1290e2)},@(NSTextCheckingTypeRegularExpression) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x1290e2)},
+        return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x1290e2)},
                  @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x1290e2)]
                  }
         };
