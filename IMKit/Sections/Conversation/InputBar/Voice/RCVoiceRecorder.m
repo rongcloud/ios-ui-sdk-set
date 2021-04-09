@@ -67,9 +67,8 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
             rcHQVoiceRecorderHandler = [[[self class] alloc] init];
             rcHQVoiceRecorderHandler.recordSettings = @{
                 AVFormatIDKey : @(kAudioFormatMPEG4AAC_HE),
-                AVSampleRateKey : @(44100.0),
                 AVNumberOfChannelsKey : @1,
-                AVEncoderBitRateKey : @(16000)
+                AVEncoderBitRateKey : @(32000)
             };
             rcHQVoiceRecorderHandler.recordTempFileURL =
                 [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"HQTempAC.m4a"]];

@@ -141,7 +141,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.dataSource = [[RCConversationDataSource alloc] init:self];
     self.util = [[RCConversationVCUtil alloc] init:self];
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
-    self.enableUnreadMentionedIcon = NO;
+    self.enableUnreadMentionedIcon = YES;
     self.defaultLocalHistoryMessageCount = 10;
     self.defaultRemoteHistoryMessageCount = 10;
 
@@ -1643,6 +1643,20 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     NSIndexPath *indexPath = [self.util findDataIndexFromMessageList:model];
     if (!indexPath) {
         return;
+    } else{
+        //如果要删除的消息是显示时间的，且下一条消息又没有显示时间，则删除消息之后，下一条消息需要显示时间
+        RCMessageModel *msgModel = self.conversationDataRepository[indexPath.row];
+        if (msgModel.isDisplayMessageTime) {
+            int nextIndex = (int)indexPath.row+1;
+            if(nextIndex < self.conversationDataRepository.count){
+                RCMessageModel *nextModel = self.conversationDataRepository[nextIndex];
+                if (nextModel && !nextModel.isDisplayMessageTime) {
+                    nextModel.isDisplayMessageTime = YES;
+                    nextModel.cellSize = CGSizeZero;
+                    [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:nextIndex inSection:0]]];
+                }
+            }
+        }
     }
     
     long msgId = model.messageId;
@@ -2928,6 +2942,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (RCChatSessionInputBarControl *)chatSessionInputBarControl {
     if (!_chatSessionInputBarControl && self.conversationType != ConversationType_SYSTEM) {
+        if(!self.viewLoaded) {
+            //当出现这个日志的时候很可能用户在 init 方法调用了 UI 接口
+            RCLogE(@"[Error] view didn't load: Method called before viewDidLoad");
+        }
         _chatSessionInputBarControl = [[RCChatSessionInputBarControl alloc]
                                        initWithFrame:CGRectMake(0, self.view.bounds.size.height - RC_ChatSessionInputBar_Height -
                                                                        [self getSafeAreaExtraBottomHeight],

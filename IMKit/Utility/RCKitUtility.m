@@ -177,6 +177,8 @@
         if (formatedMsg.length > 500) {
             formatedMsg = [formatedMsg substringToIndex:500];
             formatedMsg = [formatedMsg stringByAppendingString:@"..."];
+        }else if(formatedMsg.length == 0){
+            formatedMsg = [RCKitUtility localizedDescription:messageContent];
         }
         return formatedMsg;
     } else {
@@ -215,9 +217,11 @@
         if (!isAllMessage && formatedMsg.length > 500) {
             formatedMsg = [formatedMsg substringToIndex:500];
             formatedMsg = [formatedMsg stringByAppendingString:@"..."];
+        }else if(formatedMsg.length == 0){
+            formatedMsg = [RCKitUtility localizedDescription:messageContent];
         }
         return formatedMsg;
-    }  else {
+    } else {
         return [RCKitUtility localizedDescription:messageContent];
     }
 }

@@ -50,6 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
+static NSString *const RCIMKitVersion = @"5.1.1";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -1271,6 +1272,10 @@ static RCIM *__rongUIKit = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationStatusChangeNotification
                                                         object:conversationStatusInfos
                                                       userInfo:nil];
+}
+
++ (NSString *)getVersion {
+    return RCIMKitVersion;
 }
 
 @end

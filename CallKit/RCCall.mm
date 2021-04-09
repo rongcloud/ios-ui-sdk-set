@@ -30,6 +30,10 @@
 #define AlertWithoutConfirm 1000
 #define AlertWithConfirm 1001
 
+static NSString *const __RongCallKit__Version = @"5.1.1";
+static NSString *const __RongCallKit__Commit = @"bc88ee96";
+static NSString *const __RongCallKit__Time = @"202104091707";
+
 @interface RCCall () <RCCallReceiveDelegate>
 
 @property(nonatomic, strong) NSMutableDictionary *alertInfoDic;
@@ -59,6 +63,7 @@
 #else
             [[RCCallClient sharedRCCallClient] setApplePushKitEnable:YES];
 #endif
+            NSLog(@"callkitVersion:%@, commitId:%@, time:%@", __RongCallKit__Version, __RongCallKit__Commit, __RongCallKit__Time);
         }
     });
     return pRongVoIP;
@@ -529,5 +534,9 @@
     [RCIM sharedRCIM].groupMemberDataSource = groupMemberDataSource;
 }
 //接口向后兼容 --]]
+
++ (NSString *)getVersion {
+    return __RongCallKit__Version;
+}
 
 @end

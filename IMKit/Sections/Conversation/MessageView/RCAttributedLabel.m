@@ -416,7 +416,6 @@
     self.tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
     [self.tapGestureRecognizer setDelegate:self];
     [self addGestureRecognizer:self.tapGestureRecognizer];
-    self.userInteractionEnabled = YES;
 }
 
 - (void)setAttributeDictionary:(NSDictionary *)attributeDictionary {

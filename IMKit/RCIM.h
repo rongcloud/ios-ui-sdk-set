@@ -1049,4 +1049,10 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  */
 - (BOOL)openExtensionModuleUrl:(NSURL *)url;
 
+/*!
+ 获取 SDK 版本号
+ @return SDK 版本号
+ */
++ (NSString *)getVersion;
+
 @end

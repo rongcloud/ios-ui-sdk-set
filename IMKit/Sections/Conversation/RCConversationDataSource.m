@@ -274,8 +274,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     NSArray *__messageArray = [self loadMoreLocalMessage];
     
     if (__messageArray.count == 0 && self.loadHistoryMessageFromRemote && msgRoamingServiceAvailable &&
-        self.chatVC.conversationType != ConversationType_CHATROOM && self.chatVC.conversationType != ConversationType_APPSERVICE &&
-        self.chatVC.conversationType != ConversationType_PUBLICSERVICE) {
+        self.chatVC.conversationType != ConversationType_CHATROOM) {
         [self loadRemoteHistoryMessages];
     }
 }

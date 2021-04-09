@@ -63,25 +63,6 @@
     [self setAutoLayout];
 }
 
-- (void)didTapMessageContentView {
-    if (self.contentLabel.currentTextCheckingType == NSTextCheckingTypeLink) {
-        // open url
-        NSString *urlString =
-            [self.contentLabel.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if ([self.delegate respondsToSelector:@selector(didTapUrlInMessageCell:model:)]) {
-            [self.delegate didTapUrlInMessageCell:urlString model:self.model];
-        }
-    } else if (self.contentLabel.currentTextCheckingType == NSTextCheckingTypePhoneNumber) {
-        // call phone number
-        NSString *number = [@"tel://" stringByAppendingString:self.contentLabel.text];
-        if ([self.delegate respondsToSelector:@selector(didTapPhoneNumberInMessageCell:model:)]) {
-            [self.delegate didTapPhoneNumberInMessageCell:number model:self.model];
-        }
-    }else{
-        [super didTapMessageContentView];
-    }
-}
-
 #pragma mark - RCReferencedContentViewDelegate
 
 - (void)didTapReferencedContentView:(RCMessageModel *)message {
@@ -198,6 +179,7 @@
         _contentLabel.numberOfLines = 0;
         [_contentLabel setLineBreakMode:NSLineBreakByCharWrapping];
         _contentLabel.delegate = self;
+        _contentLabel.userInteractionEnabled = YES;
     }
     return _contentLabel;
 }

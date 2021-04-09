@@ -537,20 +537,24 @@
     UIImage *image = ImageView.image;
     CGFloat imageWidth = image.size.width;
     CGFloat imageHeight = image.size.height;
-    if (imageWidth < 400) {
+    if (imageWidth < width) {
         /*
-         图宽＜400px，高＜屏幕高 宽不变，高不变，水平垂直居中屏幕展示
-         图宽＜400px，高≥屏幕高 宽不变，高不变，水平居中，垂直方向从图片顶端开始展示
+         图宽＜屏幕宽，高＜屏幕高 宽适配屏幕宽，高不变，水平垂直居中屏幕展示
+         图宽＜屏幕宽，高≥屏幕高 宽不变，高不变，水平居中，垂直方向从图片顶端开始展示
          */
-        [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
         if (imageHeight < height) {
+            CGFloat scale = imageHeight / imageWidth;
+            imageWidth = width;
+            imageHeight = width * scale;
+            [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
             ImageView.center = self.view.center;
         } else {
+            [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
             ImageView.center = CGPointMake(width / 2, imageHeight / 2);
         }
     } else {
         /*
-         图宽大于等于400 宽适配屏幕宽，高等比放大或缩小  放大或缩小后的高＜屏幕高，垂直居中屏幕显示
+         图宽大于等于屏幕宽 宽适配屏幕宽，高等比放大或缩小  放大或缩小后的高＜屏幕高，垂直居中屏幕显示
          放大或缩小后的高≥屏幕高，垂直方向从图片顶端开始展示
          */
         CGFloat scale = imageHeight / imageWidth;

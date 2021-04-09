@@ -160,10 +160,15 @@
         self.videoDevice.activeVideoMinFrameDuration = frameDuration;
         [self.videoDevice unlockForConfiguration];
     }
+    
+    NSDictionary *audioSettingDic = @{
+         AVFormatIDKey : @(kAudioFormatMPEG4AAC),
+         AVNumberOfChannelsKey : @1,
+         AVSampleRateKey : @44100,
+         AVEncoderBitRateKey : @96000,
+     };
 
-    self.audioCompressionSettings =
-        [[audioDeviceOutput recommendedAudioSettingsForAssetWriterWithOutputFileType:AVFileTypeMPEG4] copy];
-
+    self.audioCompressionSettings = audioSettingDic;
     self.videoCompressionSettings =
         [[videoDeviceOutput recommendedVideoSettingsForAssetWriterWithOutputFileType:AVFileTypeMPEG4] copy];
 

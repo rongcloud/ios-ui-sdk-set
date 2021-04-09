@@ -45,7 +45,7 @@
 
             self.userInfoList = [userInfoList copy];
         }
-
+        self.extra = [dict objectForKey:@"extra"];
         NSDictionary *userinfoDic = [dict objectForKey:@"user"];
         [self decodeUserInfo:userinfoDic];
     } else {
@@ -80,6 +80,9 @@
 
     if (self.senderUserInfo) {
         [dict setObject:[self encodeUserInfo:self.senderUserInfo] forKey:@"user"];
+    }
+    if (self.extra) {
+        [dict setObject:self.extra forKey:@"extra"];
     }
 
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:kNilOptions error:nil];

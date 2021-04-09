@@ -45,7 +45,7 @@
     return maxWidth;
 }
 
-+ (CGSize)getThumbnailImageSize:(UIImage *)image{
++ (CGSize)getThumbnailImageSize:(UIImage *)image {
     //图片消息最小值为 100 X 100，最大值为 240 X 240
     // 重新梳理规则，如下：
     // 1、宽高任意一边小于 100 时，如：20 X 40 ，则取最小边，按比例放大到 100 进行显示，如最大边超过240 时，居中截取 240

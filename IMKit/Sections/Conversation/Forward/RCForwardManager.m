@@ -133,17 +133,20 @@
     NSString *beforeUserId = [[NSString alloc] init];
     for (int i = 0; i < messageList.count; i++) {
         RCMessageModel *messageModel = [messageList objectAtIndex:i];
-        RCUserInfo *userInfo =
-            [[RCUserInfoCacheManager sharedManager] getUserInfoFromCacheOnly:messageModel.senderUserId];
-        NSString *senderUserName = userInfo.name;
+        RCUserInfo *userInfo;
+        NSString *senderUserName;
         //组装名字
         if (forwardConversationType == ConversationType_GROUP) {
+            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:messageModel.senderUserId inGroupId:messageModel.targetId];
+            senderUserName = userInfo.name;
             RCGroup *groupInfo =
                 [[RCUserInfoCacheManager sharedManager] getGroupInfoFromCacheOnly:messageModel.targetId];
             if (![nameList containsObject:groupInfo.groupName]) {
                 [nameList addObject:groupInfo.groupName];
             }
         } else {
+            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:messageModel.senderUserId];
+            senderUserName = userInfo.name;
             if (![nameList containsObject:senderUserName]) {
                 [nameList addObject:senderUserName];
             }
