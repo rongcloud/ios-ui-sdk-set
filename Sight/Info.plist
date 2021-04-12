@@ -17,7 +17,9 @@
 	<key>CFBundleShortVersionString</key>
 	<string>5.1.1</string>
 	<key>CFBundleVersion</key>
-	<string>5.1.1_202104091655</string>
+	<string>202104121139</string>
+    <key>RCVersion</key>
+    <string>5.1.1</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
 </dict>
