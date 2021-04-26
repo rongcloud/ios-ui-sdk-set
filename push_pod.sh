@@ -1,8 +1,7 @@
 #!/bin/sh
 
-git checkout main
 git reset --hard origin/main
-git clean -dfx
+git checkout -f main
 git pull
 
 ##  打 tag
