@@ -16,7 +16,6 @@ git tag -a $Version -m $Version
 git push origin $Version
 
 
-sed -i ""  -e 's/pod_ver/'"$Version"'/' RongCloudOpenSource.podspec
-sed -i ""  -e 's/sdk_ver/'"$SDK_Version"'/' RongCloudOpenSource.podspec
+sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
 
 pod trunk push --use-libraries --allow-warnings --verbose

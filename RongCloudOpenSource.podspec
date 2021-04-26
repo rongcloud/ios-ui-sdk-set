@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 
 
   s.name         = "RongCloudOpenSource"
-  s.version      = "5.1.1.1"
+  s.version      = "5.1.1"
   s.summary      = "RongCloud UI SDK SourceCode."
 
 
