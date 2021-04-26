@@ -31,20 +31,31 @@ update_sdk RongiFlyKit iFlyKit
 update_sdk RongContactCard ContactCard
 update_sdk RongCallKit CallKit
 
-## 3. 更新 podspec 版本
-sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
-
-## 4. 删除重复存在的 .h
+## 3. 删除重复存在的 .h
 
 python delete_existed_header.py
 
-## 4. 提交代码
+## 4. 统一管理资源文件
+
+res_path="Resources"
+
+if [ ! -d $res_path ];then
+	mkdir $res_path
+fi
+
+rsync -a IMKit/Resource/* $res_path/ && rm -rf IMKit/Resource/
+rsync -a Sticker/Resource/* $res_path/ && rm -rf Sticker/Resource/
+rsync -a iFlyKit/Resource/* $res_path/ && rm -rf iFlyKit/Resource/
+rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
+
+
+## 5. 提交代码
 git status
 git add .
 git commit -m "Release RongCloud SourceCode Version ${Version}"
 git push origin main -v
 
-## 5. 打 tag
+## 6. 打 tag
 TAGS=`git tag`
 
 if [[ "${TAGS[*]}" =~ $Version ]]; then
