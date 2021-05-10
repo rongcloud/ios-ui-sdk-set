@@ -34,6 +34,7 @@ update_sdk RongCallKit CallKit
 ## 3. 删除重复存在的 .h
 
 python delete_existed_header.py
+python delete_unuse_callkit.py
 
 ## 4. 统一管理资源文件
 
