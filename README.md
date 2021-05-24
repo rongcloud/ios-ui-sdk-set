@@ -17,6 +17,8 @@ RongCloudOpenSource 里面 SDK 都以源码形式存在，主要包含各个 UI 
 强烈不建议直接修改 SDK 源码，避免后续版本升级导致修改被重置
 ```
 
+**·注：RongCloudOpenSource 的发布时间为 RongCloudIM 和 RongCloudRTC 发布之后的一到两个工作日**
+
 ## 2. 架构说明
 
 ![](https://rongcloud-image.cn.ronghub.com/image_jpeg__RC-2021-03-01_9330_1614584928194.jpg?e=1630136930&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:Y7Zv3fMKTmb5_YOYq3TWS-_7ntE=)
