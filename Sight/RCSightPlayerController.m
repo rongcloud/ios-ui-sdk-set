@@ -40,6 +40,10 @@
 @property (copy, nonatomic) void (^completion)(void);
 @property (copy, nonatomic) void (^error)(NSError *error);
 
+@property (assign, nonatomic) BOOL isAddStatusObserver;
+
+@property (nonatomic, strong) NSURLSession *session;
+
 @end
 
 @implementation RCSightPlayerController
@@ -51,15 +55,7 @@
         self.transport.delegate = self;
         self.autoPlay = isauto;
         self.rcSightURL = assetURL;
-        NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
-        [defaultCenter addObserver:self
-                          selector:@selector(appWillEnterBackground)
-                              name:UIApplicationDidEnterBackgroundNotification
-                            object:nil];
-        [defaultCenter addObserver:self
-                          selector:@selector(appWillEnterBackground)
-                              name:@"RCCallNewSessionCreation Notification"
-                            object:nil];
+        [self registerNotificationCenter];
 
     }
     return self;
@@ -68,16 +64,7 @@
 - (instancetype)init {
     if (self = [super init]) {
         self.transport.delegate = self;
-        NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
-        [defaultCenter addObserver:self
-                          selector:@selector(appWillEnterBackground)
-                              name:UIApplicationDidEnterBackgroundNotification
-                            object:nil];
-        [defaultCenter addObserver:self
-                          selector:@selector(appWillEnterBackground)
-                              name:@"RCCallNewSessionCreation Notification"
-                            object:nil];
-
+        [self registerNotificationCenter];
     }
     return self;
 }
@@ -85,6 +72,9 @@
 #pragma mark - Deinit
 
 - (void)dealloc {
+    if (self.isAddStatusObserver) {
+        [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     if (_itemEndObserver) {
         [[NSNotificationCenter defaultCenter] removeObserver:_itemEndObserver
@@ -108,7 +98,6 @@
     _playerItem = nil;
     _player = nil;
     _timeObserver = nil;
-    _canceling = NO;
 }
 
 - (void)setOverlayHidden:(BOOL)overlayHidden {
@@ -275,10 +264,14 @@
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     self.completion = completion;
     self.error = error;
-    [self.playerItem addObserver:self
-                      forKeyPath:STATUS_KEYPATH
-                         options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
-                         context:nil];
+    if (!self.isAddStatusObserver) {
+        [self.playerItem addObserver:self
+                          forKeyPath:STATUS_KEYPATH
+                             options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                             context:nil];
+        self.isAddStatusObserver = YES;
+    }
+    
 
     [self.playerView setPlayer:self.player];
 }
@@ -296,7 +289,10 @@
         if (oldValue == newValue) {
             return;
         }
-        [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
+        if (self.isAddStatusObserver) {
+            [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
+            self.isAddStatusObserver = NO;
+        }
         if (self.playerItem.status == AVPlayerItemStatusReadyToPlay) {
 
             // Set up time observers.
@@ -426,6 +422,7 @@
     [self.errorTipsLabel removeFromSuperview];
     [self.progressView removeFromSuperview];
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.rcSightURL.path]) {
+        __weak typeof(self) weakSelf = self;
         [[RCDownloadHelper new]
             getDownloadFileToken:MediaType_SIGHT
                    completeBlock:^(NSString *_Nonnull token) {
@@ -437,15 +434,14 @@
                            if (token) {
                                [urlRequest setValue:token forHTTPHeaderField:@"authorization"];
                            }
-                           NSURLSession *session = [NSURLSession
+                           weakSelf.session = [NSURLSession
                                sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration]
-                                               delegate:self
+                                               delegate:weakSelf
                                           delegateQueue:[[NSOperationQueue alloc] init]];
+                           [weakSelf.view addSubview:weakSelf.progressView];
+                           [weakSelf.progressView startIndeterminateAnimation];
 
-                           [self.view addSubview:self.progressView];
-                           [self.progressView startIndeterminateAnimation];
-
-                           NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:urlRequest];
+                           NSURLSessionDownloadTask *downloadTask = [weakSelf.session downloadTaskWithRequest:urlRequest];
                            [downloadTask resume];
                        });
                    }];
@@ -554,6 +550,7 @@
 - (void)URLSession:(NSURLSession *)session
                  downloadTask:(NSURLSessionDownloadTask *)downloadTask
     didFinishDownloadingToURL:(NSURL *)location {
+    session = nil;
     NSString *cachepath = [RCUtilities rongImageCacheDirectory];
     NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     NSString *localPath = [cachepath stringByAppendingFormat:@"/%@/RCSightCache/Sight_%@.mp4", currentUserId,
@@ -574,13 +571,14 @@
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.progressView performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.5];
-            if (self.canceling) {
-                return;
-            }
             self.rcSightURL = [[NSURL alloc] initFileURLWithPath:localPath];
-            if (!self.isAutoPlay) {
+            if (!self.isAutoPlay || self.canceling) {
+                if (self.canceling) {
+                    self.canceling = NO;
+                }
                 self.transport.centerPlayBtn.hidden = NO;
                 self.transport.centerPlayBtn.selected = NO;
+                [self.transport setControlBarHidden:YES];
                 return;
             }
             if([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Background) {
@@ -598,6 +596,7 @@
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    [session finishTasksAndInvalidate];
     if (error) {
         sleep(2);
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -614,6 +613,33 @@
 }
 
 #pragma mark - Notification Selector
+- (void)registerNotificationCenter {
+    NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
+    [defaultCenter addObserver:self
+                      selector:@selector(appWillEnterBackground)
+                          name:UIApplicationDidEnterBackgroundNotification
+                        object:nil];
+    [defaultCenter addObserver:self
+                      selector:@selector(appWillEnterBackground)
+                          name:@"RCCallNewSessionCreation Notification"
+                        object:nil];
+    
+    [defaultCenter addObserver:self
+                      selector:@selector(deviceOrientationDidChange:)
+                          name:UIApplicationDidChangeStatusBarFrameNotification
+                        object:nil];
+}
+
+- (void)deviceOrientationDidChange:(NSNotification *)notification {
+    UIDeviceOrientation interfaceOrientation = [UIDevice currentDevice].orientation;
+    if (interfaceOrientation == UIDeviceOrientationLandscapeLeft || interfaceOrientation == UIDeviceOrientationLandscapeRight || interfaceOrientation == UIDeviceOrientationPortrait){
+        CGRect bounds = [UIScreen mainScreen].bounds;
+        self.progressView.center = CGPointMake(CGRectGetMidX(bounds), CGRectGetMidY(bounds));
+        self.errorTipsLabel.center =
+            CGPointMake(self.progressView.center.x, self.progressView.center.y + 47);
+    }
+}
+
 - (void)appWillEnterBackground {
     if (self.isPlaying) {
         [self.player pause];

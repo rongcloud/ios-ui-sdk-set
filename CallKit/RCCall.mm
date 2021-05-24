@@ -30,19 +30,20 @@
 #define AlertWithoutConfirm 1000
 #define AlertWithConfirm 1001
 
-static NSString *const __RongCallKit__Version = @"5.1.1";
-static NSString *const __RongCallKit__Commit = @"bc88ee96";
-static NSString *const __RongCallKit__Time = @"202104121156";
+static NSString *const __RongCallKit__Version = @"5.1.2.1";
+static NSString *const __RongCallKit__Commit = @"b55fa0be";
+static NSString *const __RongCallKit__Time = @"202105241855";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
-@property(nonatomic, strong) NSMutableDictionary *alertInfoDic;
-@property(nonatomic, strong) AVAudioPlayer *audioPlayer;
-@property(nonatomic, strong) NSMutableArray *callWindows;
-@property(nonatomic, strong) NSTimer *timer;
-@property(nonatomic, strong) NSMutableDictionary *locationNotificationMap;
+@property (nonatomic, strong) NSMutableDictionary *alertInfoDic;
+@property (nonatomic, strong) AVAudioPlayer *audioPlayer;
+@property (nonatomic, strong) NSMutableArray *callWindows;
+@property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) NSMutableDictionary *locationNotificationMap;
 
 @end
+
 
 @implementation RCCall
 
@@ -59,10 +60,7 @@ static NSString *const __RongCallKit__Time = @"202104121156";
             pRongVoIP.callWindows = [[NSMutableArray alloc] init];
             pRongVoIP.locationNotificationMap = [[NSMutableDictionary alloc] init];
             [pRongVoIP registerNotification];
-#if PUBLIC
-#else
-            [[RCCallClient sharedRCCallClient] setApplePushKitEnable:YES];
-#endif
+//RCCallKit_Delete_end
             NSLog(@"callkitVersion:%@, commitId:%@, time:%@", __RongCallKit__Version, __RongCallKit__Commit, __RongCallKit__Time);
         }
     });
@@ -318,12 +316,12 @@ static NSString *const __RongCallKit__Time = @"202104121156";
     }
 }
 
--(void)didCancelCallRemoteNotification:(NSString *)callId
-                         inviterUserId:(NSString *)inviterUserId
-                             mediaType:(RCCallMediaType)mediaType
-                            userIdList:(NSArray *)userIdList
-                            pushConfig:(RCMessagePushConfig*) pushConfig
-                        isRemoteCancel:(BOOL)isRemoteCancel {
+- (void)didCancelCallRemoteNotification:(NSString *)callId
+                          inviterUserId:(NSString *)inviterUserId
+                              mediaType:(RCCallMediaType)mediaType
+                             userIdList:(NSArray *)userIdList
+                             pushConfig:(RCMessagePushConfig *) pushConfig
+                         isRemoteCancel:(BOOL)isRemoteCancel {
     [self stopReceiveCallVibrate];
     
     [[RCCXCall sharedInstance] endCXCall];
@@ -339,37 +337,21 @@ static NSString *const __RongCallKit__Time = @"202104121156";
                               userIdList:(NSArray *)userIdList
                                 userDict:(NSDictionary *)userDict
                               isVoIPPush:(BOOL)isVoIPPush
-                                 pushConfig:(RCMessagePushConfig *)pushConfig {
+                              pushConfig:(RCMessagePushConfig *)pushConfig {
     if (!self.canIncomingCall) {
         return;
     }
-#if PUBLIC
-#else
-    if (isVoIPPush) {
-        NSInteger checker = [RCCallKitUtility compareVersion:[UIDevice currentDevice].systemVersion toVersion:@"10.0"];
-        if (checker >= 0) {
-            if (mediaType == RCCallMediaAudio) {
-                [[RCCXCall sharedInstance] reportIncomingCallWithInviter:inviterUserId
-                                                              userIdList:userIdList
-                                                                 isVideo:NO];
-                return;
-            }
-            else{
-                [[RCCXCall sharedInstance] reportIncomingCallWithInviter:inviterUserId
-                userIdList:userIdList
-                   isVideo:YES];
-                return;
-            }
-        }
-    }
-#endif
+//RCCallKit_Delete_end
 
     [self startReceiveCallVibrate];
 
     [self postLocalNotification:pushConfig userInfo:userDict hasSound:YES isCancelCall:NO];
 }
 
-- (void)postLocalNotification:(RCMessagePushConfig *)pushConfig userInfo:(NSDictionary*)userInfo hasSound:(BOOL)hasSound isCancelCall:(BOOL)isCancelCall{
+- (void)postLocalNotification:(RCMessagePushConfig *)pushConfig
+                     userInfo:(NSDictionary *)userInfo
+                     hasSound:(BOOL)hasSound
+                 isCancelCall:(BOOL)isCancelCall {
     NSLog(@"postLocalNotification hasSound:%@,isCancelCall:%@", hasSound?@"YES":@"NO", isCancelCall?@"YES":@"NO");
     NSString* pushContent = @"";
     NSString *title = @"";

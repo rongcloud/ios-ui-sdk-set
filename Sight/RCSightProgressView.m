@@ -85,6 +85,7 @@
 
 - (void)commonInit {
     _progressTintColor = [UIColor blackColor];
+    self.tintColor = [UIColor whiteColor];
 
     self.backgroundLayer.frame = self.bounds;
     self.backgroundLayer.tintColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.8];
@@ -207,7 +208,7 @@
                                                        clockwise:NO]
                                .CGPath;
     self.shapeLayer.strokeEnd = 1;
-
+    self.shapeLayer.strokeColor = [UIColor whiteColor].CGColor;
     [CATransaction commit];
 
     CABasicAnimation *rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];

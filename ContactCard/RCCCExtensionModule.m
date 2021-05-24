@@ -63,8 +63,7 @@
                 vc.modalPresentationStyle = UIModalPresentationFullScreen;
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 nav.modalPresentationStyle = UIModalPresentationFullScreen;
-                [[UIApplication sharedApplication]
-                        .delegate.window.rootViewController presentViewController:nav
+                [[RCKitUtility getKeyWindow].rootViewController presentViewController:nav
                                                                          animated:YES
                                                                        completion:nil];
             }

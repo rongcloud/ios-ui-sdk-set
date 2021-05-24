@@ -145,6 +145,13 @@
     }
 
     self.videoConnection = [videoDeviceOutput connectionWithMediaType:AVMediaTypeVideo];
+    
+    // 视频防抖
+    AVCaptureDevice *device = [self activeCamera];
+    AVCaptureVideoStabilizationMode stabilizationMode = AVCaptureVideoStabilizationModeCinematic;
+    if ([device.activeFormat isVideoStabilizationModeSupported:stabilizationMode]) {
+        [self.videoConnection setPreferredVideoStabilizationMode:stabilizationMode];
+    }
 
     if ([self.captureSession canAddOutput:self.imageOutput]) {
         [self.captureSession addOutput:self.imageOutput];
@@ -152,7 +159,7 @@
 
     self.captureSession.sessionPreset = AVCaptureSessionPresetHigh;
 
-    CMTime frameDuration = CMTimeMake(1, 20);
+    CMTime frameDuration = CMTimeMake(1, 30);
 
     NSError *error = nil;
     if ([self.videoDevice lockForConfiguration:&error]) {
@@ -236,15 +243,17 @@
 
 - (NSDictionary *)recommendedVideoCompressionSettings {
     NSDictionary *systemSettings = [self.videoCompressionSettings copy];
+    NSInteger height = [systemSettings[@"AVVideoHeightKey"] integerValue] / 2;
+    NSInteger width = [systemSettings[@"AVVideoWidthKey"] integerValue] / 2;
     NSDictionary *settings = @{
         AVVideoCodecKey : @"avc1",
-        AVVideoHeightKey : @([systemSettings[@"AVVideoHeightKey"] integerValue] / 2),
-        AVVideoWidthKey : @([systemSettings[@"AVVideoWidthKey"] integerValue] / 2),
+        AVVideoHeightKey : @(height),
+        AVVideoWidthKey : @(width),
         AVVideoCompressionPropertiesKey : @{
-            AVVideoMaxKeyFrameIntervalDurationKey : @(5),
-            AVVideoAverageBitRateKey : @(1024 * 1024),
+            AVVideoAverageBitRateKey : @(width * height * 6),
             AVVideoProfileLevelKey : AVVideoProfileLevelH264HighAutoLevel,
-            AVVideoExpectedSourceFrameRateKey : @(20)
+            AVVideoExpectedSourceFrameRateKey : @(30), // 帧率
+            AVVideoMaxKeyFrameIntervalKey : @(5) // 关键帧最大间隔，1为每个都是关键帧，数值越大压缩率越高
         }
     };
     /*

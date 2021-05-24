@@ -8,7 +8,9 @@
 
 #import "RCSightPlayerOverlayView.h"
 #import "RongSightAdaptiveHeader.h"
-
+#define RCBottomViewAlignBottom ([RCKitUtility getWindowSafeAreaInsets].bottom + 54)
+#define RCTopViewAlignHeight ([RCKitUtility getWindowSafeAreaInsets].top + 66)
+#define RCCloseButtonAlignTop [RCKitUtility getWindowSafeAreaInsets].top+30
 @interface RCSightPlayerOverlayView ()
 
 @property (nonatomic, strong) UIButton *playBtn;
@@ -22,7 +24,9 @@
 @property (nonatomic, strong) UIImageView *thumbnailView;
 
 @property (nonatomic, strong) NSLayoutConstraint *bottomConstraint;
-@property (nonatomic, strong) NSLayoutConstraint *topConstraint;
+@property (nonatomic, strong) NSLayoutConstraint *topYConstraint;
+@property (nonatomic, strong) NSLayoutConstraint *topHeightConstraint;
+@property (nonatomic, strong) NSLayoutConstraint *closeYConstraint;
 
 @property (nonatomic, assign) BOOL scrubbing;
 @property (nonatomic, assign) BOOL controlsHidden;
@@ -108,19 +112,18 @@
         UIImageView *backgroudView = [[UIImageView alloc] init];
         backgroudView.image = RCResourceImage(@"player_shadow_top");
         [_topView addSubview:backgroudView];
+        self.topHeightConstraint = [self constrainView:_topView toSize:RCTopViewAlignHeight direction:CCSightLayoutDirectionVertical];
         [self strechToSuperview:backgroudView];
-        [self constrainView:_topView toSize:ISX ? 84 : 64 direction:CCSightLayoutDirectionVertical];
-
+        [_topView addSubview:self.closeBtn];
+        [_topView addSubview:self.extraButton];
         [self constrainView:self.closeBtn toSize:44 direction:CCSightLayoutDirectionHorizontal];
         [self constrainView:self.closeBtn toSize:44 direction:CCSightLayoutDirectionVertical];
-        [_topView addSubview:self.closeBtn];
-
-        [self constraintAlignSuperView:self.closeBtn alignSpace:ISX ? 8 : 0 AlignMent:CCSightLayoutAlignLeading];
-        [self constraintAlignSuperView:self.closeBtn alignSpace:ISX ? 31 : 9 AlignMent:CCSightLayoutAlignTop];
+        [self constraintAlignSuperView:self.closeBtn alignSpace:20
+                             AlignMent:CCSightLayoutAlignLeading];
+        self.closeYConstraint = [self constraintAlignSuperView:self.closeBtn alignSpace:RCCloseButtonAlignTop AlignMent:CCSightLayoutAlignTop];
 
         [self constrainView:self.extraButton toSize:44 direction:CCSightLayoutDirectionHorizontal];
         [self constrainView:self.extraButton toSize:44 direction:CCSightLayoutDirectionVertical];
-        [_topView addSubview:self.extraButton];
         [self constraintAlignSuperView:self.extraButton alignSpace:ISX ? 31 : 9 AlignMent:CCSightLayoutAlignTop];
         [self constraintAlignSuperView:self.extraButton alignSpace:ISX ? 8 : 0 AlignMent:CCSightLayoutAlignTrailing];
     }
@@ -143,7 +146,7 @@
         backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [contentView addSubview:backgroudView];
         [self strechToSuperview:backgroudView];
-        [self constrainView:_bottomView toSize:ISX ? 78 : 54 direction:CCSightLayoutDirectionVertical];
+        [self constrainView:_bottomView toSize:RCBottomViewAlignBottom direction:CCSightLayoutDirectionVertical];
 
         [self constrainView:self.playBtn toSize:44 direction:CCSightLayoutDirectionHorizontal];
         [contentView addSubview:self.playBtn];
@@ -174,6 +177,7 @@
 #pragma mark - init
 - (instancetype)init {
     if (self = [super init]) {
+        [self registerNotificationCenter];
         [self setUp];
     }
     return self;
@@ -187,7 +191,6 @@
 
 - (void)setUp {
     self.backgroundColor = [UIColor clearColor];
-
     self.thumbnailView = [[UIImageView alloc] init];
     self.thumbnailView.backgroundColor = [UIColor blackColor];
     self.thumbnailView.userInteractionEnabled = YES;
@@ -199,12 +202,12 @@
     [self addSubview:self.bottomView];
 
     [self installHorizontalFlexibleConstraintsForView:self.topView];
-    self.topConstraint =
-        [self constraintAlignSuperView:self.topView alignSpace:ISX ? -84 : -64 AlignMent:CCSightLayoutAlignTop];
+    self.topYConstraint =
+        [self constraintAlignSuperView:self.topView alignSpace:-RCTopViewAlignHeight AlignMent:CCSightLayoutAlignTop];
 
     [self installHorizontalFlexibleConstraintsForView:self.bottomView];
     self.bottomConstraint =
-        [self constraintAlignSuperView:self.bottomView alignSpace:ISX ? -78 : -54 AlignMent:CCSightLayoutAlignBottom];
+        [self constraintAlignSuperView:self.bottomView alignSpace:-RCBottomViewAlignBottom AlignMent:CCSightLayoutAlignBottom];
     self.bottomView.hidden = YES;
 
     self.indicatorView =
@@ -221,6 +224,38 @@
     UITapGestureRecognizer *tapGesture =
         [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapHandler:)];
     [self addGestureRecognizer:tapGesture];
+}
+
+- (void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+#pragma mark - Notification
+- (void)registerNotificationCenter {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(deviceOrientationDidChange:)
+                                                 name:UIApplicationDidChangeStatusBarFrameNotification
+                                               object:nil];
+}
+
+- (void)deviceOrientationDidChange:(NSNotification *)notification {
+    UIDeviceOrientation interfaceOrientation = [UIDevice currentDevice].orientation;
+    if (interfaceOrientation == UIDeviceOrientationLandscapeLeft || interfaceOrientation == UIDeviceOrientationLandscapeRight || interfaceOrientation == UIDeviceOrientationPortrait){
+        //屏幕旋转后视图变化
+        [UIView animateWithDuration:0.3 animations:^{
+            self.closeYConstraint.constant = RCCloseButtonAlignTop;
+            self.topHeightConstraint.constant = RCTopViewAlignHeight;
+            if (self.controlsHidden) {
+                self.topYConstraint.constant = -RCTopViewAlignHeight;
+                self.bottomConstraint.constant = -RCBottomViewAlignBottom;
+            } else {
+                self.topYConstraint.constant = 0;
+                if (![self.delegate prefersBottomBarHidden]) {
+                    self.bottomConstraint.constant = 0;
+                }
+            }
+            [self layoutIfNeeded];
+        }];
+    }
 }
 
 #pragma mark - target action
@@ -304,7 +339,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutDirection) {
     CCSightLayoutDirectionVertical,
 };
 
-- (void)constrainView:(UIView *)view toSize:(CGFloat)size direction:(CCSightLayoutDirection)direction {
+- (NSLayoutConstraint *)constrainView:(UIView *)view toSize:(CGFloat)size direction:(CCSightLayoutDirection)direction {
     NSString *axisString = direction == CCSightLayoutDirectionHorizontal ? @"H:" : @"V:";
     NSString *formatString = [NSString stringWithFormat:@"%@[view(==size)]", axisString];
     NSDictionary *bindings = NSDictionaryOfVariableBindings(view);
@@ -312,6 +347,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutDirection) {
     NSArray *constraints =
         [NSLayoutConstraint constraintsWithVisualFormat:formatString options:0 metrics:metrics views:bindings];
     [view addConstraints:constraints];
+    return constraints.firstObject;
 }
 
 - (void)constraintView:(UIView *)leftview toView:(UIView *)rightView horizontalSpace:(CGFloat)space {
@@ -394,8 +430,8 @@ typedef NS_ENUM(NSInteger, CCSightLayoutDirection) {
 - (void)animatedHideControls {
     [UIView animateWithDuration:0.3
                      animations:^{
-                         self.topConstraint.constant = ISX ? -84 : -64;
-                         self.bottomConstraint.constant = ISX ? -78 : -54;
+                         self.topYConstraint.constant = -RCTopViewAlignHeight;
+                         self.bottomConstraint.constant = -RCBottomViewAlignBottom;
                          [self layoutIfNeeded];
                      }];
 }
@@ -439,11 +475,11 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
         return;
     }
     if (hidden) {
-        self.topConstraint.constant = ISX ? -84 : -64;
-        self.bottomConstraint.constant = ISX ? -78 : -54;
+        self.topYConstraint.constant = -RCTopViewAlignHeight;
+        self.bottomConstraint.constant = -RCBottomViewAlignBottom;
         self.controlsHidden = YES;
     } else {
-        self.topConstraint.constant = 0;
+        self.topYConstraint.constant = 0;
         if (self.centerPlayBtn.hidden) {
             self.bottomConstraint.constant = 0;
         }
@@ -462,10 +498,11 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
     [UIView animateWithDuration:0.3
         animations:^{
             if (!self.controlsHidden) {
-                self.topConstraint.constant = ISX ? -84 : -64;
-                self.bottomConstraint.constant = ISX ? -78 : -54;
+                self.topYConstraint.constant = -RCTopViewAlignHeight;
+                self.bottomConstraint.constant = -RCBottomViewAlignBottom;
             } else {
-                self.topConstraint.constant = 0;
+                self.topYConstraint.constant = 0;
+                self.closeYConstraint.constant = RCCloseButtonAlignTop;
                 if (![self.delegate prefersBottomBarHidden]) {
                     self.bottomConstraint.constant = 0;
                 }
@@ -537,9 +574,6 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
 - (void)stopIndicatorViewAnimating {
     [self.indicatorView stopAnimating];
     self.indicatorView.hidden = YES;
-}
-
-- (void)dealloc {
 }
 
 @end
