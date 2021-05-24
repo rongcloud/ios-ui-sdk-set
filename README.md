@@ -4,7 +4,7 @@
 
 **为了让开发者可以通过 pod 进行 `framework` 和 `源码` 两种形式切换，融云 UI SDK 以 pod 方式开源**
 
-**基于现有的 `RongCloudIM` 与 `RongCloudRTC` 两个 pod， 增加一个新的 pod 仓库 `RongCloudOpenSource`**
+**依赖现有的 `RongCloudIM` 与 `RongCloudRTC` 两个 pod， 增加一个新的 pod 仓库 `RongCloudOpenSource`**
 
 RongCloudIM 和 RongCloudRTC 里面 SDK 都以 framework 形式存在
 
