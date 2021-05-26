@@ -40,6 +40,7 @@ Pod::Spec.new do |s|
 
   s.subspec 'Sight' do |st|
     st.source_files = 'Sight/RongSight.h','Sight/**/*.{h,m}'
+    st.private_header_files = 'Sight/RCDownloadHelper.h'
     st.dependency 'RongCloudOpenSource/IMKit'
   end
 
@@ -59,6 +60,7 @@ Pod::Spec.new do |s|
 
   s.subspec 'RongCallKit' do |ck|
     ck.source_files = 'CallKit/RongCallKit.h','CallKit/**/*.{h,m,mm}'
+    ck.private_header_files = 'CallKit/Header/*.h'
     ck.resources = "Resources/RongCallKit.bundle"
     ck.dependency 'RongCloudOpenSource/IMKit'
     ck.dependency 'RongCloudRTC/RongCallLib','5.1.1'
