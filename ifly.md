@@ -28,7 +28,7 @@ Xcode 项目路径为 ：Pods -> Pods -> RongCloudOpenSource -> IFly -> Framewor
 
 ![](./images/ifly1.png)
 
-如果看不到图片，可通过图片原始路径查看
+**该步骤有一张示意图，如果看不到图片，可通过图片原始路径查看**
 
 图片原始路径: `images/ifly1.png`
 
@@ -36,7 +36,7 @@ Xcode 项目路径为 ：Pods -> Pods -> RongCloudOpenSource -> IFly -> Framewor
 
 ![](./images/ifly2.png)
 
-如果看不到图片，可通过图片原始路径查看
+**该步骤有一张示意图，如果看不到图片，可通过图片原始路径查看**
 
 图片原始路径: `images/ifly2.png`
 
