@@ -31,6 +31,13 @@ update_sdk RongiFlyKit iFlyKit
 update_sdk RongContactCard ContactCard
 update_sdk RongCallKit CallKit
 
+## 剔除 ifly 的敏感信息
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' -e 's?^#define iFlyKey.*$?#define iFlyKey @\"\"?' iFlyKit/Extention/RCiFlyKitExtensionModule.m
+else
+  sed -i -e 's?^#define iFlyKey.*$?#define iFlyKey @\"\"?' iFlyKit/Extention/RCiFlyKitExtensionModule.m
+fi
+
 ## 3. 删除重复存在的 .h
 
 python delete_existed_header.py

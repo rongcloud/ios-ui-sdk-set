@@ -87,7 +87,11 @@ pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 #import <RongCloudOpenSource/RongSight.h>
 ```
 
-## 4. FAQ
+## 4. 讯飞语音输入插件特殊说明
+
+[讯飞语音输入插件](./ifly.md)
+
+## 5. FAQ
 
 > 找不到 RongCloudOpenSource 怎么办？
 

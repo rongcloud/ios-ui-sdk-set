@@ -12,7 +12,7 @@
 #import <iflyMSC/iflyMSC.h>
 #import "RongiFlyAdaptiveHeader.h"
 //默认的讯飞输入sdk的appKey
-#define iFlyKey @"5a3cf660"
+#define iFlyKey @""
 @interface UIImage (RCDynamicImage)
 + (UIImage *)rc_imageWithLocalPath:(NSString *)path;
 @property (nonatomic, copy) NSString *rc_imageLocalPath;
