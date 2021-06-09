@@ -2,7 +2,7 @@
 
 `本讯飞输入插件依赖于 IMKit 和讯飞语音库 iflyMSC.framework`
 
-因为讯飞语音库是收费业务，所以推送该仓库的时候已将融云内部使用的讯飞 appkey 删除，需要您自行去讯飞官网申请账号并下载 SDK
+因为讯飞语音库是讯飞的收费业务，所以推送该仓库的时候已将融云内部使用的讯飞 appkey 删除，需要您自行去讯飞官网申请账号并下载 SDK
 
 注：因为讯飞的 appkey 和 iflyMSC.framework 是强绑定关系，所以更换讯飞 appkey 必须同时更换 iflyMSC.framework
 
