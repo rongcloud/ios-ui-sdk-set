@@ -42,9 +42,9 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = RCLocalizedString(@"Albums");
-    [self setAuthorizationStatusAuthorized];
     [self setNavigationItem];
     [self setupTableView];
+    [self setAuthorizationStatusAuthorized];
     [self getDataSourceAndReloadView];
 }
 
@@ -99,6 +99,7 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);
     self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)]) {
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     }

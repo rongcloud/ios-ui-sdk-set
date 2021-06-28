@@ -21,7 +21,7 @@
 
 static NSString *const reuseIdentifier = @"Cell";
 
-@interface RCPhotosPickerController () <UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver>
+@interface RCPhotosPickerController () <UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver,RCPhotoPickerCollectCellDelegate>
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *selectedAssets;
 
 @property (nonatomic, strong) UIView *toolBar;
@@ -83,9 +83,6 @@ static NSString *const reuseIdentifier = @"Cell";
      self.assetArray = [NSMutableArray arrayWithArray:photos];
      self.isLoad = YES;
      for (int i = 0; i < photos.count; i++) {
-
-         RCAssetModel *model = photos[i];
-         NSString *identifier = [[RCAssetHelper shareAssetHelper] getAssetIdentifier:model.asset];
 
          for (int j = 0; j < self.selectedAssets.count; j++) {
              if ([self.selectedAssets[j].asset isEqual:photos[i].asset]) {
@@ -159,22 +156,11 @@ static NSString *const reuseIdentifier = @"Cell";
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     RCPhotoPickerCollectCell *cell =
         [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
-    // 设置assetCell willChangeBlock
-    __weak typeof(self) weakSelf = self;
-    [cell setWillChangeSelectedStateBlock:^BOOL(RCAssetModel *asset) {
-        return [weakSelf cellCanChangeSelectedState:asset];
-        
-    }];
-
-    // 设置assetCell didChangeBlock
-    [cell setDidChangeSelectedStateBlock:^(BOOL selected, RCAssetModel *asset) {
-        [weakSelf cellDidChangeSelectedState:asset selected:selected];
-    }];
 
     RCAssetModel *model = self.assetArray[indexPath.row];
     model.index = indexPath.row;
 
-    [cell configPickerCellWithItem:self.assetArray[indexPath.row]];
+    [cell configPickerCellWithItem:self.assetArray[indexPath.row] delegate:self];
 
     return cell;
 }
@@ -183,62 +169,79 @@ static NSString *const reuseIdentifier = @"Cell";
        willDisplayCell:(UICollectionViewCell *)cell
     forItemAtIndexPath:(NSIndexPath *)indexPath {
     RCAssetModel *model = self.assetArray[indexPath.row];
+    if(![model.asset isKindOfClass:PHAsset.class]) {
+        return;
+    }
+    
     RCPhotoPickerCollectCell *pickerCell = nil;
     if ([cell isKindOfClass:RCPhotoPickerCollectCell.class]) {
         pickerCell = (RCPhotoPickerCollectCell *)cell;
     }
-    if ([model.asset isKindOfClass:PHAsset.class]) {
-        PHAsset *phasset = (PHAsset *)model.asset;
-        if (phasset.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
-            if (!model.avAsset) {
-                [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:phasset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
-                    if (!avAsset) {
-                        return;
+    
+    PHAsset *phasset = (PHAsset *)model.asset;
+    if (phasset.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        if (!model.avAsset) {
+            [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:phasset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+                if (!avAsset) {
+                    return;
+                }
+                if (![pickerCell.representedAssetIdentifier isEqualToString:imageIdentifier]) {
+                    return;
+                }
+                model.avAsset = avAsset;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (indexPath.row < self.assetArray.count) {
+                        [collectionView reloadItemsAtIndexPaths:@[ indexPath ]];
                     }
-                    if (![pickerCell.representedAssetIdentifier isEqualToString:imageIdentifier]) {
-                        return;
-                    }
-                    model.avAsset = avAsset;
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        if (indexPath.row < self.assetArray.count) {
-                            [collectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-                        }
-                    });
-                } progressHandler:nil];
-            } else {
-                RCPhotoPickerCollectCell *pickerCell = (RCPhotoPickerCollectCell *)cell;
-                [pickerCell configPickerCellWithItem:model];
-            }
+                });
+            } progressHandler:nil];
+        } else {
+            RCPhotoPickerCollectCell *pickerCell = (RCPhotoPickerCollectCell *)cell;
+            [pickerCell configPickerCellWithItem:model delegate:self];
         }
     }
 }
+#pragma mark - RCPhotoPickerCollectCellDelegate
+/// 是否可以变成选中状态
+- (BOOL)canChangeSelectedState:(RCAssetModel *)asset {
+    return [self cellCanChangeSelectedState:asset];
+}
 
-#pragma mark <UICollectionViewDelegate>
-- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-    RCAssetModel *selectModel = self.assetArray[indexPath.row];
-    if (selectModel) {
-        RCPhotoPreviewCollectionViewController *previewController =
-            [RCPhotoPreviewCollectionViewController imagePickerViewController];
-        previewController.isFull = self.isFull;
-        [previewController previewPhotosWithSelectArr:self.selectedAssets
-                                         allPhotosArr:self.assetArray
-                                         currentIndex:indexPath.row
-                                     accordToIsSelect:NO];
-        __weak typeof(self) weakself = self;
-        [previewController
-            setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
+- (void)downloadFailFromiCloud {
+    NSString *msg = RCLocalizedString(@"DownloadFailFromiCloud");
+    [self showAlertWithMessage:msg];
+}
 
-                weakself.selectedAssets = selectArr;
-                weakself.assetArray = assetPhotos.mutableCopy;
-                weakself.isFull = isFull;
-                [weakself setButtonEnable];
-                [weakself.collectionView reloadData];
-            }];
-        [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
-            weakself.sendPhotosBlock(selectArr, isFull);
-        }];
-        [self.navigationController pushViewController:previewController animated:YES];
+- (void)didChangeSelectedState:(BOOL)selected model:(RCAssetModel *)asset {
+    [self cellDidChangeSelectedState:asset selected:selected];
+}
+
+- (void)didTapPickerCollectCell:(RCAssetModel *)selectModel {
+    if(!selectModel) {
+        return;
     }
+    
+    RCPhotoPreviewCollectionViewController *previewController =
+        [RCPhotoPreviewCollectionViewController imagePickerViewController];
+    previewController.isFull = self.isFull;
+    [previewController previewPhotosWithSelectArr:self.selectedAssets
+                                     allPhotosArr:self.assetArray
+                                     currentIndex:selectModel.index
+                                 accordToIsSelect:NO];
+    __weak typeof(self) weakself = self;
+    [previewController
+        setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
+
+            weakself.selectedAssets = selectArr;
+            weakself.assetArray = assetPhotos.mutableCopy;
+            weakself.isFull = isFull;
+            [weakself setButtonEnable];
+            [weakself.collectionView reloadData];
+        }];
+    [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
+        weakself.sendPhotosBlock(selectArr, isFull);
+    }];
+    [self.navigationController pushViewController:previewController animated:YES];
 }
 
 #pragma mark - Target Action
@@ -335,6 +338,7 @@ static NSString *const reuseIdentifier = @"Cell";
     [self setButtonEnable];
     [self _updateBottomSendImageCountButton];
 }
+
 - (void)setNaviItem{
     UIView *rightBarView = [[UIView alloc] init];
     rightBarView.frame = CGRectMake(0, 0, 80, 40);

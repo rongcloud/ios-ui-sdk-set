@@ -71,6 +71,9 @@
         [[RCAssetHelper shareAssetHelper]
          getOriginImageDataWithAsset:self.model
          result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
+            if(!imageData) {
+                return;
+            }
             RCGIFImage *gifImage = [RCGIFImage animatedImageWithGIFData:imageData];
             dispatch_async(dispatch_get_main_queue(), ^{
                 weakSelf.previewImageView.animatedImage = gifImage;

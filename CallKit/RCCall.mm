@@ -30,9 +30,9 @@
 #define AlertWithoutConfirm 1000
 #define AlertWithConfirm 1001
 
-static NSString *const __RongCallKit__Version = @"5.1.2.1";
-static NSString *const __RongCallKit__Commit = @"b55fa0be";
-static NSString *const __RongCallKit__Time = @"202105241855";
+static NSString *const __RongCallKit__Version = @"5.1.3";
+static NSString *const __RongCallKit__Commit = @"3174d6bc";
+static NSString *const __RongCallKit__Time = @"202106252021";
 
 @interface RCCall () <RCCallReceiveDelegate>
 

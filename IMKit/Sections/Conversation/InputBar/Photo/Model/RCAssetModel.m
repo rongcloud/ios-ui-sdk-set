@@ -74,6 +74,9 @@
         return [[RCAssetHelper shareAssetHelper]
             getOriginImageDataWithAsset:self
                                  result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
+                                    if(!imageData) {
+                                        return;
+                                    }
                                      dispatch_async(dispatch_get_main_queue(), ^{
                                          BOOL downloadFinined =
                                              (![[info objectForKey:PHImageCancelledKey] boolValue] &&
@@ -100,6 +103,28 @@
             self.imageRequestID = 0;
         }
     }
+}
+
+- (BOOL)isVideoAssetInvalid {
+    if (self.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        if(self.avAsset) {
+            return NO;
+        }else {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)fetchThumbnailImage {
+    [[RCAssetHelper shareAssetHelper] getThumbnailWithAsset:self.asset
+                                                       size:CGSizeMake((WIDTH * SCREEN_SCALE), (WIDTH * SCREEN_SCALE))
+                                                     result:^(UIImage *thumbnailImage) {
+                                                         dispatch_async(dispatch_get_main_queue(), ^{
+                                                             _thumbnailImage = thumbnailImage;
+                                                         });
+                                                     }];
+
 }
 
 - (PHAssetMediaType)mediaType {

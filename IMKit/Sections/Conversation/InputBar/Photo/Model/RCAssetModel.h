@@ -38,6 +38,7 @@
  */
 @property (nonatomic, assign, readonly) PHAssetMediaType mediaType;
 
+// 如果 self 为视频类型且 avAsset 为 nil，说明视频数据无法从本地或者 icloud 拿到
 @property (nonatomic, strong) AVAsset *avAsset;
 
 /**
@@ -46,6 +47,15 @@
 @property (nonatomic, assign) NSTimeInterval duration;
 
 @property (nonatomic, copy, readonly) NSString *durationText;
+
+/// 加载缩略图时尝试获取大图，本地没有大图且从 iCloud 下载大图失败时为 YES
+@property (nonatomic, assign) BOOL isDownloadFailFromiCloud;
+
+//如果是视频类型，并且 avAsset 为无效数据则返回 YES，其余返回 NO
+- (BOOL)isVideoAssetInvalid;
+
+//为了解决相册大量图片性能问题，默认不保存缩略图，但是图片视频被选中后就需要保存了`
+- (void)fetchThumbnailImage;
 
 + (RCAssetModel *)modelWithAsset:(id)asset;
 @end

@@ -273,3 +273,5 @@
 "unread"="غير مقروء";
 "i_know_it"="فهمت";
 "ChatFiles"="ملفات الدردشة";
+"CannotUploadFiles"="لا يمكن تحميل وسائط 0kb.";
+"DownloadFailFromiCloud"="Download Fail From iCloud";

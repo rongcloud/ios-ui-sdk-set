@@ -70,6 +70,7 @@
  *  获取图片原图 data
  *
  *  @param assetModel 图片资源
+ *  @discussion 如果本地获取原始图片失败会从 iCloud 下载，如果 iCloud 获取失败，则 photo 为 nil
  */
 - (PHImageRequestID)
 getOriginImageDataWithAsset:(RCAssetModel *)assetModel

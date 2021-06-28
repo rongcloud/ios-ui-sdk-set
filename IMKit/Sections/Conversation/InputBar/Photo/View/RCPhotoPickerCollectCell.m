@@ -13,6 +13,8 @@
 #import <RongIMLib/RongIMLib.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCPhotoPickImageView.h"
+#import "RCAlertView.h"
+
 #define WIDTH (([UIScreen mainScreen].bounds.size.width - 20) / 4)
 #define SIZE CGSizeMake(WIDTH, WIDTH)
 
@@ -27,6 +29,10 @@
  */
 @property (nonatomic, strong) UIButton *selectbutton;
 
+@property (nonatomic, weak) id<RCPhotoPickerCollectCellDelegate> delegate;
+
+@property (nonatomic, strong) UIImage *thumbnailImage;
+
 @end
 @implementation RCPhotoPickerCollectCell
 
@@ -40,14 +46,15 @@
 
 - (void)prepareForReuse {
     [super prepareForReuse];
-    _assetModel = nil;
-    _photoImageView.image = nil;
-    _selectbutton.selected = NO;
+    self.assetModel = nil;
+    self.photoImageView.image = nil;
+    self.selectbutton.selected = NO;
 }
 
 #pragma mark - Public Methods
-- (void)configPickerCellWithItem:(RCAssetModel *)model {
-    _assetModel = model;
+- (void)configPickerCellWithItem:(RCAssetModel *)model delegate:(id<RCPhotoPickerCollectCellDelegate>)delegate{
+    self.assetModel = model;
+    self.delegate = delegate;
     [self.photoImageView setPhotoModel:model];
     _selectbutton.selected = model.isSelect;
     
@@ -62,6 +69,7 @@
     }
     self.representedAssetIdentifier = modelIdentifier;
     
+    // 获取缩略图
     __weak typeof(self) weakSelf = self;
     [[RCAssetHelper shareAssetHelper]
         getThumbnailWithAsset:model.asset
@@ -72,59 +80,99 @@
             weakSelf.photoImageView.image = thumbnailImage;
         });
     }];
+    
+}
+
+- (void)checkDownloadFailFromiCloud:(RCAssetModel *)model block:(void(^)(BOOL downloadFailFromiCloud))block {
+    // 尝试获取大图或者视频，检查是否能获取
+    model.isDownloadFailFromiCloud = NO;
+    if (self.assetModel.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+            dispatch_main_async_safe(^{
+                BOOL isDownloadFail = !avAsset ? YES : NO;
+                model.isDownloadFailFromiCloud = isDownloadFail;
+                if(block) {
+                    block(isDownloadFail);
+                }
+            });
+        } progressHandler:nil];
+    }else {
+        [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model result:^(NSData *photo, NSDictionary *info, RCAssetModel *assetModel) {
+            dispatch_main_async_safe(^{
+                BOOL isDownloadFail = !photo ? YES : NO;
+                model.isDownloadFailFromiCloud = isDownloadFail;
+                if(block) {
+                    block(isDownloadFail);
+                }
+            });
+        } progressHandler:nil];
+    }
 }
 
 #pragma mark - Private Methods
 
 - (void)onSelectButtonClick:(UIButton *)sender {
-    if (self.assetModel) {
-        __weak typeof(self) weakSelf = self;
-        [[RCAssetHelper shareAssetHelper]
-            getOriginImageDataWithAsset:self.assetModel
-                                 result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
-                                     if (![weakSelf.representedAssetIdentifier isEqualToString:[[RCAssetHelper shareAssetHelper]
-                                     getAssetIdentifier:assetModel.asset]]) {
+    if(!self.assetModel) {
+        return;
+    }
+    __weak typeof(self) weakSelf = self;
+    [[RCAssetHelper shareAssetHelper]
+        getOriginImageDataWithAsset:self.assetModel
+                             result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
+                                 if (![weakSelf.representedAssetIdentifier isEqualToString:[[RCAssetHelper shareAssetHelper]
+                                 getAssetIdentifier:assetModel.asset]]) {
+                                     return;
+                                 }
+        
+                                 dispatch_main_async_safe(^{
+                                     if(!imageData || [weakSelf.assetModel isVideoAssetInvalid]) {
+                                         if(weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(downloadFailFromiCloud)]) {
+                                             [weakSelf.delegate downloadFailFromiCloud];
+                                         }
                                          return;
                                      }
-                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                         if ([[weakSelf.assetModel.asset valueForKey:@"uniformTypeIdentifier"]
-                                                 isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-                                             if (imageData.length >
-                                                 [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
-                                                 UIViewController *rootVC = [UIApplication sharedApplication]
-                                                                                .delegate.window.rootViewController;
-                                                 UIAlertController *alertController = [UIAlertController
-                                                     alertControllerWithTitle:RCLocalizedString(
-                                                                                  @"GIFAboveMaxSize")
-                                                                      message:nil
-                                                               preferredStyle:UIAlertControllerStyleAlert];
-                                                 [alertController
-                                                     addAction:[UIAlertAction
-                                                                   actionWithTitle:RCLocalizedString(@"OK")
-                                                                             style:UIAlertActionStyleDefault
-                                                                           handler:nil]];
-                                                 [rootVC presentViewController:alertController
-                                                                      animated:YES
-                                                                    completion:nil];
-                                             } else {
-                                                 [weakSelf changeMessageModelState:sender.selected
-                                                                        assetModel:assetModel];
-                                             }
+                                     if ([[weakSelf.assetModel.asset valueForKey:@"uniformTypeIdentifier"]
+                                             isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+                                         if (imageData.length >
+                                             [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
+                                             UIViewController *rootVC = [UIApplication sharedApplication]
+                                                                            .delegate.window.rootViewController;
+                                             UIAlertController *alertController = [UIAlertController
+                                                 alertControllerWithTitle:RCLocalizedString(
+                                                                              @"GIFAboveMaxSize")
+                                                                  message:nil
+                                                           preferredStyle:UIAlertControllerStyleAlert];
+                                             [alertController
+                                                 addAction:[UIAlertAction
+                                                               actionWithTitle:RCLocalizedString(@"OK")
+                                                                         style:UIAlertActionStyleDefault
+                                                                       handler:nil]];
+                                             [rootVC presentViewController:alertController
+                                                                  animated:YES
+                                                                completion:nil];
                                          } else {
-                                             [weakSelf changeMessageModelState:sender.selected assetModel:assetModel];
+                                             [weakSelf changeMessageModelState:sender.selected
+                                                                    assetModel:assetModel];
                                          }
+                                     } else {
+                                         [weakSelf changeMessageModelState:sender.selected assetModel:assetModel];
+                                     }
 
-                                     });
-                                 }
-                        progressHandler:nil];
-    }
+                                 });
+                             }
+                    progressHandler:nil];
 }
 
 - (void)changeMessageModelState:(BOOL)originState assetModel:(RCAssetModel *)assetModel {
-    bool currentState = self.willChangeSelectedStateBlock ? self.willChangeSelectedStateBlock(assetModel) : NO;
+    bool currentState = NO;
+    if(self.delegate && [self.delegate respondsToSelector:@selector(canChangeSelectedState:)]) {
+        currentState = [self.delegate canChangeSelectedState:assetModel];
+    }
     if (originState != currentState) {
         assetModel.thumbnailImage = self.thumbnailImage;
-        self.didChangeSelectedStateBlock ? self.didChangeSelectedStateBlock(currentState, assetModel) : nil;
+        if(self.delegate && [self.delegate respondsToSelector:@selector(didChangeSelectedState:model:)]) {
+            [self.delegate didChangeSelectedState:currentState model:assetModel];
+        }
     }
     self.selectbutton.selected = currentState;
 }
@@ -174,6 +222,26 @@
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];
 }
 
+- (void)doTapPhotoImageView:(BOOL)isDownloadFail {
+    if(isDownloadFail|| [self.assetModel isVideoAssetInvalid]) {
+        if(self.delegate && [self.delegate respondsToSelector:@selector(downloadFailFromiCloud)]) {
+            [self.delegate downloadFailFromiCloud];
+        }
+        return;
+    }
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didTapPickerCollectCell:)]) {
+        [self.delegate didTapPickerCollectCell:self.assetModel];
+    }
+}
+
+- (void)didTapPhotoImageView {
+    __weak typeof(self) weakSelf = self;
+    [self checkDownloadFailFromiCloud:self.assetModel block:^(BOOL downloadFailFromiCloud) {
+        [weakSelf doTapPhotoImageView:downloadFailFromiCloud];
+    }];
+    
+}
+
 #pragma mark - Getters and Setters
 
 
@@ -181,6 +249,12 @@
     if (!_photoImageView) {
         _photoImageView = [[RCPhotoPickImageView alloc] initWithFrame:self.bounds];
         _photoImageView.contentMode = UIViewContentModeScaleAspectFill;
+        UITapGestureRecognizer *tap =
+                    [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhotoImageView)];
+        tap.numberOfTapsRequired = 1;
+        tap.numberOfTouchesRequired = 1;
+        [_photoImageView addGestureRecognizer:tap];
+        _photoImageView.userInteractionEnabled = YES;
         _photoImageView.clipsToBounds = YES;
     }
     return _photoImageView;;

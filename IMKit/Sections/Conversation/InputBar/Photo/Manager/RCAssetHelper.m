@@ -183,6 +183,7 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
                            if (imageData && resultBlock) {
                                resultBlock([self exchangeImageDataType:assetModel.asset imageData:imageData], info,
                                            assetModel);
+                               return;
                            }
                            // Download image from iCloud / 从iCloud下载图片
                            if ([info objectForKey:PHImageResultIsInCloudKey] && !imageData) {
@@ -202,10 +203,15 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
                                                     options:options
                                               resultHandler:^(NSData *imageData, NSString *dataUTI,
                                                               UIImageOrientation orientation, NSDictionary *info) {
-                                                  if (imageData && resultBlock)
-                                                      resultBlock([self exchangeImageDataType:assetModel.asset
-                                                                                    imageData:imageData],
-                                                                  info, assetModel);
+                                                   if(resultBlock) {
+                                                       NSData *data = imageData;
+                                                       if(imageData) {
+                                                           data = [self exchangeImageDataType:assetModel.asset
+                                                                                    imageData:imageData];
+                                                       }
+                                                       resultBlock(data,info,assetModel);
+                                                   }
+
                                               }];
                            }
 

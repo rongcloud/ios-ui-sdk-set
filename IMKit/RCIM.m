@@ -50,7 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.2.1";
+static NSString *const RCIMKitVersion = @"5.1.3";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -1006,7 +1006,7 @@ static NSString *const RCIMKitVersion = @"5.1.2.1";
 
 - (BOOL)cancelSendMediaMessage:(long)messageId {
     BOOL isCanceled = [[RCIMClient sharedRCIMClient] cancelSendMediaMessage:messageId];
-    if (isCanceled && [[RCResendManager sharedManager] needResend:messageId]) {
+    if ([[RCResendManager sharedManager] needResend:messageId]) {
         [[RCResendManager sharedManager] removeResendMessage:messageId];
     }
     return isCanceled;

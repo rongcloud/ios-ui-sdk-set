@@ -156,7 +156,6 @@ static BOOL msgRoamingServiceAvailable = YES;
         __weak typeof(self) ws = self;
         _throttleReloadAction = [self getThrottleActionWithTimeInteval:0.3 action:^{
             RCConversationViewController *chatVC = ws.chatVC;
-            [chatVC.conversationMessageCollectionView performBatchUpdates:^{
                 NSIndexPath *indexPath = ws.reloadIndexPaths.firstObject;
                 BOOL reload = NO;
                 if (indexPath.row == [chatVC.conversationMessageCollectionView numberOfItemsInSection:0]) {
@@ -172,7 +171,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                     [chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:ws.reloadIndexPaths];
                 }
                 [ws.reloadIndexPaths removeAllObjects];
-            } completion:^(BOOL finished) {
+       
                 if (chatVC.sendMsgAndNeedScrollToBottom || [ws isAtTheBottomOfTableView]) {
                     [chatVC scrollToBottomAnimated:YES];
                     chatVC.sendMsgAndNeedScrollToBottom = NO;
@@ -183,7 +182,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                         [chatVC updateUnreadMsgCountLabel];
                     }
                 }
-            }];
+          
         }];
     }
     return _throttleReloadAction;

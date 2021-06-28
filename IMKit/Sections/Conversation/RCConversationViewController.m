@@ -22,6 +22,7 @@
 #import "RCSightMessageCell.h"
 #import "RCHQVoiceMessageCell.h"
 #import "RCSightSlideViewController.h"
+#import "RCImageSlideController.h"
 #import "RCDestructSightViewController.h"
 #import "RCSystemSoundPlayer.h"
 #import "RCUserInfoCacheManager.h"
@@ -236,6 +237,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [[RongIMKitExtensionManager sharedManager] extensionViewWillAppear:self.conversationType
                                                               targetId:self.targetId
                                                          extensionView:self.extensionView];
+    
+    if(self.placeholderLabel) {
+        [self.placeholderLabel removeFromSuperview];
+        [self.chatSessionInputBarControl.inputTextView addSubview:self.placeholderLabel];
+        self.placeholderLabel.hidden = self.chatSessionInputBarControl.draft.length > 0;
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -1307,6 +1314,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     if (self.dataSource.isLoadingHistoryMessage || [self isRemainMessageExisted]) {
         [self loadRemainMessageAndScrollToBottom:YES];
     }
+    if ((range.location == 0 && [text isEqualToString:@""]) || [text isEqualToString:@"\n"]) {
+        self.placeholderLabel.hidden = NO;
+    } else {
+        self.placeholderLabel.hidden = YES;
+    }
 }
 
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag {
@@ -1392,6 +1404,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                                                targetId:self.targetId
                                             contentType:[RCTextMessage getObjectName]];
     }
+    self.placeholderLabel.hidden = self.chatSessionInputBarControl.inputTextView.text.length > 0;
 }
 
 - (void)emojiView:(RCEmojiBoardView *)emojiView didTouchSendButton:(UIButton *)sendButton {
@@ -1403,6 +1416,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     rcTextMessage.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
 
     [self sendMessage:rcTextMessage pushContent:nil];
+    
+    self.placeholderLabel.hidden = NO;
 }
 
 //点击常用语的回调
@@ -1666,6 +1681,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
     
     long msgId = model.messageId;
+    if ([model.content isKindOfClass:[RCMediaMessageContent class]]) {
+        [self cancelUploadMedia:model];
+    }
     [[RCIMClient sharedRCIMClient] deleteMessages:@[ @(msgId) ]];
     [self.conversationDataRepository removeObjectAtIndex:indexPath.item];
     //偶现 查看阅后即焚小视频或者图片， 切换到后台在进入崩溃，原因是 indexPath 越界，怀疑从后台进入后会自动重新刷新 collecttionView
@@ -2051,9 +2069,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     RCRecallNotificationMessage *recallMessage = (RCRecallNotificationMessage *)model.content;
     NSString *content = recallMessage.recallContent;
     if (content.length > 0) {
-        [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
-        self.chatSessionInputBarControl.inputTextView.text =
-            [NSString stringWithFormat:@"%@%@", self.chatSessionInputBarControl.inputTextView.text, content];
+        RCTextView *textView = self.chatSessionInputBarControl.inputTextView;
+        [textView becomeFirstResponder];
+        NSString *replaceContent = [NSString stringWithFormat:@"%@%@", textView.text, content];
+        textView.text = replaceContent;
+        NSRange range = NSMakeRange(textView.text.length, content.length);
+        [self inputTextView:textView shouldChangeTextInRange:range replacementText:replaceContent];
     }
 }
 
@@ -2716,6 +2737,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         reference.referMsg = self.referencingView.referModel.content;
         reference.referMsgUserId = self.referencingView.referModel.senderUserId;
         reference.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
+        reference.referMsgUid = self.referencingView.referModel.messageUId;
         [self sendMessage:reference pushContent:nil];
         [self dismissReferencingView:self.referencingView];
         return YES;

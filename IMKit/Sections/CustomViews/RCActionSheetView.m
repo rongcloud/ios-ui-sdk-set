@@ -62,8 +62,28 @@
         _selectedBlock = selectedBlock;
         _cancelBlock = cancelBlock;
         [self createUI];
+        [self registerNotificationCenter];
     }
     return self;
+}
+
+- (void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Notification
+- (void)registerNotificationCenter {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(deviceOrientationDidChange:)
+                                                 name:UIApplicationDidChangeStatusBarFrameNotification
+                                               object:nil];
+}
+
+- (void)deviceOrientationDidChange:(NSNotification *)notification {
+    UIDeviceOrientation interfaceOrientation = [UIDevice currentDevice].orientation;
+    if (interfaceOrientation == UIDeviceOrientationLandscapeLeft || interfaceOrientation == UIDeviceOrientationLandscapeRight || interfaceOrientation == UIDeviceOrientationPortrait){
+        [self removeFromSuperview];
+    }
 }
 
 #pragma mark------ 创建UI视图

@@ -47,15 +47,23 @@
 @property (nonatomic, assign) BOOL isAppear;
 
 @property (nonatomic, assign) BOOL isTouchScroll;
+
+@property (nonatomic, assign) CGFloat viewWidth;
 @end
 
 @implementation RCSightSlideViewController {
     BOOL _statusBarHidden;
+    BOOL _isNotchScreen;//是否是刘海屏
 }
 
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
+    if (@available(iOS 11.0, *)) {
+        if ([RCKitUtility getKeyWindow].safeAreaInsets.bottom > 0) {
+            _isNotchScreen = YES;
+        }
+    }
     ////设置导航条透明
     self.autoPlayFlag = YES;
     [self getMessageFromModel:self.messageModel];
@@ -76,8 +84,8 @@
     if (self.isTouchScroll) {
         return;
     }
-    self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
-    self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
+    [self scrollToCurrentIndex];
+    
 }
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
@@ -97,7 +105,9 @@
     self.navigationController.navigationBarHidden = NO;
     _statusBarHidden = NO;
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
-    self.previousMessageId = self.messageModelArray[self.currentIndex].message.messageId;
+    if (self.currentIndex < self.messageModelArray.count) {
+        self.previousMessageId = self.messageModelArray[self.currentIndex].message.messageId;
+    }
     [self resetPlay];
     self.isAppear = NO;
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitViewSupportAutorotateNotification object:@(NO)];
@@ -252,6 +262,7 @@
     if (self.onlyPreviewCurrentMessage) {
         return;
     }
+    self.viewWidth = self.view.bounds.size.width;
     self.previousContentOffsetX = self.currentIndex * self.view.bounds.size.width;
     self.previousMessageId = self.messageModelArray[self.currentIndex].message.messageId;
 }
@@ -263,7 +274,11 @@
     }
     NSInteger midIndex = self.messageModelArray.count / 2;
     
-    self.currentIndex = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
+    int index = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
+    if (index < self.messageModelArray.count && self.viewWidth == self.view.bounds.size.width) {
+        self.currentIndex = index;
+    }
+    
     if (self.currentIndex >= midIndex && scrollView.contentOffset.x > self.previousContentOffsetX) {
         NSArray<RCMessageModel *> *models =
             [self getBackMessagesForModel:(RCMessageModel *)self.messageModelArray.lastObject.message count:5 times:0];
@@ -302,9 +317,18 @@
                        atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                animated:NO];
         }
+    }else{
+        [self scrollToCurrentIndex];
     }
     self.previousContentOffsetX = self.currentIndex * self.view.bounds.size.width;
     [self resetPlay];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    int index = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
+    if (index < self.messageModelArray.count && self.viewWidth == self.view.bounds.size.width && self.isTouchScroll) {
+        self.currentIndex = index;
+    }
 }
 
 #pragma mark - RCSightCollectionViewCellDelegate
@@ -341,10 +365,6 @@
     }
     UIDeviceOrientation interfaceOrientation = [UIDevice currentDevice].orientation;
     if (interfaceOrientation == UIDeviceOrientationLandscapeLeft || interfaceOrientation == UIDeviceOrientationLandscapeRight || interfaceOrientation == UIDeviceOrientationPortrait){
-        [self.collectionView reloadData];
-        [self.collectionView layoutIfNeeded]; // 强制重绘并等待完成
-        self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
-        self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
         [self updateRightTopButtonFrame];
     }
 }
@@ -375,6 +395,23 @@
 }
 
 #pragma mark - helper
+- (void)scrollToCurrentIndex{
+    if (_isNotchScreen) {
+        [CATransaction begin];
+        [CATransaction disableActions];
+        self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
+        self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
+        [CATransaction commit];
+    }else{
+        [self.collectionView performBatchUpdates:^{
+            self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
+            self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
+        } completion:^(BOOL finished) {
+            
+        }];
+    }
+}
+
 - (void)resetPlay{
     for (RCSightModel *model in self.messageModelArray) {
         if (model.message.messageId == self.previousMessageId) {

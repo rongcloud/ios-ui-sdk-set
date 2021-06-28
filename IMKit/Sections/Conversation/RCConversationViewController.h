@@ -201,6 +201,16 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 @property (nonatomic, strong) RCReferencingView *referencingView;
 
 /*!
+ 输入工具栏占位文本 label，默认为 nil，不显示占位
+ 
+ 在会话页面的 viewDidLoad 写如下代码即可
+ self.placeholderLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 180, 20)];
+ self.placeholderLabel.text = @"测试 Placeholder";
+ self.placeholderLabel.textColor = [UIColor grayColor];
+*/
+@property (nonatomic, strong) UILabel *placeholderLabel;
+
+/*!
  输入框中内容发生变化的回调
 
  @param inputTextView 文本输入框
@@ -475,6 +485,8 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion
  你需要在cell中重写RCMessageBaseCell基类的sizeForMessageModel:withCollectionViewWidth:referenceExtraHeight:来计算cell的高度。
+ 
+ @discussion 如果有自定义消息，在会话页面子类 viewDidLoad 方法中需优先注册自定义消息的 cell, 再做其他操作
  */
 - (void)registerClass:(Class)cellClass forMessageClass:(Class)messageClass;
 

@@ -421,9 +421,6 @@
         [self animationLayoutBottomBarWithStatus:KBottomBarDefaultStatus animated:YES];
         return;
     }
-    if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-        [[RCAssetHelper shareAssetHelper] hasAuthorizationStatusAuthorized];
-    }
     if (self.currentBottomBarStatus == KBottomBarPluginStatus) {
         [self animationLayoutBottomBarWithStatus:KBottomBarKeyboardStatus animated:YES];
     } else {

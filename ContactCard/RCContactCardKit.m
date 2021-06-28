@@ -23,7 +23,7 @@
 }
 
 - (void)popupSendContactCardView:(RCCCUserInfo *)cardUserInfo targetUserInfo:(RCCCUserInfo *)targetUserInfo {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:ConversationType_PRIVATE targetId:targetUserInfo.userId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;
@@ -47,7 +47,7 @@
                         targetId:(NSString *)targetId
                 conversationType:(RCConversationType)conversationType
                 destructDuration:(NSInteger)destructDuration {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:conversationType targetId:targetId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;
@@ -61,7 +61,7 @@
 }
 
 - (void)popupSendContactCardView:(RCCCUserInfo *)cardUserInfo targetGroupInfo:(RCCCGroupInfo *)targetGroupInfo {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:ConversationType_GROUP targetId:targetGroupInfo.groupId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;

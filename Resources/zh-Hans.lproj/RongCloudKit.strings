@@ -271,3 +271,5 @@
 "Reference"="引用";
 "CanNotRecall" = "该消息超过撤回时间，不能被撤回。";
 "ChatFiles"="聊天文件";
+"CannotUploadFiles"="不能上传 0kb 的文件";
+"DownloadFailFromiCloud"="从 iCloud 下载图片失败，请稍后重试";

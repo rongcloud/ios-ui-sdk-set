@@ -121,8 +121,9 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     RCSightSlideViewController *ssv = [[RCSightSlideViewController alloc] init];
     ssv.messageModel = model;
     ssv.topRightBtnHidden = YES;
-    ssv.modalPresentationStyle = UIModalPresentationFullScreen;
-    [self presentViewController:ssv animated:YES completion:nil];
+    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:ssv];
+    navc.modalPresentationStyle = UIModalPresentationFullScreen;
+    [self presentViewController:navc animated:YES completion:nil];
 }
 
 #pragma mark - UIScrollViewDelegate

@@ -259,6 +259,13 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     if (!selectModel) {
         return;
     }
+    //如果预览页面当前的视频图片也无法 iCloud 下载，那么就得报错
+    if(selectModel.isDownloadFailFromiCloud || [selectModel isVideoAssetInvalid]) {
+        [RCAlertView showAlertController:nil message:RCLocalizedString(@"DownloadFailFromiCloud") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
+        return;
+    }
+    //被选中，则保存缩略图
+    [selectModel fetchThumbnailImage];
     [self selectedImageCanSend:selectModel
                       complete:^(BOOL canSend) {
                           if (canSend) {
@@ -540,6 +547,12 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [[RCAssetHelper shareAssetHelper]
             getOriginImageDataWithAsset:selectModel
                                  result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
+                                    if(!imageData) {
+                                        if(completeBlock) {
+                                            completeBlock(NO);
+                                        }
+                                        return;
+                                    }
                                      dispatch_async(dispatch_get_main_queue(), ^{
                                          if (imageData.length >
                                              [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
