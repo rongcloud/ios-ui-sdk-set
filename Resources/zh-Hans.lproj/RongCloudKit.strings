@@ -82,6 +82,7 @@
 "Back"="返回";
 "IsDeleteHistoryMsg"="是否删除历史消息？";
 "ConnectionIsNotReachable"="当前网络不可用，请检查你的网络设置";
+"KickedOfflineByOtherClient"="该账号已经在其他设备登录";
 "SendReadReceiptRequestFailed"="当前网络不可用，请检查你的网络设置";
 "PreviewFile"="文件预览";
 "StartDownloadFile"="开始下载";
@@ -211,9 +212,9 @@
 "HaveMentioned"="[有人@我]";
 "HaveMentionedForNotification"="[有人@我]";
 "HaveMentionedMeCount" = "有人@我(%@)";
-"chatDate"="yyyy年M月d日";
+"chatDate"="yyyy/M/d";
 "chatListDate"="yyyy/M/d";
-"SameYearDate"="yy/M/d";
+"SameYearDate"="M/d";
 "locale"="zh_CN";
 "readNum"="%d 人已读";
 "read"="已读";

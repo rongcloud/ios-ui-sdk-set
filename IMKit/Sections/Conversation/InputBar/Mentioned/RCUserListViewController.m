@@ -126,7 +126,7 @@
         user = arrayForKey[indexPath.row];
     }
 
-    [cell.nameLabel setText:user.name];
+    [cell.nameLabel setText:[RCKitUtility getDisplayName:user]];
     cell.headImageView = [self portraitView:[NSURL URLWithString:user.portraitUri]];
 
     return cell;
@@ -179,7 +179,7 @@
     if (needUpdateUserInfo) {
         dispatch_async(self.sortDataQueue, ^{
             RCUserInfo *userInfo = [self.dataSource getSelectingUserInfo:needUpdateUserInfo.userId];
-            needUpdateUserInfo.name = userInfo.name;
+            needUpdateUserInfo.name = [RCKitUtility getDisplayName:userInfo];
             needUpdateUserInfo.portraitUri = userInfo.portraitUri;
             NSMutableDictionary *tmpDict = [self sortedArrayWithPinYinDic:self.dataArr];
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -311,7 +311,7 @@
 
         NSMutableArray *tempArr = [NSMutableArray new];
         for (RCUserInfo *user in friends) {
-            NSString *pyResult = [RCKitUtility getPinYinUpperFirstLetters:user.name];
+            NSString *pyResult = [RCKitUtility getPinYinUpperFirstLetters:[RCKitUtility getDisplayName:user]];
             if (pyResult.length <= 0) {
                 if (!isReturn) {
                     [_tempOtherArr addObject:user];

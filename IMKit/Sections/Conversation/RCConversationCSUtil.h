@@ -30,4 +30,6 @@
 - (void)didTapCSPullLeaveMessage:(RCMessageModel *)model;
 
 - (void)customerServiceLeftCurrentViewController;
+
+- (void)robotSwitchButtonDidTouch;
 @end

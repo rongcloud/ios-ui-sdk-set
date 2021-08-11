@@ -82,6 +82,7 @@
 "Back"="Back";
 "IsDeleteHistoryMsg"="Do you want to clear the chat history?";
 "ConnectionIsNotReachable"="Network unavailable, check network";
+"KickedOfflineByOtherClient"="This account has been logged-in on other devices";
 "SendReadReceiptRequestFailed"="Network unavailable, check network";
 "PreviewFile"="File preview";
 "StartDownloadFile"="Start download";
@@ -211,10 +212,10 @@
 "HaveMentioned"="[You were mentioned]";
 "HaveMentionedForNotification"="You were mentioned ";
 "HaveMentionedMeCount" = "@(%@)";
-"chatDate"="d MMM yyyy";
-"chatListDate"="M/d/yyyy";
+"chatDate"="yyyy/M/d";
+"chatListDate"="yyyy/M/d";
+"SameYearDate"="M/d";
 "locale"="en_US";
-"SameYearDate"="M/d/yy";
 "readNum"="%d read";
 "read"="Read";
 "punctuation"=", ";

@@ -206,6 +206,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    //系统会话，没有输入框,无法根据输入框回调滚动，查看消息没有滚动到最底部
+    if (!self.chatSessionInputBarControl && [self.dataSource isAtTheBottomOfTableView] && self.locatedMessageSentTime == 0) {
+        [self.conversationMessageCollectionView performBatchUpdates:^{
+            [self.conversationMessageCollectionView reloadData];
+        } completion:^(BOOL finished) {
+            [self scrollToBottomAnimated:NO];
+        }];
+    }
     [self updateUnreadMsgCountLabel];
     if (self.unReadMessage > 0) {
         [self.util syncReadStatus];
@@ -1319,6 +1327,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     } else {
         self.placeholderLabel.hidden = YES;
     }
+}
+
+- (void)robotSwitchButtonDidTouch{
+    [self.csUtil robotSwitchButtonDidTouch];
 }
 
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag {

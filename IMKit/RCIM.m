@@ -50,7 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.3";
+static NSString *const RCIMKitVersion = @"5.1.4";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -188,16 +188,7 @@ static NSString *const RCIMKitVersion = @"5.1.3";
                 dbOpened:(void (^)(RCDBErrorCode code))dbOpenedBlock
                  success:(void (^)(NSString *userId))successBlock
                    error:(void (^)(RCConnectErrorCode errorCode))errorBlock {
-    self.hasNotifydExtensionModuleUserId = NO;
-    self.token = token;
-    [[RCIMClient sharedRCIMClient] connectWithToken:token
-        timeLimit:timeLimit
-        dbOpened:^(RCDBErrorCode code) {
-            if (dbOpenedBlock != nil) {
-                dbOpenedBlock(code);
-            }
-        }
-        success:^(NSString *userId) {
+    [[RCCoreClient sharedCoreClient] connectWithToken:token timeLimit:timeLimit dbOpened:dbOpenedBlock success:^(NSString *userId) {
             [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             if (successBlock) {
                 successBlock(userId);
@@ -211,14 +202,13 @@ static NSString *const RCIMKitVersion = @"5.1.3";
                     });
                 }
             });
-        }
-        error:^(RCConnectErrorCode status) {
+        } error:^(RCConnectErrorCode errorCode) {
             NSString *userId = [[RCIMClient sharedRCIMClient].currentUserInfo.userId copy];
             if (userId) {
                 [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             }
             if (errorBlock != nil)
-                errorBlock(status);
+                errorBlock(errorCode);
         }];
     if ([RCIMClient sharedRCIMClient].currentUserInfo.userId.length > 0) {
         self.currentUserInfo = [RCIMClient sharedRCIMClient].currentUserInfo;
@@ -433,14 +423,15 @@ static NSString *const RCIMKitVersion = @"5.1.3";
 }
 
 - (void)setExclusiveSoundPlayer {
-    if (RCKitConfigCenter.message.isExclusiveSoundPlayer) {
-        [[AVAudioSession sharedInstance] setActive:NO
-                                       withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
-                                             error:nil];
-    } else {
+    if (RCKitConfigCenter.message.isExclusiveSoundPlayer || [RCKitUtility isAudioHolding] ||[RCKitUtility isCameraHolding]) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
         [audioSession setActive:YES error:nil];
+    }else {
+        //不独占音频 且 所有sdk都没有使用音频再归还给其他app。
+        [[AVAudioSession sharedInstance] setActive:NO
+                                       withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                             error:nil];
     }
 }
 

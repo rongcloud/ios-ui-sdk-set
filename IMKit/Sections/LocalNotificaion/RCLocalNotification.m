@@ -211,8 +211,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
 
             }];
     } else if (ConversationType_CUSTOMERSERVICE == message.conversationType) {
-        NSString *customeServiceName =
-            message.content.senderUserInfo.name != nil ? message.content.senderUserInfo.name : @"客服";
+        NSString *customeServiceName = [RCKitUtility getDisplayName:message.content.senderUserInfo] ?: @"客服";
         showMessage = [self formatOtherNotification:message name:customeServiceName showMessage:showMessage];
         resultBlock(customeServiceName, showMessage);
 
@@ -232,26 +231,24 @@ static RCLocalNotification *__rc__LocalNotification = nil;
             resultBlock(serviceProfile.name, showMessage);
         }
     } else if (ConversationType_SYSTEM == message.conversationType) {
-        [[RCUserInfoCacheManager sharedManager]
-            getUserInfo:message.targetId
-               complete:^(RCUserInfo *userInfo) {
-                   if (nil == userInfo) {
-                       return;
-                   }
-                   showMessage = [self formatOtherNotification:message name:userInfo.name showMessage:showMessage];
-                   resultBlock(userInfo.name, showMessage);
-               }];
+        [[RCUserInfoCacheManager sharedManager] getUserInfo:message.targetId complete:^(RCUserInfo *userInfo) {
+            if (nil == userInfo) {
+                return;
+            }
+            NSString *dispalyName = [RCKitUtility getDisplayName:userInfo];
+            showMessage = [self formatOtherNotification:message name:dispalyName showMessage:showMessage];
+            resultBlock(dispalyName, showMessage);
+        }];
     } else {
-        [[RCUserInfoCacheManager sharedManager]
-            getUserInfo:message.targetId
-               complete:^(RCUserInfo *userInfo) {
-                   if (nil == userInfo) {
-                       return;
-                   }
-                   showMessage = [self formatOtherNotification:message name:userInfo.name showMessage:showMessage];
-                   resultBlock(userInfo.name, showMessage);
-
-               }];
+        [[RCUserInfoCacheManager sharedManager] getUserInfo:message.targetId complete:^(RCUserInfo *userInfo) {
+            if (nil == userInfo) {
+                return;
+            }
+            NSString *dispalyName = [RCKitUtility getDisplayName:userInfo];
+            showMessage = [self formatOtherNotification:message name:dispalyName showMessage:showMessage];
+            resultBlock(dispalyName, showMessage);
+            
+        }];
     }
 }
 
@@ -265,11 +262,11 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                 showMessage = [NSString
                     stringWithFormat:@"%@%@:%@",
                                      NSLocalizedStringFromTable(@"HaveMentionedForNotification", @"RongCloudKit", nil),
-                                     userInfo.name, showMessage];
+                                     [RCKitUtility getDisplayName:userInfo], showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
         } else {
-            showMessage = [NSString stringWithFormat:@"%@:%@", userInfo.name, showMessage];
+            showMessage = [NSString stringWithFormat:@"%@:%@", [RCKitUtility getDisplayName:userInfo], showMessage];
         }
     } else {
         if (message.content.mentionedInfo.isMentionedMe) {
@@ -277,11 +274,11 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                 showMessage = [NSString
                     stringWithFormat:@"%@%@(%@):%@",
                                      NSLocalizedStringFromTable(@"HaveMentionedForNotification", @"RongCloudKit", nil),
-                                     userInfo.name, groupInfo.groupName, showMessage];
+                               [RCKitUtility getDisplayName:userInfo], groupInfo.groupName, showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
         } else {
-            showMessage = [NSString stringWithFormat:@"%@(%@):%@", userInfo.name, groupInfo.groupName, showMessage];
+            showMessage = [NSString stringWithFormat:@"%@(%@):%@", [RCKitUtility getDisplayName:userInfo], groupInfo.groupName, showMessage];
         }
     }
     

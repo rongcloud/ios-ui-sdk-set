@@ -53,17 +53,16 @@
                 return timeText = [formatter stringFromDate:messageDate];
             } else if (intervalDays == 1) {
                 return timeText = RCLocalizedString(@"Yesterday");
-            } else if (intervalDays < 7) {
+            } else if (intervalDays < 7 && [self isCurrentWeek:messageDate]) {
                 [formatter setDateFormat:@"eeee"];
                 return timeText = [formatter stringFromDate:messageDate];
             } else {
                 [formatter setDateFormat:RCLocalizedString(@"SameYearDate")];
                 return timeText = [formatter stringFromDate:messageDate];
             }
-        } else {
-            [formatter setDateFormat:RCLocalizedString(@"SameYearDate")];
-            return timeText = [formatter stringFromDate:messageDate];
         }
+        [formatter setDateFormat:RCLocalizedString(@"SameYearDate")];
+        return timeText = [formatter stringFromDate:messageDate];
     }
     [formatter setDateFormat:RCLocalizedString(@"chatListDate")];
     return timeText = [formatter stringFromDate:messageDate];
@@ -83,16 +82,17 @@
             if (intervalDays == 0) {
                 return timeText = [formatter stringFromDate:messageDate];
             } else if (intervalDays == 1) {
-                return timeText = [NSString stringWithFormat:@"%@ %@", RCLocalizedString( @"Yesterday"), [formatter stringFromDate:messageDate]];
-            } else if (intervalDays < 7) {
+                return timeText = [NSString stringWithFormat:@"%@ %@", RCLocalizedString(@"Yesterday"), [formatter stringFromDate:messageDate]];
+            } else if (intervalDays < 7 && [self isCurrentWeek:messageDate]) {
                 [formatter setDateFormat:[NSString stringWithFormat:@"eeee %@", formatStr]];
                 return timeText = [formatter stringFromDate:messageDate];
             } else {
-                return [self getMessageDate:messageDate dateFormat:formatter];
+                [formatter setDateFormat:[NSString stringWithFormat:@"%@ %@", RCLocalizedString(@"SameYearDate"), [self getDateFormatterString:messageDate]]];
+                return [formatter stringFromDate:messageDate];
             }
-        } else {
-            return [self getMessageDate:messageDate dateFormat:formatter];
         }
+        [formatter setDateFormat:[NSString stringWithFormat:@"%@ %@", RCLocalizedString(@"SameYearDate"), [self getDateFormatterString:messageDate]]];
+        return [formatter stringFromDate:messageDate];
     }
     return [self getMessageDate:messageDate dateFormat:formatter];
 }
@@ -794,6 +794,16 @@
     return NO;
 }
 
++ (BOOL)isCurrentWeek:(NSDate *)messageDate {
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    int unit = NSCalendarUnitWeekOfMonth | NSCalendarUnitMonth | NSCalendarUnitYear;
+    NSDateComponents *nowCmps = [calendar components:unit fromDate:[NSDate date]];
+    NSDateComponents *messageCmps = [calendar components:unit fromDate:messageDate];
+    BOOL isCurrentWeek = (messageCmps.year == nowCmps.year) && (messageCmps.month == nowCmps.month) &&
+                         (messageCmps.weekOfMonth == nowCmps.weekOfMonth);
+    return isCurrentWeek;
+}
+
 + (NSInteger)getIntervalDays:(NSDate *)messageDate{
     NSDate *now = [NSDate date];
     NSDateFormatter *formatter = [self getDateFormatter];
@@ -846,17 +856,16 @@
 
 + (NSString *)__formatContactNotificationMessageContent:(RCContactNotificationMessage *)contactNotification {
     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:contactNotification.sourceUserId];
-    if (userInfo.name.length) {
+    NSString *displayName = [self getDisplayName:userInfo];
+    if (displayName.length) {
         if ([contactNotification.operation isEqualToString:ContactNotificationMessage_ContactOperationRequest]) {
-            return [NSString stringWithFormat:RCLocalizedString(@"FromFriendInvitation"),
-                                              userInfo.name];
+            return [NSString stringWithFormat:RCLocalizedString(@"FromFriendInvitation"), displayName];
         }
         if ([contactNotification.operation isEqualToString:ContactNotificationMessage_ContactOperationAcceptResponse]) {
             return [NSString stringWithFormat:RCLocalizedString(@"AcceptFriendRequest")];
         }
         if ([contactNotification.operation isEqualToString:ContactNotificationMessage_ContactOperationRejectResponse]) {
-            return [NSString stringWithFormat:RCLocalizedString(@"RejectFriendRequest"),
-                                              userInfo.name];
+            return [NSString stringWithFormat:RCLocalizedString(@"RejectFriendRequest"), displayName];
         }
     } else {
         return RCLocalizedString(@"AddFriendInvitation");
@@ -1002,8 +1011,9 @@
                 target = RCLocalizedString(@"You");
             } else {
                 RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operatedIds[0]];
-                if ([userInfo.name length]) {
-                    target = userInfo.name;
+                NSString *displayName = [self getDisplayName:userInfo];
+                if ([displayName length]) {
+                    target = displayName;
                 } else {
                     target = [[NSString alloc] initWithFormat:@"user<%@>", operatedIds[0]];
                 }
@@ -1020,10 +1030,11 @@
         operator= RCLocalizedString(@"You");
     } else {
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
-        if ([userInfo.name length]) {
-            operator= userInfo.name;
+        NSString *displayName = [self getDisplayName:userInfo];
+        if ([displayName length]) {
+            operator = displayName;
         } else {
-            operator= [[NSString alloc] initWithFormat:@"user<%@>", operator];
+            operator = [[NSString alloc] initWithFormat:@"user<%@>", operator];
         }
     }
     switch (discussionNotification.type) {
@@ -1088,18 +1099,19 @@
     }else if ([operator isEqualToString:currentUserId]) {
         return [NSString stringWithFormat:@"%@", RCLocalizedString(@"SelfHaveRecalled")];
     } else {
-        RCUserInfo *userInfo;
-        if (conversationType == ConversationType_GROUP && targetId.length > 0) {
-            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator inGroupId:targetId];
-        }
-
-        if (userInfo.name.length == 0) {
-            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
-        }
-        NSString *operatorName;
-        if ([userInfo.name length]) {
-            operatorName = userInfo.name;
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
+        NSString *operatorName = userInfo.name;
+        if (userInfo.alias.length > 0) {
+            operatorName = userInfo.alias;
         } else {
+            if (conversationType == ConversationType_GROUP && targetId.length > 0) {
+                RCUserInfo *groupMemberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator inGroupId:targetId];
+                if (groupMemberInfo.name.length > 0) {
+                    operatorName = groupMemberInfo.name;
+                }
+            }
+        }
+        if (operatorName.length == 0) {
             operatorName= [[NSString alloc] initWithFormat:@"user<%@>", operator];
         }
         return [NSString
@@ -1123,18 +1135,20 @@
     }else if ([operator isEqualToString:currentUserId]) {
         return [NSString stringWithFormat:@"%@", NSLocalizedStringFromTable(@"SelfHaveRecalled", @"RongCloudKit", nil)];
     } else {
-        RCUserInfo *userInfo;
-        if (conversationType == ConversationType_GROUP && targetId.length > 0) {
-            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator inGroupId:targetId];
-        }
-
-        if (userInfo.name.length == 0) {
-            userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
-        }
-        NSString *operatorName;
-        if ([userInfo.name length]) {
-            operatorName = userInfo.name;
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
+        NSString *operatorName = userInfo.name;
+        if (userInfo.alias.length > 0) {
+            operatorName = userInfo.alias;
         } else {
+            if (conversationType == ConversationType_GROUP && targetId.length > 0) {
+                RCUserInfo *groupMemberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator inGroupId:targetId];
+                if (groupMemberInfo.name.length > 0) {
+                    operatorName = groupMemberInfo.name;
+                }
+            }
+        }
+        
+        if (operatorName.length == 0) {
             operatorName= [[NSString alloc] initWithFormat:@"user<%@>", operator];
         }
         if (conversationType == ConversationType_GROUP) {
@@ -1190,5 +1204,12 @@
                                                                     stringByAppendingPathComponent:@"RCColor.plist"]];
     }
     return colorDic;
+}
+
++ (NSString *)getDisplayName:(RCUserInfo *)userInfo {
+    if (userInfo.alias.length > 0) {
+        return userInfo.alias;
+    }
+    return userInfo.name;
 }
 @end

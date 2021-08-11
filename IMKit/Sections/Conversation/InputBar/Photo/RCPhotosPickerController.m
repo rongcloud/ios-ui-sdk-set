@@ -15,6 +15,8 @@
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCKitConfig.h"
+#import "RCMBProgressHUD.h"
+
 
 #define WIDTH ((SCREEN_WIDTH - 20) / 4)
 #define SIZE CGSizeMake(WIDTH, WIDTH)
@@ -33,6 +35,8 @@ static NSString *const reuseIdentifier = @"Cell";
 @property (nonatomic, strong) PHCachingImageManager *cachingImageManager;
 @property (nonatomic, assign) CGRect previousPreheatRect;
 @property (nonatomic, assign) CGSize thumbnailSize;
+
+@property (nonatomic, strong) RCMBProgressHUD *progressHUD;
 
 @end
 
@@ -217,6 +221,13 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)didTapPickerCollectCell:(RCAssetModel *)selectModel {
+    __weak typeof(self) weakSelf = self;
+    [self checkDownloadFailFromiCloud:selectModel block:^(BOOL downloadFailFromiCloud) {
+        [weakSelf doTapPhotoImageView:selectModel isDownloadFail:downloadFailFromiCloud];
+    }];
+}
+
+- (void)enterPreviewCollectionViewController:(RCAssetModel *)selectModel {
     if(!selectModel) {
         return;
     }
@@ -242,6 +253,66 @@ static NSString *const reuseIdentifier = @"Cell";
         weakself.sendPhotosBlock(selectArr, isFull);
     }];
     [self.navigationController pushViewController:previewController animated:YES];
+}
+
+
+- (void)checkDownloadFailFromiCloud:(RCAssetModel *)model block:(void(^)(BOOL downloadFailFromiCloud))block {
+    __weak typeof(self) weakself = self;
+    // 尝试获取大图或者视频，检查是否能获取
+    model.isDownloadFailFromiCloud = NO;
+    if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+            dispatch_main_async_safe(^{
+                if(weakself.progressHUD) {
+                    [weakself.progressHUD hideAnimated:YES afterDelay:0.5];
+                    weakself.progressHUD = nil;
+                }
+
+                BOOL isDownloadFail = !avAsset ? YES : NO;
+                model.isDownloadFailFromiCloud = isDownloadFail;
+                if(block) {
+                    block(isDownloadFail);
+                }
+            });
+        } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+            dispatch_main_async_safe(^{
+                if(progress < 1 && !error && !weakself.progressHUD) {
+                    weakself.progressHUD = [RCMBProgressHUD showHUDAddedTo:weakself.view animated:YES];
+                }
+            });
+        }];
+
+    }else {
+        [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model result:^(NSData *photo, NSDictionary *info, RCAssetModel *assetModel) {
+            dispatch_main_async_safe(^{
+                if(weakself.progressHUD) {
+                    [weakself.progressHUD hideAnimated:YES afterDelay:0.5];
+                    weakself.progressHUD = nil;
+                }
+
+                BOOL isDownloadFail = !photo ? YES : NO;
+                model.isDownloadFailFromiCloud = isDownloadFail;
+                if(block) {
+                    block(isDownloadFail);
+                }
+            });
+        } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+            dispatch_main_async_safe(^{
+                if(progress < 1 && !error && !weakself.progressHUD) {
+                    weakself.progressHUD = [RCMBProgressHUD showHUDAddedTo:weakself.view animated:YES];
+                }
+            });
+        }];
+    }
+}
+
+
+- (void)doTapPhotoImageView:(RCAssetModel *)model isDownloadFail:(BOOL)isDownloadFail {
+    if(isDownloadFail|| [model isVideoAssetInvalid]) {
+        [self downloadFailFromiCloud];
+        return;
+    }
+    [self enterPreviewCollectionViewController:model];
 }
 
 #pragma mark - Target Action
@@ -495,9 +566,14 @@ static NSString *const reuseIdentifier = @"Cell";
             for (int i = 0; i < albumChanges.insertedObjects.count; i++) {
                 if ([albumChanges.insertedObjects[i] isKindOfClass:[PHAsset class]]) {
                     BOOL isContain = NO;
+                    BOOL isContainVideo = RCKitConfigCenter.message.isMediaSelectorContainVideo;
                     for (int j = 0; j < self.assetArray.count; j++) {
                         RCAssetModel *assetModel = self.assetArray[j];
                         PHAsset *newAsset = albumChanges.insertedObjects[i];
+                        if (!isContainVideo && newAsset.mediaType == PHAssetMediaTypeVideo) {
+                            isContain = YES;
+                            break;
+                        }
                         PHAsset *asset = assetModel.asset;
                         if ([newAsset.localIdentifier isEqualToString:asset.localIdentifier]) {
                             isContain = YES;

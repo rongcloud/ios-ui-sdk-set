@@ -55,8 +55,10 @@
     //(1）如果宽高比没有超过 2.4，等比压缩，取长边 240 进行显示。
     //(2）如果宽高比超过 2.4，等比缩放（压缩或者放大），取短边 100，长边居中截取 240 进行显示。
     CGSize imageSize = image.size;
-    CGFloat imageMaxLength = 120;
-    CGFloat imageMinLength = 50;
+    CGFloat maxSize = [RCIMClient sharedRCIMClient].imageCompressConfig.maxSize / 2;
+    CGFloat minSize = [RCIMClient sharedRCIMClient].imageCompressConfig.minSize / 2;
+    CGFloat imageMaxLength = maxSize > 0 ? maxSize : 120;
+    CGFloat imageMinLength = minSize > 0 ? minSize : 50;
     if (imageSize.width == 0 || imageSize.height == 0) {
         return CGSizeMake(imageMaxLength, imageMinLength);
     }

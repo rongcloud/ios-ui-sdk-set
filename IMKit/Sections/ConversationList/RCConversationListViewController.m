@@ -325,6 +325,13 @@
             needReloadTableView = YES;
         }
         self.networkIndicatorView.hidden = NO;
+        [self.networkIndicatorView setText:RCLocalizedString(@"ConnectionIsNotReachable")];
+    } else if(status == ConnectionStatus_KICKED_OFFLINE_BY_OTHER_CLIENT){
+        if (self.networkIndicatorView.hidden) {
+            needReloadTableView = YES;
+        }
+        self.networkIndicatorView.hidden = NO;
+        [self.networkIndicatorView setText:RCLocalizedString(@"KickedOfflineByOtherClient")];
     } else if (status != ConnectionStatus_Connecting) {
         if (!self.networkIndicatorView.hidden) {
             needReloadTableView = YES;

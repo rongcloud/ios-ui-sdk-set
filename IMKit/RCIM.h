@@ -476,6 +476,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
                  success:(void (^)(NSString *userId))successBlock
                    error:(void (^)(RCConnectErrorCode errorCode))errorBlock;
 
+
 /*!
  断开与融云服务器的连接
 

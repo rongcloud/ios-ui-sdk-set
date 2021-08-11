@@ -83,32 +83,6 @@
     
 }
 
-- (void)checkDownloadFailFromiCloud:(RCAssetModel *)model block:(void(^)(BOOL downloadFailFromiCloud))block {
-    // 尝试获取大图或者视频，检查是否能获取
-    model.isDownloadFailFromiCloud = NO;
-    if (self.assetModel.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
-        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
-            dispatch_main_async_safe(^{
-                BOOL isDownloadFail = !avAsset ? YES : NO;
-                model.isDownloadFailFromiCloud = isDownloadFail;
-                if(block) {
-                    block(isDownloadFail);
-                }
-            });
-        } progressHandler:nil];
-    }else {
-        [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model result:^(NSData *photo, NSDictionary *info, RCAssetModel *assetModel) {
-            dispatch_main_async_safe(^{
-                BOOL isDownloadFail = !photo ? YES : NO;
-                model.isDownloadFailFromiCloud = isDownloadFail;
-                if(block) {
-                    block(isDownloadFail);
-                }
-            });
-        } progressHandler:nil];
-    }
-}
-
 #pragma mark - Private Methods
 
 - (void)onSelectButtonClick:(UIButton *)sender {
@@ -116,6 +90,24 @@
         return;
     }
     __weak typeof(self) weakSelf = self;
+    if(self.assetModel.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:self.assetModel.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+            if (![[[RCAssetHelper shareAssetHelper] getAssetIdentifier:weakSelf.assetModel.asset] isEqualToString:imageIdentifier]) {
+                return;
+            }
+            dispatch_main_async_safe(^{
+                if (!avAsset) {
+                    if(weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(downloadFailFromiCloud)]) {
+                        [weakSelf.delegate downloadFailFromiCloud];
+                    }
+                    return;
+                }
+                [weakSelf changeMessageModelState:sender.selected
+                                   assetModel:weakSelf.assetModel];
+            });
+        } progressHandler:nil];
+        return;
+    }
     [[RCAssetHelper shareAssetHelper]
         getOriginImageDataWithAsset:self.assetModel
                              result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
@@ -222,23 +214,10 @@
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];
 }
 
-- (void)doTapPhotoImageView:(BOOL)isDownloadFail {
-    if(isDownloadFail|| [self.assetModel isVideoAssetInvalid]) {
-        if(self.delegate && [self.delegate respondsToSelector:@selector(downloadFailFromiCloud)]) {
-            [self.delegate downloadFailFromiCloud];
-        }
-        return;
-    }
+- (void)didTapPhotoImageView {
     if(self.delegate && [self.delegate respondsToSelector:@selector(didTapPickerCollectCell:)]) {
         [self.delegate didTapPickerCollectCell:self.assetModel];
     }
-}
-
-- (void)didTapPhotoImageView {
-    __weak typeof(self) weakSelf = self;
-    [self checkDownloadFailFromiCloud:self.assetModel block:^(BOOL downloadFailFromiCloud) {
-        [weakSelf doTapPhotoImageView:downloadFailFromiCloud];
-    }];
     
 }
 

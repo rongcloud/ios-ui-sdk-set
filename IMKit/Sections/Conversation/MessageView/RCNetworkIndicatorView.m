@@ -67,4 +67,7 @@
     return self;
 }
 
+- (void)setText:(NSString *)text{
+    self.networkUnreachableDescriptionLabel.text = text;
+}
 @end

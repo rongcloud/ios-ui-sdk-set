@@ -62,7 +62,7 @@
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:conversation.targetId];
         if (userInfo) {
             [self.headerImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            [self.nameLabel setText:userInfo.name];
+            [self.nameLabel setText:[RCKitUtility getDisplayName:userInfo]];
         } else {
             [self.headerImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
             [self.nameLabel setText:conversation.targetId];

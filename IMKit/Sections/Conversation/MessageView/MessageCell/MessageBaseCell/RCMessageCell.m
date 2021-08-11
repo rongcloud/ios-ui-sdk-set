@@ -101,7 +101,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             model.userInfo = model.content.senderUserInfo;
             if (model.content.senderUserInfo != nil) {
                 [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
-                [self.nicknameLabel setText:model.content.senderUserInfo.name];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
             } else {
                 [self.portraitImageView setImage:RCResourceImage(@"portrait_kefu")];
                 [self.nicknameLabel setText:nil];
@@ -112,7 +112,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             [self.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
             if (userInfo) {
                 [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                [self.nicknameLabel setText:userInfo.name];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
             } else {
                 [self.portraitImageView setImageURL:nil];
                 [self.nicknameLabel setText:nil];
@@ -139,19 +139,20 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             model.userInfo = userInfo;
             if (userInfo) {
                 [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                [self.nicknameLabel setText:userInfo.name];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
             } else {
                 [self.portraitImageView setImageURL:nil];
                 [self.nicknameLabel setText:nil];
             }
         }
     } else if (ConversationType_GROUP == model.conversationType) {
-        RCUserInfo *userInfo =
-            [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
+        RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+        userInfo.alias = tempUserInfo.alias;
         model.userInfo = userInfo;
         if (userInfo) {
             [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            [self.nicknameLabel setText:userInfo.name];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
         } else {
             [self.portraitImageView setImageURL:nil];
             [self.nicknameLabel setText:nil];
@@ -163,7 +164,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             if (model.conversationType != ConversationType_Encrypted) {
                 [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
             }
-            [self.nicknameLabel setText:userInfo.name];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
         } else {
             [self.portraitImageView setImageURL:nil];
             [self.nicknameLabel setText:nil];
@@ -616,8 +617,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     if ([self.model.senderUserId isEqualToString:userInfoDic[@"userId"]]) {
         if (self.model.conversationType == ConversationType_GROUP) {
             //重新取一下混合的用户信息
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
-                                                                             inGroupId:self.model.targetId];
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+            RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+            userInfo.alias = tempUserInfo.alias;
             [self updateUserInfoUI:userInfo];
         } else if (self.model.messageDirection == MessageDirection_SEND) {
             [self updateUserInfoUI:userInfoDic[@"userInfo"]];
@@ -637,8 +639,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         if ([self.model.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
             [self.model.senderUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
             //重新取一下混合的用户信息
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
-                                                                             inGroupId:self.model.targetId];
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+            RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+            userInfo.alias = tempUserInfo.alias;
             [self updateUserInfoUI:userInfo];
         }
     }
@@ -651,7 +654,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         if (userInfo.portraitUri.length > 0) {
             [weakSelf.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
         }
-        [weakSelf.nicknameLabel setText:userInfo.name];
+        [weakSelf.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
     });
 }
 

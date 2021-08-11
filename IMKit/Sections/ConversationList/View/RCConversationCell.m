@@ -175,7 +175,7 @@
                 if (model.conversationType != ConversationType_Encrypted) {
                     self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
                 }
-                [self updateConversationTitle:userInfo.name];
+                [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
             }
             [self.detailContentView updateContent:model prefixName:nil];
         } else if (model.conversationType == ConversationType_GROUP) {
@@ -188,9 +188,15 @@
             if (self.hideSenderName) {
                 [self.detailContentView updateContent:model prefixName:nil];
             } else {
-                RCUserInfo *userInfo =
-                    [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-                [self.detailContentView updateContent:model prefixName:userInfo.name];
+                RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
+                RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+                NSString *displayName = userInfo.name;
+                if (userInfo.alias.length > 0) {
+                    displayName = userInfo.alias;
+                } else if (memberInfo.name.length > 0) {
+                    displayName = memberInfo.name;
+                }
+                [self.detailContentView updateContent:model prefixName:displayName];
             }
         } else if (model.conversationType == ConversationType_DISCUSSION) {
             [self updateConversationTitle:RCLocalizedString(@"DISCUSSION")];
@@ -213,7 +219,7 @@
             } else {
                 RCUserInfo *userInfo =
                     [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-                [self.detailContentView updateContent:model prefixName:userInfo.name];
+                [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
             }
         }
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
@@ -223,7 +229,7 @@
             model.conversationType == ConversationType_CUSTOMERSERVICE ||
             model.conversationType == ConversationType_SYSTEM) {
             RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.targetId];
-            [self.detailContentView updateContent:model prefixName:userInfo.name];
+            [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
         } else if (model.conversationType == ConversationType_GROUP) {
             RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
             [self.detailContentView updateContent:model prefixName:group.groupName];
@@ -307,14 +313,16 @@
     if (updateSenderName) {
         if (_hideSenderName) {
             [self.detailContentView updateContent:self.model prefixName:nil];
-        } else if (self.model.conversationType == ConversationType_GROUP) {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
-                                                                             inGroupId:self.model.targetId];
-            [self.detailContentView updateContent:self.model prefixName:userInfo.name];
-        } else if (self.model.conversationType == ConversationType_DISCUSSION) {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
-                                                                             inGroupId:self.model.targetId];
-            [self.detailContentView updateContent:self.model prefixName:userInfo.name];
+        } else if (self.model.conversationType == ConversationType_GROUP || self.model.conversationType == ConversationType_DISCUSSION) {
+            RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+            RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+            NSString *displayName = userInfo.name;
+            if (userInfo.alias.length > 0) {
+                displayName = userInfo.alias;
+            } else if (memberInfo.name.length > 0) {
+                displayName = memberInfo.name;
+            }
+            [self.detailContentView updateContent:self.model prefixName:displayName];
         }
     }
 }
@@ -324,6 +332,7 @@
     NSDictionary *userInfoDic = notification.object;
     RCUserInfo *updateUserInfo = userInfoDic[@"userInfo"];
     NSString *updateUserId = userInfoDic[@"userId"];
+    NSString *displayName = [RCKitUtility getDisplayName:updateUserInfo];
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
@@ -332,11 +341,11 @@
                  self.model.conversationType == ConversationType_CUSTOMERSERVICE ||
                  self.model.conversationType == ConversationType_SYSTEM)) {
                 self.headerView.headerImageView.imageURL = [NSURL URLWithString:updateUserInfo.portraitUri];
-                [self updateConversationTitle:updateUserInfo.name];
+                [self updateConversationTitle:displayName];
             } else if (self.model.conversationType == ConversationType_Encrypted) {
                 NSString *originalTargetId = [self.model.targetId componentsSeparatedByString:@";;;"].lastObject;
                 if ([updateUserId isEqualToString:originalTargetId]) {
-                    [self updateConversationTitle:updateUserInfo.name];
+                    [self updateConversationTitle:displayName];
                 }
             } else if ([updateUserId isEqualToString:self.model.senderUserId] &&
                        self.model.conversationType == ConversationType_GROUP) {
@@ -344,13 +353,19 @@
                     [self.model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]]) {
                     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
                                                                                      inGroupId:self.model.targetId];
-                    [self.detailContentView updateContent:self.model prefixName:userInfo.name];
+                    NSString *name = updateUserInfo.name;
+                    if (updateUserInfo.alias.length > 0) {
+                        name = updateUserInfo.alias;
+                    } else if (userInfo.name.length > 0) {
+                        name = userInfo.name;
+                    }
+                    [self.detailContentView updateContent:self.model prefixName:name];
                 }
             } else if ([updateUserId isEqualToString:self.model.senderUserId] &&
                        self.model.conversationType == ConversationType_DISCUSSION) {
                 if (!self.hideSenderName ||
                     [self.model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]]) {
-                    [self.detailContentView updateContent:self.model prefixName:updateUserInfo.name];
+                    [self.detailContentView updateContent:self.model prefixName:displayName];
                 }
             }
         } else if (self.model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
@@ -358,7 +373,7 @@
                 (self.model.conversationType == ConversationType_PRIVATE ||
                  self.model.conversationType == ConversationType_CUSTOMERSERVICE ||
                  self.model.conversationType == ConversationType_SYSTEM)) {
-                [self.detailContentView updateContent:self.model prefixName:updateUserInfo.name];
+                [self.detailContentView updateContent:self.model prefixName:displayName];
             }
         }
     });
@@ -374,9 +389,15 @@
             self.model.conversationType == ConversationType_GROUP && [self.model.targetId isEqualToString:groupId] &&
             [self.model.senderUserId isEqualToString:userId]) {
             if (!self.hideSenderName) {
-                RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
-                                                                                 inGroupId:self.model.targetId];
-                [self.detailContentView updateContent:self.model prefixName:userInfo.name];
+                RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+                RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+                NSString *displayName = userInfo.name;
+                if (userInfo.alias.length > 0) {
+                    displayName = userInfo.alias;
+                } else if (memberInfo.name.length > 0) {
+                    displayName = memberInfo.name;
+                }
+                [self.detailContentView updateContent:self.model prefixName:displayName];
             }
         }
     });

@@ -106,6 +106,9 @@
 #pragma mark - Super Methods
 - (void)setFrame:(CGRect)frame{
     [super setFrame:frame];
+    if (!self.isContainViewAppeared) {
+        return;
+    }
     if ([self.delegate respondsToSelector:@selector(chatInputBar:shouldChangeFrame:)]) {
         [self.delegate chatInputBar:self shouldChangeFrame:frame];
     }

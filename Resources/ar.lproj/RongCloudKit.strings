@@ -200,10 +200,10 @@
 "ImageHasBeenDeleted"="تم حذف الصورة";
 "HaveMentioned"="[تم ذكرك]";
 "HaveMentionedForNotification"="تمت الإشارة إليك";
-"chatDate"="d MMM yyyy";
-"chatListDate"="M/d/yyyy";
+"chatDate"="yyyy/M/d";
+"chatListDate"="yyyy/M/d";
+"SameYearDate"="M/d";
 "locale"="en_US";
-"SameYearDate"="M/d/yy";
 "readNum"="%d قراءة";
 "read"="قرأ";
 "punctuation"=", ";
@@ -275,3 +275,4 @@
 "ChatFiles"="ملفات الدردشة";
 "CannotUploadFiles"="لا يمكن تحميل وسائط 0kb.";
 "DownloadFailFromiCloud"="Download Fail From iCloud";
+"KickedOfflineByOtherClient"="This account has been logged-in on other devices";

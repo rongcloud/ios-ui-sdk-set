@@ -13,4 +13,6 @@
 @property (nonatomic, strong) UIImageView *networkUnreachableImageView;
 
 - (instancetype)initWithText:(NSString *)text;
+
+- (void)setText:(NSString *)text;
 @end

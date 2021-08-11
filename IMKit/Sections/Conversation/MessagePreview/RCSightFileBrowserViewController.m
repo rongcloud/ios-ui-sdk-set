@@ -110,9 +110,13 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     } else {
         userInfo = [[RCIM sharedRCIM] getUserInfoCache:model.senderUserId];
     }
-    NSString *userName = userInfo.name.length > 20
-                             ? [NSString stringWithFormat:@"%@...", [userInfo.name substringToIndex:20]]
-                             : userInfo.name;
+    NSString *displayName = userInfo.name;
+    if (userInfo.alias.length > 0) {
+        displayName = userInfo.alias;
+    }
+    NSString *userName = displayName.length > 20
+                             ? [NSString stringWithFormat:@"%@...", [displayName substringToIndex:20]]
+                             : displayName;
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@ %@", userName, timeString, sizeString];
 }
 

@@ -64,7 +64,7 @@
  */
 - (PHImageRequestID)getOriginVideoWithAsset:(id)asset
                                      result:(void (^)(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier))resultBlock
-                            progressHandler:(void (^)(double, NSError *, BOOL *, NSDictionary *))progressHandler;
+                            progressHandler:(void (^)(double progress, NSError *error, BOOL *stop, NSDictionary *info))progressHandler;
 
 /**
  *  获取图片原图 data

@@ -18,6 +18,7 @@
 @property (nonatomic, assign) BOOL needGenerateAttributed;
 @property (nonatomic, assign) NSRange rangeOfTextHighlighted;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGestureRecognizer;
+@property (nonatomic, assign) NSTextCheckingType currentTextCheckingType;
 
 @end
 
@@ -206,9 +207,7 @@
              range:NSMakeRange(0, self.originalString.length)
         usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
             __strong typeof(weakSelf) strongSelf = weakSelf;
-            strongSelf->_currentTextCheckingType = result.resultType;
-            [strongSelf.attributedStrings addObject:result];
-            [strongSelf generateAttributedString];
+            [strongSelf updateTextCheckingResult:result];
         }];
     }else {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -218,13 +217,17 @@
             usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     __strong typeof(weakSelf) strongSelf = weakSelf;
-                    strongSelf->_currentTextCheckingType = result.resultType;
-                    [strongSelf.attributedStrings addObject:result];
-                    [strongSelf generateAttributedString];
+                    [strongSelf updateTextCheckingResult:result];
                 });
             }];
         });
     }
+}
+
+- (void)updateTextCheckingResult:(NSTextCheckingResult *)result{
+    self.currentTextCheckingType = result.resultType;
+    [self.attributedStrings addObject:result];
+    [self generateAttributedString];
 }
 
 - (void)generateAttributedString {

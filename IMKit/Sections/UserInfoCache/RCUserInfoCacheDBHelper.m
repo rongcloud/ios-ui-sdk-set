@@ -8,7 +8,7 @@
 
 #import "RCUserInfoCacheDBHelper.h"
 
-int const RCKitStorageVersion = 2;
+int const RCKitStorageVersion = 3;
 
 @interface RCUserInfoCacheDBHelper ()
 
@@ -30,7 +30,7 @@ int const RCKitStorageVersion = 2;
 - (void)createDBTableIfNeed {
     if ([self.workingDB open]) {
         [self updateDBVersionIfNeed:RCKitStorageVersion];
-        [self.workingDB executeUpdate:@"CREATE TABLE IF NOT EXISTS USER_INFO(user_id TEXT PRIMARY KEY, name TEXT, "
+        [self.workingDB executeUpdate:@"CREATE TABLE IF NOT EXISTS USER_INFO(user_id TEXT PRIMARY KEY, name TEXT, alias TEXT, "
                                       @"portrait_uri TEXT, extra TEXT)"];
         [self.workingDB executeUpdate:@"CREATE TABLE IF NOT EXISTS CONVERSATION_USER_INFO(conversation_type INTEGER, "
                                       @"target_id TEXT, user_id TEXT, name TEXT, portrait_uri TEXT, PRIMARY "
@@ -52,14 +52,15 @@ int const RCKitStorageVersion = 2;
             oldVersion = [resultSet intForColumn:@"version"];
         }
         [resultSet close];
-        if (oldVersion == 1) {
-            //            [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN extra TEXT"];
-            //老数据库里不包含 extra 字段，需要清空数据
-            [self.workingDB executeUpdate:@"DROP TABLE IF EXISTS USER_INFO"];
-        }
         if (oldVersion < version) {
             [self.workingDB executeUpdate:@"DELETE FROM VERSION"];
             [self.workingDB executeUpdate:@"INSERT OR REPLACE INTO VERSION (version) VALUES(?)", @(version)];
+            if (oldVersion == 1) {
+                [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN extra TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN alias TEXT"];
+            } else if (oldVersion == 2) {
+                [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN alias TEXT"];
+            }
         }
     }
 }
@@ -225,6 +226,7 @@ int const RCKitStorageVersion = 2;
             RCUserInfo *dbUserInfo = [[RCUserInfo alloc] init];
             dbUserInfo.userId = [resultSet stringForColumn:@"user_id"];
             dbUserInfo.name = [resultSet stringForColumn:@"name"];
+            dbUserInfo.alias = [resultSet stringForColumn:@"alias"];
             dbUserInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
             dbUserInfo.extra = [resultSet stringForColumn:@"extra"];
             [resultSet close];
@@ -246,6 +248,7 @@ int const RCKitStorageVersion = 2;
             RCUserInfo *dbUserInfo = [[RCUserInfo alloc] init];
             dbUserInfo.userId = [resultSet stringForColumn:@"user_id"];
             dbUserInfo.name = [resultSet stringForColumn:@"name"];
+            dbUserInfo.alias = [resultSet stringForColumn:@"alias"];
             dbUserInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
             dbUserInfo.extra = [resultSet stringForColumn:@"extra"];
             [dbUserInfoList addObject:dbUserInfo];
@@ -260,8 +263,8 @@ int const RCKitStorageVersion = 2;
 - (void)replaceUserInfoFromDB:(RCUserInfo *)userInfo forUserId:(NSString *)userId {
     if ([self.workingDB open]) {
         [self.workingDB
-            executeUpdate:@"INSERT OR REPLACE INTO USER_INFO (user_id, name, portrait_uri, extra) VALUES(?, ?, ?, ?)",
-                          userId, userInfo.name, userInfo.portraitUri, userInfo.extra ?: @""];
+            executeUpdate:@"INSERT OR REPLACE INTO USER_INFO (user_id, name, alias, portrait_uri, extra) VALUES(?, ?, ?, ?, ?)",
+                          userId, userInfo.name, userInfo.alias, userInfo.portraitUri, userInfo.extra ?: @""];
     }
 }
 
