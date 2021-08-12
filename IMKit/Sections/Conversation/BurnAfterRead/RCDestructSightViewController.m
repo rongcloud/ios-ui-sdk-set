@@ -10,12 +10,12 @@
 #import "RCIM.h"
 #import "RCMessageModel.h"
 #import "RCSightCollectionView.h"
-#import "RCSightCollectionViewCell.h"
+#import "RCDestructSightCollectionCell.h"
 #import "RCKitCommonDefine.h"
 #import "RCSightPlayerOverlayView+imkit.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
-@interface RCDestructSightViewController () <UIScrollViewDelegate, RCSightCollectionViewCellDelegate,
+@interface RCDestructSightViewController () <UIScrollViewDelegate, RCDestructSightCollectionCellDelegate,
                                          UICollectionViewDataSource, UICollectionViewDelegate,
                                          UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate>
 
@@ -120,7 +120,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                            cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    RCSightCollectionViewCell *cell =
+    RCDestructSightCollectionCell *cell =
         [self.collectionView dequeueReusableCellWithReuseIdentifier:@"RCSightCell" forIndexPath:indexPath];
     RCMessageModel *model = self.messageModelArray[indexPath.row];
     [cell setDataModel:model];
@@ -159,7 +159,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
        willDisplayCell:(UICollectionViewCell *)cell
     forItemAtIndexPath:(NSIndexPath *)indexPath {
     RCMessageModel *model = self.messageModelArray[indexPath.row];
-    RCSightCollectionViewCell *sightCell = (RCSightCollectionViewCell *)cell;
+    RCDestructSightCollectionCell *sightCell = (RCDestructSightCollectionCell *)cell;
 
     if (self.messageModel == model && self.autoPlayFlag) {
         sightCell.autoPlay = YES;
@@ -175,7 +175,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return [UIScreen mainScreen].bounds.size;
 }
 
-#pragma mark - RCSightCollectionViewCellDelegate
+#pragma mark - RCDestructSightCollectionCellDelegate
 
 - (void)closeSight {
     [self dismissViewControllerAnimated:YES completion:nil];
@@ -250,7 +250,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         flowLayout.minimumLineSpacing = 0;
         flowLayout.minimumInteritemSpacing = 0;
         _collectionView = [[RCSightCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:flowLayout];
-        [_collectionView registerClass:[RCSightCollectionViewCell class] forCellWithReuseIdentifier:@"RCSightCell"];
+        [_collectionView registerClass:[RCDestructSightCollectionCell class] forCellWithReuseIdentifier:@"RCSightCell"];
         _collectionView.dataSource = self;
         _collectionView.alwaysBounceHorizontal = YES;
         _collectionView.delegate = self;
