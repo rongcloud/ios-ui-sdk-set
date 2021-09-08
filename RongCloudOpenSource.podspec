@@ -66,7 +66,7 @@ Pod::Spec.new do |s|
     ck.private_header_files = 'CallKit/Header/*.h'
     ck.resources = "Resources/RongCallKit.bundle"
     ck.dependency 'RongCloudOpenSource/IMKit'
-    ck.dependency 'RongCloudRTC/RongCallLib','5.1.1'
+    ck.dependency 'RongCloudRTC/RongCallLib'
   end
 
 end
