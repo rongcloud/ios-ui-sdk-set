@@ -61,3 +61,4 @@ Xcode 项目路径为 ：Pods -> Pods -> RongCloudOpenSource -> IFly -> Framewor
 上述步骤，只有步骤 4 可能需要多次操作，其余步骤只需要处理一次
 
 如果 RongCloudOpenSource 的版本进行变更，那么就需要执行步骤 4 手动删除一次，因为 pod 更新会重新加载该 framework，如果不删除可能会报多次引入 iflyMSC.framework 的错误
+
