@@ -47,10 +47,13 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @property (nonatomic, copy) NSString *token;
 @property (nonatomic, strong) NSMutableArray *downloadingMeidaMessageIds;
 
+@property (nonatomic, strong) NSHashTable<id<RCIMReceiveMessageDelegate>> *receiveMessageDelegates;
+@property (nonatomic, strong) NSHashTable<id<RCIMConnectionStatusDelegate>> *connectionStatusDelegates;
+
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.4";
+static NSString *const RCIMKitVersion = @"5.1.5";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -61,7 +64,8 @@ static NSString *const RCIMKitVersion = @"5.1.4";
             __rongUIKit.userInfoDataSource = nil;
             __rongUIKit.groupUserInfoDataSource = nil;
             __rongUIKit.groupInfoDataSource = nil;
-            __rongUIKit.receiveMessageDelegate = nil;
+            __rongUIKit.receiveMessageDelegates = [NSHashTable weakObjectsHashTable];
+            __rongUIKit.connectionStatusDelegates = [NSHashTable weakObjectsHashTable];
             __rongUIKit.enableMessageAttachUserInfo = NO;
             __rongUIKit.enablePersistentUserInfoCache = NO;
             __rongUIKit.hasNotifydExtensionModuleUserId = NO;
@@ -71,6 +75,10 @@ static NSString *const RCIMKitVersion = @"5.1.4";
         }
     });
     return __rongUIKit;
+}
+
++ (void)load{
+    [RCUtilities setModuleName:@"imkit" version:[self getVersion]];
 }
 
 - (void)setCurrentUserInfo:(RCUserInfo *)currentUserInfo {
@@ -125,6 +133,35 @@ static NSString *const RCIMKitVersion = @"5.1.4";
 
     [[RongIMKitExtensionManager sharedManager] initWithAppKey:appKey];
     [[RCIMClient sharedRCIMClient] setRCConversationStatusChangeDelegate:self];
+}
+
+- (void)setReceiveMessageDelegate:(id<RCIMReceiveMessageDelegate>)receiveMessageDelegate {
+    [self addReceiveMessageDelegate:receiveMessageDelegate];
+}
+
+- (id<RCIMReceiveMessageDelegate>)receiveMessageDelegate {
+    @synchronized (self) {
+        if (self.receiveMessageDelegates.allObjects.count > 0) {
+            return self.receiveMessageDelegates.allObjects.firstObject;
+        }
+        return nil;
+    }
+}
+
+- (void)addReceiveMessageDelegate:(id<RCIMReceiveMessageDelegate>)delegate {
+    @synchronized (self) {
+        if (delegate) {
+            [self.receiveMessageDelegates addObject:delegate];
+        }
+    }
+}
+
+- (void)removeReceiveMessageDelegate:(id<RCIMReceiveMessageDelegate>)delegate {
+    @synchronized (self) {
+        if (delegate) {
+            [self.receiveMessageDelegates removeObject:delegate];
+        }
+    }
 }
 
 - (void)resetNotificationQuietStatus {
@@ -273,11 +310,12 @@ static NSString *const RCIMKitVersion = @"5.1.4";
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object {
 
-    if ([self.receiveMessageDelegate respondsToSelector:@selector(interceptMessage:)]) {
-        if ([self.receiveMessageDelegate interceptMessage:message]) {
+    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+        if ([delegate respondsToSelector:@selector(interceptMessage:)] && [delegate interceptMessage:message]) {
             return;
         }
     }
+    
     if (!message) {
         return;
     }
@@ -333,8 +371,10 @@ static NSString *const RCIMKitVersion = @"5.1.4";
     }
 
     NSDictionary *dic_left = @{ @"left" : @(nLeft) };
-    if ([self.receiveMessageDelegate respondsToSelector:@selector(onRCIMReceiveMessage:left:)]) {
-        [self.receiveMessageDelegate onRCIMReceiveMessage:message left:nLeft];
+    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+        if ([delegate respondsToSelector:@selector(onRCIMReceiveMessage:left:)]) {
+            [delegate onRCIMReceiveMessage:message left:nLeft];
+        }
     }
 
     // dispatch message
@@ -364,8 +404,12 @@ static NSString *const RCIMKitVersion = @"5.1.4";
         }
         if (message.content.mentionedInfo.isMentionedMe) {
             BOOL appConsumed = NO;
-            if ([self.receiveMessageDelegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
-                appConsumed = [self.receiveMessageDelegate onRCIMCustomAlertSound:message];
+            for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+                if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
+                    if ([delegate onRCIMCustomAlertSound:message]) {
+                        appConsumed = YES;
+                    }
+                }
             }
             if (!appConsumed) {
                 // 非讨论组通知消息，并且消息未设置为静默才响铃
@@ -386,8 +430,12 @@ static NSString *const RCIMKitVersion = @"5.1.4";
                 
                 if (NOTIFY == nStatus) {
                     BOOL appComsumed = NO;
-                    if ([self.receiveMessageDelegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
-                        appComsumed = [self.receiveMessageDelegate onRCIMCustomAlertSound:message];
+                    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+                        if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
+                            if ([delegate onRCIMCustomAlertSound:message]) {
+                                appComsumed = YES;
+                            }
+                        }
                     }
                     if (!appComsumed) {
                         
@@ -417,8 +465,10 @@ static NSString *const RCIMKitVersion = @"5.1.4";
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object offline:(BOOL)offline hasPackage:(BOOL)hasPackage {
-    if([self.receiveMessageDelegate respondsToSelector:@selector(onRCIMReceived:left:offline:hasPackage:)]) {
-        [self.receiveMessageDelegate onRCIMReceived:message left:nLeft offline:offline hasPackage:hasPackage];
+    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+        if ([delegate respondsToSelector:@selector(onRCIMReceived:left:offline:hasPackage:)]) {
+            [delegate onRCIMReceived:message left:nLeft offline:offline hasPackage:hasPackage];
+        }
     }
 }
 
@@ -440,15 +490,17 @@ static NSString *const RCIMKitVersion = @"5.1.4";
                                                         object:@(message.messageId)
                                                       userInfo:nil];
     
+    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    if ([self.receiveMessageDelegate respondsToSelector:@selector(onRCIMMessageRecalled:)]) {
-        [self.receiveMessageDelegate onRCIMMessageRecalled:message.messageId];
-    }
+        if ([delegate respondsToSelector:@selector(onRCIMMessageRecalled:)]) {
+            [delegate onRCIMMessageRecalled:message.messageId];
+        }
 #pragma clang diagnostic pop
-    
-    if ([self.receiveMessageDelegate respondsToSelector:@selector(messageDidRecall:)]) {
-        [self.receiveMessageDelegate messageDidRecall:message];
+        
+        if ([delegate respondsToSelector:@selector(messageDidRecall:)]) {
+            [delegate messageDidRecall:message];
+        }
     }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self postLocalNotificationIfNeed:message];
@@ -516,8 +568,39 @@ static NSString *const RCIMKitVersion = @"5.1.4";
         }
     });
 
-    if ([self.connectionStatusDelegate respondsToSelector:@selector(onRCIMConnectionStatusChanged:)]) {
-        [self.connectionStatusDelegate onRCIMConnectionStatusChanged:status];
+    for (id<RCIMConnectionStatusDelegate> delegate in self.connectionStatusDelegates) {
+        if ([delegate respondsToSelector:@selector(onRCIMConnectionStatusChanged:)]) {
+            [delegate onRCIMConnectionStatusChanged:status];
+        }
+    }
+}
+
+- (void)setConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)connectionStatusDelegate {
+    [self addConnectionStatusDelegate:connectionStatusDelegate];
+}
+
+- (id<RCIMConnectionStatusDelegate>)connectionStatusDelegate {
+    @synchronized (self) {
+        if (self.connectionStatusDelegates.count > 0) {
+            return self.connectionStatusDelegates.allObjects.firstObject;
+        }
+        return nil;
+    }
+}
+
+- (void)addConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)delegate {
+    @synchronized (self) {
+        if (delegate) {
+            [self.connectionStatusDelegates addObject:delegate];
+        }
+    }
+}
+
+- (void)removeConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)delegate {
+    @synchronized (self) {
+        if (delegate) {
+            [self.connectionStatusDelegates removeObject:delegate];
+        }
     }
 }
 

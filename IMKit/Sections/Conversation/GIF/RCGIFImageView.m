@@ -8,6 +8,7 @@
 
 #import "RCGIFImageView.h"
 #import "RCGIFImage.h"
+#import "RCKitUtility.h"
 
 #if defined(DEBUG) && DEBUG
 @protocol RCGIFImageViewDebugDelegate <NSObject>
@@ -335,7 +336,13 @@ static NSUInteger gcd(NSUInteger a, NSUInteger b) {
 // Don't repeatedly check our window & superview in `-displayDidRefresh:` for performance reasons.
 // Just update our cached value whenever the animated image or visibility (window, superview, hidden, alpha) is changed.
 - (void)updateShouldAnimate {
-    BOOL isVisible = self.window && self.superview && ![self isHidden] && self.alpha > 0.0;
+    UIWindow *window = self.window;
+    if (@available(iOS 14.0, *)) {
+        if (!window) {
+            window = [RCKitUtility getKeyWindow];
+        }
+    }
+    BOOL isVisible = window && self.superview && ![self isHidden] && self.alpha > 0.0;
     self.shouldAnimate = self.animatedImage && isVisible;
 }
 
@@ -378,6 +385,7 @@ static NSUInteger gcd(NSUInteger a, NSUInteger b) {
                     }
 
                     if (self.loopCountdown == 0) {
+                        super.image = image;
                         [self stopAnimating];
                         return;
                     }

@@ -64,6 +64,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.collectionView.scrollsToTop = NO;
+    self.collectionView.backgroundColor = [UIColor blackColor];
     self.collectionView.showsHorizontalScrollIndicator = NO;
     self.collectionView.contentSize = CGSizeMake(SCREEN_WIDTH * self.previewPhotosArr.count, SCREEN_HEIGHT);
     self.collectionView.pagingEnabled = YES;

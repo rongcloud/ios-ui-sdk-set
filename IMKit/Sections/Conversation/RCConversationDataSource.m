@@ -573,8 +573,6 @@ static BOOL msgRoamingServiceAvailable = YES;
                 [[RCIMClient sharedRCIMClient] setMessageReceivedStatus:rcMessage.messageId
                                                          receivedStatus:ReceivedStatus_READ];
             }
-        } else {
-            self.chatVC.unReadMessage++;
         }
         Class messageContentClass = model.content.class;
 
@@ -595,21 +593,23 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
 
         __weak typeof(self) __blockSelf = self;
-
         dispatch_async(dispatch_get_main_queue(), ^{
+            if (!__blockSelf.chatVC.isViewLoaded && (persistentFlag & MessagePersistent_ISCOUNTED)) {
+                __blockSelf.chatVC.unReadMessage++;
+            }
             //数量不可能无限制的大，这里限制收到消息过多时，就对显示消息数量进行限制。
             //用户可以手动下拉更多消息，查看更多历史消息。
             [__blockSelf clearOldestMessagesWhenMemoryWarning];
-            rcMessage = [self.chatVC willAppendAndDisplayMessage:rcMessage];
+            rcMessage = [__blockSelf.chatVC willAppendAndDisplayMessage:rcMessage];
             if (rcMessage) {
                 if (rcMessage.messageDirection == MessageDirection_SEND) {
                     __blockSelf.showUnreadViewMessageId = rcMessage.messageId;
                 }
-                if (!self.isLoadingHistoryMessage) {
+                if (!__blockSelf.isLoadingHistoryMessage) {
                     [__blockSelf appendAndDisplayMessage:rcMessage];
                 }
                 if (rcMessage.messageDirection == MessageDirection_SEND) {
-                    [self.appendMessageQueue addOperationWithBlock:^{
+                    [__blockSelf.appendMessageQueue addOperationWithBlock:^{
                         dispatch_async(dispatch_get_main_queue(), ^{
                             [__blockSelf.chatVC updateForMessageSendSuccess:rcMessage.messageId content:rcMessage.content];
                         });
@@ -628,8 +628,8 @@ static BOOL msgRoamingServiceAvailable = YES;
                 if(![__blockSelf isAtTheBottomOfTableView] && ![rcMessage.senderUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]){
                     RCMentionedInfo *mentionedInfo = rcMessage.content.mentionedInfo;
                     if (mentionedInfo.isMentionedMe) {
-                        [self.unreadMentionedMessages addObject:rcMessage];
-                        [self setupUnReadMentionedButton];
+                        [__blockSelf.unreadMentionedMessages addObject:rcMessage];
+                        [__blockSelf setupUnReadMentionedButton];
                     }
                 }
 

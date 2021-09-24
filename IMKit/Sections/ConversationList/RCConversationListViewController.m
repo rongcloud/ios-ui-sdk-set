@@ -17,7 +17,7 @@
 #import "UIImage+RCDynamicImage.h"
 #import "RCConversationListDataSource.h"
 #import "RCKitConfig.h"
-
+#import "RCConversationViewController.h"
 @interface RCConversationListViewController () <UITableViewDataSource, UITableViewDelegate, RCConversationCellDelegate,RCConversationListDataSourceDelegate>
 
 @property (nonatomic, strong) UIView *connectionStatusView;
@@ -61,7 +61,7 @@
     self.dataSource.delegate = self;
     self.isEnteredToCollectionViewController = NO;
     self.isShowNetworkIndicatorView = YES;
-    self.showConversationListWhileLogOut = YES;
+    self.displayConversationTypeArray = @[@(ConversationType_PRIVATE), @(ConversationType_GROUP), @(ConversationType_SYSTEM), @(ConversationType_CUSTOMERSERVICE), @(ConversationType_CHATROOM), @(ConversationType_APPSERVICE), @(ConversationType_PUBLICSERVICE), @(ConversationType_Encrypted)];
 }
 
 #pragma mark - Life cycle
@@ -72,7 +72,7 @@
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
     
-    self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     self.conversationListTableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     CGFloat leftOffset = 12 + [RCKitConfig defaultConfig].ui.globalConversationPortraitSize.width + 12;
@@ -629,6 +629,20 @@
 - (void)onSelectedTableRow:(RCConversationModelType)conversationModelType
          conversationModel:(RCConversationModel *)model
                atIndexPath:(NSIndexPath *)indexPath {
+    if (self.navigationController) {
+        RCConversationViewController *conversationVC = [[RCConversationViewController alloc] initWithConversationType:model.conversationType targetId:model.targetId];
+        conversationVC.conversationType = model.conversationType;
+        conversationVC.targetId = model.targetId;
+        conversationVC.title = model.conversationTitle;
+        if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
+            conversationVC.unReadMessage = model.unreadMessageCount;
+            conversationVC.enableNewComingMessageIcon = YES; //开启消息提醒
+            conversationVC.enableUnreadMessageIcon = YES;
+        }
+        [self.navigationController pushViewController:conversationVC animated:YES];
+    }else{
+        RCLogI(@"navigationController is nil , Please Rewrite `onSelectedTableRow:conversationModel:atIndexPath:` method to implement the conversation cell click to push RCConversationViewController vc");
+    }
 }
 - (void)didDeleteConversationCell:(RCConversationModel *)model {
 }

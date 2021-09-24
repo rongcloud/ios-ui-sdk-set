@@ -80,6 +80,10 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
     return 70;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return CGFLOAT_MIN;
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.row >= self.listingConversationArray.count) {
         return;
@@ -143,14 +147,15 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
 
 - (UITableView *)conversationTableView {
     if (!_conversationTableView) {
-        _conversationTableView = [[UITableView alloc] init];
         CGFloat navBarHeight = 64;
         CGFloat homeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
         if (homeBarHeight > 0) {
             navBarHeight = 88;
         }
-        _conversationTableView.frame =
-            CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - navBarHeight - homeBarHeight);
+        _conversationTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - navBarHeight - homeBarHeight) style:(UITableViewStyleGrouped)];
+        _conversationTableView.estimatedRowHeight = 0;
+        _conversationTableView.estimatedSectionHeaderHeight = 0;
+        _conversationTableView.estimatedSectionFooterHeight = 0;
         _conversationTableView.dataSource = self;
         _conversationTableView.delegate = self;
         _conversationTableView.backgroundColor = [UIColor clearColor];

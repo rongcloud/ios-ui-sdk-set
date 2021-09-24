@@ -474,6 +474,7 @@
         _collectionView.delegate = self;
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
+        _collectionView.backgroundColor = [UIColor blackColor];
     }
     return _collectionView;
 }

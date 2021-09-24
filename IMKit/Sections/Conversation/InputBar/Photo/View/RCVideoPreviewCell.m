@@ -55,6 +55,8 @@
         PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
         options.networkAccessAllowed = YES;
         options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
+        options.version = PHVideoRequestOptionsVersionOriginal;
+
         options.progressHandler =
             ^(double progress, NSError *_Nullable error, BOOL *_Nonnull stop, NSDictionary *_Nullable info) {
                 DebugLog(@"PHVideoRequestOptions progressHandler progress %f", progress);

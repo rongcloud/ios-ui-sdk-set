@@ -227,7 +227,9 @@
             (model.conversationType == ConversationType_PRIVATE || model.conversationType == ConversationType_GROUP ||
              model.conversationType == ConversationType_DISCUSSION) &&
             ![model.content isKindOfClass:NSClassFromString(@"JrmfRedPacketMessage")] &&
-            ![model.content isKindOfClass:NSClassFromString(@"RCCallSummaryMessage")]);
+            ![model.content isKindOfClass:NSClassFromString(@"RCCallSummaryMessage")]
+            &&
+            ![model.content isKindOfClass:NSClassFromString(@"RCRealTimeLocationStartMessage")]);
 }
 
 

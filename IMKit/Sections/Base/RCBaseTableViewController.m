@@ -13,9 +13,16 @@
 @end
 
 @implementation RCBaseTableViewController
+- (instancetype)initWithStyle:(UITableViewStyle)style{
+    if (self = [super initWithStyle:UITableViewStyleGrouped]) {
+        
+    }
+    return self;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self closeSelfSizing];
 }
 
 - (void)viewWillLayoutSubviews {
@@ -34,6 +41,16 @@
                                                   forKey:@"RCCurrentUserInterfaceStyle"];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
+}
+
+- (void)closeSelfSizing {
+    self.tableView.estimatedRowHeight = 0;
+    self.tableView.estimatedSectionHeaderHeight = 0;
+    self.tableView.estimatedSectionFooterHeight = 0;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return CGFLOAT_MIN;
 }
 
 @end

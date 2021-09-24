@@ -161,7 +161,7 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 /*!
  当前阅读区域的下方收到消息时，是否在会话页面的右下角提示下方存在未读消息
 
- @discussion 默认值为NO。
+ @discussion 默认值为NO。不支持聊天室
  开启该提示功能之后，当会话页面滑动到最下方时，此会话中收到消息会自动更新；
  当用户停留在上方某个区域阅读时，此会话收到消息时，会在右下角显示未读消息提示，而不会自动滚动到最下方，
  用户点击该提醒按钮，会滚动到最下方。
@@ -397,6 +397,9 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  删除消息并更新UI
 
  @param model 消息Cell的数据模型
+ @discussion 会话页面只删除本地消息，如果需要删除远端历史消息，需要
+    1.重写该方法，并调用 super 删除本地消息
+    2.调用删除远端消息接口，删除远端消息
  */
 - (void)deleteMessage:(RCMessageModel *)model;
 

@@ -235,7 +235,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.unReadButton removeFromSuperview];
         self.unReadMessage = 0;
     }
-    if (self.unReadMessage > self.defaultLocalHistoryMessageCount && self.enableUnreadMessageIcon == YES && !self.unReadButton.selected) {
+    if (self.unReadMessage > self.defaultLocalHistoryMessageCount && self.enableUnreadMessageIcon == YES && !self.unReadButton.selected && self.conversationType != ConversationType_SYSTEM) {
         [self setupUnReadMessageView];
     }
     
@@ -1234,6 +1234,15 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self sendMediaMessage:imageMessage pushContent:pushContent appUpload:appUpload];
 }
 
+- (void)resendMessageWithModel:(RCMessageModel *)model {
+    RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:model.messageId];
+    [[RCIM sharedRCIM] sendMessage:message pushContent:nil pushData:nil successBlock:^(RCMessage *successMessage) {
+        
+    } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
+        
+    }];
+}
+
 - (void)resendMessage:(RCMessageContent *)messageContent {
     if ([messageContent isMemberOfClass:RCImageMessage.class]) {
         RCImageMessage *imageMessage = (RCImageMessage *)messageContent;
@@ -2152,10 +2161,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[ message ] priority:NO];
         [self.conversationMessageCollectionView reloadItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
     } else {
-        [[RCIMClient sharedRCIMClient] deleteMessages:@[ @(msgId) ]];
         [self.conversationDataRepository removeObject:model];
-        [self.conversationMessageCollectionView deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
-        [self resendMessage:content];
+        [self.conversationDataRepository addObject:model];
+        NSIndexPath *targetIndex = [NSIndexPath indexPathForItem:self.conversationDataRepository.count - 1 inSection:0];
+        [self.conversationMessageCollectionView moveItemAtIndexPath:indexPath toIndexPath:targetIndex];
+        [self resendMessageWithModel:model];
     }
 }
 
@@ -2243,10 +2253,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         self.currentSelectedModel = nil;
     }
     [self showToolBar:[RCMessageSelectionUtility sharedManager].multiSelect];
-    NSArray<NSIndexPath *> *indexPathsForVisibleItems =
-        [self.conversationMessageCollectionView indexPathsForVisibleItems];
-    if (indexPathsForVisibleItems) {
-        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
+    if (@available(iOS 15.0, *)) {
+        [self.conversationMessageCollectionView reloadData];
+    }else{
+        NSArray<NSIndexPath *> *indexPathsForVisibleItems =
+            [self.conversationMessageCollectionView indexPathsForVisibleItems];
+        if (indexPathsForVisibleItems) {
+            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
+        }
     }
 }
 

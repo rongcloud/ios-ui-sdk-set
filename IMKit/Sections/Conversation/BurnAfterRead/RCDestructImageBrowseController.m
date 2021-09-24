@@ -81,10 +81,6 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.navigationController setNavigationBarHidden:YES];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
 }
 
@@ -130,6 +126,7 @@
         [imageProressView setHidden:YES];
     }
     [self beginDestructing];
+    [self resizeSubviews:imageView];
 }
 
 - (void)imageViewFailedToLoadImage:(RCloudImageView *)imageView error:(NSError *)error {
@@ -142,7 +139,6 @@
     if (self.messageModel.messageDirection == MessageDirection_RECEIVE && imageMessage.destructDuration > 0) {
         [[RCIMClient sharedRCIMClient]
             messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId]];
-        ;
     }
 }
 
@@ -341,10 +337,48 @@
 
 //调整图片大小
 - (void)resizeSubviews:(RCloudImageView *)ImageView {
-    ImageView.contentMode = UIViewContentModeScaleAspectFit;
-    CGFloat imageWidth = self.view.frame.size.width;
-    CGFloat imageHeight = self.view.frame.size.height;
-    [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
+    CGFloat width = self.scrollView.frame.size.width;
+    CGFloat height = self.scrollView.frame.size.height;
+    UIImage *image = ImageView.image;
+    CGFloat imageWidth = image.size.width;
+    CGFloat imageHeight = image.size.height;
+    if(imageWidth <= 0){
+        imageWidth = 1;
+    }
+    if(imageHeight <= 0) {
+        imageHeight = 1;
+    }
+    CGPoint viewCenter = CGPointMake(width/2, height/2);
+        if (imageWidth < width) {
+            /*
+             图宽＜屏幕宽，高＜屏幕高 宽适配屏幕宽，高不变，水平垂直居中屏幕展示
+             图宽＜屏幕宽，高≥屏幕高 宽不变，高不变，水平居中，垂直方向从图片顶端开始展示
+             */
+            if (imageHeight < height) {
+                CGFloat scale = imageHeight / imageWidth;
+                imageWidth = width;
+                imageHeight = width * scale;
+                [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
+                ImageView.center = viewCenter;
+            } else {
+                [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
+                ImageView.center = CGPointMake(width / 2, imageHeight / 2);
+            }
+        } else {
+            /*
+             图宽大于等于屏幕宽 宽适配屏幕宽，高等比放大或缩小  放大或缩小后的高＜屏幕高，垂直居中屏幕显示
+             放大或缩小后的高≥屏幕高，垂直方向从图片顶端开始展示
+             */
+            CGFloat scale = imageHeight / imageWidth;
+            imageWidth = width;
+            imageHeight = width * scale;
+            [ImageView setFrame:CGRectMake(0, 0, imageWidth, imageHeight)];
+            if (imageHeight < height) {
+                ImageView.center = viewCenter;
+            }
+        }
+    UIScrollView *scrollView = (UIScrollView *)ImageView.superview;
+    scrollView.contentSize = ImageView.frame.size;
 }
 
 - (void)action:(NSTimer *)scheduledTimer {

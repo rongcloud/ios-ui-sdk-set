@@ -18,11 +18,10 @@
 #define RCCXCallLocalizedName @"RongCloud"
 
 //RCCallKit_Delete_end
-@interface RCCXCall()
-@property(nonatomic, strong) NSUUID *currentUUID;
+@interface RCCXCall ()
+@property (nonatomic, strong) NSUUID *currentUUID;
 @end
 //RCCallKit_Delete_end
-
 
 @implementation RCCXCall
 
@@ -36,7 +35,7 @@
         if (pCall == nil) {
             pCall = [[RCCXCall alloc] init];
             pCall.acceptedFromCallKit = NO;
-//RCCallKit_Delete_end
+            //RCCallKit_Delete_end
         }
     });
     return pCall;
@@ -45,23 +44,29 @@
 - (void)startCall:(NSString *)userId {
     NSUUID *uuid = [NSUUID UUID];
     self.currentUUID = uuid;
-//RCCallKit_Delete_end
+    //RCCallKit_Delete_end
 }
 
 - (void)reportOutgoingCallConnected {
-//RCCallKit_Delete_end
+    //RCCallKit_Delete_end
 }
 
 - (void)reportIncomingCallWithInviter:(NSString *)inviterId
                            userIdList:(NSArray<NSString *> *)userIdList
                               isVideo:(BOOL)isVideo {
-//RCCallKit_Delete_end
+    //RCCallKit_Delete_end
+}
+
+- (void)answerCXCall {
+    //RCCallKit_Delete_end
+    self.currentUUID = nil;
+    //RCCallKit_Delete_end
 }
 
 - (void)endCXCall {
-//RCCallKit_Delete_end
+    //RCCallKit_Delete_end
     self.currentUUID = nil;
-//RCCallKit_Delete_end
+    //RCCallKit_Delete_end
 }
 
 - (void)hangupIfNeedWithUUID:(NSString *)UUID {

@@ -251,6 +251,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         flowLayout.minimumInteritemSpacing = 0;
         _collectionView = [[RCSightCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:flowLayout];
         [_collectionView registerClass:[RCDestructSightCollectionCell class] forCellWithReuseIdentifier:@"RCSightCell"];
+        _collectionView.backgroundColor = [UIColor blackColor];
         _collectionView.dataSource = self;
         _collectionView.alwaysBounceHorizontal = YES;
         _collectionView.delegate = self;

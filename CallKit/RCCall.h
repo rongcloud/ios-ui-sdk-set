@@ -20,7 +20,7 @@
 
 #endif
 
-#define RCCallGroupMemberDataSource RCIMGroupMemberDataSource //接口向后兼容
+#define RCCallGroupMemberDataSource RCIMGroupMemberDataSource  //接口向后兼容
 
 /// 新的 callsession 被创建时发出该通知
 UIKIT_EXTERN NSNotificationName const RCCallNewSessionCreationNotification;
@@ -43,7 +43,7 @@ UIKIT_EXTERN NSNotificationName const RCCallNewSessionCreationNotification;
 /*!
  视频通话支持的最大通话人数
  */
-@property(nonatomic, assign) NSInteger maxMultiVideoCallUserNumber;
+@property (nonatomic, assign) NSInteger maxMultiVideoCallUserNumber;
 
 /*!
  系统来电显示的 app 名字
@@ -68,7 +68,8 @@ UIKIT_EXTERN NSNotificationName const RCCallNewSessionCreationNotification;
  @warning  **已废弃，请勿使用。**
  升级说明：如果您之前使用了此属性，可以直接替换为[RCIM sharedRCIM]的groupMemberDataSource属性，行为和实现完全一致。
  */
-@property (nonatomic, weak) id<RCCallGroupMemberDataSource> groupMemberDataSource __deprecated_msg("已废弃，请勿使用。");
+@property (nonatomic, weak) id<RCCallGroupMemberDataSource> groupMemberDataSource __deprecated_msg("已废弃，请勿使用。")
+    ;
 
 /*!
  获取融云通话界面组件CallKit的核心类单例

@@ -171,7 +171,7 @@
     if (!_tableView) {
         _tableView = [[UITableView alloc]
             initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, self.view.bounds.size.height)
-                    style:UITableViewStylePlain];
+                    style:UITableViewStyleGrouped];
         [_tableView setDelegate:self];
         [_tableView setDataSource:self];
         _tableView.backgroundColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"f0f0f6" alpha:1] darkColor:[UIColor colorWithHexString:@"111111" alpha:1]];

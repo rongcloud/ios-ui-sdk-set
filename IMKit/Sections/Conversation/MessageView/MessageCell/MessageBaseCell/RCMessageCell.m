@@ -565,14 +565,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                 stringWithFormat:RCLocalizedString(@"readNum"), notifyModel.progress];
             [self updateStatusContentView:self.model];
         }
-    } else {
-        if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] &&
-            (self.model.conversationType == ConversationType_GROUP ||
-             self.model.conversationType == ConversationType_DISCUSSION)) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.receiptView.hidden = YES;
-            });
-        }
     }
 }
 

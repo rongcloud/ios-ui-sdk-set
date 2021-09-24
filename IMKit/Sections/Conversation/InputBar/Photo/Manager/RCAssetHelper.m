@@ -144,6 +144,9 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     PHImageRequestID imageRequestID = 0;
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
         PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+        options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
+        options.version = PHVideoRequestOptionsVersionOriginal;
+
         options.progressHandler = ^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (progressHandler) {

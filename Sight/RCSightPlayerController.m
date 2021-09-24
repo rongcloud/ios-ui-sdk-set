@@ -44,6 +44,7 @@
 
 @property (nonatomic, strong) NSURLSession *session;
 
+@property (nonatomic, copy) NSString *localPath;
 @end
 
 @implementation RCSightPlayerController
@@ -555,6 +556,7 @@
     NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     NSString *localPath = [cachepath stringByAppendingFormat:@"/%@/RCSightCache/Sight_%@.mp4", currentUserId,
                            [RCFileUtility getFileKey:[self.rcSightURL description]]];
+    self.localPath = localPath;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSightDownloadComplete" object:localPath];
     NSString *directory = [localPath stringByDeletingLastPathComponent];
     if (![[NSFileManager defaultManager] fileExistsAtPath:directory]) {
@@ -597,6 +599,31 @@
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     [session finishTasksAndInvalidate];
+    
+    //下载失败则把缓存数据清除
+    if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
+        [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
+    }
+    
+    if ([task.response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)task.response;
+        NSInteger responseCode = [httpURLResponse statusCode];
+        if(responseCode == 403 || responseCode == 404) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.progressView stopIndeterminateAnimation];
+                [self.progressView removeFromSuperview];
+                CGPoint playBtnCenter = self.transport.centerPlayBtn.center;
+                self.errorTipsLabel.center =
+                    CGPointMake(playBtnCenter.x, CGRectGetMaxY(self.transport.centerPlayBtn.frame) + 16);
+                self.errorTipsLabel.text = NSLocalizedStringFromTable(@"VideoExpired", @"RongCloudKit", nil);
+                [self.view addSubview:self.errorTipsLabel];
+            });
+            RCLogE(@"download sight error , reason : RC_FILE_EXPIRED ");
+            return;
+        }
+    }
+    
+    
     if (error) {
         sleep(2);
         dispatch_async(dispatch_get_main_queue(), ^{

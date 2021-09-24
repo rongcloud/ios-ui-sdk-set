@@ -17,9 +17,6 @@
 /// 普通类，由会话列表页面持有
 @interface RCConversationListDataSource : NSObject
 
-/// 用来控制用户退出登录时是否会话列表显示数据
-@property (nonatomic, assign) BOOL showConversationListWhileLogOut;
-
 /// 需要展示的会话类型，通过该字段获取匹配的会话类型的数据
 @property (nonatomic, strong) NSArray *displayConversationTypeArray;
 

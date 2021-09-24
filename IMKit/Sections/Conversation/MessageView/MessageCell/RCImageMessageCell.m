@@ -96,16 +96,27 @@
 
 + (CGFloat)getMessageContentHeight:(RCMessageModel *)model{
     CGFloat messagecontentview_height = 0.0f;
-    RCImageMessage *imageMessage = (RCImageMessage *)model.content;
     if (model.content.destructDuration > 0) {
         messagecontentview_height = DestructBackGroundHeight;
     } else {
-        messagecontentview_height = [RCMessageCellTool getThumbnailImageSize:imageMessage.thumbnailImage].height;
+        messagecontentview_height = [RCMessageCellTool getThumbnailImageSize:[self getDisplayImage:model]].height;
     }
     if (messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
         messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
     return messagecontentview_height;
+}
+
++ (UIImage *)getDisplayImage:(RCMessageModel *)model {
+    RCImageMessage *imageMessage = (RCImageMessage *)model.content;
+    if (imageMessage.thumbnailImage) {
+        return imageMessage.thumbnailImage;
+    }
+    if (model.messageDirection == MessageDirection_SEND) {
+        return RCResourceImage(@"to_thumb_image_broken");
+    } else {
+        return RCResourceImage(@"from_thumb_image_broken");
+    }
 }
 
 - (void)initialize {
@@ -123,8 +134,9 @@
         if (imageMessage.destructDuration <= 0) {
             self.destructBackgroundView.frame = CGRectZero;
             self.destructBackgroundView.hidden = YES;
-            CGSize imageSize = [RCMessageCellTool getThumbnailImageSize:imageMessage.thumbnailImage];
-            self.pictureView.image = imageMessage.thumbnailImage;
+            UIImage *displayImage = [[self class] getDisplayImage:self.model];
+            CGSize imageSize = [RCMessageCellTool getThumbnailImageSize:displayImage];
+            self.pictureView.image = displayImage;
             self.messageContentView.contentSize = imageSize;
             self.pictureView.frame = self.messageContentView.bounds;
         }

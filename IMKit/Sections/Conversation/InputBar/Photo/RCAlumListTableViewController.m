@@ -232,6 +232,9 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
                 }];
             PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
             options.networkAccessAllowed = YES;
+            options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
+            options.version = PHVideoRequestOptionsVersionOriginal;
+
             [[PHImageManager defaultManager]
                 requestAVAssetForVideo:model.asset
                                options:options
