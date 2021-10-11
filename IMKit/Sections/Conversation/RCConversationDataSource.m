@@ -50,14 +50,14 @@ static BOOL msgRoamingServiceAvailable = YES;
 @property (nonatomic, strong) RCMessage *firstUnreadMessage; //第一条未读消息,进入会话时存储起来，因为加载消息之后会改变所有消息的未读状态
 @property (nonatomic, copy) void(^throttleReloadAction)(void);
 
-@property (nonatomic, strong) NSMutableArray *reloadIndexPaths;
+@property (nonatomic, strong) NSMutableArray *reloadMessages;
 @end
 
 @implementation RCConversationDataSource
 - (instancetype)init:(RCConversationViewController *)chatVC {
     self = [super init];
     if(self) {
-        self.reloadIndexPaths = [NSMutableArray array];
+        self.reloadMessages = [NSMutableArray new];
         self.chatVC = chatVC;
         self.loadHistoryMessageFromRemote = NO;
         self.allMessagesAreLoaded = YES;
@@ -116,8 +116,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                 RCMessageModel *model = [RCMessageModel modelWithMessage:rcMessage];
                 [chatVC.util figureOutLatestModel:model];
                 if ([ws appendMessageModel:model]) {
-                    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:chatVC.conversationDataRepository.count - 1 inSection:0];
-                    [ws.reloadIndexPaths addObject:indexPath];
+                    [self.reloadMessages addObject:model];
                     ws.throttleReloadAction();
                 }
             }
@@ -155,22 +154,24 @@ static BOOL msgRoamingServiceAvailable = YES;
     if (!_throttleReloadAction) {
         __weak typeof(self) ws = self;
         _throttleReloadAction = [self getThrottleActionWithTimeInteval:0.3 action:^{
-            RCConversationViewController *chatVC = ws.chatVC;
-                NSIndexPath *indexPath = ws.reloadIndexPaths.firstObject;
-                BOOL reload = NO;
-                if (indexPath.row == [chatVC.conversationMessageCollectionView numberOfItemsInSection:0]) {
-                    [chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:ws.reloadIndexPaths];
-                }else{
-                    reload = YES;
+                if(ws.reloadMessages.count <= 0) {
+                    return;
                 }
-                if ([chatVC.conversationMessageCollectionView numberOfItemsInSection:0] !=
-                    chatVC.conversationDataRepository.count || reload) {
-                    DebugLog(@"Error, datasource and collectionview are inconsistent!!");
-                    [chatVC.conversationMessageCollectionView reloadData];
-                }else{
-                    [chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:ws.reloadIndexPaths];
+                RCConversationViewController *chatVC = ws.chatVC;
+                NSUInteger dataRepositorycount = ws.chatVC.conversationDataRepository.count;
+                if(dataRepositorycount <=0) {
+                    dataRepositorycount = 0;
                 }
-                [ws.reloadIndexPaths removeAllObjects];
+                [chatVC.conversationDataRepository addObjectsFromArray:ws.reloadMessages];
+            
+                NSMutableArray *reloadIndexPaths = [NSMutableArray new];
+                for (int i=0 ; i<ws.reloadMessages.count ; i++) {
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(dataRepositorycount + i) inSection:0];
+                    [reloadIndexPaths addObject:indexPath];
+                }
+            
+                [chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:reloadIndexPaths];
+                [ws.reloadMessages removeAllObjects];
        
                 if (chatVC.sendMsgAndNeedScrollToBottom || [ws isAtTheBottomOfTableView]) {
                     [chatVC scrollToBottomAnimated:YES];
@@ -218,7 +219,6 @@ static BOOL msgRoamingServiceAvailable = YES;
             }
         }
     }
-    [self.chatVC.conversationDataRepository addObject:model];
     return YES;
 }
 
@@ -735,6 +735,29 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)didReloadRecalledMessage:(long)recalledMsgId {
     int index = -1;
     RCMessageModel *msgModel;
+    //先过滤延时刷新的消息，再刷新数据源
+    if(self.reloadMessages.count > 0) {
+        for(int i=0 ; i < self.reloadMessages.count ; i++) {
+            msgModel = [self.reloadMessages objectAtIndex:i];
+            if(msgModel.messageId == recalledMsgId) {
+                index = i;
+                break;
+            }
+        }
+        
+        if(index >= 0) {
+            RCMessage *newMsg = [[RCIMClient sharedRCIMClient] getMessage:recalledMsgId];
+            if(newMsg) {
+                RCMessageModel *newModel = [RCMessageModel modelWithMessage:newMsg];
+                newModel.isDisplayMessageTime = msgModel.isDisplayMessageTime;
+                newModel.isDisplayNickname = msgModel.isDisplayNickname;
+                self.reloadMessages[index] = newModel;
+            }
+            return;
+        }
+    }
+    
+    
     for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
         msgModel = [self.chatVC.conversationDataRepository objectAtIndex:i];
         if (msgModel.messageId == recalledMsgId &&
