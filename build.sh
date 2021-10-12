@@ -16,7 +16,16 @@ git pull
 function update_sdk(){
 	src_name=$1
 	target_name=$2
-	cp /var/lib/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
+	build_host=$(hostname)
+        if [ ${build_host} = "rce" ];
+        then
+                cp /var/lib/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
+        elif [ ${build_host} = "KSSH2-RC-DF-Base-JenkinsCICD-25-200" ];
+        then
+                cp /data/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
+        else
+                exit 1
+        fi
 	unzip ${src_name}_SourceCode_*.zip
 	rm -rf ${target_name}/
 	mv ${src_name}/${src_name} ${target_name}
