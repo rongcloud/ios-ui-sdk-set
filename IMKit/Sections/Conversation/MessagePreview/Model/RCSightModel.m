@@ -35,7 +35,7 @@
             if ([[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
                 self.playerController.rcSightURL = [[NSURL alloc] initFileURLWithPath:localPath];
                 [self.playerController setFirstFrameThumbnail:self.playerController.firstFrameImage];
-            } else {
+            } else if(sightMessage.sightUrl.length > 0){
                 self.playerController.rcSightURL = [NSURL URLWithString:sightMessage.sightUrl];
             }
         }

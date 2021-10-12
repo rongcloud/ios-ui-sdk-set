@@ -253,13 +253,19 @@
 
                 }
                 success:^(NSString *mediaPath) {
-                    [weakSelf showWebView:mediaPath];
+                    dispatch_main_async_safe(^{
+                        [weakSelf showWebView:mediaPath];
+                    });
                 }
                 error:^(RCErrorCode errorCode) {
-                    [weakSelf showLoadFailedTipView];
+                    dispatch_main_async_safe(^{
+                        [weakSelf showLoadFailedTipView];
+                    });
                 }
                 cancel:^{
-                    [weakSelf showLoadFailedTipView];
+                    dispatch_main_async_safe(^{
+                        [weakSelf showLoadFailedTipView];
+                    });
                 }];
         } else {
             [self showLoadFailedTipView];
@@ -273,6 +279,7 @@
     if (!localPath) {
         return;
     }
+    dispatch_async(dispatch_get_main_queue(), ^{
     [self stopAnimation];
     self.loadingTipView.hidden = YES;
     self.loadFailedTipView.hidden = YES;
@@ -282,6 +289,7 @@
     if (html && url) {
         [self.combineMsgWebView loadHTMLString:html baseURL:url];
     }
+    });
 }
 
 - (void)showRemoteURL {
@@ -296,10 +304,14 @@
 
             }
             success:^(NSString *mediaPath) {
-                [weakSelf showWebView:mediaPath];
+                dispatch_main_async_safe(^{
+                    [weakSelf showWebView:mediaPath];
+                });
             }
             error:^(RCErrorCode errorCode) {
-                [weakSelf showLoadFailedTipView];
+                dispatch_main_async_safe(^{
+                    [weakSelf showLoadFailedTipView];
+                });
             }
             cancel:^{
 

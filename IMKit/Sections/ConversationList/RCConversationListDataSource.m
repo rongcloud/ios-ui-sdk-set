@@ -47,7 +47,7 @@
     __weak typeof(self) ws = self;
     dispatch_async(self.updateEventQueue, ^{
         NSMutableArray *modelList = [[NSMutableArray alloc] init];
-        if (ws.showConversationListWhileLogOut || [[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
+        if ([[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
             lastModel = ws.dataList.lastObject;
             if (lastModel && lastModel.sentTime > 0) {
                 sentTime = lastModel.sentTime;
@@ -96,8 +96,7 @@
     dispatch_async(self.updateEventQueue, ^{
         NSMutableArray<RCConversationModel *> *modelList = [[NSMutableArray alloc] init];
 
-        if (self.showConversationListWhileLogOut ||
-            [[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
+        if ([[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
             int c = self.currentCount < PagingCount ? PagingCount : (int)self.currentCount;
             NSArray *conversationList =
                 [[RCIMClient sharedRCIMClient] getConversationList:self.displayConversationTypeArray
@@ -221,6 +220,13 @@
     dispatch_async(self.updateEventQueue, ^{
         if (weakSelf.isConverstaionListAppear) {
             weakSelf.throttleReloadAction();
+        }else {
+            int left = [notification.userInfo[@"left"] intValue];
+            if (left == 0) {
+                if (self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
+                    [weakSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
+                }
+            }
         }
     });
 }

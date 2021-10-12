@@ -61,7 +61,6 @@
     self.dataSource.delegate = self;
     self.isEnteredToCollectionViewController = NO;
     self.isShowNetworkIndicatorView = YES;
-    self.showConversationListWhileLogOut = YES;
 }
 
 #pragma mark - Life cycle
@@ -72,7 +71,7 @@
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
     
-    self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     self.conversationListTableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     CGFloat leftOffset = 12 + [RCKitConfig defaultConfig].ui.globalConversationPortraitSize.width + 12;

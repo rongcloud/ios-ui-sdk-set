@@ -103,7 +103,7 @@
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     if (self.searchController.active) {
-        return 0;
+        return CGFLOAT_MIN;
     } else {
         return 22.0;
     }
@@ -386,7 +386,10 @@
 - (UITableView *)tableView {
     if (!_tableView) {
         _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0.0, 0.0, kScreenWidth, kScreenHeight)
-                                                  style:UITableViewStylePlain];
+                                                  style:UITableViewStyleGrouped];
+        _tableView.estimatedRowHeight = 0;
+        _tableView.estimatedSectionHeaderHeight = 0;
+        _tableView.estimatedSectionFooterHeight = 0;
         [_tableView setDelegate:self];
         [_tableView setDataSource:self];
         [_tableView setSectionIndexBackgroundColor:[UIColor clearColor]];

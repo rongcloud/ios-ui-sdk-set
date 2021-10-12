@@ -117,6 +117,7 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
             [self.tipsLabel setHidden:YES];
         }
         [self pushImagePickerController:assetsGroup animated:NO];
+        [self.tableView reloadData];
     } else {
         [RCKitUtility showProgressViewFor:self.tableView text:nil animated:YES];
         [sharedAssetHelper
@@ -150,8 +151,8 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
                                               [weakSelf.tipsLabel setHidden:YES];
                                           }
                                       }
-                                      [weakSelf.tableView reloadData];
                                   }
+                                  [weakSelf.tableView reloadData];
 
                               });
                           }];

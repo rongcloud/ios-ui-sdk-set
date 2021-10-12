@@ -116,6 +116,24 @@
         return;
     }
     __weak typeof(self) weakSelf = self;
+    if(self.assetModel.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:self.assetModel.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+            if (![[[RCAssetHelper shareAssetHelper] getAssetIdentifier:weakSelf.assetModel.asset] isEqualToString:imageIdentifier]) {
+                return;
+            }
+            dispatch_main_async_safe(^{
+                if (!avAsset) {
+                    if(weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(downloadFailFromiCloud)]) {
+                        [weakSelf.delegate downloadFailFromiCloud];
+                    }
+                    return;
+                }
+                [weakSelf changeMessageModelState:sender.selected
+                                   assetModel:weakSelf.assetModel];
+            });
+        } progressHandler:nil];
+        return;
+    }
     [[RCAssetHelper shareAssetHelper]
         getOriginImageDataWithAsset:self.assetModel
                              result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {

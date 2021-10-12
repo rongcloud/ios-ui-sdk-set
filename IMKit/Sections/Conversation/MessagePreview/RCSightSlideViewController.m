@@ -321,12 +321,14 @@
         [self scrollToCurrentIndex];
     }
     self.previousContentOffsetX = self.currentIndex * self.view.bounds.size.width;
-    [self resetPlay];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    int index = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
+    int index = (round)(scrollView.contentOffset.x / self.view.bounds.size.width);//四舍五入取整
     if (index < self.messageModelArray.count && self.viewWidth == self.view.bounds.size.width && self.isTouchScroll) {
+        if (index != self.currentIndex) {
+            [self resetPlay];
+        }
         self.currentIndex = index;
     }
 }
@@ -415,10 +417,7 @@
 - (void)resetPlay{
     for (RCSightModel *model in self.messageModelArray) {
         if (model.message.messageId == self.previousMessageId) {
-            NSInteger index = [self.messageModelArray indexOfObject:model];
-            if (index != self.currentIndex) {
-                [model.playerController reset:NO];
-            }
+            [model.playerController reset:NO];
             return;
         }
     }
@@ -510,6 +509,7 @@
         _collectionView.delegate = self;
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
+        _collectionView.backgroundColor = [UIColor blackColor];
     }
     return _collectionView;
 }

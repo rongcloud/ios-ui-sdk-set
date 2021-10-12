@@ -97,6 +97,7 @@
     titleLabel.textColor = RCDYCOLOR(0x8b8b8b, 0x878787);
     titleLabel.text = self.title;
     [self.headView addSubview:titleLabel];
+    self.tableView.tableHeaderView = self.headView;
 }
 
 - (void)createUI {
@@ -117,15 +118,17 @@
 
 - (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
+        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
+        _tableView.estimatedRowHeight = 0;
+        _tableView.estimatedSectionHeaderHeight = 0;
+        _tableView.estimatedSectionFooterHeight = 0;
         _tableView.delegate = self;
         _tableView.dataSource = self;
-        _tableView.rowHeight = 56.0;
-        _tableView.bounces = NO;
         _tableView.backgroundColor = RCDYCOLOR(0xffffff, 0x1d1d1d);
-        _tableView.tableHeaderView = self.headView;
         _tableView.separatorInset = UIEdgeInsetsMake(0, -50, 0, 0);
         _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x2f2f2f);
+        _tableView.rowHeight = 56.0;
+        _tableView.bounces = NO;
         [_tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"OneCell"];
     }
     return _tableView;
@@ -166,6 +169,10 @@
         }
     }
     [self dismiss];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    return CGFLOAT_MIN;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {

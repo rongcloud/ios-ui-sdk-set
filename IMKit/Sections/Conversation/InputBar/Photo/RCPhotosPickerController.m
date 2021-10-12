@@ -495,9 +495,14 @@ static NSString *const reuseIdentifier = @"Cell";
             for (int i = 0; i < albumChanges.insertedObjects.count; i++) {
                 if ([albumChanges.insertedObjects[i] isKindOfClass:[PHAsset class]]) {
                     BOOL isContain = NO;
+                    BOOL isContainVideo = RCKitConfigCenter.message.isMediaSelectorContainVideo;
                     for (int j = 0; j < self.assetArray.count; j++) {
                         RCAssetModel *assetModel = self.assetArray[j];
                         PHAsset *newAsset = albumChanges.insertedObjects[i];
+                        if (!isContainVideo && newAsset.mediaType == PHAssetMediaTypeVideo) {
+                            isContain = YES;
+                            break;
+                        }
                         PHAsset *asset = assetModel.asset;
                         if ([newAsset.localIdentifier isEqualToString:asset.localIdentifier]) {
                             isContain = YES;

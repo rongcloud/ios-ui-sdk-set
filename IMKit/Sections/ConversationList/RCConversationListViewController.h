@@ -277,8 +277,9 @@
  当用户退出登陆时，是否还能继续显示会话列表
 
  @discussion 默认值为YES。
+ @warning 该字段已被废弃，用户会使用 APP  收发个人的敏感消息，如果断开链接之后不关闭数据库，可能出现当前用户看到上个用户的敏感消息，基于安全方面考虑：当断开 SDK 连接的时候，SDK 会把消息数据库关闭
  */
-@property (nonatomic, assign) BOOL showConversationListWhileLogOut;
+@property (nonatomic, assign) BOOL showConversationListWhileLogOut __deprecated_msg("");
 
 #pragma mark - 其他
 

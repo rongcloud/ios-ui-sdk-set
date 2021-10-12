@@ -50,7 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.3";
+static NSString *const RCIMKitVersion = @"5.1.3.4";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {

@@ -124,13 +124,13 @@
 
     [self updateStatusContentView:self.model];
     if (model.sentStatus == SentStatus_SENDING || [[RCResendManager sharedManager] needResend:self.model.messageId]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_main_async_safe(^{
             [self.gifImageView addSubview:_progressView];
             [self.progressView setFrame:self.gifImageView.bounds];
             [self.progressView startAnimating];
         });
     } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_main_async_safe(^{
             [self.progressView removeFromSuperview];
         });
     }
@@ -139,7 +139,7 @@
 - (void)updateStatusContentView:(RCMessageModel *)model{
     [super updateStatusContentView:model];
     __weak typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_main_async_safe(^{
         if (model.content.destructDuration <= 0) {
             weakSelf.messageActivityIndicatorView.hidden = YES;
         }
@@ -185,7 +185,7 @@
     __weak typeof(self) weakSelf = self;
     [[RCIM sharedRCIM] downloadMediaMessage:weakSelf.currentModel.messageId
         progress:^(int progress) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_main_async_safe(^{
             if (weakSelf.gifDownLoadPropressView.hidden) {
                 [weakSelf showView:weakSelf.gifDownLoadPropressView];
             }
@@ -193,18 +193,18 @@
         });
         }
         success:^(NSString *mediaPath) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [weakSelf showView:weakSelf.gifImageView];
                 [weakSelf showGifImageView:mediaPath];
             });
         }
         error:^(RCErrorCode errorCode) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [weakSelf showView:weakSelf.loadfailedImageView];
             });
         }
         cancel:^{
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [weakSelf showView:weakSelf.needLoadImageView];
             });
         }];
@@ -216,7 +216,7 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSData *data = [NSData dataWithContentsOfFile:[RCUtilities getCorrectedFilePath:localPath]];
         RCGIFImage *gifImage = [RCGIFImage animatedImageWithGIFData:data];
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_main_async_safe(^{
             if (gifImage) {
                 if (self.model.content.destructDuration > 0) {
                     weakSelf.gifImageView.hidden = YES;
@@ -224,6 +224,8 @@
                 } else {
                     weakSelf.destructBackgroundView.hidden = YES;
                     weakSelf.gifImageView.hidden = NO;
+                    weakSelf.loadBackButton.hidden = YES;
+                    weakSelf.loadingImageView.hidden = YES;
                     weakSelf.gifImageView.animatedImage = gifImage;
                 }
             } else {
@@ -240,37 +242,37 @@
     if (self.model.messageId == notifyModel.messageId) {
         DebugLog(@"messageCellUpdateSendingStatusEvent >%@ ", notifyModel.actionName);
         if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_BEGIN]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [self.gifImageView addSubview:_progressView];
                 [self.progressView setFrame:self.gifImageView.bounds];
                 [self.progressView startAnimating];
             });
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_FAILED]) {
             if (self.model.sentStatus == SentStatus_SENDING) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_main_async_safe(^{
                     [self.gifImageView addSubview:_progressView];
                     [self.progressView setFrame:self.gifImageView.bounds];
                     [self.progressView startAnimating];
                 });
             } else {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_main_async_safe(^{
                     [self.progressView stopAnimating];
                     [self.progressView removeFromSuperview];
                 });
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_SUCCESS]) {
             if (self.model.sentStatus != SentStatus_READ) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_main_async_safe(^{
                     [self.progressView stopAnimating];
                     [self.progressView removeFromSuperview];
                 });
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [self.progressView updateProgress:progress];
             });
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_main_async_safe(^{
                 [self.progressView stopAnimating];
                 [self.progressView removeFromSuperview];
             });

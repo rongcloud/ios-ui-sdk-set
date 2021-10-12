@@ -145,18 +145,6 @@
 
 
 - (void)setAutoLayout {
-    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
-    self.destructTextImage.hidden = YES;
-    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
-        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
-        self.textLabel.text = RCLocalizedString(@"ClickToView");
-        self.destructTextImage.hidden = NO;
-    }else if(textMessage){
-        self.textLabel.text = textMessage.content;
-    }else{
-        DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
-    }
-    
     CGSize labelSize = [RCTextMessageCell getTextSize:self.model];//textlabelsize
     
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
@@ -181,8 +169,18 @@
         [self.textLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
         self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
-    _textLabel.attributeDictionary = [self attributeDictionary];
-    _textLabel.highlightedAttributeDictionary = [self attributeDictionary];
+    
+    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
+    self.destructTextImage.hidden = YES;
+    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
+        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
+        self.textLabel.text = RCLocalizedString(@"ClickToView");
+        self.destructTextImage.hidden = NO;
+    }else if(textMessage){
+        self.textLabel.text = textMessage.content;
+    }else{
+        DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
+    }
 }
 
 - (NSDictionary *)attributeDictionary {
@@ -313,6 +311,8 @@
         [_textLabel setTextAlignment:NSTextAlignmentLeft];
         _textLabel.delegate = self;
         _textLabel.userInteractionEnabled = YES;
+        _textLabel.attributeDictionary = [self attributeDictionary];
+        _textLabel.highlightedAttributeDictionary = [self attributeDictionary];
     }
     return _textLabel;
 }

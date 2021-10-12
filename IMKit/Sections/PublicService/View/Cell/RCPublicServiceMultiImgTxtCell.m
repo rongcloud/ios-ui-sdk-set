@@ -110,6 +110,10 @@
     }
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    return CGFLOAT_MIN;
+}
+
 #pragma mark – Private Methods
 
 - (void)longPressAction:(UITableViewCell *)cell {
@@ -140,9 +144,12 @@
 
 - (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
+        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
         _tableView.layer.cornerRadius = 4;
         _tableView.layer.masksToBounds = YES;
+        _tableView.estimatedRowHeight = 0;
+        _tableView.estimatedSectionHeaderHeight = 0;
+        _tableView.estimatedSectionFooterHeight = 0;
         _tableView.dataSource = self;
         _tableView.delegate = self;
         _tableView.scrollEnabled = NO;

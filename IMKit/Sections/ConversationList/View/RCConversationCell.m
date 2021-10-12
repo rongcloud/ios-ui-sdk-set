@@ -86,7 +86,7 @@
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"H:|-12-[_headerView(width)]-12-"
-                                                       @"[_conversationTitle]-5-[_conversationTagView]-5-"
+                                                       @"[_conversationTitle]-5-[_conversationTagView(>=30)]-5-"
                                                        @"[_messageCreatedTimeLabel(>=80)]-12-|"
                                                options:0
                                                metrics:@{
@@ -104,7 +104,7 @@
                                                  views:cellSubViews]];
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]-4-[_detailContentView(18)]"
+                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]-4-[_detailContentView]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
@@ -132,13 +132,13 @@
                                                                 multiplier:1
                                                                   constant:0]];
     
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTitle
-                                                                 attribute:NSLayoutAttributeTop
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.headerView
+                                                                 attribute:NSLayoutAttributeBottom
                                                                  relatedBy:NSLayoutRelationEqual
-                                                                    toItem:_headerView
-                                                                 attribute:NSLayoutAttributeTop
+                                                                    toItem:self.detailContentView
+                                                                 attribute:NSLayoutAttributeBottom
                                                                 multiplier:1
-                                                                  constant:4]];
+                                                                  constant:0]];
 
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:_headerView
                                                                  attribute:NSLayoutAttributeCenterY

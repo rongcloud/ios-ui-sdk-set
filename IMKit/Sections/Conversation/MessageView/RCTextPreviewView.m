@@ -23,7 +23,7 @@
 - (instancetype)initWithFrame:(CGRect)frame text:(NSString *)text{
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = RCDYCOLOR(0xffffff, 0x111111);
-        CGFloat textHeight = [RCKitUtility getTextDrawingSize:text font:[UIFont systemFontOfSize:20] constrainedSize:CGSizeMake(SCREEN_WIDTH, MAXFLOAT)].height;
+        CGFloat textHeight = [RCKitUtility getTextDrawingSize:text font:[UIFont systemFontOfSize:20] constrainedSize:CGSizeMake(SCREEN_WIDTH-20, MAXFLOAT)].height;
         textHeight = ceilf(textHeight)+20;
         self.contentSize = CGSizeMake(SCREEN_WIDTH, textHeight);
         if (textHeight <= SCREEN_HEIGHT) {
@@ -78,7 +78,7 @@
         _label.numberOfLines = 0;
         _label.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
         _label.font = [UIFont systemFontOfSize:20];
-        _label.textAlignment = NSTextAlignmentCenter;
+        _label.textAlignment = NSTextAlignmentLeft;
         _label.attributeDictionary = [RCMessageCellTool getTextLinkOrPhoneNumberAttributeDictionary:MessageDirection_RECEIVE   ];
         _label.highlightedAttributeDictionary = [RCMessageCellTool getTextLinkOrPhoneNumberAttributeDictionary:MessageDirection_RECEIVE];
         _label.delegate = self;

@@ -206,6 +206,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    //系统会话，没有输入框,无法根据输入框回调滚动，查看消息没有滚动到最底部
+    if (!self.chatSessionInputBarControl && [self.dataSource isAtTheBottomOfTableView] && self.locatedMessageSentTime == 0) {
+        [self.conversationMessageCollectionView performBatchUpdates:^{
+            [self.conversationMessageCollectionView reloadData];
+        } completion:^(BOOL finished) {
+            [self scrollToBottomAnimated:NO];
+        }];
+    }
     [self updateUnreadMsgCountLabel];
     if (self.unReadMessage > 0) {
         [self.util syncReadStatus];
@@ -227,7 +235,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.unReadButton removeFromSuperview];
         self.unReadMessage = 0;
     }
-    if (self.unReadMessage > self.defaultLocalHistoryMessageCount && self.enableUnreadMessageIcon == YES && !self.unReadButton.selected) {
+    if (self.unReadMessage > self.defaultLocalHistoryMessageCount && self.enableUnreadMessageIcon == YES && !self.unReadButton.selected && self.conversationType != ConversationType_SYSTEM) {
         [self setupUnReadMessageView];
     }
     
@@ -1321,6 +1329,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 }
 
+- (void)robotSwitchButtonDidTouch{
+    [self.csUtil robotSwitchButtonDidTouch];
+}
+
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag {
     switch (tag) {
     case PLUGIN_BOARD_ITEM_ALBUM_TAG: {
@@ -2231,10 +2243,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         self.currentSelectedModel = nil;
     }
     [self showToolBar:[RCMessageSelectionUtility sharedManager].multiSelect];
-    NSArray<NSIndexPath *> *indexPathsForVisibleItems =
-        [self.conversationMessageCollectionView indexPathsForVisibleItems];
-    if (indexPathsForVisibleItems) {
-        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
+    if (@available(iOS 15.0, *)) {
+        [self.conversationMessageCollectionView reloadData];
+    }else{
+        NSArray<NSIndexPath *> *indexPathsForVisibleItems =
+            [self.conversationMessageCollectionView indexPathsForVisibleItems];
+        if (indexPathsForVisibleItems) {
+            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
+        }
     }
 }
 

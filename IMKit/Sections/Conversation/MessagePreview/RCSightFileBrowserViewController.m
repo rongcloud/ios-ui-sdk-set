@@ -22,7 +22,7 @@
 @implementation RCSightFileBrowserViewController
 #pragma mark - Life Cycle
 - (instancetype)initWithMessageModel:(RCMessageModel *)model {
-    if (self = [super initWithStyle:UITableViewStylePlain]) {
+    if (self = [super initWithStyle:UITableViewStyleGrouped]) {
         self.messageModel = model;
     }
     return self;
