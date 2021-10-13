@@ -601,10 +601,11 @@
     [session finishTasksAndInvalidate];
     
     //下载失败则把缓存数据清除
-    if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
-        [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
+    if (error) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
+            [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
+        }
     }
-    
     if ([task.response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSHTTPURLResponse *httpURLResponse = (NSHTTPURLResponse *)task.response;
         NSInteger responseCode = [httpURLResponse statusCode];
