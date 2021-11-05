@@ -68,12 +68,10 @@
 #pragma mark - MKMapViewDelegate
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {
     static NSString *pinAnnotationIdentifier = @"PinAnnotationIdentifier";
-    MKPinAnnotationView *pinAnnotationView =
-        (MKPinAnnotationView *)[mapView dequeueReusableAnnotationViewWithIdentifier:pinAnnotationIdentifier];
+    MKAnnotationView *pinAnnotationView = (MKAnnotationView *)[mapView dequeueReusableAnnotationViewWithIdentifier:pinAnnotationIdentifier];
     if (!pinAnnotationView) {
-        pinAnnotationView =
-            [[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pinAnnotationIdentifier];
-        pinAnnotationView.pinColor = MKPinAnnotationColorGreen;
+        pinAnnotationView = [[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pinAnnotationIdentifier];
+        pinAnnotationView.image = RCResourceImage(@"map_annotation");
         pinAnnotationView.canShowCallout = YES;
     }
     return pinAnnotationView;

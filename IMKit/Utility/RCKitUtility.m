@@ -965,6 +965,8 @@
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveDismiss" : @"GroupDismiss"),
                                        nickName];
+    } else {
+        message = groupNotification.message;
     }
     return message;
 }

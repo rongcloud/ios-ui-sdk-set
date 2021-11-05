@@ -75,7 +75,7 @@
     self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     self.conversationListTableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
-    self.conversationListTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(1, 1, 0, 1)];
+    self.conversationListTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(1, 1, 0, CGFLOAT_MIN)];
     CGFloat leftOffset = 12 + [RCKitConfig defaultConfig].ui.globalConversationPortraitSize.width + 12;
     if ([self.conversationListTableView respondsToSelector:@selector(setSeparatorInset:)]) {
         self.conversationListTableView.separatorInset = UIEdgeInsetsMake(0, leftOffset, 0, 0);
@@ -695,6 +695,9 @@
                 [imageView.image rc_needReloadImage]) {
                 imageView.image = [UIImage rc_imageWithLocalPath:imageView.image.rc_imageLocalPath];
             }
+        }
+        if (self.dataSource.isConverstaionListAppear) {
+            [self.conversationListTableView reloadData];
         }
     }
 }

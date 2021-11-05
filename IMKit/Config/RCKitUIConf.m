@@ -13,7 +13,7 @@
 {
     self = [super init];
     if (self) {
-        self.globalNavigationBarTintColor = [UIColor whiteColor];
+        self.globalNavigationBarTintColor = [UIColor blackColor];
         self.globalConversationAvatarStyle = RC_USER_AVATAR_RECTANGLE;
         self.globalConversationPortraitSize = CGSizeMake(46, 46);
         self.globalMessageAvatarStyle = RC_USER_AVATAR_RECTANGLE;

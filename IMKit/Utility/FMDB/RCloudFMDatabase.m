@@ -340,8 +340,11 @@ void RCloudFMDBBlockSQLiteCallBackFunction(sqlite3_context *context, int argc, s
     // Copy the set so we don't get mutation errors
     NSSet *openSetCopy = RCloudFMDBReturnAutoreleased([_openResultSets copy]);
     for (NSValue *rsInWrappedInATastyValueMeal in openSetCopy) {
-        RCloudFMResultSet *rs = (RCloudFMResultSet *)[rsInWrappedInATastyValueMeal pointerValue];
-
+        id result = [rsInWrappedInATastyValueMeal pointerValue];
+        if(![result isKindOfClass:[RCloudFMResultSet class]]) {
+            continue;
+        }
+        RCloudFMResultSet *rs = (RCloudFMResultSet*)result;
         [rs setParentDB:nil];
         [rs close];
 

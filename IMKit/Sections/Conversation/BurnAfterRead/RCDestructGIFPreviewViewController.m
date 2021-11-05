@@ -14,6 +14,7 @@
 #import "RCGIFUtility.h"
 #import "RCDestructCountDownButton.h"
 #import "RCIMClient+Destructing.h"
+#import "RCImageMessageProgressView.h"
 @interface RCDestructGIFPreviewViewController ()
 
 @property (nonatomic, strong) NSData *gifData;
@@ -22,6 +23,9 @@
 @property (nonatomic, strong) RCGIFImageView *gifView;
 
 @property (nonatomic, strong) RCDestructCountDownButton *rightTopButton;
+
+@property (nonatomic, strong) RCImageMessageProgressView *progressView;
+
 
 @end
 
@@ -62,8 +66,8 @@
     }
     RCMessage *msg = [[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId];
     RCGIFMessage *gifMessage = (RCGIFMessage *)msg.content;
-    [[RCIMClient sharedRCIMClient] messageBeginDestruct:msg];
     if (gifMessage && gifMessage.localPath.length > 0) {
+        [[RCIMClient sharedRCIMClient] messageBeginDestruct:msg];
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             weakSelf.gifData = [NSData dataWithContentsOfFile:[RCUtilities getCorrectedFilePath:gifMessage.localPath]];
@@ -73,7 +77,55 @@
                 }
             });
         });
+    }else{
+        [self downLoadGif];
     }
+}
+
+- (void)downLoadGif {
+    [self showProgressView];
+    __weak typeof(self) weakSelf = self;
+    [[RCIM sharedRCIM] downloadMediaMessage:weakSelf.messageModel.messageId  progress:^(int progress) {
+        dispatch_main_async_safe(^{
+            [weakSelf.progressView updateProgress:progress];
+        });
+    } success:^(NSString *mediaPath) {
+        dispatch_main_async_safe(^{
+            [weakSelf hiddenProgressView];
+            [weakSelf configModel];
+        });
+    } error:^(RCErrorCode errorCode) {
+        dispatch_main_async_safe(^{
+            [weakSelf hiddenProgressView];
+            [weakSelf showFailedView];
+        });
+    } cancel:^{
+        
+    }];
+}
+
+- (void)showFailedView{
+    UIImageView *failedImageView = [[UIImageView alloc] initWithImage:RCResourceImage(@"broken")];
+    failedImageView.image = RCResourceImage(@"broken");
+    failedImageView.frame = CGRectMake(0, 0, 81, 60);
+    failedImageView.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2-60);
+    UILabel *failLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75, self.view.frame.size.height / 2 - 26, 150, 30)];
+    failLabel.text = RCLocalizedString(@"ImageLoadFailed");
+    failLabel.textAlignment = NSTextAlignmentCenter;
+    failLabel.textColor = HEXCOLOR(0x999999);
+    [self.view addSubview:failedImageView];
+    [self.view addSubview:failLabel];
+}
+
+- (void)showProgressView{
+    [self.view addSubview:self.progressView];
+    [self.progressView setCenter:CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2-60)];
+    [self.progressView startAnimating];
+}
+
+- (void)hiddenProgressView{
+    [self.progressView stopAnimating];
+    [self.progressView removeFromSuperview];
 }
 
 - (void)clickBackBtn:(id)sender {
@@ -143,4 +195,14 @@
     return _rightTopButton;
 }
 
+- (RCImageMessageProgressView *)progressView{
+    if (!_progressView) {
+        _progressView =
+            [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
+        _progressView.label.hidden = YES;
+        _progressView.indicatorView.color = HEXCOLOR(0x999999);
+        _progressView.backgroundColor = [UIColor clearColor];
+    }
+    return _progressView;
+}
 @end

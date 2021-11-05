@@ -685,6 +685,13 @@
 
 - (void)rcInputBar_didReceiveKeyboardWillShowNotification:(NSNotification *)notification {
     DebugLog(@"%s", __FUNCTION__);
+    if (@available(iOS 15.0, *)) {
+        UIApplicationState state = [UIApplication sharedApplication].applicationState;
+        if (state == UIApplicationStateBackground) {
+            return;
+        }
+    }
+    
     //textViewBeginEditing 是在 inputTextView 代理 textViewShouldBeginEditing 中赋值
     //此判断是避免会话页面其他输入框的响应导致会话输入框弹起
     if (self.inputContainerView.textViewBeginEditing) {
@@ -703,14 +710,6 @@
                 
             }];
         }
-    }else{
-        //部分情况键盘弹起会先发通知再走 textViewShouldBeginEditing， 如摇动手机撤回输入内容
-        __weak typeof(self) weakSelf = self;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if (weakSelf.inputContainerView.textViewBeginEditing) {
-                [weakSelf rcInputBar_didReceiveKeyboardWillShowNotification:notification];
-            }
-        });
     }
     if (@available(iOS 13.0, *)) {
         [[UIMenuController sharedMenuController] hideMenuFromView:self];

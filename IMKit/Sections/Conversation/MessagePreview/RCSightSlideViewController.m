@@ -131,7 +131,7 @@
 
 #pragma mark - 数据源处理
 - (NSArray<RCMessageModel *> *)getBackMessagesForModel:(RCMessageModel *)model count:(NSInteger)count times:(int)times {
-    NSArray<RCMessageModel *> *imageArrayBackward =
+    NSArray<RCMessage *> *imageArrayBackward =
         [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
@@ -140,7 +140,8 @@
                                                     count:(int)count];
     NSArray *messages = [self filterDestructSightMessage:imageArrayBackward];
     if (times < 2 && messages.count == 0 && imageArrayBackward.count == count) {
-        messages = [self getBackMessagesForModel:imageArrayBackward.lastObject count:count times:times + 1];
+        RCMessageModel *model = [RCMessageModel modelWithMessage:imageArrayBackward.lastObject];
+        messages = [self getBackMessagesForModel:model count:count times:times + 1];
     }
     return messages;
 }
@@ -148,7 +149,7 @@
 - (NSArray<RCMessageModel *> *)getFrontMessagesForModel:(RCMessageModel *)model
                                                   count:(NSInteger)count
                                                   times:(int)times {
-    NSArray<RCMessageModel *> *imageArrayForward =
+    NSArray<RCMessage *> *imageArrayForward =
         [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
@@ -158,7 +159,8 @@
 
     NSArray *messages = [self filterDestructSightMessage:imageArrayForward.reverseObjectEnumerator.allObjects];
     if (times < 2 && imageArrayForward.count == count && messages.count == 0) {
-        messages = [self getFrontMessagesForModel:imageArrayForward.lastObject count:count times:times + 1];
+        RCMessageModel *model = [RCMessageModel modelWithMessage:imageArrayForward.lastObject];
+        messages = [self getFrontMessagesForModel:model count:count times:times + 1];
     }
     return messages;
 }
@@ -166,8 +168,9 @@
 //过滤阅后即焚视频消息
 - (NSArray *)filterDestructSightMessage:(NSArray *)array {
     NSMutableArray *backwardMessages = [NSMutableArray array];
-    for (RCMessageModel *model in array) {
-        if (!(model.content.destructDuration > 0)) {
+    for (RCMessage *mesage in array) {
+        if (!(mesage.content.destructDuration > 0)) {
+            RCMessageModel *model = [RCMessageModel modelWithMessage:mesage];
             [backwardMessages addObject:model];
         }
     }

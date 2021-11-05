@@ -198,6 +198,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         _playerController = [[RCSightPlayerController alloc] init];
         _playerController.overlayHidden = YES;
         _playerController.delegate = self;
+        _playerController.isLoopPlayback = YES;
     }
     return _playerController;
 }

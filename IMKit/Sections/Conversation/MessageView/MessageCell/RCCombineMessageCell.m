@@ -86,6 +86,7 @@
     [[NSMutableAttributedString alloc] initWithString:summaryContent];
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     [paragraphStyle setLineSpacing:CONTENTLINESPACE];//设置行间距
+    paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
     [attriString addAttribute:NSParagraphStyleAttributeName
                         value:paragraphStyle
                         range:NSMakeRange(0, [summaryContent length])];
@@ -116,7 +117,7 @@
 
     if ([text respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+        paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
         paragraphStyle.lineSpacing = lineSpace;
         NSDictionary *attributes = @{NSFontAttributeName : font, NSParagraphStyleAttributeName : paragraphStyle};
 

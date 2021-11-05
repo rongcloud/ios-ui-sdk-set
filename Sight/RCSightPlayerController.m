@@ -618,7 +618,11 @@
                     CGPointMake(playBtnCenter.x, CGRectGetMaxY(self.transport.centerPlayBtn.frame) + 16);
                 self.errorTipsLabel.text = NSLocalizedStringFromTable(@"VideoExpired", @"RongCloudKit", nil);
                 [self.view addSubview:self.errorTipsLabel];
+                self.transport.centerPlayBtn.hidden = YES;
             });
+            if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
+                [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
+            }
             RCLogE(@"download sight error , reason : RC_FILE_EXPIRED ");
             return;
         }

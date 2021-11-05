@@ -16,7 +16,7 @@
 @property (nonatomic, assign) BOOL sendMsgAndNeedScrollToBottom;
 
 - (void)updateUnreadMsgCountLabel;
-- (void)updateForMessageSendSuccess:(long)messageId content:(RCMessageContent *)content;
+- (void)updateForMessageSendSuccess:(RCMessage *)message;
 - (void)fetchPublicServiceProfile;
 @end
 

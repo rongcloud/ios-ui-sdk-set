@@ -113,8 +113,13 @@
         [self showGifImageView:localPath];
     } else {
         if (gifMessage.remoteUrl.length > 0 && gifMessage.gifDataSize > maxAutoSize * 1024) {
-            //超过限制，需要点击下载
-            [self showView:self.needLoadImageView];
+            if (self.model.content.destructDuration > 0) {
+                self.gifImageView.hidden = YES;
+                self.destructBackgroundView.hidden = NO;
+            }else{
+                //超过限制，需要点击下载
+                [self showView:self.needLoadImageView];
+            }
         } else {
             self.messageContentView.userInteractionEnabled = NO;
             //没超过限制，自动下载

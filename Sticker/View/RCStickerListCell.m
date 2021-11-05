@@ -31,9 +31,9 @@
     if (self) {
         self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
                                                         darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
-        [self addSubview:self.headImage];
-        [self addSubview:self.nameLabel];
-        [self addSubview:self.deleteBtn];
+        [self.contentView addSubview:self.headImage];
+        [self.contentView addSubview:self.nameLabel];
+        [self.contentView addSubview:self.deleteBtn];
 
         self.headImage.frame = CGRectMake(15, 5, 40, 40);
         self.nameLabel.frame = CGRectMake(CGRectGetMaxX(self.headImage.frame) + 15, 12.5, 200, 25);

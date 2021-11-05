@@ -543,20 +543,20 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         // 更新消息状态
         NSNumber *conversationType = statusDic[@"conversationType"];
         NSString *targetId = statusDic[@"targetId"];
+        NSNumber *messageId = statusDic[@"messageId"];
         if (conversationType.intValue == self.conversationType && [targetId isEqual:self.targetId]) {
-            NSNumber *messageId = statusDic[@"messageId"];
             NSNumber *sentStatus = statusDic[@"sentStatus"];
             if (sentStatus.intValue == SentStatus_SENDING) {
                 NSNumber *progress = statusDic[@"progress"];
                 [self updateForMessageSendProgress:progress.intValue messageId:messageId.longValue];
             } else if (sentStatus.intValue == SentStatus_SENT) {
-                RCMessageContent *content = statusDic[@"content"];
-                [self updateForMessageSendSuccess:messageId.longValue content:content];
+                RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId.longValue];
+                [self updateForMessageSendSuccess:message];
             } else if (sentStatus.intValue == SentStatus_FAILED) {
                 NSNumber *errorCode = statusDic[@"error"];
-                RCMessageContent *content = statusDic[@"content"];
+                RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId.longValue];
                 bool ifResendNotification = [statusDic.allKeys containsObject:@"resend"];
-                [self updateForMessageSendError:errorCode.intValue messageId:messageId.longValue content:content ifResendNotification:ifResendNotification];
+                [self updateForMessageSendError:errorCode.intValue message:message ifResendNotification:ifResendNotification];
             } else if (sentStatus.intValue == SentStatus_CANCELED) {
                 RCMessageContent *content = statusDic[@"content"];
                 [self updateForMessageSendCanceled:messageId.longValue content:content];
@@ -2062,7 +2062,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         if ([self.util canRecallMessageOfModel:model]) {
             [items addObject:recallItem];
         }
-        [items addObject:multiSelectItem];
     } else {
         if ([model.content isMemberOfClass:[RCTextMessage class]] ||
             [model.content isMemberOfClass:[RCReferenceMessage class]]) {
@@ -2074,8 +2073,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         }
         if ([self.util canReferenceMessage:model]) {
             [items addObject:referItem];
-        }
-
+        }        
+    }
+    if (self.conversationType != ConversationType_SYSTEM) {
         [items addObject:multiSelectItem];
     }
     return items.copy;
@@ -2328,7 +2328,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_PROGRESS messageId:messageId progress:progress];
 }
 
-- (void)updateForMessageSendSuccess:(long)messageId content:(RCMessageContent *)content {
+- (void)updateForMessageSendSuccess:(RCMessage *)message {
+    long messageId = message.messageId;
+    RCMessageContent *content = message.content;
     DebugLog(@"message<%ld> send succeeded ", messageId);
     [self.csUtil startNotSendMessageAlertTimer];
 
@@ -2355,6 +2357,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     });
 
     [self didSendMessage:0 content:content];
+    [self didSendMessageModel:0 model:[RCMessageModel modelWithMessage:message]];
 
     if ([content isKindOfClass:[RCImageMessage class]]) {
         RCImageMessage *imageMessage = (RCImageMessage *)content;
@@ -2418,9 +2421,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 
 - (void)updateForMessageSendError:(RCErrorCode)nErrorCode
-                        messageId:(long)messageId
-                          content:(RCMessageContent *)content
+                          message:(RCMessage *)message
              ifResendNotification:(bool)ifResendNotification{
+    long messageId = message.messageId;
+    RCMessageContent *content = message.content;
     DebugLog(@"message<%ld> send failed error code %d", messageId, (int)nErrorCode);
 
 
@@ -2438,6 +2442,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         });
 
     [self didSendMessage:nErrorCode content:content];
+    [self didSendMessageModel:nErrorCode model:[RCMessageModel modelWithMessage:message]];
 
     RCInformationNotificationMessage *informationNotifiMsg = [self.util getInfoNotificationMessageByErrorCode:nErrorCode];
     if (nil != informationNotifiMsg && !ifResendNotification) {
@@ -2944,6 +2949,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (void)didSendMessage:(NSInteger)status content:(RCMessageContent *)messageContent {
     DebugLog(@"super %s, %@", __FUNCTION__, messageContent);
+}
+
+- (void)didSendMessageModel:(NSInteger)status model:(RCMessageModel *)messageModel {
+    DebugLog(@"super %s, %@", __FUNCTION__, messageModel);
 }
 
 - (void)didCancelMessage:(RCMessageContent *)messageContent {

@@ -177,7 +177,7 @@
         _contentLabel.highlightedAttributeDictionary = [self attributeDictionary];
         [_contentLabel setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         _contentLabel.numberOfLines = 0;
-        [_contentLabel setLineBreakMode:NSLineBreakByCharWrapping];
+        [_contentLabel setLineBreakMode:NSLineBreakByWordWrapping];
         _contentLabel.delegate = self;
         _contentLabel.userInteractionEnabled = YES;
     }

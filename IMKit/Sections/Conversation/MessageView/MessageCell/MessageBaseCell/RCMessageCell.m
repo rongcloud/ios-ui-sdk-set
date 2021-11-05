@@ -775,9 +775,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _messageActivityIndicatorView;
 }
 
-- (UIButton *)messageFailedStatusView{
+- (RCButton *)messageFailedStatusView{
     if (!_messageFailedStatusView) {
-        _messageFailedStatusView = [[UIButton alloc] init];
+        _messageFailedStatusView = [[RCButton alloc] init];
         [_messageFailedStatusView setImage:RCResourceImage(@"sendMsg_failed_tip") forState:UIControlStateNormal];
         _messageFailedStatusView.hidden = YES;
         [_messageFailedStatusView addTarget:self

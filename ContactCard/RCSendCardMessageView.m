@@ -303,36 +303,36 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     RCUserInfo *currentUserInfo = [RCIM sharedRCIM].currentUserInfo;
     cardMessage.sendUserId = currentUserInfo.userId;
     cardMessage.sendUserName = currentUserInfo.name;
+    RCMessage *message = [[RCMessage alloc] initWithType:_conversationType targetId:_targetId direction:MessageDirection_SEND content:cardMessage];
+    NSString *tail = [NSString stringWithFormat:RCLocalizedString(@"RecommendedToYou"), _cardUserInfo.name];
+    NSString *pushTitle = @"";
     NSString *pushContent = nil;
-    NSString *tail = [NSString
-        stringWithFormat:RCLocalizedString(@"RecommendedToYou"), _cardUserInfo.name];
     if (_conversationType == ConversationType_GROUP) {
-        pushContent = [NSString stringWithFormat:@"%@(%@)%@", cardMessage.sendUserName, _groupInfo.groupName, tail];
-    } else {
+        pushTitle = _groupInfo.groupName;
         pushContent = [NSString stringWithFormat:@"%@%@", cardMessage.sendUserName, tail];
+    } else {
+        pushTitle = cardMessage.sendUserName;
+        pushContent = [NSString stringWithFormat:@"%@", tail];
     }
+    message.messagePushConfig.pushTitle = pushTitle;
+    message.messagePushConfig.pushContent = pushContent;
+    
     if (self.destructDuration > 0) {
         cardMessage.destructDuration = self.destructDuration;
     }
     __weak typeof(self) ws = self;
-    [[RCIM sharedRCIM] sendMessage:_conversationType
-        targetId:_targetId
-        content:cardMessage
-        pushContent:pushContent
-        pushData:nil
-        success:^(long messageId) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [ws performSelector:@selector(sendTextMessageIfNeed) withObject:nil afterDelay:0.2];
-            });
-            [ws dealWithWhenSendComplete];
-        }
-        error:^(RCErrorCode nErrorCode, long messageId) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [ws performSelector:@selector(sendTextMessageIfNeed) withObject:nil afterDelay:0.2];
-            });
-            [ws gotoConversationVC];
-            [ws dealWithWhenSendComplete];
-        }];
+    [[RCIM sharedRCIM] sendMessage:message pushContent:nil pushData:nil successBlock:^(RCMessage *successMessage) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [ws performSelector:@selector(sendTextMessageIfNeed) withObject:nil afterDelay:0.2];
+        });
+        [ws dealWithWhenSendComplete];
+    } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [ws performSelector:@selector(sendTextMessageIfNeed) withObject:nil afterDelay:0.2];
+        });
+        [ws gotoConversationVC];
+        [ws dealWithWhenSendComplete];
+    }];
 }
 
 - (void)dealWithWhenSendComplete {

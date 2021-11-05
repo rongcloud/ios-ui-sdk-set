@@ -353,7 +353,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     if (__messageArray.count < self.chatVC.defaultLocalHistoryMessageCount) {
         self.allMessagesAreLoaded = NO;
         self.loadHistoryMessageFromRemote = YES;
-//        [self loadRemoteHistoryMessages];
+        [self loadRemoteHistoryMessages];
     }
     self.isIndicatorLoading = NO;
     [self.chatVC.collectionViewHeader stopAnimating];
@@ -611,7 +611,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                 if (rcMessage.messageDirection == MessageDirection_SEND) {
                     [__blockSelf.appendMessageQueue addOperationWithBlock:^{
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            [__blockSelf.chatVC updateForMessageSendSuccess:rcMessage.messageId content:rcMessage.content];
+                            [__blockSelf.chatVC updateForMessageSendSuccess:rcMessage];
                         });
                     }];
                 }

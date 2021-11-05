@@ -110,7 +110,7 @@
                                                  views:cellSubViews]];
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:|-16-[_conversationTagView(20)]"
+                           constraintsWithVisualFormat:@"V:[_conversationTagView(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
@@ -128,6 +128,13 @@
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
                                                                     toItem:self.detailContentView
+                                                                 attribute:NSLayoutAttributeCenterY
+                                                                multiplier:1
+                                                                  constant:0]];
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTagView
+                                                                 attribute:NSLayoutAttributeCenterY
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:self.conversationTitle
                                                                  attribute:NSLayoutAttributeCenterY
                                                                 multiplier:1
                                                                   constant:0]];
