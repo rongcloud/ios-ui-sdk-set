@@ -21,7 +21,9 @@ RongCloudOpenSource 里面 SDK 都以源码形式存在，主要包含各个 UI 
 
 ## 2. 架构说明
 
-![](https://rongcloud-image.cn.ronghub.com/image_jpeg__RC-2021-03-01_9330_1614584928194.jpg?e=1630136930&token=CddrKW5AbOMQaDRwc3ReDNvo3-sL_SO1fSUBKV3H:Y7Zv3fMKTmb5_YOYq3TWS-_7ntE=)
+![](./images/pod_ui_arch.png)
+
+**此处有架构图，如果空白或者加载失败，请查看 images/pod_ui_arch.png**
 
 **绿色部分的 SDK 是以 `framework` 形式存在，属于 RongCloudIM**
 
@@ -44,6 +46,8 @@ CallKit|可选|音视频 UI 库
 ## 3. 引入方式说明
 
 支持 framework 和 源码 两种引入方式
+
+`说明：本文档涉及的 SDK 仅能两种形式存在，即全是源码，或者全是 framework`，不能出现一部分源码，一部分 framework（如不支持 IMKit 使用源码而 CallKit 使用 framework）
 
 如果需要在 framework 和 源码两种方式之间切换需要涉及 podfile 的声明 和 APP 项目的引入问题，可以参见下面的内容
 
