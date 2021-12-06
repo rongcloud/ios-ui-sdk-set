@@ -91,11 +91,17 @@ pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 #import <RongCloudOpenSource/RongSight.h>
 ```
 
-## 4. 讯飞语音输入插件特殊说明
+## 4. 名片插件特殊说明
+
+名片插件没有以 framework 形式推到 pod，如果需要使用名片 SDK，建议使用源码方式导入
+
+如果必须使用名片的 framework，那么请在 [SealTalk 源码](https://github.com/rongcloud/sealtalk-ios/tree/master/ios-sealtalk/framework/RongContactCard)中下载名片 SDK 并手动导入，并将 xcframework 的 Embed 设置为 Embed & Sign
+
+## 5. 讯飞语音输入插件特殊说明
 
 [讯飞语音输入插件](./ifly.md)
 
-## 5. FAQ
+## 6. FAQ
 
 > 找不到 RongCloudOpenSource 怎么办？
 
