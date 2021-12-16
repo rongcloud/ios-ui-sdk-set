@@ -29,6 +29,8 @@
 
 @property (nonatomic, strong) NSMutableArray *unreadMentionedMessages;
 
+@property (nonatomic, strong) NSMutableArray *cachedReloadMessages;
+
 //进入聊天页面初次加载的消息
 - (void)getInitialMessage:(RCConversation *)conversation;
 

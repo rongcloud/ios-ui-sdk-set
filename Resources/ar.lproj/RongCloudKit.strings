@@ -277,3 +277,4 @@
 "DownloadFailFromiCloud"="Download Fail From iCloud";
 "KickedOfflineByOtherClient"="This account has been logged-in on other devices";
 "VideoExpired"="Video Deleted or Expired";
+"LoadMsgAskInfo"="Network Error，View local history messages?";

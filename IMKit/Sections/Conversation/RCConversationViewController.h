@@ -40,6 +40,27 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 };
 
 /*!
+ 加载消息类型
+ @discussion added from 5.1.7
+ */
+typedef enum : NSUInteger {
+    /*!
+     同步远端消息成功失败都加载消息
+     */
+    RCConversationLoadMessageTypeAlways,
+    
+    /*!
+     同步远端消息失败时询问是否加载本地消息
+     */
+    RCConversationLoadMessageTypeAsk,
+    
+    /*!
+     同步远端消息成功再加载消息
+     */
+    RCConversationLoadMessageTypeOnlySuccess,
+} RCConversationLoadMessageType;
+
+/*!
  会话页面类
  */
 @interface RCConversationViewController
@@ -258,7 +279,7 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 @property (nonatomic, assign) int defaultHistoryMessageCountOfChatRoom;
 
 /*!
- 设置进入会话页面后下拉刷新从远端获取消息的条数，默认是 10。
+ 设置进入会话页面后下拉刷新从远端获取消息的条数，默认是 10，defaultRemoteHistoryMessageCount 传入 1~20 之间的数值。
  @discussion 此属性需要在viewDidLoad之前进行设置。
  */
 @property (nonatomic, assign) int defaultRemoteHistoryMessageCount;
@@ -268,6 +289,15 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  @discussion 此属性需要在viewDidLoad之前进行设置。
  */
 @property (nonatomic, assign) int defaultLocalHistoryMessageCount;
+
+/*!
+ 加载消息类型（不支持聊天室）
+ 
+ @discussion 加载消息是先从本地获取历史消息，本地有缺失的情况下会从服务端同步缺失的部分。 从服务端同步失败的时候会返回非 0 的 errorCode，同时把本地能取到的消息回调上去。
+ @discussion 此属性可以控制从服务端同步失败的时候加载消息的方式。
+ @discussion added from 5.1.7
+ */
+@property (nonatomic, assign) RCConversationLoadMessageType loadMessageType;
 
 /*!
  已经选择的所有消息

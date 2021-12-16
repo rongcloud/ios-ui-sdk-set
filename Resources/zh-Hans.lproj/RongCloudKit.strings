@@ -275,3 +275,4 @@
 "CannotUploadFiles"="不能上传 0kb 的文件";
 "DownloadFailFromiCloud"="从 iCloud 下载图片失败，请稍后重试";
 "VideoExpired"="视频被删除或过期";
+"LoadMsgAskInfo"="网络异常，查看本地历史消息？";

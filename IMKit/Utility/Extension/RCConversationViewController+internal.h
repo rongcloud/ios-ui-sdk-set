@@ -18,6 +18,7 @@
 - (void)updateUnreadMsgCountLabel;
 - (void)updateForMessageSendSuccess:(RCMessage *)message;
 - (void)fetchPublicServiceProfile;
+- (void)setupUnReadMessageView;
 @end
 
 #endif /* RCConversationViewController_internal_h */

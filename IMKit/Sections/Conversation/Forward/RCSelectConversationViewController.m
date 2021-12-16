@@ -147,12 +147,9 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
 
 - (UITableView *)conversationTableView {
     if (!_conversationTableView) {
-        CGFloat navBarHeight = 64;
         CGFloat homeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
-        if (homeBarHeight > 0) {
-            navBarHeight = 88;
-        }
-        _conversationTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - navBarHeight - homeBarHeight) style:(UITableViewStyleGrouped)];
+        CGRect frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height-homeBarHeight);
+        _conversationTableView = [[UITableView alloc] initWithFrame:frame  style:UITableViewStyleGrouped];
         _conversationTableView.estimatedRowHeight = 0;
         _conversationTableView.estimatedSectionHeaderHeight = 0;
         _conversationTableView.estimatedSectionFooterHeight = 0;

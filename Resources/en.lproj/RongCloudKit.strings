@@ -275,3 +275,4 @@
 "CannotUploadFiles"="Cannot upload 0KB file.";
 "DownloadFailFromiCloud"="Download Fail From iCloud";
 "VideoExpired"="Video Deleted or Expired";
+"LoadMsgAskInfo"="Network Error，View local history messages?";

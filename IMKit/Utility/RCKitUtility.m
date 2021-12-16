@@ -219,7 +219,7 @@
             formatedMsg = [formatedMsg substringToIndex:500];
             formatedMsg = [formatedMsg stringByAppendingString:@"..."];
         }else if(formatedMsg.length == 0){
-            formatedMsg = [RCKitUtility localizedDescription:messageContent];
+            formatedMsg = @"";
         }
         return formatedMsg;
     } else {

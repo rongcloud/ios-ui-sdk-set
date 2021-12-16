@@ -21,6 +21,11 @@
 #import "RCHQVoiceMessageCell.h"
 #import "RCKitConfig.h"
 #import "RCSightMessage+imkit.h"
+#import "RCConversationDataSource.h"
+
+@interface RCConversationViewController ()
+@property (nonatomic, strong, readonly) RCConversationDataSource *dataSource;
+@end
 
 @interface RCConversationVCUtil ()
 @property (nonatomic, weak) RCConversationViewController *chatVC;
@@ -125,11 +130,24 @@
 }
 
 - (void)figureOutLatestModel:(RCMessageModel *)model {
-    if (self.chatVC.conversationDataRepository.count > 0) {
+    if ([model.content isKindOfClass:RCOldMessageNotificationMessage.class]) {
+        model.isDisplayMessageTime = NO;
+        return;
+    }
+    NSMutableArray *messageArr = [NSMutableArray new];
+    if(self.chatVC.conversationDataRepository.count > 0) {
+        [messageArr addObjectsFromArray:self.chatVC.conversationDataRepository];
+    }
+    if (self.chatVC.dataSource.cachedReloadMessages.count > 0) {
+        [messageArr addObjectsFromArray:self.chatVC.dataSource.cachedReloadMessages];
+    }
+    if (messageArr.count > 0) {
 
-        RCMessageModel *pre_model =
-            [self.chatVC.conversationDataRepository objectAtIndex:self.chatVC.conversationDataRepository.count - 1];
-
+        RCMessageModel *pre_model = messageArr.lastObject;
+        if ([pre_model.content isKindOfClass:RCOldMessageNotificationMessage.class]) {
+            model.isDisplayMessageTime = YES;
+            return;
+        }
         long long previous_time = pre_model.sentTime;
 
         long long current_time = model.sentTime;

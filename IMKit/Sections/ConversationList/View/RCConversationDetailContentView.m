@@ -86,7 +86,7 @@
             [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
-            messageContent = [NSString stringWithFormat:@"%@:%@", self.prefixName, [self formatMessageContent:model]];
+            messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];
         }
     }
     if (messageContent == nil) {

@@ -385,7 +385,7 @@ static long hq_messageId = 0;
     RCHQVoiceMessage *_voiceMessage =
         (RCHQVoiceMessage *)[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId].content;
     NSString *localPath = [self getCorrectedPath:_voiceMessage.localPath];
-    if (localPath.length > 0) {
+    if (localPath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
 
         /**
          *  if the previous voice message is playing, then

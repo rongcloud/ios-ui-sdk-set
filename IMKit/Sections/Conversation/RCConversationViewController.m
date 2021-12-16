@@ -214,38 +214,18 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             [self scrollToBottomAnimated:NO];
         }];
     }
-    [self updateUnreadMsgCountLabel];
-    if (self.unReadMessage > 0) {
-        [self.util syncReadStatus];
-        [self.util sendReadReceipt];
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [[RCIMClient sharedRCIMClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId];
-            /// 清除完未读数需要通知更新UI
-            [self notifyUpdateUnreadMessageCount];
-        });
-    }
+    
     self.navigationController.interactivePopGestureRecognizer.delaysTouchesBegan = NO;
 
     [self.conversationMessageCollectionView addGestureRecognizer:self.resetBottomTapGesture];
-
-    [self.chatSessionInputBarControl containerViewWillAppear];
-
-    [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
-    if (self.conversationDataRepository.count == 0 && self.unReadButton != nil) {
-        [self.unReadButton removeFromSuperview];
-        self.unReadMessage = 0;
-    }
-    if (self.unReadMessage > self.defaultLocalHistoryMessageCount && self.enableUnreadMessageIcon == YES && !self.unReadButton.selected && self.conversationType != ConversationType_SYSTEM) {
-        [self setupUnReadMessageView];
-    }
     
-    [self.dataSource scrollToSuitablePosition];
-    [self.dataSource setupUnReadMentionedButton];
+    [self.chatSessionInputBarControl containerViewWillAppear];
+    
+    [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
     
     [[RongIMKitExtensionManager sharedManager] extensionViewWillAppear:self.conversationType
                                                               targetId:self.targetId
                                                          extensionView:self.extensionView];
-    
     if(self.placeholderLabel) {
         [self.placeholderLabel removeFromSuperview];
         [self.chatSessionInputBarControl.inputTextView addSubview:self.placeholderLabel];
@@ -2253,15 +2233,13 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         self.currentSelectedModel = nil;
     }
     [self showToolBar:[RCMessageSelectionUtility sharedManager].multiSelect];
-    if (@available(iOS 15.0, *)) {
-        [self.conversationMessageCollectionView reloadData];
-    }else{
-        NSArray<NSIndexPath *> *indexPathsForVisibleItems =
-            [self.conversationMessageCollectionView indexPathsForVisibleItems];
-        if (indexPathsForVisibleItems) {
-            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
-        }
+    NSArray<NSIndexPath *> *indexPathsForVisibleItems = [self.conversationMessageCollectionView indexPathsForVisibleItems];
+    if (indexPathsForVisibleItems) {
+        // 刷新可视范围的 Cell
+        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
     }
+    // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 http://zt.rongcloud.net/index.php?m=bug&f=view&t=html&id=44945 这个问题
+    [self.conversationMessageCollectionView reloadData];
 }
 
 - (void)showToolBar:(BOOL)show {
@@ -2449,7 +2427,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         __block RCMessage *tempMessage = [[RCIMClient sharedRCIMClient] insertOutgoingMessage:self.conversationType
                                                                                      targetId:self.targetId
                                                                                    sentStatus:SentStatus_SENT
-                                                                                      content:informationNotifiMsg];
+                                                                                      content:informationNotifiMsg
+                                                                                     sentTime:(message.sentTime + 1)];
         dispatch_async(dispatch_get_main_queue(), ^{
             tempMessage = [__weakself willAppendAndDisplayMessage:tempMessage];
             if (tempMessage) {
@@ -2815,8 +2794,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 
 - (void)setDefaultRemoteHistoryMessageCount:(int)defaultRemoteHistoryMessageCount {
-    if (defaultRemoteHistoryMessageCount > 100) {
-        defaultRemoteHistoryMessageCount = 100;
+    if (defaultRemoteHistoryMessageCount > 20) {
+        defaultRemoteHistoryMessageCount = 20;
     }else if(defaultRemoteHistoryMessageCount < 0){
         defaultRemoteHistoryMessageCount = 10;
     }
