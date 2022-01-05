@@ -2,7 +2,7 @@
 //  RCMenuContainerView.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2020/5/26.
+//  Created by RongCloud on 2020/5/26.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 
@@ -14,7 +14,7 @@
 @interface RCMenuContainerView : UIView
 
 /*!
- 公众服务账号菜单
+ Public Service Menu
  */
 @property (nonatomic, strong) RCPublicServiceMenu *publicServiceMenu;
 

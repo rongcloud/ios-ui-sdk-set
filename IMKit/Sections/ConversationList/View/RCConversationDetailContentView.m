@@ -2,8 +2,8 @@
 //  RCConversationDetailContentView.m
 //  RongIMKit
 //
-//  Created by 岑裕 on 16/9/15.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 16/9/15.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCConversationDetailContentView.h"
@@ -86,7 +86,7 @@
             [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
-            messageContent = [NSString stringWithFormat:@"%@:%@", self.prefixName, [self formatMessageContent:model]];
+            messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];
         }
     }
     if (messageContent == nil) {

@@ -2,8 +2,8 @@
 //  RCAlbumModel.h
 //  RongExtensionKit
 //
-//  Created by 张改红 on 16/3/25.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 16/3/25.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

@@ -2,7 +2,7 @@
 //  RCInputContainerView+internal.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2020/12/9.
+//  Created by RongCloud on 2020/12/9.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

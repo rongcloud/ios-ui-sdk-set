@@ -420,12 +420,22 @@
     if ([RCKitUtility isRTL]) {
         imageViewFrame = CGRectMake(temBut.size.width - arrowLeft - arrowWidth, (temBut.size.height- 9)/2, arrowWidth, 9);
     }
-    UIImageView *imageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
-    CGPoint center = imageView.center;
-    center.y = sender.center.y;
-    imageView.center = center;
-    imageView.image = RCResourceImage(@"arrow");
-    [senderButton addSubview:imageView];
+
+    UIView *view = [senderButton viewWithTag:1010];
+    if (view) {
+        view.frame = imageViewFrame;
+        CGPoint center = view.center;
+        center.y = sender.center.y;
+        view.center = center;
+    }else{
+        UIImageView *imageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
+        CGPoint center = imageView.center;
+        center.y = sender.center.y;
+        imageView.center = center;
+        imageView.image = RCResourceImage(@"arrow");
+        imageView.tag = 1010;
+        [senderButton addSubview:imageView];
+    }
 }
 
 #pragma mark - 回执请求及响应处理， 同步阅读状态

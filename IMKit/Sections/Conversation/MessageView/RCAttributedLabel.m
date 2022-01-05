@@ -3,7 +3,7 @@
 //  iOS-IMKit
 //
 //  Created by YangZigang on 14/10/29.
-//  Copyright (c) 2014年 RongCloud. All rights reserved.
+//  Copyright (c) 2014 RongCloud. All rights reserved.
 //
 
 #import "RCAttributedLabel.h"

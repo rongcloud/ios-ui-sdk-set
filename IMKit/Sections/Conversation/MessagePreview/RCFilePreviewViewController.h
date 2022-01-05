@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by Jue on 16/7/29.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCMessageModel.h"

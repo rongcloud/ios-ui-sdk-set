@@ -2,7 +2,7 @@
 //  UIImage+RCDynamicImage.m
 //  RongExtensionKit
 //
-//  Created by 张改红 on 2019/11/11.
+//  Created by RongCloud on 2019/11/11.
 //  Copyright © 2019 RongCloud. All rights reserved.
 //
 

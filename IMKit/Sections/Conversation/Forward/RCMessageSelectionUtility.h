@@ -2,8 +2,8 @@
 //  RCMessageSelectionUtility.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2018/3/29.
-//  Copyright © 2018年 RongCloud. All rights reserved.
+//  Created by RongCloud on 2018/3/29.
+//  Copyright © 2018 RongCloud. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

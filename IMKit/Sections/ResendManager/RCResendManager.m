@@ -2,7 +2,7 @@
 //  RCResendManager.m
 //  RongIMKit
 //
-//  Created by 孙浩 on 2020/6/1.
+//  Created by RongCloud on 2020/6/1.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

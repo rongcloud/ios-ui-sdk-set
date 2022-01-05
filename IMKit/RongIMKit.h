@@ -3,34 +3,64 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/13.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
 #if __has_include(<RongIMKit/RongIMKit.h>)
 
-/// IMKit核心类
+/**
+ *  \~chinese
+ IMKit 核心类
+ 
+ *  \~english
+ IMKit Core class
+ */
 #import <RongIMKit/RCIM.h>
 #import <RongIMKit/RCIM+Deprecated.h>
 
-/// 会话列表相关类
+/**
+ *  \~chinese
+ 会话列表相关类
+ 
+ *  \~english
+ ConversationListViewController
+ */
 #import <RongIMKit/RCConversationListViewController.h>
 #import <RongIMKit/RCPublicServiceListViewController.h>
 
-/// 会话页面相关类
+/**
+ *  \~chinese
+ 会话页面相关类
+ 
+ *  \~english
+ RCConversationViewController
+ */
 #import <RongIMKit/RCConversationViewController.h>
 #import <RongIMKit/RCImageSlideController.h>
 #import <RongIMKit/RCLocationPickerViewController.h>
 #import <RongIMKit/RCLocationViewController.h>
 #import <RongIMKit/RCPublicServiceSearchViewController.h>
 
-/// 会话列表Cell相关类
+/**
+ *  \~chinese
+ 会话列表Cell相关类
+ 
+ *  \~english
+ RCConversationBaseCell
+ */
 #import <RongIMKit/RCConversationBaseCell.h>
 #import <RongIMKit/RCConversationCell.h>
 #import <RongIMKit/RCConversationModel.h>
 
-/// 消息Cell相关类
+/**
+ *  \~chinese
+ 消息Cell相关类
+ 
+ *  \~english
+ RCMessageCell
+ */
 #import <RongIMKit/RCFileMessageCell.h>
 #import <RongIMKit/RCImageMessageCell.h>
 #import <RongIMKit/RCGIFMessageCell.h>
@@ -52,7 +82,13 @@
 #import <RongIMKit/RCMessageCellTool.h>
 #import <RongIMKit/RCHQVoiceMessageCell.h>
 
-/// 工具类
+/**
+ *  \~chinese
+ 工具类
+ 
+ *  \~english
+  Util
+ */
 #import <RongIMKit/RCKitUtility.h>
 #import <RongIMKit/RCThemeDefine.h>
 #import <RongIMKit/RCKitCommonDefine.h>
@@ -61,7 +97,13 @@
 #import <RongIMKit/RCKitMessageConf.h>
 #import <RongIMKit/RCKitUIConf.h>
 
-/// 其他
+/**
+ *  \~chinese
+ 其他
+ 
+ *  \~english
+  Other
+ */
 #import <RongIMKit/RCAttributedLabel.h>
 #import <RongIMKit/RCBaseViewController.h>
 #import <RongIMKit/RCContentView.h>
@@ -75,27 +117,57 @@
 #import <RongIMKit/RCActionSheetView.h>
 
 #else
-/// IMKit核心类
+/**
+ *  \~chinese
+ IMKit 核心类
+ 
+ *  \~english
+ IMKit Core class
+ */
 #import "RCIM.h"
 #import "RCIM+Deprecated.h"
 
-/// 会话列表相关类
+/**
+ *  \~chinese
+ 会话列表相关类
+ 
+ *  \~english
+ ConversationListViewController
+ */
 #import "RCConversationListViewController.h"
 #import "RCPublicServiceListViewController.h"
 
-/// 会话页面相关类
+/**
+ *  \~chinese
+ 会话页面相关类
+ 
+ *  \~english
+ RCConversationViewController
+ */
 #import "RCConversationViewController.h"
 #import "RCImageSlideController.h"
 #import "RCLocationPickerViewController.h"
 #import "RCLocationViewController.h"
 #import "RCPublicServiceSearchViewController.h"
 
-/// 会话列表Cell相关类
+/**
+ *  \~chinese
+ 会话列表Cell相关类
+ 
+ *  \~english
+ RCConversationBaseCell
+ */
 #import "RCConversationBaseCell.h"
 #import "RCConversationCell.h"
 #import "RCConversationModel.h"
 
-/// 消息Cell相关类
+/**
+ *  \~chinese
+ 消息Cell相关类
+ 
+ *  \~english
+ RCMessageCell
+ */
 #import "RCFileMessageCell.h"
 #import "RCImageMessageCell.h"
 #import "RCGIFMessageCell.h"
@@ -117,7 +189,13 @@
 #import "RCMessageCellTool.h"
 #import "RCHQVoiceMessageCell.h"
 
-/// 工具类
+/**
+ *  \~chinese
+ 工具类
+ 
+ *  \~english
+  Util
+ */
 #import "RCKitUtility.h"
 #import "RCThemeDefine.h"
 #import "RCKitCommonDefine.h"
@@ -126,7 +204,13 @@
 #import "RCKitMessageConf.h"
 #import "RCKitUIConf.h"
 
-/// 其他
+/**
+ *  \~chinese
+ 其他
+ 
+ *  \~english
+  Other
+ */
 #import "RCAttributedLabel.h"
 #import "RCBaseViewController.h"
 #import "RCContentView.h"

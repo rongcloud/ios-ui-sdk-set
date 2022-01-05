@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/24.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCConversationCell.h"
@@ -25,7 +25,7 @@
 
 @implementation RCConversationCell
 
-#pragma mark - 初始化
+#pragma mark - init
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
@@ -110,7 +110,7 @@
                                                  views:cellSubViews]];
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:|-16-[_conversationTagView(20)]"
+                           constraintsWithVisualFormat:@"V:[_conversationTagView(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
@@ -128,6 +128,13 @@
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
                                                                     toItem:self.detailContentView
+                                                                 attribute:NSLayoutAttributeCenterY
+                                                                multiplier:1
+                                                                  constant:0]];
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTagView
+                                                                 attribute:NSLayoutAttributeCenterY
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:self.conversationTitle
                                                                  attribute:NSLayoutAttributeCenterY
                                                                 multiplier:1
                                                                   constant:0]];

@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by Liv on 15/3/16.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCPluginBoardHorizontalCollectionViewLayout.h"

@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/13.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCIM.h"
@@ -50,7 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.3.4";
+static NSString *const RCIMKitVersion = @"5.1.3.8";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {

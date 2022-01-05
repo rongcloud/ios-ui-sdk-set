@@ -2,7 +2,7 @@
 //  RCSightModel+internal.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2021/5/10.
+//  Created by RongCloud on 2021/5/10.
 //  Copyright © 2021 RongCloud. All rights reserved.
 //
 

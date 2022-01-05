@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by Zhaoqianyu on 2018/5/14.
-//  Copyright © 2018年 RongCloud. All rights reserved.
+//  Copyright © 2018 RongCloud. All rights reserved.
 //
 
 #import "RCDestructImageBrowseController.h"

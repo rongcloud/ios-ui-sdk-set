@@ -3,11 +3,12 @@
 //  RCIM
 //
 //  Created by Heq.Shinoda on 14-6-20.
-//  Copyright (c) 2014年 Heq.Shinoda. All rights reserved.
+//  Copyright (c) 2014 Heq.Shinoda. All rights reserved.
 //
 
 #import "RCMessageBubbleTipView.h"
 #import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 
 #define kDefaultbubbleTipTextColor [UIColor whiteColor]
 #define kDefaultbubbleTipBackgroundColor [UIColor redColor]
@@ -191,6 +192,10 @@
 
     newFrame.origin.x += _bubbleTipPositionAdjustment.x;
     newFrame.origin.y += _bubbleTipPositionAdjustment.y;
+    
+    if(RCKitConfigCenter.ui.globalConversationAvatarStyle == RC_USER_AVATAR_RECTANGLE) {
+        newFrame.origin.y -= 5;
+    }
 
     self.frame = CGRectIntegral(newFrame);
 

@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by YangZigang on 14/11/5.
-//  Copyright (c) 2014年 RongCloud. All rights reserved.
+//  Copyright (c) 2014 RongCloud. All rights reserved.
 //
 
 #import "RCLocationPickerViewController.h"

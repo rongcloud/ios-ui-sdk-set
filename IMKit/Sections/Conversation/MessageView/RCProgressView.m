@@ -2,7 +2,7 @@
 //  RCProgressView.m
 //  RongIMKit
 //
-//  Created by 张改红 on 2020/9/9.
+//  Created by RongCloud on 2020/9/9.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

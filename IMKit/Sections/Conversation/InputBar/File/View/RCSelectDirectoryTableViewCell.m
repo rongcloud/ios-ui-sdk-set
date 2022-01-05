@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by Jue on 16/8/17.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCSelectDirectoryTableViewCell.h"

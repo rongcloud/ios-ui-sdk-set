@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by Heq.Shinoda on 14-5-29.
-//  Copyright (c) 2014年 RongCloud. All rights reserved.
+//  Copyright (c) 2014 RongCloud. All rights reserved.
 //
 
 #import "RCEmojiBoardView.h"

@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/2/2.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCTextMessageCell.h"
@@ -117,7 +117,7 @@
 
 - (void)setDestructViewLayout {
     [super setDestructViewLayout];
-    if (!self.destructTextImage.hidden) {
+    if (self.model.content.destructDuration > 0) {
         if ([RCKitUtility isRTL]) {
             self.destructTextImage.frame = CGRectMake(DESTRUCT_TEXT_ICON_WIDTH , CGRectGetMidY(self.messageContentView.frame) - DESTRUCT_TEXT_ICON_HEIGHT / 2, DESTRUCT_TEXT_ICON_WIDTH, DESTRUCT_TEXT_ICON_HEIGHT);
         } else {

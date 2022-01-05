@@ -9,7 +9,11 @@
 #import <UIKit/UIKit.h>
 
 /*!
+ * \~chinese
 IMKit UITableViewController 基类
+ 
+ * \~english
+ IMKit UITableViewController super class
 
 */
 

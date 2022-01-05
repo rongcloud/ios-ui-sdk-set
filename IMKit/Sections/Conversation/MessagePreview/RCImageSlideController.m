@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by zhanggaihong on 2021/5/27.
-//  Copyright © 2021年 RongCloud. All rights reserved.
+//  Copyright © 2021 RongCloud. All rights reserved.
 //
 
 #import "RCImageSlideController.h"

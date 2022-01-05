@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/22.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCConversationListViewController.h"
@@ -28,7 +28,7 @@
 
 @implementation RCConversationListViewController
 
-#pragma mark - 初始化
+#pragma mark - init
 - (instancetype)initWithDisplayConversationTypes:(NSArray *)displayConversationTypeArray
                       collectionConversationType:(NSArray *)collectionConversationTypeArray {
     self = [super init];

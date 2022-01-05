@@ -2,7 +2,7 @@
 //  RCReeditMessageManager.m
 //  RongIMKit
 //
-//  Created by 孙浩 on 2019/12/26.
+//  Created by RongCloud on 2019/12/26.
 //  Copyright © 2019 RongCloud. All rights reserved.
 //
 

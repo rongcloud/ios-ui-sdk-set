@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/22.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCLocalNotification.h"
@@ -268,6 +268,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                                      userInfo.name, showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
+            [self formatRecallMessage:message name:userInfo.name];
         } else {
             showMessage = [NSString stringWithFormat:@"%@:%@", userInfo.name, showMessage];
         }
@@ -280,6 +281,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                                      userInfo.name, groupInfo.groupName, showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
+            [self formatRecallMessage:message name:userInfo.name];
         } else {
             showMessage = [NSString stringWithFormat:@"%@(%@):%@", userInfo.name, groupInfo.groupName, showMessage];
         }
@@ -307,6 +309,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
 
 - (NSString *)formatOtherNotification:(RCMessage *)message name:(NSString *)name showMessage:(NSString *)showMessage {
     if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
+        [self formatRecallMessage:message name:name];
     } else {
         if (@available(iOS 8.2, *)) {
             showMessage = [NSString stringWithFormat:@"%@", showMessage];
@@ -315,6 +318,38 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         }
     }
     return showMessage;
+}
+
+- (NSString *)formatRecallMessage:(RCMessage *)message name:(NSString *)name{
+    RCRecallNotificationMessage *recallMessage = (RCRecallNotificationMessage *)message.content;
+    if (!recallMessage || !recallMessage.operatorId) {
+        return nil;
+    }
+    
+    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *operator= recallMessage.operatorId;
+    if (recallMessage.isAdmin) {
+        return
+        [NSString stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil),
+         NSLocalizedStringFromTable(@"AdminWithMessageRecalled", @"RongCloudKit", nil)];
+    }else if ([operator isEqualToString:currentUserId]) {
+        return [NSString stringWithFormat:@"%@", NSLocalizedStringFromTable(@"SelfHaveRecalled", @"RongCloudKit", nil)];
+    } else {
+        NSString *operatorName;
+        if ([name length]) {
+            operatorName = name;
+        } else {
+            operatorName= [[NSString alloc] initWithFormat:@"user<%@>", operator];
+        }
+        if (message.conversationType == ConversationType_GROUP) {
+            return [NSString
+                    stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil), operatorName];
+        } else {
+            return [NSString
+                    stringWithFormat:NSLocalizedStringFromTable(@"MessageHasRecalled", @"RongCloudKit", nil)];
+        }
+    }
+    return nil;
 }
 
 - (BOOL)pushTitleEffectived:(NSString *)pushTitle {

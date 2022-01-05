@@ -2,14 +2,14 @@
 //  RCExtensionMessageCellInfo.h
 //  RongIMExtension
 //
-//  Created by 岑裕 on 2016/10/18.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 2016/10/18.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 
 /*!
- MessageCell信息
+ MessageCell info class
  */
 @interface RCExtensionMessageCellInfo : NSObject
 

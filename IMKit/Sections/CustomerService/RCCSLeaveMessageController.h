@@ -2,8 +2,8 @@
 //  RCCSLeaveMessageController.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2016/12/5.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 2016/12/5.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCConversationViewController.h"

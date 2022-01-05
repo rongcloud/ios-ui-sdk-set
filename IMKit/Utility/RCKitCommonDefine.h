@@ -1,8 +1,8 @@
 //
 //  RCKitCommonDefine.h
 //
-//  Created by 岑裕 on 2016/10/12.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 2016/10/12.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCKitUtility.h"
@@ -66,7 +66,13 @@
 #define DebugLog( s, ... )
 #endif
 
-//在允许横竖屏的页面出现或者消失时发此通知，Notification 的 object 为 @(YES) 或者 @(NO)
+/**
+ *  \~chinese
+ 在允许横竖屏的页面出现或者消失时发此通知，Notification 的 object 为 @(YES) 或者 @(NO)
+ 
+ *  \~english
+ Send this notification when a page that allows horizontal and vertical screens to appear or disappear. The object of Notification is @ (YES) or @ (NO)
+ */
 #define RCKitViewSupportAutorotateNotification @"RCKitViewSupportAutorotateNotification"
 
 #endif /* RCKitCommonDefine_h */

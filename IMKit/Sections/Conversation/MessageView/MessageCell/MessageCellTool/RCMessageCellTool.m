@@ -2,7 +2,7 @@
 //  RCMessageTool.m
 //  RongIMKit
 //
-//  Created by 张改红 on 2020/6/11.
+//  Created by RongCloud on 2020/6/11.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by xugang on 15/1/22.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCBaseViewController.h"
@@ -20,132 +20,231 @@
 
 @class RCCustomerServiceInfo,RCPublicServiceMenuItem;
 /*!
+ *  \~chinese
  客服服务状态
+ 
+ *  \~english
+ Customer service status 
  */
 typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
     /*!
+     *  \~chinese
      无客服服务
+     
+     *  \~english
+     No customer service
      */
     RCCustomerService_NoService,
 
     /*!
+     *  \~chinese
      人工客服服务
+     
+     *  \~english
+     Manual customer service
      */
     RCCustomerService_HumanService,
 
     /*!
+     *  \~chinese
      机器人客服服务
+     
+     *  \~english
+     Robot customer service
      */
     RCCustomerService_RobotService
 };
 
 /*!
+ *  \~chinese
  会话页面类
+ 
+ *  \~english
+ Conversation page class
  */
 @interface RCConversationViewController
     : RCBaseViewController <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout,
                             UIGestureRecognizerDelegate, UIScrollViewDelegate>
 
-#pragma mark - 初始化
+#pragma mark - init
 
 /*!
+ *  \~chinese
  初始化会话页面
 
  @param conversationType 会话类型
  @param targetId         目标会话ID
 
  @return 会话页面对象
+ 
+ *  \~english
+ Initialize the conversation page.
+
+ @param conversationType Conversation type
+ @param targetId Target conversation ID.
+
+ @ return conversation page object
  */
 - (id)initWithConversationType:(RCConversationType)conversationType targetId:(NSString *)targetId;
 
-#pragma mark - 会话属性
+#pragma mark - Conversation
 
 /*!
+ *  \~chinese
  当前会话的会话类型
+ 
+ *  \~english
+ Conversation type of the current conversation
  */
 @property (nonatomic) RCConversationType conversationType;
 
 /*!
+ *  \~chinese
  目标会话ID
+ 
+ *  \~english
+ Target conversation ID
  */
 @property (nonatomic, copy) NSString *targetId;
 
-#pragma mark - 会话页面属性
+#pragma mark - ConversationVC config
 /**
+ *  \~chinese
  进入页面时定位的消息的发送时间
 
  @discussion 用于消息搜索之后点击进入页面等场景
+ 
+ *  \~english
+ The sending time of the located message when entering the page.
+
+ @ discussion It is used for scenarios such as clicking to enter the page after message search
  */
 @property (nonatomic, assign) long long locatedMessageSentTime;
 
 /*!
+ *  \~chinese
  聊天内容的消息Cell数据模型的数据源
 
  @discussion 数据源中存放的元素为消息Cell的数据模型，即RCMessageModel对象。
  @warning 非线程安全，请在主线程操作该属性
+ 
+ *  \~english
+ Chat messages Cell data model data source.
+
+ @ discussion The element stored in the data source is the data model of the message Cell, that is, the RCMessageModel object.
+  @ warning It is not thread safe, please operate this property in the main thread.
  */
 @property (nonatomic, strong) NSMutableArray *conversationDataRepository;
 
 /*!
+ *  \~chinese
  会话页面的CollectionView
+ 
+ *  \~english
+ CollectionView of the conversation page
  */
 @property (nonatomic, strong) UICollectionView *conversationMessageCollectionView;
 
-#pragma mark 导航栏返回按钮中的未读消息数提示
+#pragma mark
 /*!
+ *  \~chinese
  需要统计未读数的会话类型数组（在导航栏的返回按钮中显示）
 
  @discussion 此属性表明在导航栏的返回按钮中需要统计显示哪部分的会话类型的未读数。
  (需要将RCConversationType转为NSNumber构建Array)
+ 
+ *  \~english
+ An array of conversation types that shall count unread (shown in the return button in the navigation bar).
+
+ @Discussion This property indicates which part of the conversation type's unread shall be counted in the return button of the navigation bar.
+  (shall convert RCConversationType to NSNumber to build Array).
  */
 @property (nonatomic, strong) NSArray *displayConversationTypeArray;
 
 /*!
+ *  \~chinese
  更新导航栏返回按钮中显示的未读消息数
 
  @discussion 如果您重写此方法，需要注意调用super。
+ 
+ *  \~english
+ Update the number of unread messages displayed in the return button of the navigation bar
+
+ @ discussion If you override this method, you shall be careful to call super
  */
 - (void)notifyUpdateUnreadMessageCount;
 
-#pragma mark 右上角的未读消息数提示
+#pragma mark
 /*!
+ *  \~chinese
  当未读消息数超过 10 条时，进入会话之后，是否在右上角提示上方存在的未读消息数
 
  @discussion 默认值为NO。
  开启该提示功能之后，当未读消息数超过 10 条时，进入该会话后，会在右上角提示用户上方存在的未读消息数，用户点击该提醒按钮，会跳转到最开始的未读消息。
+ 
+ *  \~english
+ When the number of unread messages exceeds 10, whether the number of unread messages exists above the prompt in the upper right corner after entering the conversation.
+
+ @ discussion The default value is NO.
+  When the prompt function is enabled, if the number of unread messages exceeds 10, to enter the conversation, the number of unread messages above the user will be prompted at the upper right corner. When the user clicks the reminder button, the user will jump to the initial unread message.
  */
 @property (nonatomic, assign) BOOL enableUnreadMessageIcon;
 
 
-#pragma mark 右上角的未读 @ 消息数提示
+#pragma mark
 /*!
+ *  \~chinese
  当收到的消息中有 @ 消息时，进入会话之后，是否在右上角提示未读 @ 消息数
 
  @discussion 默认值为YES。
  开启该提示功能之后，当一个会话收到大量消息时（超过一个屏幕能显示的内容），
  进入该会话后，会在右上角提示用户上方存在的未读 @ 消息数，用户点击该提醒按钮，会跳转到最早的未读 @ 消息处，同时未读 @ 消息数量减 1，再次点击，未读 @ 消息数量根据当前屏幕内看到的个数相应减少。
+ 
+ *  \~english
+ When there are @ messages in the received messages, whether to prompt the number of unread @ messages in the upper right corner after entering the conversation.
+
+ @ discussion The default value is YES.
+  When this prompt is turned on, if a conversation receives a large number of messages (more than a screen can display), to enter the conversation, the number of unread @ messages above the user will be prompted in the upper right corner. When the user clicks the reminder button, the user will jump to the earliest unread @ message. At the same time, subtract the number of unread @ messages by 1, and click again. The number of unread @ messages decreases accordingly according to the number of unread @ messages seen on the current screen.
  */
 @property (nonatomic, assign) BOOL enableUnreadMentionedIcon;
 
 /*!
+ *  \~chinese
  该会话的未读消息数
+ 
+ *  \~english
+ The number of unread messages for this conversation.
  */
 @property (nonatomic, assign) NSInteger unReadMessage;
 
 /*!
+ *  \~chinese
  右上角未读消息数提示的Label
 
  @discussion 当 unReadMessage > 10  右上角会显示未读消息数。
+ 
+ *  \~english
+ The tag of the number of unread messages at the upper right corner.
+
+ @ discussion It displays the number of unread messages in the upper-right corner of unReadMessage > 10.
  */
 @property (nonatomic, strong) UILabel *unReadMessageLabel;
 
 /*!
+ *  \~chinese
  右上角未读消息数提示的按钮
+ 
+ *  \~english
+ Button for the number of unread messages at the upper right corner
  */
 @property (nonatomic, strong) UIButton *unReadButton;
 
 /*!
+ *  \~chinese
  右上角@消息数提示的Label
+ 
+ *  \~english
+ Label of @ message prompt at the upper right corner
  */
 @property (nonatomic, strong) UILabel *unReadMentionedLabel;
 
@@ -153,171 +252,302 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 @property (nonatomic, strong) UIImageView *unreadRightBottomIcon;
 
 /*!
+ *  \~chinese
  右上角@消息数提示的按钮
+ 
+ *  \~english
+ The button for @ message prompt at the upper right corner
  */
 @property (nonatomic, strong) UIButton *unReadMentionedButton;
 
-#pragma mark 右下角的未读消息数提示
+#pragma mark
 /*!
+ *  \~chinese
  当前阅读区域的下方收到消息时，是否在会话页面的右下角提示下方存在未读消息
 
  @discussion 默认值为NO。
  开启该提示功能之后，当会话页面滑动到最下方时，此会话中收到消息会自动更新；
  当用户停留在上方某个区域阅读时，此会话收到消息时，会在右下角显示未读消息提示，而不会自动滚动到最下方，
  用户点击该提醒按钮，会滚动到最下方。
+ 
+ *  \~english
+ When you receive a message at the bottom of the current reading area, whether there is an unread message below the prompt in the lower right corner of the conversation page.
+
+ @ discussion The default value  is NO
+  When the prompt function is enabled, if the conversation page slides to the bottom, the message received in the conversation will be automatically updated.
+ When the user stays in the upper area to read, if the conversation receives a message, an unread message prompt is displayed at the lower right corner instead of automatically scrolling to the bottom.
+ When the user clicks the reminder button, it scrolls to the bottom.
  */
 @property (nonatomic, assign) BOOL enableNewComingMessageIcon;
 
 /*!
+ *  \~chinese
  右下角未读消息数提示的Label
+ 
+ *  \~english
+ The tag of the number of unread messages at the lower right corner.
  */
 @property (nonatomic, strong) UILabel *unReadNewMessageLabel;
 
-#pragma mark - 输入工具栏
+#pragma mark -
 
 /*!
+ *  \~chinese
  会话页面下方的输入工具栏
+ 
+ *  \~english
+ Input toolbar at the bottom of the conversation page
  */
 @property (nonatomic, strong) RCChatSessionInputBarControl *chatSessionInputBarControl;
 
 /*!
+ *  \~chinese
  输入框的默认输入模式
 
  @discussion 默认值为RCChatSessionInputBarInputText，即文本输入模式。 请在[super viewWillAppear:animated]之后调用
+ 
+ *  \~english
+ The default input mode of the input box.
+
+ @ discussion The default value is RCChatconversationInputBarInputText, that is, text input mode Please call after [super viewWillAppear:animated]
  */
 @property (nonatomic) RCChatSessionInputBarInputType defaultInputType;
 
 /*!
+ *  \~chinese
  会话扩展显示区域
 
  @discussion 可以自定义显示会话页面的view。
+ 
+ *  \~english
+ Conversation extended display area.
+
+ @ discussion It can customize the view that displays the conversation page.
  */
 @property (nonatomic, strong) UIView *extensionView;
 
 /*!
+ *  \~chinese
  输入框上方引用内容显示View
+ 
+ *  \~english
+ Display View of the referenced content above the input box
 
 */
 @property (nonatomic, strong) RCReferencingView *referencingView;
 
 /*!
+ *  \~chinese
  输入工具栏占位文本 label，默认为 nil，不显示占位
  
  在会话页面的 viewDidLoad 写如下代码即可
  self.placeholderLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 180, 20)];
- self.placeholderLabel.text = @"测试 Placeholder";
+ self.placeholderLabel.text = @"test Placeholder";
+ self.placeholderLabel.textColor = [UIColor grayColor];
+ 
+ *  \~english
+ inputbar placeholder label，default is nil
+ 
+ in viewDidLoad，such as
+ self.placeholderLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 180, 20)];
+ self.placeholderLabel.text = @"test Placeholder";
  self.placeholderLabel.textColor = [UIColor grayColor];
 */
 @property (nonatomic, strong) UILabel *placeholderLabel;
 
 /*!
+ *  \~chinese
  输入框中内容发生变化的回调
 
  @param inputTextView 文本输入框
  @param range         当前操作的范围
  @param text          插入的文本
+ 
+ *  \~english
+ Callback for a change in the content of the input box.
+
+ @param inputTextView Text input box.
+ @param range The scope of the current operation.
+ @param text Inserted text.
  */
 - (void)inputTextView:(UITextView *)inputTextView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text;
 
 /*!
+ *  \~chinese
  输入工具栏尺寸（高度）发生变化的回调
 
  @param chatInputBar 输入工具栏
  @param frame        输入工具栏最终需要显示的Frame
 
  @discussion 如重写此方法，请先调用父类方法。
+ 
+ *  \~english
+ Callback for a change in the size (height) of the input toolbar.
+
+ @param chatInputBar Input Toolbar.
+ @param frame Enter the Frame that the toolbar finally shall display.
+
+ @ discussion If you override this method, call the parent method first.
  */
 - (void)chatInputBar:(RCChatSessionInputBarControl *)chatInputBar shouldChangeFrame:(CGRect)frame;
 
 /*!
+ *  \~chinese
  扩展功能板的点击回调
 
  @param pluginBoardView 输入扩展功能板View
  @param tag             输入扩展功能(Item)的唯一标示
+ 
+ *  \~english
+ Callback for clicking extended function panel
+
+ @param pluginBoardView Enter the extended function board View.
+ @param tag Enter a unique indication of the extended function (Item).
  */
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag;
 
-#pragma mark - 显示设置
+#pragma mark - 
 
 /*!
+ *  \~chinese
  收到的消息是否显示发送者的名字
 
  @discussion 默认值为YES。
  您可以针对群聊、聊天室、单聊等不同场景，自己定制是否显示发送方的名字。
+ 
+ *  \~english
+ Whether the message received shows the name of the sender.
+
+ @ discussion The default value is YES.
+  You can customize whether to display the name of the sender for different scenarios such as group chat, chatroom, single chat and so on.
  */
 @property (nonatomic) BOOL displayUserNameInCell;
 
 /*!
+ *  \~chinese
  设置进入聊天室需要获取的历史消息数量（仅在当前会话为聊天室时生效）
 
  @discussion 此属性需要在viewDidLoad之前进行设置。
  -1表示不获取任何历史消息，0表示不特殊设置而使用SDK默认的设置（默认为获取10条），0<messageCount<=50为具体获取的消息数量,最大值为30。注：如果是7.x系统获取历史消息数量不要大于30
+ 
+ *  \~english
+ Set the number of historical messages that shall be obtained to enter a chatroom (effective only if the current conversation is a chatroom).
+
+ @ discussion This property shall be set before viewDidLoad
+  - 1 indicates no historical messages are obtained. 0 means to use the default setting of SDK without special settings (The default value is to get 10 messages). 0 < messageCount < = 50 is the number of messages obtained, and the maximum value is 30. Note: If it is a 7.x system, the number of historical messages should not be greater than 30.
  */
 @property (nonatomic, assign) int defaultHistoryMessageCountOfChatRoom;
 
 /*!
+ *  \~chinese
  设置进入会话页面后下拉刷新从远端获取消息的条数，默认是 10。
  @discussion 此属性需要在viewDidLoad之前进行设置。
+ 
+ *  \~english
+ Set the number of messages that can be obtained from the remote end by the drop-down refresh after entering the conversation page. The default value is 10.
+  @ discussion This property shall be set before viewDidLoad.
  */
 @property (nonatomic, assign) int defaultRemoteHistoryMessageCount;
 
 /*!
+ *  \~chinese
  设置进入会话页面后下拉刷新从本地数据库取的消息的条数，默认是 10。
  @discussion 此属性需要在viewDidLoad之前进行设置。
+ 
+ *  \~english
+ Set the number of messages pulled down to refresh from the local database after entering the conversation page. The default value is 10.
+  @ discussion This property shall be set before viewDidLoad.
  */
 @property (nonatomic, assign) int defaultLocalHistoryMessageCount;
 
 /*!
+ *  \~chinese
  已经选择的所有消息
  @discussion 只有在 allowsMessageCellSelection 为 YES,才会有有效值
+ 
+ *  \~english
+ All messages that have been selected.
+ @ discussion It has a valid value only if allowsMessageCellSelection is YES,
  */
 @property (nonatomic, strong, readonly) NSArray<RCMessageModel *> *selectedMessages;
 
 /*!
+ *  \~chinese
  会话页面消息是否可编辑选择,如果为 YES,消息 cell 会变为多选样式,如果为 NO，页面恢复初始状态。
+ 
+ *  \~english
+ Whether the conversation page message is editable or not, if it is a YES, message, the cell will become a multi-selection style, and if the original state is restored for the NO, page.
  */
 @property (nonatomic, assign) BOOL allowsMessageCellSelection;
 
 /*!
+ *  \~chinese
  消息编辑选择的状态下页面底部出现的工具视图
+ 
+ *  \~english
+ The tool view that appears at the bottom of the page in the state selected by the message editor.
  */
 @property (nonatomic, strong) UIToolbar *messageSelectionToolbar;
 
 /*!
+ *  \~chinese
  提示用户信息并推出当前会话界面
 
  @param errorInfo 错误提示
 
  @discussion 在聊天室加入失败SDK会调用此接口，提示用户并退出聊天室。如果您需要修改提示或者不退出，可以重写此方法。
+ 
+ *  \~english
+ Prompt for user information and Start the current conversation interface.
+
+ @param errorInfo Error prompt.
+
+ @ discussion When it fails to join in the chatroom, SDK will call this interface to prompt the user and exit the chatroom. You can override this method if you will change the prompt or do not exit.
  */
 - (void)alertErrorAndLeft:(NSString *)errorInfo;
 
 
-#pragma mark - 界面操作
+#pragma mark -
 
 /*!
+ *  \~chinese
  滚动到列表最下方
 
  @param animated 是否开启动画效果
+ 
+ *  \~english
+ Scroll to the bottom of the list.
+
+ @param animated Whether to turn on the animation effect.
  */
 - (void)scrollToBottomAnimated:(BOOL)animated;
 
 /*!
+ *  \~chinese
  返回前一个页面的方法
 
  @param sender 事件发起者
 
  @discussion 其中包含了一些会话页面退出的清理工作，如退出讨论组等。
  如果您重写此方法，请注意调用super。
+ 
+ *  \~english
+ The method to return to the previous page.
+
+ @param sender Event initiator.
+
+ @ discussion It includes some cleaning up for conversation page exit, such as quitting the discussion group, and so on.
+  If you override this method, be careful to call super.
  */
 - (void)leftBarButtonItemPressed:(id)sender;
 
-#pragma mark - 消息操作
+#pragma mark - Message
 
-#pragma mark 发送消息
+#pragma mark Message Send
 /*!
+ *  \~chinese
  发送消息
 
  @param messageContent 消息的内容
@@ -330,10 +560,25 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  自定义类型的消息，需要您自己设置pushContent来定义推送内容，否则将不会进行远程推送。
 
  如果您需要设置发送的pushData，可以使用RCIM的发送消息接口。
+ 
+ *  \~english
+ Send a message.
+
+ @param messageContent The content of the message.
+ @param pushContent Remote push content that shall be displayed when the receiver is offline.
+
+ @ discussion Receive a remote push when the receiver is offline and allows remote push.
+  There are two parts in remote push, one is pushContent, for display, the other is pushData for carrying data that is not displayed.
+
+  SDK built-in message type, if you set pushContent to nil, the default push format will be used for remote push.
+  For a custom type of message, you shall set pushContent to define the push content, otherwise remote push will not be carried out.
+
+  If you shall set the pushData to be sent, you can use the sending message interface of RCIM.
  */
 - (void)sendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
 
 /*!
+ *  \~chinese
  发送媒体消息(上传图片或文件到App指定的服务器)
 
  @param messageContent 消息的内容
@@ -345,12 +590,26 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  需要您在该回调中上传媒体信息（图片或文件），并通过uploadListener监听通知SDK同步显示上传进度。
 
  如果appUpload设置为NO，将会和普通媒体消息的发送一致，上传到融云默认的服务器并发送。
+ 
+ *  \~english
+ Send media messages (upload images or files to a server specified by App).
+
+ @param messageContent The content of the message.
+ @param pushContent Remote push content that shall be displayed when the receiver is offline.
+ @param appUpload Whether to upload to the server specified by App.
+
+ @ discussion
+ This method is used to upload media information to your own server. In this case, you shall set appUpload to YES, and implement uploadMedia:uploadListener: callback.
+  You shall upload media information (images or files) in this callback, and notify SDK to synchronously display the upload progress through uploadListener listening.
+
+  If appUpload is set to NO, it will be consistent with the sending of ordinary media messages, and will be uploaded to the default server of RongCloud and sent.
  */
 - (void)sendMediaMessage:(RCMessageContent *)messageContent
              pushContent:(NSString *)pushContent
                appUpload:(BOOL)appUpload;
 
 /*!
+ *  \~chinese
  上传媒体信息到App指定的服务器的回调
 
  @param message        媒体消息（图片消息或文件消息）的实体
@@ -358,30 +617,57 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion 如果您通过sendMediaMessage:pushContent:appUpload:接口发送媒体消息，则必须实现此回调。
  您需要在此回调中通过uploadListener将上传媒体信息的进度和结果通知SDK，SDK会根据这些信息，自动更新UI。
+ 
+ *  \~english
+ Callback for uploading media information to a server specified by App.
+
+ @param message The entity of a media message (image message or file message).
+ @param uploadListener Listen to the progress of SDK image upload.
+
+ @ discussion You must implement this callback if you send media messages through the sendMediaMessage:pushContent:appUpload: interface.
+  In this callback, you shall notify SDK of the progress and result of uploading media information through uploadListener. Based on this information, UI will be updated automatically.
  */
 - (void)uploadMedia:(RCMessage *)message uploadListener:(RCUploadMediaStatusListener *)uploadListener;
 
 /*!
+ *  \~chinese
  取消上传媒体消息。
 
  @param model        媒体消息（文件消息）的Model
 
  @discussion 如果您通过sendMediaMessage:pushContent:appUpload:发送媒体消息（上传媒体内容到App服务器），需要
  重写此函数，在此函数中取消掉您的上传，并调用uploadListener的cancelBlock告诉融云SDK该发送已经取消。目前仅支持文件消息的取消
+ 
+ *  \~english
+ Cancel uploading media messages.
+
+  @param model        Model of media messages (file messages).
+
+ @ discussion If you send media messages over sendMediaMessage:pushContent:appUpload: (upload media content to the App server), you need rewrite this function, cancel your upload in this function, and call uploadListener's cancelBlock to tell RongCloud SDK that the sending has been canceled. Currently, only the cancellation of file messages is supported.
  */
 - (void)cancelUploadMedia:(RCMessageModel *)model;
 /*!
+ *  \~chinese
  重新发送消息
 
  @param messageContent 消息的内容
 
  @discussion 发送消息失败，点击小红点时，会将本地存储的原消息实体删除，回调此接口将消息内容重新发送。
  如果您需要重写此接口，请注意调用super。
+ 
+ *  \~english
+ Resend the message.
+
+ @param messageContent The content of the message.
+
+ @ discussion If it fails to send a message, when you click Little Red Dot, the original message entity stored locally will be deleted, and the message content will be re-sent by calling this API.
+  If you shall override this interface, be careful to call super.
  */
 - (void)resendMessage:(RCMessageContent *)messageContent;
 
-#pragma mark 插入消息
+#pragma mark Message Insert
 /*!
+ *  \~chinese
  在会话页面中插入一条消息并展示
 
  @param message 消息实体
@@ -389,29 +675,52 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  @discussion 通过此方法插入一条消息，会将消息实体对应的内容Model插入数据源中，并更新UI。
  请注意，这条消息只会在 UI 上插入，并不会存入数据库。
  用户调用这个接口插入消息之后，如果退出会话页面再次进入的时候，这条消息将不再显示。
+ 
+ *  \~english
+ Insert a message in the conversation page and show.
+
+ @param message Message entity.
+
+ @ discussion When a message is inserted through this method, the content Model corresponding to the message entity will be inserted into the data source, and the UI is updated.
+  Note that this message will only be inserted on the UI and will not be stored in the database.
+  After the user calls this interface to insert the message, if you exit the conversation page and enter again, the message will no longer be displayed.
  */
 - (void)appendAndDisplayMessage:(RCMessage *)message;
 
-#pragma mark 删除消息
+#pragma mark Message Delete
 /*!
+ *  \~chinese
  删除消息并更新UI
 
  @param model 消息Cell的数据模型
+ 
+ *  \~english
+ Delete messages and update UI.
+
+ @param model Data Model of message Cell.
  */
 - (void)deleteMessage:(RCMessageModel *)model;
 
-#pragma mark 撤回消息
+#pragma mark Message Recall
 /*!
+ *  \~chinese
  撤回消息并更新UI
 
  @param messageId 被撤回的消息Id
  @discussion 只有存储并发送成功的消息才可以撤回。
+ 
+ *  \~english
+ Recall the message and update the UI.
+
+ @param messageId Recalled message Id.
+ @ discussion It can only be recalled if the message is successfully stored and sent.
  */
 - (void)recallMessage:(long)messageId;
 
-#pragma mark - 消息操作的回调
+#pragma mark - Message operation callback
 
 /*!
+ *  \~chinese
  准备发送消息的回调
 
  @param messageContent 消息内容
@@ -420,25 +729,49 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion 此回调在消息准备向外发送时会回调，您可以在此回调中对消息内容进行过滤和修改等操作。
  如果此回调的返回值不为nil，SDK会对外发送返回的消息内容。
+ 
+ *  \~english
+ Callback for preparing to send a message.
+
+ @param messageContent Message content.
+
+ @ return modified message content.
+
+ @ discussion This callback will be called back when the message is ready to be sent out. You can filter and modify the message content in this callback.
+  If the return value of this callback is not nil,SDK will send the content of the returned message to the outside.
  */
 - (RCMessageContent *)willSendMessage:(RCMessageContent *)messageContent;
 
 /*!
+ *  \~chinese
  发送消息完成的回调
 
  @param status          发送状态，0表示成功，非0表示失败
  @param messageContent   消息内容
+ 
+ *  \~english
+ Callback for completing message sending
+
+ @param status sending status. 0: successful; non-0: failed.
+ @param messageContent Message content.
  */
 - (void)didSendMessage:(NSInteger)status content:(RCMessageContent *)messageContent;
 
 /*!
+ *  \~chinese
  取消了消息发送的回调
 
  @param messageContent   消息内容
+ 
+ *  \~english
+ Callback for canceling message sending
+
+ @param messageContent Message content.
  */
 - (void)didCancelMessage:(RCMessageContent *)messageContent;
 
 /*!
+ *  \~chinese
  即将在会话页面插入消息的回调
 
  @param message 消息实体
@@ -446,38 +779,71 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion 此回调在消息准备插入数据源的时候会回调，您可以在此回调中对消息进行过滤和修改操作。
  如果此回调的返回值不为nil，SDK会将返回消息实体对应的消息Cell数据模型插入数据源，并在会话页面中显示。
+ 
+ *  \~english
+ Callback for inserting message into the conversation page
+
+ @param message Message entity.
+ @ return modified message entity.
+
+ @ discussion This callback is called back when the message is ready to be inserted into the data source, and you can filter and modify the message in this callback.
+  If the return value of this callback is not nil,SDK will insert the message Cell data model corresponding to the returned message entity into the data source and displayed on the conversation page.
  */
 - (RCMessage *)willAppendAndDisplayMessage:(RCMessage *)message;
 
 /*!
+ *  \~chinese
  即将显示消息Cell的回调
 
  @param cell        消息Cell
  @param indexPath   该Cell对应的消息Cell数据模型在数据源中的索引值
 
  @discussion 您可以在此回调中修改Cell的显示和某些属性。
+ 
+ *  \~english
+ Callback for message Cell to be displayed soon.
+
+ @param cell Message Cell.
+ @param indexPath The corresponding message of the Cell the index value of the Cell data model in the data source.
+
+ @ discussion You can modify the display and some properties of Cell in this callback.
  */
 - (void)willDisplayMessageCell:(RCMessageBaseCell *)cell atIndexPath:(NSIndexPath *)indexPath;
 
 
 /*!
+ *  \~chinese
 多选模式时，消息将要被选择时的回调
 
 @param model 消息 Cell 的数据模型
 @return 是否继续执行选择操作，默认是YES
+ 
+ *  \~english
+ Callback when the message is about to be selected in multiple selection mode.
+
+ @param model Data Model of message Cell.
+ @ return: Whether to continue with the selection operation. The default value is YES.
 */
 - (BOOL)willSelectMessage:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
 多选模式时，消息将要被取消选择时的回调
 
 @param model 消息 Cell 的数据模型
 @return 是否继续执行取消选择操作，默认是YES
+ 
+ *  \~english
+ Callback when the message is about to be deselected in the case of multiple selection mode.
+
+ @param model Data Model of message Cell.
+ @ return Whether to continue to deselect and the default value is YES.
 */
 - (BOOL)willCancelSelectMessage:(RCMessageModel *)model;
 
-#pragma mark - 自定义消息
+#pragma mark - Custom Message
 /*!
+ *  \~chinese
  注册自定义消息的Cell
 
  @param cellClass     自定义消息cell的类
@@ -487,10 +853,20 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  你需要在cell中重写RCMessageBaseCell基类的sizeForMessageModel:withCollectionViewWidth:referenceExtraHeight:来计算cell的高度。
  
  @discussion 如果有自定义消息，在会话页面子类 viewDidLoad 方法中需优先注册自定义消息的 cell, 再做其他操作
+ 
+ *  \~english
+ Register the Cell for custom messages.
+
+ @param cellClass Classes for custom message cell.
+ @param messageClass The class of the custom message corresponding to the custom message Cell, which shall be inherited from RCMessageContent.
+
+ @ discussion
+ You shall override the sizeForMessageModel:withCollectionViewWidth:referenceExtraHeight: of the RCMessageBaseCell base class in cell to calculate the height of the cell.
  */
 - (void)registerClass:(Class)cellClass forMessageClass:(Class)messageClass;
 
 /*!
+ *  \~chinese
  未注册消息Cell显示的回调
 
  @param collectionView  当前CollectionView
@@ -501,11 +877,24 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  未注册消息的显示主要用于App未雨绸缪的新旧版本兼容，在使用此回调之前，需要将RCIM的showUnkownMessage设置为YES。
  比如，您App在新版本迭代中增加了某种自定义消息，当已经发布的旧版本不能识别，开发者可以在旧版本中预先定义好这些不能识别的消息的显示，
  如提示当前版本不支持，引导用户升级等。
+ 
+ *  \~english
+ Callback for displaying unregistered message Cell.
+
+ @param collectionView Current CollectionView.
+ @param indexPath  Index value of the corresponding message Cell data model of the Cell in the data source.
+ @ return the Cell that the unregistered message shall display.
+
+ @ discussion
+ The display of unregistered messages is mainly used for compatibility between the old and new versions of App that are prepared in advance. Before using this callback, you shall set the showUnkownMessage of RCIM to YES.
+  For example, your App adds some custom messages in the iteration of the new version. When the old version that has been released is not recognized, the developer can pre-define the display of these unrecognized messages in the old version.
+ E.g. Prompt the current version does not support, guide users to upgrade and so on.
  */
 - (RCMessageBaseCell *)rcUnkownConversationCollectionView:(UICollectionView *)collectionView
                                    cellForItemAtIndexPath:(NSIndexPath *)indexPath;
 
 /*!
+ *  \~chinese
  未注册消息Cell显示的回调
 
  @param collectionView          当前CollectionView
@@ -517,24 +906,47 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
  未注册消息的显示主要用于App未雨绸缪的新旧版本兼容，在使用此回调之前，需要将RCIM的showUnkownMessage设置为YES。
  比如，您App在新版本迭代中增加了某种自定义消息，当已经发布的旧版本不能识别，开发者可以在旧版本中预先定义好这些不能识别的消息的显示，
  如提示当前版本不支持，引导用户升级等。
+ 
+ *  \~english
+ Callback for displaying unregistered message Cell.
+
+ @param collectionView Current CollectionView.
+ @param collectionViewLayout Current CollectionView Layout.
+ @param indexPath Index value of the corresponding message Cell data model of the Cell in the data source.
+ @ return the height that the unregistered message Cell shall display.
+
+ @ discussion
+ The display of unregistered messages is mainly used for compatibility between the old and new versions of App that are prepared in advance. Before using this callback, you shall set the showUnkownMessage of RCIM to YES.
+  For example, your App adds some custom messages in the iteration of the new version. When the old version that has been released is not recognized, the developer can pre-define the display of these unrecognized messages in the old version.
+ E.g. Prompt the current version does not support, guide users to upgrade and so on.
  */
 - (CGSize)rcUnkownConversationCollectionView:(UICollectionView *)collectionView
                                       layout:(UICollectionViewLayout *)collectionViewLayout
                       sizeForItemAtIndexPath:(NSIndexPath *)indexPath;
 
-#pragma mark - 点击事件回调
+#pragma mark - Tap Event
 
 /*!
+ *  \~chinese
  点击Cell中的消息内容的回调
 
  @param model 消息Cell的数据模型
 
  @discussion SDK在此点击事件中，针对SDK中自带的图片、语音、位置等消息有默认的处理，如查看、播放等。
  您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
+ 
+ *  \~english
+ Callback for clicking the message content in Cell.
+
+ @param model Data Model of message Cell.
+
+ @ discussion SDK in this click event, there is default processing for images, voice, location and other messages included in SDK, such as viewing, playing, and so on.
+  When you rewrite this callback, if you want to retain the original functionality of SDK, you shall be careful to call super.
  */
 - (void)didTapMessageCell:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  长按Cell中的消息内容的回调
 
  @param model 消息Cell的数据模型
@@ -542,158 +954,294 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion SDK在此长按事件中，会默认展示菜单。
  您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
+ 
+ *  \~english
+ Callback for holding the message content in Cell.
+
+ @param model  Data Model of message Cell.
+ @param view View of hold area.
+
+ @ discussion SDK displays the menu by default in this hold event.
+  When you rewrite this callback, if you want to retain the original functionality of SDK, you shall be careful to call super.
  */
 - (void)didLongTouchMessageCell:(RCMessageModel *)model inView:(UIView *)view;
 
 /*!
+ *  \~chinese
  获取长按Cell中的消息时的菜单
 
  @param model 消息Cell的数据模型
 
  @discussion SDK在此长按事件中，会展示此方法返回的菜单。
  您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
+ 
+ *  \~english
+ Get the menu when you hold a message in Cell.
+
+ @param model Data Model of message Cell.
+
+ @ discussion SDK displays the menu returned by this method in this hold event.
+  When you rewrite this callback, if you want to retain the original functionality of SDK, you shall be careful to call super.
  */
 - (NSArray<UIMenuItem *> *)getLongTouchMessageCellMenuList:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  点击Cell中URL的回调
 
  @param url   点击的URL
  @param model 消息Cell的数据模型
+ 
+ *  \~english
+ Callback for clicking URL in Cell.
+
+ @param url Clicked URL.
+ @param model Data Model of message Cell.
 */
 - (void)didTapUrlInMessageCell:(NSString *)url model:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  点击撤回消息Cell中重新编辑的回调
 
  @param model 消息Cell的数据模型
 
  @discussion 点击撤回消息Cell中重新编辑，会调用此回调，不会再触发didTapMessageCell:。
+ 
+ *  \~english
+ Callback for clicking the recall message Cell to re-edit
+
+ @param model Data Model of message Cell.
+
+ @ discussion This callback is called when  the recall message Cell is clicked to re-edit, which will not trigger didTapMessageCell: again.
  */
 - (void)didTapReedit:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  点击引用消息中被引用消息内容预览的回调
 
  @param model 引用消息Cell的数据模型
+ 
+ *  \~english
+ Callback for clicking the content preview of the referenced message in the referenced message.
+
+ @param model Data model of reference message Cell.
 */
 - (void)didTapReferencedContentView:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  点击Cell中电话号码的回调
 
  @param phoneNumber 点击的电话号码
  @param model       消息Cell的数据模型
+ 
+ *  \~english
+ Callback for clicking the phone number in Cell.
+
+ @param phoneNumber The phone number clicked.
+ @param model Data Model of message Cell.
  */
 - (void)didTapPhoneNumberInMessageCell:(NSString *)phoneNumber model:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  点击Cell中头像的回调
 
  @param userId  点击头像对应的用户ID
+ 
+ *  \~english
+ Callback for clicking the portrait in Cell.
+
+ @param userId Click the user ID corresponding to the portrait.
  */
 - (void)didTapCellPortrait:(NSString *)userId;
 
 /*!
+ *  \~chinese
  长按Cell中头像的回调
 
  @param userId  头像对应的用户ID
+ 
+ *  \~english
+ Callback for holding portrait in Cell.
+
+ @param userId ID of the user corresponding to the portrait.
  */
 - (void)didLongPressCellPortrait:(NSString *)userId;
 
-#pragma mark - 语音消息、图片消息、位置消息、文件消息显示与操作
+#pragma mark - Voice,Image,Location,File show
 
 /*!
+ *  \~chinese
  开始录制语音消息的回调
+ 
+ *  \~english
+ Callback for starting to record voice messages.
  */
 - (void)onBeginRecordEvent;
 
 /*!
+ *  \~chinese
  结束录制语音消息的回调
+ 
+ *  \~english
+ Callback for ending recording of voice message.
  */
 - (void)onEndRecordEvent;
 
 /*!
+ *  \~chinese
  取消录制语音消息的回调(不会再走 onEndRecordEvent)
+ 
+ *  \~english
+ Callback for canceling recording of voice messages (will not go to onEndRecordEvent again).
  */
 - (void)onCancelRecordEvent;
 /*!
+ *  \~chinese
  是否开启语音消息连续播放
 
  @discussion 如果设置为YES，在点击播放语音消息时，会将下面所有未播放过的语音消息依次播放。
+ 
+ *  \~english
+ Whether to enable continuous playback of voice messages.
+
+ If @ discussion It is set to YES, when you click to play voice messages, all the following unplayed voice messages will be played in turn.
  */
 @property (nonatomic, assign) BOOL enableContinuousReadUnreadVoice;
 
 /*!
+ *  \~chinese
  查看图片消息中的图片
 
  @param model   消息Cell的数据模型
 
  @discussion SDK在此方法中会默认调用RCImageSlideController下载并展示图片。
+ 
+ *  \~english
+ View the image in the image message.
+
+ @param model Data Model of message Cell.
+
+ @ discussion SDK calls RCImageSlideController by default in this method to download and display the image.
  */
 - (void)presentImagePreviewController:(RCMessageModel *)model;
 
 /*!
+ *  \~chinese
  发送新拍照的图片完成之后，是否将图片在本地另行存储。
 
  @discussion 如果设置为YES，您需要在saveNewPhotoToLocalSystemAfterSendingSuccess:回调中自行保存。
+ 
+ *  \~english
+ After sending the newly imagegraphed image, whether the image will be stored separately locally.
+
+  If @ discussion It is set to YES, you shall save it in the saveNewimageToLocalSystemAfterSendingSuccess: callback.
  */
 @property (nonatomic, assign) BOOL enableSaveNewPhotoToLocalSystem;
 
 /*!
+ *  \~chinese
  发送新拍照的图片完成之后，将图片在本地另行存储的回调
 
  @param newImage    图片
 
  @discussion 您可以在此回调中按照您的需求，将图片另行保存或执行其他操作。
+ 
+ *  \~english
+ Callback for storing the image locally after the newly taken image is sent
+
+ @param newImage image.
+
+ @ discussion You can save the image or perform other operations according to your needs in this callback.
  */
 - (void)saveNewPhotoToLocalSystemAfterSendingSuccess:(UIImage *)newImage;
 
 /*!
+ *  \~chinese
  查看位置信息的位置详情
 
  @param locationMessageContent  点击的位置消息
 
  @discussion SDK在此方法中会默认调用RCLocationViewController在地图中展示位置。
+ 
+ *  \~english
+ View location details of location information.
+
+ @param locationMessageContent Clicked location message.
+
+ @ discussion SDK calls RCLocationViewController by default in this method to show the location in the map.
  */
 - (void)presentLocationViewController:(RCLocationMessage *)locationMessageContent;
 
 /*!
+ *  \~chinese
  查看文件消息中的文件
 
  @param model   消息Cell的数据模型
 
  @discussion SDK在此方法中会默认调用RCFilePreviewViewController下载并展示文件。
+ 
+ *  \~english
+ View files in file messages.
+
+ @param model Data Model of message Cell.
+
+ @ discussion SDK calls RCFilePreviewViewController by default in this method to download and display the file.
  */
 - (void)presentFilePreviewViewController:(RCMessageModel *)model;
 
-#pragma mark - 公众号
+#pragma mark - PublicService
 /*!
+ *  \~chinese
  点击公众号菜单
 
  @param selectedMenuItem  被点击的公众号菜单
+ 
+ *  \~english
+ Click the official account menu.
+
+ @param selectedMenuItem Official account menu clicked.
  */
 - (void)onPublicServiceMenuItemSelected:(RCPublicServiceMenuItem *)selectedMenuItem;
 
 /*!
+ *  \~chinese
  点击公众号Cell中的URL的回调
 
  @param url   被点击的URL
  @param model 被点击的Cell对应的Model
+ 
+ *  \~english
+ Callback for clicking the URL in the official account Cell.
+
+ @param url URL clicked.
+ @param model The Model corresponding to the Cell clicked.
  */
 - (void)didTapUrlInPublicServiceMessageCell:(NSString *)url model:(RCMessageModel *)model;
 
-#pragma mark - 客服
+#pragma mark - CustomerService
 /*!
+ *  \~chinese
  用户的详细信息，此数据用于上传用户信息到客服后台，数据的nickName和portraitUrl必须填写。
+ 
+ *  \~english
+ The details of the user, which are used to upload the user information to the customer service backend. The nickName and portraitUrl of the data must be entered.
  */
 @property (nonatomic, strong) RCCustomerServiceInfo *csInfo;
 
 /*!
+ *  \~chinese
 客服评价弹出时间，在客服页面停留超过这个时间，离开客服会弹出评价提示框，默认为60s
+ 
+ *  \~english
+ Customer service evaluation pop-up time, stay in the customer service page for more than this time, leave customer service will pop up evaluation prompt box, default value is 60s.
  */
 @property (nonatomic, assign) NSTimeInterval csEvaInterval;
 /*!
+ *  \~chinese
  评价客服服务,然后离开当前VC的。此方法有可能在离开客服会话页面触发，也可能是客服在后台推送评价触发，也可能用户点击机器人知识库评价触发。应用可以重写此方法来自定义客服评价界面。应用不要直接调用此方法。
 
  @param serviceStatus  当前的服务类型。
@@ -703,45 +1251,86 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion
  sdk会在需要评价时调用此函数。如需自定义评价界面，请根据demo的RCDCustomerServiceViewController中的示例来重写此函数。
+ 
+ *  \~english
+ Evaluate customer service and then leave the current VC. This method may be triggered when the customer service conversation page leaves, the customer service pushes the evaluation in the background, or the user clicks on the robot knowledge base evaluation. Applications can rewrite this method to customize the customer service evaluation interface. The application should not call this method directly.
+
+  @param serviceStatus  The current service type.
+  @ param commentId.
+ Comment on ID. When the user actively leaves the customer service conversation, the id is the null;, when the customer service pushes the evaluation request in the background, the id is the conversation id;, and when the user clicks on the robot to respond to the evaluation, this is the robot knowledge base id.
+  @param isQuit         Whether to leave after the evaluation is completed.
+
+ @ discussion
+ Sdk calls this function when an evaluation is needed. To customize the evaluation interface, rewrite this function according to the example in demo's RCDCustomerServiceViewController.
  */
 - (void)commentCustomerServiceWithStatus:(RCCustomerServiceStatus)serviceStatus
                                commentId:(NSString *)commentId
                         quitAfterComment:(BOOL)isQuit;
 
 /*!
+ *  \~chinese
  选择客服分组
  @param  groupList    所有客服分组
  @param  resultBlock  resultBlock
  @discussion
  重写这个方法你可以自己重写客服分组界面，当用户选择技能组后，调用resultBlock传入用户选择分组的groupId，如果用户没有选择，可以传nil，会自动分配一个客服分组
+ 
+ *  \~english
+ Select customer service group.
+ @ param groupList all customer service groups.
+ @ param resultBlock resultBlock.
+ @ discussion
+ To rewrite this method, you can rewrite the customer service grouping interface by yourself. When the user selects a skill group, call resultBlock and pass in the groupId, of the user selection grouping. If the user does not have a choice, you can pass nil, and a customer service grouping will be assigned automatically.
  */
 - (void)onSelectCustomerServiceGroup:(NSArray *)groupList result:(void (^)(NSString *groupId))resultBlock;
 
 /*!
+ *  \~chinese
  离开客服界面
 
  @discussion 调用此方法离开客服VC。
+ 
+ *  \~english
+ Leave the customer service interface
+
+ @ discussion This method is called to leave the customer service VC.
  */
 - (void)customerServiceLeftCurrentViewController;
 
 /*!
+ *  \~chinese
  客服服务模式变化
 
  @param newMode  新的客服服务模式。
+ 
+ *  \~english
+ Change of customer service model.
+
+ @param newMode New customer service model.
  */
 - (void)onCustomerServiceModeChanged:(RCCSModeType)newMode;
 
 /*!
+ *  \~chinese
  客服通告
 
  @param announceMsg  客服通告内容
  @param announceClickUrl  客服通告链接url
 
  @discussion 此方法带回通告栏的展示内容及点击链接，须 App 自己实现
+ 
+ *  \~english
+ Customer service announcement.
+
+ @param announceMsg Customer service announcement content.
+ @param announceClickUrl Customer service announcement link url.
+
+ @ discussion This method brings back the display content of the bulletin board and clicks the link, which must be implemented by App itself.
  */
 - (void)announceViewWillShow:(NSString *)announceMsg announceClickUrl:(NSString *)announceClickUrl;
 
 /*!
+ *  \~chinese
  输入框内输入了@符号，即将显示选人界面的回调
 
  @param selectedBlock 选人后的回调
@@ -749,11 +1338,21 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion
  开发者如果想更换选人界面，可以重写方法，弹出自定义的选人界面，选人结束之后，调用selectedBlock传入选中的UserInfo即可。
+ 
+ *  \~english
+ Callback for displaying person selection interface when the @ symbol is entered in the input box
+
+ @param selectedBlock Callback after person selection
+ @param cancelBlock Callback for canceling person selection
+
+ @ discussion
+ If developers want to change the selection interface, they can rewrite the method and pop up the custom selection interface. After the selection is over, call selectedBlock and pass in the selected UserInfo.
  */
 - (void)showChooseUserViewController:(void (^)(RCUserInfo *selectedUserInfo))selectedBlock
                               cancel:(void (^)(void))cancelBlock;
 
 /*!
+ *  \~chinese
  合并转发消息的回调
 
  @param index            0 是逐条转发消息, 1 是合并转发消息。
@@ -761,6 +1360,15 @@ typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
 
  @discussion
  开发者如果想更换转发消息的选择会话界面，可以重写此方法，弹出自定义的选择会话界面，选择结束之后，调用completedBlock传入选中的会话即可。
+ 
+ *  \~english
+ Callback for merging and forwarding messages.
+
+ @param index 0 is to forward messages one by one, and 1 is to merge and forward messages.
+  @param completedBlock   Return a list of conversations that shall be forwarded.
+
+  @ discussion
+ If developers want to change the selection conversation interface for forwarding messages, they can override this method, pop up the custom selection conversation interface, and call completedBlock to pass in the selected conversation after the selection is over.
  */
 - (void)forwardMessage:(NSInteger)index completed:(void (^)(NSArray<RCConversation *> *conversationList))completedBlock;
 @end

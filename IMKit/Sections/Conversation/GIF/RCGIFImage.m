@@ -3,7 +3,7 @@
 //
 //
 //  Created by liyan on 2018/8/3.
-//  Copyright © 2018年 RongCloud. All rights reserved.
+//  Copyright © 2018 RongCloud. All rights reserved.
 //
 
 #import "RCGIFImage.h"
@@ -240,8 +240,10 @@ static NSHashTable *allAnimatedImagesWeak;
         // }
         NSDictionary *imageProperties =
             (__bridge_transfer NSDictionary *)CGImageSourceCopyProperties(_imageSource, NULL);
-        _loopCount = [[[imageProperties objectForKey:(id)kCGImagePropertyGIFDictionary]
-            objectForKey:(id)kCGImagePropertyGIFLoopCount] unsignedIntegerValue];
+        // ios 14 以上的设备有的 gif 图获取到的 _loopCount 大于 0，导致gif 图不能循环播放
+//        _loopCount = [[[imageProperties objectForKey:(id)kCGImagePropertyGIFDictionary]
+//            objectForKey:(id)kCGImagePropertyGIFLoopCount] unsignedIntegerValue];
+        _loopCount = 0;
 
         // Iterate through frame images
         size_t imageCount = CGImageSourceGetCount(_imageSource);

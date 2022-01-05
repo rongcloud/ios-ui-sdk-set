@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by LiFei on 2016/12/5.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCSightMessageCell.h"

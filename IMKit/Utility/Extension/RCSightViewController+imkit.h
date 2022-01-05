@@ -2,7 +2,7 @@
 //  RCSightViewController+imkit.h
 //  RongIMKit
 //
-//  Created by 张改红 on 2020/12/23.
+//  Created by RongCloud on 2020/12/23.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

@@ -2,8 +2,8 @@
 //  RCOldMessageNotificationMessage.h
 //  RongIMKit
 //
-//  Created by 杜立召 on 15/8/24.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Created by RongCloud on 15/8/24.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

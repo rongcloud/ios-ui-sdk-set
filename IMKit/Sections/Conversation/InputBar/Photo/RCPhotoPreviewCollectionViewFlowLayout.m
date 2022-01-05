@@ -2,7 +2,7 @@
 //  RCPhotoPreviewCollectionViewFlowLayout.m
 //  RongIMKit
 //
-//  Created by 孙浩 on 2020/9/4.
+//  Created by RongCloud on 2020/9/4.
 //  Copyright © 2020 RongCloud. All rights reserved.
 //
 

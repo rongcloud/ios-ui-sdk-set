@@ -5,7 +5,7 @@
 //  RCMJRefreshExample
 //
 //  Created by MJ Lee on 15/3/4.
-//  Copyright (c) 2015年 小码哥. All rights reserved.
+//  Copyright (c) 2015 小码哥. All rights reserved.
 //  刷新控件的基类
 
 #import <UIKit/UIKit.h>

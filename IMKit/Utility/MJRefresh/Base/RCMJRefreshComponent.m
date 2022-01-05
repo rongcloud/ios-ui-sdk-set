@@ -5,7 +5,7 @@
 //  RCMJRefreshExample
 //
 //  Created by MJ Lee on 15/3/4.
-//  Copyright (c) 2015年 小码哥. All rights reserved.
+//  Copyright (c) 2015 小码哥. All rights reserved.
 //
 
 #import "RCMJRefreshComponent.h"
@@ -16,7 +16,7 @@
 @end
 
 @implementation RCMJRefreshComponent
-#pragma mark - 初始化
+#pragma mark - init
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         // 准备工作

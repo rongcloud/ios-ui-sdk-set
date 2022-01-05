@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by zhaobingdong on 2017/5/2.
-//  Copyright © 2017年 RongCloud. All rights reserved.
+//  Copyright © 2017 RongCloud. All rights reserved.
 //
 
 #import "RCSightSlideViewController.h"

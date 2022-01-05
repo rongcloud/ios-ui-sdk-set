@@ -3,7 +3,7 @@
 //  RCMJRefreshExample
 //
 //  Created by MJ Lee on 15/4/24.
-//  Copyright (c) 2015年 小码哥. All rights reserved.
+//  Copyright (c) 2015 小码哥. All rights reserved.
 //
 
 #import "RCMJRefreshBackFooter.h"
@@ -15,7 +15,7 @@
 
 @implementation RCMJRefreshBackFooter
 
-#pragma mark - 初始化
+#pragma mark - init
 - (void)willMoveToSuperview:(UIView *)newSuperview {
     [super willMoveToSuperview:newSuperview];
 

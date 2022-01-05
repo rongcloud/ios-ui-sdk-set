@@ -3,7 +3,7 @@
 //  RongIMKit
 //
 //  Created by liulin on 16/7/17.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

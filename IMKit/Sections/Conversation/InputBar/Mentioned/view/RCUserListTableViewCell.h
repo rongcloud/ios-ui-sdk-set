@@ -2,8 +2,8 @@
 //  RCUserListTableViewCell.h
 //  RongExtensionKit
 //
-//  Created by 杜立召 on 16/7/14.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 16/7/14.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

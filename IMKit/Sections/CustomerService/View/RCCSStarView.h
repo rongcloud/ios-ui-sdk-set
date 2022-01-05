@@ -2,8 +2,8 @@
 //  RCCSStarView.h
 //  RongSelfBuiltCustomerDemo
 //
-//  Created by 张改红 on 2016/12/6.
-//  Copyright © 2016年 rongcloud. All rights reserved.
+//  Created by RongCloud on 2016/12/6.
+//  Copyright © 2016 rongcloud. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

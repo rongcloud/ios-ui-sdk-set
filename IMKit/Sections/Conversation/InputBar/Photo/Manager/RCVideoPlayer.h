@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by birney on 2018/7/9.
-//  Copyright © 2018年 RongCloud. All rights reserved.
+//  Copyright © 2018 RongCloud. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

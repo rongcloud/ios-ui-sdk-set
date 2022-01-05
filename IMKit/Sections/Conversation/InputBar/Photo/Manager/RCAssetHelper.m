@@ -3,7 +3,7 @@
 //  RongExtensionKit
 //
 //  Created by Liv on 15/3/24.
-//  Copyright (c) 2015年 RongCloud. All rights reserved.
+//  Copyright (c) 2015 RongCloud. All rights reserved.
 //
 
 #import "RCAssetHelper.h"
@@ -26,7 +26,16 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
         _assetLibrary = [[ALAssetsLibrary alloc] init];
         __rc__photo__working_queue = dispatch_queue_create("com.rongcloud.photoWorkingQueue", NULL);
         if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-            [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+            PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+            BOOL authed = NO;
+            if (@available(iOS 14, *)) {
+                authed = (status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited);
+            } else {
+                authed = (status == PHAuthorizationStatusAuthorized);
+            }
+            if (authed) {
+                [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+            }
         }
     }
     return self;
@@ -242,7 +251,7 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
                                                    ![[info objectForKey:PHImageResultIsDegradedKey] boolValue]);
                            if (downloadFinined) {
                                if (resultBlock)
-                                   resultBlock(imageData.length);
+                                   resultBlock([self exchangeImageDataType:asset imageData:imageData].length);
                            }
                        }];
     } else if ([asset isKindOfClass:[ALAsset class]]) {
@@ -292,13 +301,9 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
         }
     }
     if (isHeic) {
-        UIImage *image = [UIImage imageWithData:imageData];
-        NSData *jpegData = UIImageJPEGRepresentation(image, 1.0);
-        if (!jpegData) {
-            CIImage *ciImage = [CIImage imageWithData:imageData];
-            CIContext *context = [CIContext context];
-            jpegData = [context JPEGRepresentationOfImage:ciImage colorSpace:ciImage.colorSpace options:@{}];
-        }
+        CIImage *ciImage = [CIImage imageWithData:imageData];
+        CIContext *context = [CIContext context];
+        NSData *jpegData = [context JPEGRepresentationOfImage:ciImage colorSpace:ciImage.colorSpace options:@{}];
         imageData = jpegData;
     }
     return imageData;

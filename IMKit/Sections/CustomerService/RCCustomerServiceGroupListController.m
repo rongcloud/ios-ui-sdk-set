@@ -2,8 +2,8 @@
 //  RCCustomerServiceGroupListController.m
 //  RongIMKit
 //
-//  Created by 张改红 on 16/7/19.
-//  Copyright © 2016年 RongCloud. All rights reserved.
+//  Created by RongCloud on 16/7/19.
+//  Copyright © 2016 RongCloud. All rights reserved.
 //
 
 #import "RCCustomerServiceGroupListController.h"

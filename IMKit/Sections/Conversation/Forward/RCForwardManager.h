@@ -2,7 +2,7 @@
 //  RCForwardManager.h
 //  SealTalk
 //
-//  Created by 孙浩 on 2019/6/17.
+//  Created by RongCloud on 2019/6/17.
 //  Copyright © 2019 RongCloud. All rights reserved.
 //
 
