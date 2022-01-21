@@ -41,8 +41,8 @@
     return pCall;
 }
 
-- (void)startCallId:(NSString *)callId userId:(NSString *)userId {
-    NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:callId];
+- (void)startCall:(NSString *)userId {
+    NSUUID *uuid = [NSUUID UUID];
     self.currentUUID = uuid;
     //RCCallKit_Delete_end
 }
@@ -51,10 +51,9 @@
     //RCCallKit_Delete_end
 }
 
-- (void)reportIncomingCallWithCallId:(NSString *)callId
-                             inviter:(NSString *)inviterId
-                          userIdList:(NSArray<NSString *> *)userIdList
-                             isVideo:(BOOL)isVideo {
+- (void)reportIncomingCallWithInviter:(NSString *)inviterId
+                           userIdList:(NSArray<NSString *> *)userIdList
+                              isVideo:(BOOL)isVideo {
     //RCCallKit_Delete_end
 }
 

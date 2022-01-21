@@ -518,6 +518,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         // 插入消息
         if (rcMessage.conversationType == self.conversationType && [rcMessage.targetId isEqual:self.targetId]) {
             [self updateForMessageSendOut:rcMessage];
+            if (rcMessage.sentStatus == SentStatus_SENDING) {
+                [self updateForMessageSendProgress:0 messageId:rcMessage.messageId];
+            }
         }
     } else if (statusDic) {
         // 更新消息状态
@@ -553,6 +556,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     if (ctype.intValue == (int)self.conversationType && [targetId isEqualToString:self.targetId]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             for (RCMessageModel *model in self.conversationDataRepository) {
+                if (model.messageDirection == MessageDirection_SEND && model.sentTime <= time.longLongValue &&
+                    model.sentStatus == SentStatus_SENT) {
+                    model.sentStatus = SentStatus_READ;
+                    [self.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_HASREAD messageId:model.messageId progress:0];
+                }
+            }
+            NSArray *cacheArray = self.dataSource.cachedReloadMessages.copy;
+            for (RCMessageModel *model in cacheArray){
                 if (model.messageDirection == MessageDirection_SEND && model.sentTime <= time.longLongValue &&
                     model.sentStatus == SentStatus_SENT) {
                     model.sentStatus = SentStatus_READ;
@@ -1216,11 +1227,27 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (void)resendMessageWithModel:(RCMessageModel *)model {
     RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:model.messageId];
-    [[RCIM sharedRCIM] sendMessage:message pushContent:nil pushData:nil successBlock:^(RCMessage *successMessage) {
-        
-    } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
-        
-    }];
+    BOOL needUploadMedia = NO;
+    if ([message.content isKindOfClass:[RCMediaMessageContent class]]) {
+        RCMediaMessageContent *mediaMessage = (RCMediaMessageContent *)message.content;
+        if (mediaMessage.remoteUrl.length <= 0) {
+            needUploadMedia = YES;
+            [[RCIM sharedRCIM] sendMediaMessage:message pushContent:nil pushData:nil progress:nil successBlock:^(RCMessage *successMessage) {
+                
+            } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
+                
+            } cancel:^(RCMessage *cancelMessage) {
+                
+            }];
+        }
+    }
+    if (!needUploadMedia) {
+        [[RCIM sharedRCIM] sendMessage:message pushContent:nil pushData:nil successBlock:^(RCMessage *successMessage) {
+            
+        } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
+            
+        }];
+    }
 }
 
 - (void)resendMessage:(RCMessageContent *)messageContent {
@@ -2073,8 +2100,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         RCTextView *textView = self.chatSessionInputBarControl.inputTextView;
         [textView becomeFirstResponder];
         NSString *replaceContent = [NSString stringWithFormat:@"%@%@", textView.text, content];
-        textView.text = replaceContent;
         NSRange range = NSMakeRange(textView.text.length, content.length);
+        textView.text = replaceContent;
         [self inputTextView:textView shouldChangeTextInRange:range replacementText:replaceContent];
     }
 }
@@ -2131,7 +2158,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     DebugLog(@"%s", __FUNCTION__);
 
     RCMessageContent *content = model.content;
-    long msgId = model.messageId;
+    
     NSIndexPath *indexPath = [self.util findDataIndexFromMessageList:model];
     if (!indexPath) {
         return;
@@ -2141,10 +2168,13 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[ message ] priority:NO];
         [self.conversationMessageCollectionView reloadItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
     } else {
-        [self.conversationDataRepository removeObject:model];
-        [self.conversationDataRepository addObject:model];
-        NSIndexPath *targetIndex = [NSIndexPath indexPathForItem:self.conversationDataRepository.count - 1 inSection:0];
-        [self.conversationMessageCollectionView moveItemAtIndexPath:indexPath toIndexPath:targetIndex];
+        // 增加判断如果不在此条重发消息不在最底部，需要换到最底部
+        if (indexPath.row != self.conversationDataRepository.count - 1) {
+            [self.conversationDataRepository removeObject:model];
+            [self.conversationDataRepository addObject:model];
+            NSIndexPath *targetIndex = [NSIndexPath indexPathForItem:self.conversationDataRepository.count - 1 inSection:0];
+            [self.conversationMessageCollectionView moveItemAtIndexPath:indexPath toIndexPath:targetIndex];
+        }
         [self resendMessageWithModel:model];
     }
 }
@@ -2314,11 +2344,24 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     __weak typeof(self) __weakself = self;
     dispatch_async(dispatch_get_main_queue(), ^{
+        RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
         for (RCMessageModel *model in __weakself.conversationDataRepository) {
             if (model.messageId == messageId) {
                 model.sentStatus = SentStatus_SENT;
                 if (model.messageId > 0) {
-                    RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:model.messageId];
+                    if (message) {
+                        model.sentTime = message.sentTime;
+                        model.messageUId = message.messageUId;
+                        model.content = message.content;
+                    }
+                }
+                break;
+            }
+        }
+        for(RCMessageModel *model in self.dataSource.cachedReloadMessages){
+            if (model.messageId == messageId) {
+                model.sentStatus = SentStatus_SENT;
+                if (model.messageId > 0) {
                     if (message) {
                         model.sentTime = message.sentTime;
                         model.messageUId = message.messageUId;
@@ -2411,6 +2454,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         // 发送失败0.3s之后再刷新，防止没有Cell绘制太慢
         dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 0.3f), dispatch_get_main_queue(), ^{
             for (RCMessageModel *model in __weakself.conversationDataRepository) {
+                if (model.messageId == messageId) {
+                    model.sentStatus = SentStatus_FAILED;
+                    break;
+                }
+            }
+            for (RCMessageModel *model in __weakself.dataSource.cachedReloadMessages) {
                 if (model.messageId == messageId) {
                     model.sentStatus = SentStatus_FAILED;
                     break;

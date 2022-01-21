@@ -23,7 +23,7 @@
 #import "RCResendManager.h"
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
-
+#import "RCKitListenerManager.h"
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
 NSString *const RCKitSendingMessageNotification = @"RCKitSendingMessageNotification";
@@ -47,13 +47,10 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @property (nonatomic, copy) NSString *token;
 @property (nonatomic, strong) NSMutableArray *downloadingMeidaMessageIds;
 
-@property (nonatomic, strong) NSHashTable<id<RCIMReceiveMessageDelegate>> *receiveMessageDelegates;
-@property (nonatomic, strong) NSHashTable<id<RCIMConnectionStatusDelegate>> *connectionStatusDelegates;
-
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.7_opensource";
+static NSString *const RCIMKitVersion = @"5.1.8_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -64,8 +61,6 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
             __rongUIKit.userInfoDataSource = nil;
             __rongUIKit.groupUserInfoDataSource = nil;
             __rongUIKit.groupInfoDataSource = nil;
-            __rongUIKit.receiveMessageDelegates = [NSHashTable weakObjectsHashTable];
-            __rongUIKit.connectionStatusDelegates = [NSHashTable weakObjectsHashTable];
             __rongUIKit.enableMessageAttachUserInfo = NO;
             __rongUIKit.enablePersistentUserInfoCache = NO;
             __rongUIKit.hasNotifydExtensionModuleUserId = NO;
@@ -140,36 +135,27 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
 }
 
 - (id<RCIMReceiveMessageDelegate>)receiveMessageDelegate {
-    @synchronized (self) {
-        if (self.receiveMessageDelegates.allObjects.count > 0) {
-            return self.receiveMessageDelegates.allObjects.firstObject;
-        }
-        return nil;
+    NSArray *receiveDelegates = [[RCKitListenerManager sharedManager] allReceiveMessageDelegates];
+    if (receiveDelegates.count > 0) {
+        return receiveDelegates.firstObject;
     }
+    return nil;
 }
 
 - (void)addReceiveMessageDelegate:(id<RCIMReceiveMessageDelegate>)delegate {
-    @synchronized (self) {
-        if (delegate) {
-            [self.receiveMessageDelegates addObject:delegate];
-        }
-    }
+    [[RCKitListenerManager sharedManager] addReceiveMessageDelegate:delegate];
 }
 
 - (void)removeReceiveMessageDelegate:(id<RCIMReceiveMessageDelegate>)delegate {
-    @synchronized (self) {
-        if (delegate) {
-            [self.receiveMessageDelegates removeObject:delegate];
-        }
-    }
+    [[RCKitListenerManager sharedManager] removeReceiveMessageDelegate:delegate];
 }
 
 - (void)resetNotificationQuietStatus {
-    [[RCIMClient sharedRCIMClient] getNotificationQuietHours:^(NSString *startTime, int spansMin) {
+    [[RCIMClient sharedRCIMClient] getNotificationQuietHours:^(NSString *startTime, int spanMins) {
         NSDateFormatter *dateFormatter = [self getDateFormatter];
         if (startTime && startTime.length != 0) {
             self.notificationQuietBeginTime = [dateFormatter dateFromString:startTime];
-            self.notificationQuietEndTime = [self.notificationQuietBeginTime dateByAddingTimeInterval:spansMin * 60];
+            self.notificationQuietEndTime = [self.notificationQuietBeginTime dateByAddingTimeInterval:spanMins * 60];
         } else {
             self.notificationQuietBeginTime = nil;
             self.notificationQuietEndTime = nil;
@@ -309,13 +295,11 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object {
-
-    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
         if ([delegate respondsToSelector:@selector(interceptMessage:)] && [delegate interceptMessage:message]) {
             return;
         }
     }
-    
     if (!message) {
         return;
     }
@@ -369,14 +353,12 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
             }
         }
     }
-
     NSDictionary *dic_left = @{ @"left" : @(nLeft) };
-    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
         if ([delegate respondsToSelector:@selector(onRCIMReceiveMessage:left:)]) {
             [delegate onRCIMReceiveMessage:message left:nLeft];
         }
     }
-
     // dispatch message
     [[RongIMKitExtensionManager sharedManager] onMessageReceived:message];
 
@@ -404,13 +386,14 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
         }
         if (message.content.mentionedInfo.isMentionedMe) {
             BOOL appConsumed = NO;
-            for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+            for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
                 if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
                     if ([delegate onRCIMCustomAlertSound:message]) {
                         appConsumed = YES;
                     }
                 }
             }
+            
             if (!appConsumed) {
                 // 非讨论组通知消息，并且消息未设置为静默才响铃
                 if (![message.content isKindOfClass:[RCDiscussionNotificationMessage class]] && !message.messageConfig.disableNotification) {
@@ -430,13 +413,14 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
                 
                 if (NOTIFY == nStatus) {
                     BOOL appComsumed = NO;
-                    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+                    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
                         if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
                             if ([delegate onRCIMCustomAlertSound:message]) {
                                 appComsumed = YES;
                             }
                         }
                     }
+                
                     if (!appComsumed) {
                         
                         if (![message.content isKindOfClass:[RCDiscussionNotificationMessage class]] && !message.messageConfig.disableNotification) {
@@ -465,7 +449,7 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object offline:(BOOL)offline hasPackage:(BOOL)hasPackage {
-    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
         if ([delegate respondsToSelector:@selector(onRCIMReceived:left:offline:hasPackage:)]) {
             [delegate onRCIMReceived:message left:nLeft offline:offline hasPackage:hasPackage];
         }
@@ -489,8 +473,7 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageNotification
                                                         object:@(message.messageId)
                                                       userInfo:nil];
-    
-    for (id<RCIMReceiveMessageDelegate> delegate in self.receiveMessageDelegates) {
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         if ([delegate respondsToSelector:@selector(onRCIMMessageRecalled:)]) {
@@ -502,6 +485,7 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
             [delegate messageDidRecall:message];
         }
     }
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         [self postLocalNotificationIfNeed:message];
     });
@@ -567,8 +551,7 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
             });
         }
     });
-
-    for (id<RCIMConnectionStatusDelegate> delegate in self.connectionStatusDelegates) {
+    for (id<RCIMConnectionStatusDelegate> delegate in [[RCKitListenerManager sharedManager] allConnectionStatusChangeDelegates]) {
         if ([delegate respondsToSelector:@selector(onRCIMConnectionStatusChanged:)]) {
             [delegate onRCIMConnectionStatusChanged:status];
         }
@@ -580,28 +563,19 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
 }
 
 - (id<RCIMConnectionStatusDelegate>)connectionStatusDelegate {
-    @synchronized (self) {
-        if (self.connectionStatusDelegates.count > 0) {
-            return self.connectionStatusDelegates.allObjects.firstObject;
+    NSArray *connectDelegates =  [[RCKitListenerManager sharedManager] allConnectionStatusChangeDelegates];
+        if (connectDelegates.count > 0) {
+            return connectDelegates.firstObject;
         }
         return nil;
-    }
 }
 
 - (void)addConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)delegate {
-    @synchronized (self) {
-        if (delegate) {
-            [self.connectionStatusDelegates addObject:delegate];
-        }
-    }
+    [[RCKitListenerManager sharedManager] addConnectionStatusChangeDelegate:delegate];
 }
 
 - (void)removeConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)delegate {
-    @synchronized (self) {
-        if (delegate) {
-            [self.connectionStatusDelegates removeObject:delegate];
-        }
-    }
+    [[RCKitListenerManager sharedManager] removeConnectionStatusChangeDelegate:delegate];
 }
 
 /*!
@@ -623,7 +597,7 @@ static NSString *const RCIMKitVersion = @"5.1.7_opensource";
 }
 
 #pragma mark - UserInfo&GroupInfo&GroupUserInfo
-- (void)setenablePersistentUserInfoCache:(BOOL)enablePersistentUserInfoCache {
+- (void)setEnablePersistentUserInfoCache:(BOOL)enablePersistentUserInfoCache {
     _enablePersistentUserInfoCache = enablePersistentUserInfoCache;
     NSString *userId = [[RCIMClient sharedRCIMClient].currentUserInfo.userId copy];
     if (enablePersistentUserInfoCache && userId) {

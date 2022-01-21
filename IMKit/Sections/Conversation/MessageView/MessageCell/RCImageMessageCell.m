@@ -49,6 +49,7 @@
 
 - (void)setDataModel:(RCMessageModel *)model {
     if (self.model && self.model.messageId != model.messageId) {
+        [self showProgressView];
         [self.progressView updateProgress:0];
     }
     [super setDataModel:model];
@@ -124,7 +125,6 @@
     [self.messageContentView addSubview:self.destructBackgroundView];
     [self.destructBackgroundView addSubview:self.destructPicture];
     [self.destructBackgroundView addSubview:self.destructLabel];
-    self.progressView = [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
 }
 
 - (void)setAutoLayout {
@@ -139,6 +139,7 @@
             self.pictureView.image = displayImage;
             self.messageContentView.contentSize = imageSize;
             self.pictureView.frame = self.messageContentView.bounds;
+            self.progressView.frame = self.pictureView.bounds;
         }
     } else {
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCImageMessage object");
@@ -147,15 +148,9 @@
 
 - (void)updateProgressView{
     if (self.model.sentStatus == SentStatus_SENDING || [[RCResendManager sharedManager] needResend:self.model.messageId]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.pictureView addSubview:self.progressView];
-            [self.progressView setFrame:self.pictureView.bounds];
-            [self.progressView startAnimating];
-        });
+        [self showProgressView];
     } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.progressView removeFromSuperview];
-        });
+        [self hiddenProgressView];
     }
 }
 
@@ -170,41 +165,39 @@
     if (self.model.messageId == notifyModel.messageId) {
         DebugLog(@"messageCellUpdateSendingStatusEvent >%@ ", notifyModel.actionName);
         if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_BEGIN]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.pictureView addSubview:_progressView];
-                [self.progressView setFrame:self.pictureView.bounds];
-                [self.progressView startAnimating];
-            });
+            [self showProgressView];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_FAILED]) {
             if (self.model.sentStatus == SentStatus_SENDING) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.pictureView addSubview:_progressView];
-                    [self.progressView setFrame:self.pictureView.bounds];
-                    [self.progressView startAnimating];
-                });
+                [self showProgressView];
             } else {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.progressView stopAnimating];
-                    [self.progressView removeFromSuperview];
-                });
+                [self hiddenProgressView];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_SUCCESS]) {
             if (self.model.sentStatus != SentStatus_READ) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.progressView stopAnimating];
-                    [self.progressView removeFromSuperview];
-                });
+                [self hiddenProgressView];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
             dispatch_async(dispatch_get_main_queue(), ^{
+                [self showProgressView];
                 [self.progressView updateProgress:progress];
             });
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.progressView stopAnimating];
-                [self.progressView removeFromSuperview];
-            });
+            [self hiddenProgressView];
         }
+    }
+}
+
+- (void)showProgressView{
+    if (self.progressView.hidden) {
+        self.progressView.hidden = NO;
+        [self.progressView startAnimating];
+    }
+}
+
+- (void)hiddenProgressView{
+    if (!self.progressView.hidden) {
+        self.progressView.hidden = YES;
+        [self.progressView stopAnimating];
     }
 }
 
@@ -243,4 +236,12 @@
     return _pictureView;
 }
 
+- (RCImageMessageProgressView *)progressView {
+    if (!_progressView) {
+        _progressView = [[RCImageMessageProgressView alloc] init];
+        [self.pictureView addSubview:_progressView];
+        _progressView.hidden = YES;
+    }
+    return _progressView;
+}
 @end

@@ -80,7 +80,7 @@ static long hq_messageId = 0;
     
     [self setMessageInfo:voiceMessage];
     [self updateSubViewsLayout:voiceMessage];
-    [self updateStatusView:voiceMessage];
+    [self updateVoiceDownloadStatusView:voiceMessage];
 }
 
 #pragma mark - Public API
@@ -300,7 +300,10 @@ static long hq_messageId = 0;
     [self addVoiceUnreadTagView];
 }
 
-- (void)updateStatusView:(RCHQVoiceMessage *)voiceMessage{
+- (void)updateVoiceDownloadStatusView:(RCHQVoiceMessage *)voiceMessage{
+    if (self.model.messageDirection == MessageDirection_SEND && self.model.sentStatus != SentStatus_SENT) {
+        return;
+    }
     if (voiceMessage.localPath.length <= 0) {
         RCMessage *msg = [self converetMsgModelToMsg:self.model];
         [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[ msg ] priority:YES];

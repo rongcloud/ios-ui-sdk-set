@@ -102,35 +102,25 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (self.model.messageId == notifyModel.messageId) {
         DebugLog(@"messageCellUpdateSendingStatusEvent >%@ ", notifyModel.actionName);
         if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_BEGIN]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.cancelSendButton.hidden = YES;
-            });
+            self.cancelSendButton.hidden = YES;
             [self updateProgressView:progress];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_FAILED]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.cancelSendButton.hidden = YES;
-            });
+            self.cancelSendButton.hidden = YES;
             [self updateProgressView:progress];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_SUCCESS]) {
             if (self.model.sentStatus != SentStatus_READ) {
                 [self updateProgressView:progress];
             }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.cancelSendButton.hidden = YES;
-            });
+            self.cancelSendButton.hidden = YES;
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
             [self updateProgressView:progress];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_CANCELED]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.cancelSendButton.hidden = YES;
-                self.progressView.hidden = YES;
-                [self displayCancelLabel];
-            });
+            self.cancelSendButton.hidden = YES;
+            self.progressView.hidden = YES;
+            [self displayCancelLabel];
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.progressView.hidden = YES;
-                self.progressView.progress = 0;
-            });
+            self.progressView.hidden = YES;
+            self.progressView.progress = 0;
         }
     }
 }
@@ -168,8 +158,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             [self displayCancelLabel];
         }else if (self.model.sentStatus == SentStatus_SENDING) {
             self.progressView.hidden = NO;
-            self.cancelSendButton.hidden = NO;
-            self.messageActivityIndicatorView.hidden = YES;
+            [self updateProgressView:self.progressView.progress];
         }else if (self.model.sentStatus == SentStatus_SENT || self.model.sentStatus == SentStatus_RECEIVED) {
             self.progressView.hidden = YES;
             self.messageActivityIndicatorView.hidden = YES;
@@ -177,6 +166,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             self.cancelSendButton.hidden = YES;
             if ([[RCResendManager sharedManager] needResend:self.model.messageId]) {
                 self.messageActivityIndicatorView.hidden = NO;
+                [self.messageActivityIndicatorView startAnimating];
                 self.progressView.hidden = NO;
             } else {
                 self.progressView.hidden = YES;
@@ -195,6 +185,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             if ([[RCResendManager sharedManager] needResend:self.model.messageId] && progress == 0) {
                 self.cancelSendButton.hidden = YES;
                 self.messageActivityIndicatorView.hidden = NO;
+                [self.messageActivityIndicatorView startAnimating];
             } else {
                 self.cancelSendButton.hidden = NO;
                 self.messageActivityIndicatorView.hidden = YES;

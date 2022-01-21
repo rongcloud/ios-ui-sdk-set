@@ -209,6 +209,11 @@
     }
 }
 
+- (CGSize)collectionView:(UICollectionView *)collectionView
+                  layout:(UICollectionViewLayout *)collectionViewLayout
+  sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    return collectionView.bounds.size;
+}
 
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
@@ -327,10 +332,10 @@
 }
 
 - (void)imagePreviewCellDidLongTap:(UILongPressGestureRecognizer *)sender{
-    [self longPressed:sender];
+    [self longPressed];
 }
 
-- (void)longPressed:(id)sender{
+- (void)longPressed{
     [RCActionSheetView showActionSheetView:nil cellArray:@[RCLocalizedString(@"Save")] cancelTitle:RCLocalizedString(@"Cancel") selectedBlock:^(NSInteger index) {
         [self saveImage];
     } cancelBlock:^{

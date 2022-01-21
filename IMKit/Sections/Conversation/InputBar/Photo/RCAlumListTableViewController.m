@@ -142,14 +142,12 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
 
                                       [weakSelf pushImagePickerController:assetsGroup animated:NO];
                                       //能获取到相册说明有权限，此时隐藏权限提示
-                                      if (weakSelf.tipsLabel) {
-                                          [weakSelf.tipsLabel setHidden:YES];
-                                      }
+                                      [weakSelf.tipsLabel setHidden:YES];
                                   } else {
                                       if ([[RCAssetHelper shareAssetHelper] hasAuthorizationStatusAuthorized]) {
-                                          if (weakSelf.tipsLabel) {
-                                              [weakSelf.tipsLabel setHidden:YES];
-                                          }
+                                          [weakSelf.tipsLabel setHidden:YES];
+                                      }else{
+                                          [weakSelf.tipsLabel setHidden:NO];
                                       }
                                   }
                                   [weakSelf.tableView reloadData];
@@ -304,7 +302,13 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
 }
 
 - (void)setAuthorizationStatusAuthorized {
-    if (![[RCAssetHelper shareAssetHelper] hasAuthorizationStatusAuthorized]) {
+    if (![[RCAssetHelper shareAssetHelper] hasAuthorizationStatusAuthorized] && [PHPhotoLibrary authorizationStatus] != PHAuthorizationStatusNotDetermined) {
+        self.tipsLabel.hidden = NO;
+    }
+}
+
+- (UILabel *)tipsLabel{
+    if (!_tipsLabel) {
         _tipsLabel = [[UILabel alloc] init];
         _tipsLabel.frame = CGRectMake(8, 64, self.view.frame.size.width - 16, 100);
         _tipsLabel.textAlignment = NSTextAlignmentCenter;
@@ -313,7 +317,8 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
         _tipsLabel.textColor = [UIColor blackColor];
         _tipsLabel.text = RCLocalizedString(@"PhotoAccessRight");
         [self.view addSubview:_tipsLabel];
+        _tipsLabel.hidden = YES;
     }
+    return _tipsLabel;
 }
-
 @end

@@ -136,9 +136,6 @@ UIColor *dynamic_color(NSInteger light_hex_value, NSInteger dark_hex_value) {
         case RCCallDisconnectReasonKickedByServer:
             hangupReasonString = RCCallKitLocalizedString(@"VoIPCallLocalKickedByServer");
             break;
-        case RCCallDisconnectReasonAcceptSystemCall:
-            hangupReasonString = RCCallKitLocalizedString(@"VoIPCallLocalAcceptSystemCall");
-            break;
         case RCCallDisconnectReasonRemoteKickedByOtherCall:
             hangupReasonString = RCCallKitLocalizedString(@"VoIPCallRemoteKickedByOtherCallError");
             break;
@@ -147,9 +144,6 @@ UIColor *dynamic_color(NSInteger light_hex_value, NSInteger dark_hex_value) {
             break;
         case RCCallDisconnectReasonRemoteKickedByServer:
             hangupReasonString = RCCallKitLocalizedString(@"VoIPCallRemoteKickedByServer");
-            break;
-        case RCCallDisconnectReasonRemoteAcceptSystemCall:
-            hangupReasonString = RCCallKitLocalizedString(@"VoIPCallRemoteAcceptSystemCall");
             break;
         case RCCallDisconnectReasonAcceptByOtherClient:
             hangupReasonString = RCCallKitLocalizedString(@"VoIPCallAcceptByOtherClient");
@@ -272,7 +266,15 @@ UIColor *dynamic_color(NSInteger light_hex_value, NSInteger dark_hex_value) {
     }
 }
 + (void)loadErrorAlertWithConfirm:(NSString *)title message:(NSString *)message {
-    [RCAlertView showAlertController:title message:message cancelTitle:RCCallKitLocalizedString(@"OK")];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title
+                                                        message:message
+                                                       delegate:nil
+                                              cancelButtonTitle:RCCallKitLocalizedString(@"OK")
+                                              otherButtonTitles:nil];
+        alert.tag = 1002;
+        [alert show];
+    });
 }
 
 + (NSInteger)compareVersion:(NSString *)version1 toVersion:(NSString *)version2 {

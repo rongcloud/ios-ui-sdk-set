@@ -260,14 +260,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             [self.progressView startIndeterminateAnimation];
             [self.progressView setHidden:NO];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_FAILED]) {
-            if (self.model.sentStatus == SentStatus_SENDING) {
-                [self.progressView startIndeterminateAnimation];
-                [self.progressView setHidden:NO];
-            } else {
-                [self.playButtonView setHidden:NO];
-                [self.progressView stopIndeterminateAnimation];
-                [self.progressView setHidden:YES];
-            }
+            [self updateSightPlayStatus];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_SUCCESS]) {
             if (self.model.sentStatus != SentStatus_READ) {
                 [self.playButtonView setHidden:NO];
@@ -275,6 +268,11 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
                 [self.progressView setHidden:YES];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
+            if (self.progressView.hidden) {
+                [self.playButtonView setHidden:YES];
+                [self.progressView startIndeterminateAnimation];
+                [self.progressView setHidden:NO];
+            }
             float pro = progress / 100.0f;
             [self.progressView setProgress:pro animated:YES];
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {

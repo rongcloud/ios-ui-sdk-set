@@ -129,22 +129,16 @@
 
     [self updateStatusContentView:self.model];
     if (model.sentStatus == SentStatus_SENDING || [[RCResendManager sharedManager] needResend:self.model.messageId]) {
-        dispatch_main_async_safe(^{
-            [self.gifImageView addSubview:_progressView];
-            [self.progressView setFrame:self.gifImageView.bounds];
-            [self.progressView startAnimating];
-        });
+        [self showProgressView];
     } else {
-        dispatch_main_async_safe(^{
-            [self.progressView removeFromSuperview];
-        });
+        [self hiddenProgressView];
     }
 }
 
 - (void)updateStatusContentView:(RCMessageModel *)model{
     [super updateStatusContentView:model];
     __weak typeof(self) weakSelf = self;
-    dispatch_main_async_safe(^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         if (model.content.destructDuration <= 0) {
             weakSelf.messageActivityIndicatorView.hidden = YES;
         }
@@ -176,6 +170,7 @@
     CGSize gifSize = [RCGIFUtility calculatecollectionViewHeight:self.currentModel];
     self.messageContentView.contentSize = CGSizeMake(gifSize.width, gifSize.height);
     self.gifImageView.frame = CGRectMake(0, 0, gifSize.width, gifSize.height);
+    self.progressView.frame = self.gifImageView.bounds;
     self.loadBackButton.frame = self.gifImageView.frame;
 }
 
@@ -249,40 +244,22 @@
     if (self.model.messageId == notifyModel.messageId) {
         DebugLog(@"messageCellUpdateSendingStatusEvent >%@ ", notifyModel.actionName);
         if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_BEGIN]) {
-            dispatch_main_async_safe(^{
-                [self.gifImageView addSubview:_progressView];
-                [self.progressView setFrame:self.gifImageView.bounds];
-                [self.progressView startAnimating];
-            });
+            [self showProgressView];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_FAILED]) {
             if (self.model.sentStatus == SentStatus_SENDING) {
-                dispatch_main_async_safe(^{
-                    [self.gifImageView addSubview:_progressView];
-                    [self.progressView setFrame:self.gifImageView.bounds];
-                    [self.progressView startAnimating];
-                });
+                [self showProgressView];
             } else {
-                dispatch_main_async_safe(^{
-                    [self.progressView stopAnimating];
-                    [self.progressView removeFromSuperview];
-                });
+                [self hiddenProgressView];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_SUCCESS]) {
             if (self.model.sentStatus != SentStatus_READ) {
-                dispatch_main_async_safe(^{
-                    [self.progressView stopAnimating];
-                    [self.progressView removeFromSuperview];
-                });
+                [self hiddenProgressView];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
-            dispatch_main_async_safe(^{
-                [self.progressView updateProgress:progress];
-            });
+            [self showProgressView];
+            [self.progressView updateProgress:progress];
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
-            dispatch_main_async_safe(^{
-                [self.progressView stopAnimating];
-                [self.progressView removeFromSuperview];
-            });
+            [self hiddenProgressView];
         }
     }
 }
@@ -394,6 +371,20 @@
     }
 }
 
+- (void)showProgressView{
+    if (self.progressView.hidden) {
+        self.progressView.hidden = NO;
+        [self.progressView startAnimating];
+    }
+}
+
+- (void)hiddenProgressView{
+    if (!self.progressView.hidden) {
+        self.progressView.hidden = YES;
+        [self.progressView stopAnimating];
+    }
+}
+
 #pragma mark - Getters and Setters
 
 - (RCGIFImageView *)gifImageView {
@@ -408,7 +399,9 @@
 
 - (RCImageMessageProgressView *)progressView {
     if (!_progressView) {
-        _progressView = [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
+        _progressView = [[RCImageMessageProgressView alloc] init];
+        [self.gifImageView addSubview:_progressView];
+        _progressView.hidden = YES;
     }
     return _progressView;
 }

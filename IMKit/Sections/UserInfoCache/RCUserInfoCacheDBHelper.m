@@ -8,7 +8,7 @@
 
 #import "RCUserInfoCacheDBHelper.h"
 
-int const RCKitStorageVersion = 3;
+int const RCKitStorageVersion = 4;
 
 @interface RCUserInfoCacheDBHelper ()
 
@@ -33,7 +33,7 @@ int const RCKitStorageVersion = 3;
         [self.workingDB executeUpdate:@"CREATE TABLE IF NOT EXISTS USER_INFO(user_id TEXT PRIMARY KEY, name TEXT, alias TEXT, "
                                       @"portrait_uri TEXT, extra TEXT)"];
         [self.workingDB executeUpdate:@"CREATE TABLE IF NOT EXISTS CONVERSATION_USER_INFO(conversation_type INTEGER, "
-                                      @"target_id TEXT, user_id TEXT, name TEXT, portrait_uri TEXT, PRIMARY "
+                                      @"target_id TEXT, user_id TEXT, name TEXT, alias TEXT, portrait_uri TEXT, extra TEXT,  PRIMARY "
                                       @"KEY(conversation_type, target_id, user_id))"];
         [self.workingDB
             executeUpdate:@"CREATE TABLE IF NOT EXISTS CONVERSATION_INFO(conversation_type INTEGER, target_id TEXT, "
@@ -58,8 +58,15 @@ int const RCKitStorageVersion = 3;
             if (oldVersion == 1) {
                 [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN extra TEXT"];
                 [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN alias TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN extra TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN alias TEXT"];
             } else if (oldVersion == 2) {
                 [self.workingDB executeUpdate:@"ALTER TABLE USER_INFO ADD COLUMN alias TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN extra TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN alias TEXT"];
+            } else if (oldVersion == 3){
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN extra TEXT"];
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN alias TEXT"];
             }
         }
     }
@@ -158,7 +165,9 @@ int const RCKitStorageVersion = 3;
             RCUserInfo *dbUserInfo = [[RCUserInfo alloc] init];
             dbUserInfo.userId = [resultSet stringForColumn:@"user_id"];
             dbUserInfo.name = [resultSet stringForColumn:@"name"];
+            dbUserInfo.alias = [resultSet stringForColumn:@"alias"];
             dbUserInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
+            dbUserInfo.extra = [resultSet stringForColumn:@"extra"];
             [resultSet close];
             return dbUserInfo;
         } else {
@@ -178,7 +187,9 @@ int const RCKitStorageVersion = 3;
             RCUserInfo *dbUserInfo = [[RCUserInfo alloc] init];
             dbUserInfo.userId = [resultSet stringForColumn:@"user_id"];
             dbUserInfo.name = [resultSet stringForColumn:@"name"];
+            dbUserInfo.alias = [resultSet stringForColumn:@"alias"];
             dbUserInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
+            dbUserInfo.extra = [resultSet stringForColumn:@"extra"];
             [dbConversationUserInfoList addObject:dbUserInfo];
         }
         [resultSet close];
@@ -194,8 +205,8 @@ int const RCKitStorageVersion = 3;
                      targetId:(NSString *)targetId {
     if ([self.workingDB open]) {
         [self.workingDB executeUpdate:@"INSERT OR REPLACE INTO CONVERSATION_USER_INFO (conversation_type, target_id, "
-                                      @"user_id, name, portrait_uri) VALUES(?, ?, ?, ?, ?)",
-                                      @(conversationType), targetId, userId, userInfo.name, userInfo.portraitUri];
+                                      @"user_id, name, alias, portrait_uri, extra) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                                      @(conversationType), targetId, userId, userInfo.name, userInfo.alias, userInfo.portraitUri, userInfo.extra];
     }
 }
 

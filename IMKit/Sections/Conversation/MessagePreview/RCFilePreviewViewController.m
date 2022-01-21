@@ -76,17 +76,13 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            UIAlertController *alertController = [UIAlertController
-                alertControllerWithTitle:nil
-                                 message:RCLocalizedString(@"MessageRecallAlert")
-                          preferredStyle:UIAlertControllerStyleAlert];
-            [alertController
-                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *_Nonnull action) {
-                                                     [self.navigationController popViewControllerAnimated:YES];
-                                                 }]];
-            [self.navigationController presentViewController:alertController animated:YES completion:nil];
+            if (self.presentedViewController) {//收到撤回消息时， 先会弹出下载取消的弹框， 因此需要先销毁
+                [self.presentedViewController dismissViewControllerAnimated:NO completion:^{
+                    [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallAlert") actionTitles:nil cancelTitle:RCLocalizedString(@"Confirm") confirmTitle:nil preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:^{
+                        [self.navigationController popViewControllerAnimated:YES];
+                    } confirmBlock:nil inViewController:self.navigationController];
+                }];
+            }
         }
     });
 }

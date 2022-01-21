@@ -553,7 +553,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                 [self updateStatusContentView:self.model];
             }
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
-            
+            self.model.sentStatus = SentStatus_SENDING;
+            self.messageFailedStatusView.hidden = YES;
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_HASREAD] &&
                    [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] &&
                    (self.model.conversationType == ConversationType_PRIVATE ||
@@ -658,6 +659,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 #pragma mark - Target Action
 - (void)didClickMsgFailedView:(UIButton *)button {
+    self.messageFailedStatusView.hidden = YES;
+    self.model.sentStatus = SentStatus_SENDING;
     if (self.delegate) {
         if ([self.delegate respondsToSelector:@selector(didTapmessageFailedStatusViewForResend:)]) {
             [self.delegate didTapmessageFailedStatusViewForResend:self.model];

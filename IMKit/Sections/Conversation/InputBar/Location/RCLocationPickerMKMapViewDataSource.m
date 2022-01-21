@@ -18,6 +18,7 @@
 @property (nonatomic, strong) NSDate *firstTimeLocationChanged;
 @property (nonatomic, strong) CLLocation *lastPoiLocation;
 @property (nonatomic, assign) BOOL ifUpdateUserLocation;
+@property (nonatomic, assign) MKCoordinateSpan mapRegionSpan;
 @end
 
 @implementation RCLocationPickerMKMapViewDataSource
@@ -53,11 +54,47 @@
 
 - (void)dealloc {
     [self.mapView.userLocation removeObserver:self forKeyPath:@"location"];
+    NSLog(@"%s",__func__);
 }
+
+
+
 
 #pragma mark MKMapViewDelegate
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
     [self fetchPOIInfo];
+    [self clearMapViewMemoryIfNeeded];
+}
+
+- (void)clearMapViewMemoryIfNeeded {
+    // 不需要频繁切换mapType（影响体验）， 在zoomLevel达到一定变化范围才执行
+    if (self.mapView.region.span.longitudeDelta < 0.005 || self.mapView.region.span.latitudeDelta < 0.005) {
+        return;
+    }
+    
+    float longitudeDelta = self.mapView.region.span.longitudeDelta - self.mapRegionSpan.longitudeDelta;
+    float latitudeDelta = self.mapView.region.span.latitudeDelta - self.mapRegionSpan.latitudeDelta;
+    
+    if ( fabs(longitudeDelta) < 0.00005 && fabs(latitudeDelta) <0.00005) {
+        return;
+    }
+
+    MKMapType mapType = self.mapView.mapType;
+    switch (self.mapView.mapType) {
+        case MKMapTypeHybrid:
+            self.mapView.mapType = MKMapTypeStandard;
+            break;
+        case MKMapTypeStandard:
+            self.mapView.mapType = MKMapTypeHybrid;
+            break;
+
+        default:
+            break;
+    }
+    self.mapView.mapType = mapType;
+    
+    // 暂存
+    self.mapRegionSpan = self.mapView.region.span;
 }
 
 #pragma mark - Private Methods

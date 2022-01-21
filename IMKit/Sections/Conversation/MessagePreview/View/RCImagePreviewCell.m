@@ -311,6 +311,8 @@
         _progressView.indicatorView.color = [UIColor blackColor];
         _progressView.backgroundColor = [UIColor clearColor];
         [_progressView setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
+        _progressView.userInteractionEnabled = NO;
+        _progressView.indicatorView.userInteractionEnabled = NO;
         [self.contentView addSubview:_progressView];
     }
     return _progressView;

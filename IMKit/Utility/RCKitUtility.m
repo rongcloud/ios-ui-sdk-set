@@ -22,15 +22,15 @@
 #import "RCExtensionService.h"
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
-@interface RCWeakRef : NSObject
-@property (nonatomic, weak) id weakRef;
+@interface RCKitWeakRefObject : NSObject
+@property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
 @end
 
-@implementation RCWeakRef
+@implementation RCKitWeakRefObject
 + (instancetype)refWithObject:(id)obj {
-    RCWeakRef *ref = [[RCWeakRef alloc] init];
-    ref.weakRef = obj;
+    RCKitWeakRefObject *ref = [[RCKitWeakRefObject alloc] init];
+    ref.weakRefObj = obj;
     return ref;
 }
 @end
@@ -108,9 +108,9 @@
             [[NSUserDefaults standardUserDefaults] objectForKey:@"RCCurrentUserInterfaceStyle"];
         keyString = [NSString stringWithFormat:@"%@%@%@", bundleName, name, currentUserInterfaceStyle];
     }
-    RCWeakRef *ref = loadedObjectDict[keyString];
-    if (ref.weakRef) {
-        return ref.weakRef;
+    RCKitWeakRefObject *ref = loadedObjectDict[keyString];
+    if (ref.weakRefObj) {
+        return ref.weakRefObj;
     }
 
     UIImage *image = nil;
@@ -124,7 +124,7 @@
 
     image = [UIImage rc_imageWithLocalPath:image_path];
 
-    [loadedObjectDict setObject:[RCWeakRef refWithObject:image] forKey:keyString];
+    [loadedObjectDict setObject:[RCKitWeakRefObject refWithObject:image] forKey:keyString];
     return image;
 }
 
