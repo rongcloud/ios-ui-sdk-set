@@ -97,6 +97,9 @@ pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 
 如果必须使用名片的 framework，那么请在 [SealTalk 源码](https://github.com/rongcloud/sealtalk-ios/tree/master/ios-sealtalk/framework/RongContactCard)中下载名片 SDK 并手动导入，并将 xcframework 的 Embed 设置为 Embed & Sign
 
+备注：名片插件自 5.1.8(含)版本以后，已支持以 framework 形式推到 pod
+集成方式 pod 'RongCloudIM/ContactCard', '5.1.8'
+
 ## 5. 讯飞语音输入插件特殊说明
 
 [讯飞语音输入插件](./ifly.md)
