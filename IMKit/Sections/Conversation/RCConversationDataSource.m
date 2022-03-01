@@ -95,7 +95,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             self.firstUnreadMessage =
                 [[RCIMClient sharedRCIMClient] getFirstUnreadMessage:self.chatVC.conversationType targetId:self.chatVC.targetId];
         }
-        if((self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION)) {
+        if((self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_ULTRAGROUP)) {
             if(RCKitConfigCenter.message.enableMessageMentioned) {
                 self.chatVC.chatSessionInputBarControl.isMentionedEnabled = YES;
                 if (conversation.hasUnreadMentioned) {
@@ -721,7 +721,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     option.count = self.chatVC.defaultRemoteHistoryMessageCount;
     option.order = order;
     __weak typeof(self) weakSelf = self;
-    [[RCCoreClient sharedCoreClient] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId option:option complete:^(NSArray *messages, RCErrorCode code) {
+    void (^completeHandle)(NSArray *messages, RCErrorCode code) = ^(NSArray *messages, RCErrorCode code) {
         dispatch_async(dispatch_get_main_queue(), ^{
             weakSelf.isIndicatorLoading = NO;
             [weakSelf resetSectionHeaderView];
@@ -749,7 +749,17 @@ static BOOL msgRoamingServiceAvailable = YES;
                 }
             }
         });
-    }];
+    };
+    
+    if (self.chatVC.conversationType == ConversationType_ULTRAGROUP) {
+        [[RCChannelClient sharedChannelManager] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId option:option complete:^(NSArray *messages, RCErrorCode code) {
+            completeHandle(messages, code);
+        }];
+    } else {
+        [[RCCoreClient sharedCoreClient] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId option:option complete:^(NSArray *messages, RCErrorCode code) {
+            completeHandle(messages, code);
+        }];
+    }
 }
 
 - (void)handleAfterLoadLastestMessage{
@@ -781,7 +791,8 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)didReceiveMessageNotification:(RCMessage *)message leftDic:(NSDictionary *)leftDic {
     __block RCMessage *rcMessage = message;
     RCMessageModel *model = [RCMessageModel modelWithMessage:rcMessage];
-    if (model.conversationType == self.chatVC.conversationType && [model.targetId isEqual:self.chatVC.targetId]) {
+    
+    if (model.conversationType == self.chatVC.conversationType && [model.targetId isEqual:self.chatVC.targetId] && ([message.channelId isEqual:self.chatVC.channelId] || (message.channelId.length == 0 && self.chatVC.channelId.length == 0))) {
         [self.chatVC.csUtil startNotReciveMessageAlertTimer];
         if (self.chatVC.isConversationAppear) {
             if (self.chatVC.conversationType != ConversationType_CHATROOM && rcMessage.messageId > 0) {

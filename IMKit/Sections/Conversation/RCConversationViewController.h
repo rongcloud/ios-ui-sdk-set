@@ -91,6 +91,11 @@ typedef enum : NSUInteger {
  */
 @property (nonatomic, copy) NSString *targetId;
 
+/*!
+ 目标频道ID
+ */
+@property (nonatomic, copy) NSString *channelId;
+
 #pragma mark - 会话页面属性
 /**
  进入页面时定位的消息的发送时间

@@ -56,8 +56,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                         darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.title = RCLocalizedString(@"PreviewFile");
 

@@ -746,7 +746,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  如果您使用IMKit，使用此方法发送定向消息SDK会自动更新UI；
  如果您使用IMLib，请使用RCIMClient中的同名方法发送定向消息，不会自动更新UI。
 
- @warning 此方法目前仅支持群组和讨论组。
+ @warning 此方法目前仅支持普通群组和讨论组。
  */
 - (RCMessage *)sendDirectionalMessage:(RCConversationType)conversationType
                              targetId:(NSString *)targetId

@@ -492,7 +492,7 @@
                            value:self.inputTextView.font
                            range:NSMakeRange(0, replaceString.length)];
             [attStr addAttribute:NSForegroundColorAttributeName
-                           value:RCDYCOLOR(0x000000, 0x999999)
+                           value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
                            range:NSMakeRange(0, replaceString.length)];
             NSInteger cursorPosition;
             if (self.inputTextView.selectedTextRange) {
@@ -965,7 +965,7 @@
                        value:self.inputTextView.font
                        range:NSMakeRange(0, insertContent.length)];
         [attStr addAttribute:NSForegroundColorAttributeName
-                       value:RCDYCOLOR(0x000000, 0x999999)
+                       value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
                        range:NSMakeRange(0, insertContent.length)];
         [self.inputTextView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
         self.inputTextView.selectedRange = NSMakeRange(cursorPosition + insertContent.length, 0);

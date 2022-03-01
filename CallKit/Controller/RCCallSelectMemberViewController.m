@@ -90,7 +90,14 @@ typedef void (^CompleteBlock)(NSArray *addUserIdList);
     self.tableView.tableFooterView = [[UIView alloc] init];
     self.tableView.backgroundColor = dynamic_color(0xf0f0f6, 0x000000);
     self.tableView.separatorColor = dynamic_color(0xE3E5E6, 0x272727);
+    NSInteger versionChecker = [RCCallKitUtility compareVersion:[UIDevice currentDevice].systemVersion toVersion:@"15.0"];
+    if (versionChecker >= 0) {
+#ifdef __IPHONE_15_0
+        self.tableView.sectionHeaderTopPadding = 0;
+#endif
+    }
 
+    
     __weak RCCallSelectMemberViewController *weakVC = self;
     _toolBar = [[RCCallToolBar alloc]
         initWithFrame:CGRectMake(0, UIScreen.mainScreen.bounds.size.height - 49.0 - RCCallExtraSpace,
@@ -163,6 +170,15 @@ typedef void (^CompleteBlock)(NSArray *addUserIdList);
     [super viewWillAppear:animated];
     self.toolBar.frame = CGRectMake(0, UIScreen.mainScreen.bounds.size.height - 49.0 - RCCallExtraSpace,
                                     self.view.frame.size.width, 49.0 + RCCallExtraSpace);
+    NSInteger versionChecker = [RCCallKitUtility compareVersion:[UIDevice currentDevice].systemVersion toVersion:@"15.0"];
+    if (versionChecker >= 0) {
+#ifdef __IPHONE_15_0
+        UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
+        [appearance configureWithOpaqueBackground];
+        self.navigationController.navigationBar.scrollEdgeAppearance = appearance;
+        self.navigationController.navigationBar.standardAppearance = appearance;
+#endif
+    }
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
@@ -209,21 +225,7 @@ typedef void (^CompleteBlock)(NSArray *addUserIdList);
 }
 
 - (void)loadErrorAlert:(NSString *)title {
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:RCCallKitLocalizedString(@"OK")
-                                                       style:UIAlertActionStyleDefault
-                                                     handler:^(UIAlertAction *_Nonnull action){
-                                                     }];
-
-    UIAlertController *controler = [UIAlertController alertControllerWithTitle:title
-                                                                       message:nil
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-    [controler addAction:okAction];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self presentViewController:controler
-                           animated:YES
-                         completion:^{
-                         }];
-    });
+    [RCAlertView showAlertController:title message:nil cancelTitle:RCCallKitLocalizedString(@"OK")  inViewController:self];
 }
 
 #pragma mark - UITableViewDataSource

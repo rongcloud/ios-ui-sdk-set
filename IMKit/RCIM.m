@@ -50,7 +50,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.1.8_opensource";
+static NSString *const RCIMKitVersion = @"5.2.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -65,7 +65,6 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
             __rongUIKit.enablePersistentUserInfoCache = NO;
             __rongUIKit.hasNotifydExtensionModuleUserId = NO;
             __rongUIKit.automaticDownloadHQVoiceMsgEnable = YES;
-            __rongUIKit.downloadingMeidaMessageIds = [[NSMutableArray alloc] init];
             [[RongIMKitExtensionManager sharedManager] loadAllExtensionModules];
         }
     });
@@ -278,16 +277,18 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
                         postLocalNotification:RCLocalizedString(@"receive_new_message")
                                      userInfo:dictionary];
                 } else {
-                    [[RCIMClient sharedRCIMClient] getConversationNotificationStatus:message.conversationType
-                        targetId:message.targetId
-                        success:^(RCConversationNotificationStatus nStatus) {
-                            if (NOTIFY == nStatus) {
-                                [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
-                            }
+                    
+                    [[RCChannelClient sharedChannelManager]
+                     getConversationNotificationStatus:message.conversationType
+                     targetId:message.targetId
+                     channelId:message.channelId
+                     success:^(RCConversationNotificationStatus nStatus) {
+                        if (NOTIFY == nStatus) {
+                            [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
                         }
-                        error:^(RCErrorCode status){
-
-                        }];
+                    } error:^(RCErrorCode status) {
+                        
+                    }];
                 }
             }
         }
@@ -836,8 +837,8 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
     if ([self.downloadingMeidaMessageIds containsObject:@(messageId)]) {
         return;
     }
-
-    [self.downloadingMeidaMessageIds addObject:@(messageId)];
+    
+    [self addMeidaMessageId:@(messageId)];
 
     [[RCIMClient sharedRCIMClient] downloadMediaMessage:messageId
         progress:^(int progress) {
@@ -853,7 +854,7 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
             }
         }
         success:^(NSString *mediaPath) {
-            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
+            [self removeMeidaMessageId:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"success", @"mediaPath" : mediaPath };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -864,7 +865,7 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
             }
         }
         error:^(RCErrorCode errorCode) {
-            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
+            [self removeMeidaMessageId:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"error", @"errorCode" : @(errorCode) };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -875,7 +876,7 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
             }
         }
         cancel:^{
-            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
+            [self removeMeidaMessageId:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"cancel" };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -885,6 +886,32 @@ static NSString *const RCIMKitVersion = @"5.1.8_opensource";
                 cancelBlock();
             }
         }];
+}
+
+- (void)addMeidaMessageId:(NSNumber *)messageId {
+    if (self.downloadingMeidaMessageIds.count <= 0) {
+        self.downloadingMeidaMessageIds = @[messageId];
+        return;
+    }
+    
+    NSMutableArray *msgIds = [NSMutableArray arrayWithArray:self.downloadingMeidaMessageIds];
+    [msgIds addObject:messageId];
+    self.downloadingMeidaMessageIds = [msgIds copy];
+}
+
+- (void)removeMeidaMessageId:(NSNumber *)messageId {
+    if (self.downloadingMeidaMessageIds.count <= 0) {
+        return;
+    }
+    
+    NSMutableArray *msgIds = [NSMutableArray arrayWithArray:self.downloadingMeidaMessageIds];
+    [msgIds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj isEqualToNumber:messageId]) {
+            [msgIds removeObject:obj];
+            *stop = YES;
+        }
+    }];
+    self.downloadingMeidaMessageIds = [msgIds copy];
 }
 
 - (BOOL)cancelDownloadMediaMessage:(long)messageId {

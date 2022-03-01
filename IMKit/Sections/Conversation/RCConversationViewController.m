@@ -171,7 +171,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 #endif
     [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
     RCConversation *conversation =
-        [[RCIMClient sharedRCIMClient] getConversation:self.conversationType targetId:self.targetId];
+        [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId];
     
     [self.dataSource getInitialMessage:conversation];
     [self setNavigationItem];

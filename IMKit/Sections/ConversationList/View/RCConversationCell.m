@@ -228,6 +228,9 @@
                     [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
                 [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
             }
+        } else {
+            [self.detailContentView updateContent:model prefixName:nil];
+            [self updateConversationTitle:[NSString stringWithFormat:@"name<%@>", model.targetId]];
         }
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
         [self updateConversationTitle:[RCKitUtility defaultTitleForCollectionConversation:model.conversationType]];
