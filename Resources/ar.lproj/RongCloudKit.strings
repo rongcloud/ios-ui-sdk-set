@@ -258,7 +258,9 @@
 "SaveFailed"= "فشل الحفظ";
 "RecallEdit"= "تعديل";
 "Reference"="اقتبس";
+"Translate"="ترجمة";
 "CanNotRecall"= "إنتهت فترة السماح لحذف الرسالة، تعذر التراجع عن الإرسال";
+"TranslateFailed" = "翻译失败，请重试";
 "RC:ImgMsg"="الصورة";
 "RC:GIFMsg"="الصورة";
 "RC:LBSMsg"="الموقع";

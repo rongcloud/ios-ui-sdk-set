@@ -28,6 +28,12 @@
     return bubbleImage;
 }
 
++ (UIImage *)translationTextBackgroundImage {
+    UIImage *bubbleImage = RCResourceImage(@"translation_from_bg_normal");
+    bubbleImage = [self getResizableImage:bubbleImage];
+    return bubbleImage;
+}
+
 + (BOOL)isWhiteBubbleImageWithSendMesageCell:(NSString *)objectName{
     NSArray *list = @[@"RC:FileMsg",@"RC:CardMsg",[RCLocationMessage getObjectName]];
     if ([list containsObject:objectName]) {

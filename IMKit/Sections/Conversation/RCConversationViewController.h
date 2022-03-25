@@ -485,7 +485,7 @@ typedef enum : NSUInteger {
  发送消息完成的回调
 
  @param status          发送状态，0表示成功，非0表示失败
- @param messageContent   消息内容
+ @param messageModel   消息内容
  */
 - (void)didSendMessageModel:(NSInteger)status model:(RCMessageModel *)messageModel;
 

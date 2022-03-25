@@ -24,6 +24,7 @@
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
 #import "RCKitListenerManager.h"
+
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
 NSString *const RCKitSendingMessageNotification = @"RCKitSendingMessageNotification";
@@ -46,11 +47,10 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @property (nonatomic, assign) BOOL hasNotifydExtensionModuleUserId;
 @property (nonatomic, copy) NSString *token;
 @property (nonatomic, strong) NSMutableArray *downloadingMeidaMessageIds;
-
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.2.0.1_opensource";
+static NSString *const RCIMKitVersion = @"5.2.1_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -215,6 +215,9 @@ static NSString *const RCIMKitVersion = @"5.2.0.1_opensource";
             if (successBlock) {
                 successBlock(userId);
             }
+        
+            // 重新读取免打扰配置
+            [self resetNotificationQuietStatus];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (!self.hasNotifydExtensionModuleUserId) {
                     self.hasNotifydExtensionModuleUserId = YES;
@@ -263,36 +266,54 @@ static NSString *const RCIMKitVersion = @"5.2.0.1_opensource";
 }
 
 - (void)postLocalNotificationIfNeed:(RCMessage *)message {
+    //聊天室消息不做本地通知
+    if (ConversationType_CHATROOM == message.conversationType) {
+        return;
+    }
+    
+    //离线消息或者消息关闭通知，不做本地通知
     if (message.isOffLine || message.messageConfig.disableNotification) {
         return;
     }
-    NSDictionary *dictionary = [RCKitUtility getNotificationUserInfoDictionary:message];
-    if ([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Background) {
-        if (message.content.mentionedInfo.isMentionedMe) {
-            [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
-        } else {
-            if (!RCKitConfigCenter.message.disableMessageNotificaiton && ![self checkNoficationQuietStatus]) {
-                if (message.conversationType == ConversationType_Encrypted) {
-                    [[RCLocalNotification defaultCenter]
-                        postLocalNotification:RCLocalizedString(@"receive_new_message")
-                                     userInfo:dictionary];
-                } else {
-                    
-                    [[RCChannelClient sharedChannelManager]
-                     getConversationNotificationStatus:message.conversationType
-                     targetId:message.targetId
-                     channelId:message.channelId
-                     success:^(RCConversationNotificationStatus nStatus) {
-                        if (NOTIFY == nStatus) {
-                            [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
-                        }
-                    } error:^(RCErrorCode status) {
-                        
-                    }];
-                }
-            }
-        }
+    
+    //APP在前台，不做本地通知
+    if (RCSDKRunningMode_Background != [RCIMClient sharedRCIMClient].sdkRunningMode) {
+        return;
     }
+    
+    //@me 要做本地通知
+    NSDictionary *dictionary = [RCKitUtility getNotificationUserInfoDictionary:message];
+    if (message.content.mentionedInfo.isMentionedMe) {
+        [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
+        return;
+    }
+
+    //全局禁止本地通知，不做本地通知
+    if (RCKitConfigCenter.message.disableMessageNotificaiton) {
+        return;
+    }
+    
+    //用户开启免打扰，不做本地通知
+    if ([self checkNoficationQuietStatus]) {
+        return;
+    }
+
+    if (message.conversationType == ConversationType_Encrypted) {
+        [[RCLocalNotification defaultCenter]
+         postLocalNotification:RCLocalizedString(@"receive_new_message")
+         userInfo:dictionary];
+    } else {
+        [[RCChannelClient sharedChannelManager]
+         getConversationNotificationStatus:message.conversationType
+         targetId:message.targetId
+         channelId:message.channelId
+         success:^(RCConversationNotificationStatus nStatus) {
+            if (NOTIFY == nStatus) {
+                [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
+            }
+        } error:nil];
+    }
+
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object {
@@ -371,81 +392,98 @@ static NSString *const RCIMKitVersion = @"5.2.0.1_opensource";
         return;
     }
 
+    if (0 != nLeft) {
+        return;
+    }
+    
     BOOL isCustomMessageAlert = YES;
-
+    // 不入库的不响铃，不本地通知提醒 此处不要return
     if (!([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
         isCustomMessageAlert = NO;
     }
+    // 不识别消息的综合判断
     if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.messageId > 0 && !message.content) {
         isCustomMessageAlert = YES;
     }
-    if (0 == nLeft && [RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Foreground &&
-        !RCKitConfigCenter.message.disableMessageAlertSound && ![self checkNoficationQuietStatus] && isCustomMessageAlert) {
-        //获取接受到会话
-        if ([[RongIMKitExtensionManager sharedManager] handleAlertForMessageReceived:message]) {
-            return;
-        }
-        if (message.content.mentionedInfo.isMentionedMe) {
-            BOOL appConsumed = NO;
-            for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
-                if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
-                    if ([delegate onRCIMCustomAlertSound:message]) {
-                        appConsumed = YES;
-                    }
-                }
+    
+    if (!isCustomMessageAlert) {
+        return;
+    }
+    
+    // 调用声音提示-内部有判断逻辑
+    [self playSoundByMessageIfNeed:message];
+    
+    
+    // 调用展示通知-内部有判断逻辑
+    [self postLocalNotificationIfNeed:message];
+}
+
+- (void)playSoundByMessageIfNeed:(RCMessage *)message {
+    //APP在后台，不响铃
+    if (RCSDKRunningMode_Foreground != [RCIMClient sharedRCIMClient].sdkRunningMode) {
+        return;
+    }
+    //全局设置禁止响铃，不响铃
+    if (RCKitConfigCenter.message.disableMessageAlertSound) {
+        return;
+    }
+    //用户设置了免打扰，不响铃
+    if ([self checkNoficationQuietStatus]) {
+        return;
+    }
+    
+    //获取接受到会话
+    if ([[RongIMKitExtensionManager sharedManager] handleAlertForMessageReceived:message]) {
+        return;
+    }
+    
+    //业务设置onRCIMCustomAlertSound 返回YES，不响铃
+    BOOL appConsumed = NO;
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
+        if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
+            if ([delegate onRCIMCustomAlertSound:message]) {
+                appConsumed = YES;
+                break;
             }
-            
-            if (!appConsumed) {
-                // 非讨论组通知消息，并且消息未设置为静默才响铃
-                if (![message.content isKindOfClass:[RCDiscussionNotificationMessage class]] && !message.messageConfig.disableNotification) {
-                    [[RCSystemSoundPlayer defaultPlayer] playSoundByMessage:message
-                                                              completeBlock:^(BOOL complete) {
-                        if (complete) {
-                            [self setExclusiveSoundPlayer];
-                        }
-                    }];
-                }
-            }
-        } else {
-            
-            [[RCIMClient sharedRCIMClient] getConversationNotificationStatus:message.conversationType
-                                                                    targetId:message.targetId
-                                                                     success:^(RCConversationNotificationStatus nStatus) {
-                
-                if (NOTIFY == nStatus) {
-                    BOOL appComsumed = NO;
-                    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
-                        if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
-                            if ([delegate onRCIMCustomAlertSound:message]) {
-                                appComsumed = YES;
-                            }
-                        }
-                    }
-                
-                    if (!appComsumed) {
-                        
-                        if (![message.content isKindOfClass:[RCDiscussionNotificationMessage class]] && !message.messageConfig.disableNotification) {
-                            [[RCSystemSoundPlayer defaultPlayer] playSoundByMessage:message
-                                                                      completeBlock:^(BOOL complete) {
-                                if (complete) {
-                                    [self setExclusiveSoundPlayer];
-                                }
-                            }];
-                        }
-                    }
-                }
-                
-            }
-                                                                       error:^(RCErrorCode status){
-                
-            }];
         }
     }
-    if (nLeft == 0 && isCustomMessageAlert) {
-        //聊天室消息不做本地通知
-        if (ConversationType_CHATROOM == message.conversationType)
-            return;
-        [self postLocalNotificationIfNeed:message];
+    if (appConsumed) {
+        return;
+    }
+    
+    //讨论组通知消息 不响铃
+    if ([message.content isKindOfClass:[RCDiscussionNotificationMessage class]]) {
+        return;
+    }
+    //消息设置为静默 不响铃
+    if (message.messageConfig.disableNotification) {
+        return;
+    }
+    
+    
+    if (message.content.mentionedInfo.isMentionedMe) {
+        
+        [[RCSystemSoundPlayer defaultPlayer] playSoundByMessage:message completeBlock:^(BOOL complete) {
+            if (complete) {
+                [self setExclusiveSoundPlayer];
+            }
+        }];
+        
+    } else {
+        
+        [[RCIMClient sharedRCIMClient] getConversationNotificationStatus:message.conversationType
+                                                                targetId:message.targetId
+                                                                 success:^(RCConversationNotificationStatus nStatus) {
+            if (NOTIFY == nStatus) {
+                [[RCSystemSoundPlayer defaultPlayer] playSoundByMessage:message
+                                                          completeBlock:^(BOOL complete) {
+                    if (complete) {
+                        [self setExclusiveSoundPlayer];
+                    }
+                }];
+            }
+            
+        } error:nil];
     }
 }
 
@@ -890,7 +928,7 @@ static NSString *const RCIMKitVersion = @"5.2.0.1_opensource";
 
 - (void)addMeidaMessageId:(NSNumber *)messageId {
     if (self.downloadingMeidaMessageIds.count <= 0) {
-        self.downloadingMeidaMessageIds = @[messageId];
+        self.downloadingMeidaMessageIds = [@[messageId] mutableCopy];
         return;
     }
     

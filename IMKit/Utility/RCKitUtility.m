@@ -191,6 +191,9 @@
                    targetId:(NSString *)targetId
            conversationType:(RCConversationType)conversationType
                isAllMessage:(BOOL)isAllMessage {
+    if (messageContent.destructDuration > 0) {
+        return NSLocalizedStringFromTable(@"BurnAfterRead", @"RongCloudKit", nil);
+    }
     if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
         return [RCKitUtility __formatDiscussionNotificationMessageContent:notification];
@@ -214,6 +217,13 @@
         return notification.richContent.title;
     } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
         NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
+        //父类conversationDigest return objName
+        if ([formatedMsg isEqualToString:[[messageContent class] getObjectName]]) {
+            formatedMsg = [RCKitUtility localizedDescription:messageContent];
+        }
+        if ([formatedMsg isEqualToString:[[messageContent class] getObjectName]]) {
+            formatedMsg = @"";
+        }
         //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
         if (!isAllMessage && formatedMsg.length > 500) {
             formatedMsg = [formatedMsg substringToIndex:500];

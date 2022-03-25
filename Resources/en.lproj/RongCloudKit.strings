@@ -270,7 +270,9 @@
 "SaveFailed" = "Save failed";
 "RecallEdit" = "Edit";
 "Reference"="Quote";
+"Translate"="Translate";
 "CanNotRecall" = "This message has passed the recall time limit. Unable to recall.";
+"TranslateFailed" = "翻译失败，请重试";
 "ChatFiles"="Chat Files";
 "CannotUploadFiles"="Cannot upload 0KB file.";
 "DownloadFailFromiCloud"="Download Fail From iCloud";

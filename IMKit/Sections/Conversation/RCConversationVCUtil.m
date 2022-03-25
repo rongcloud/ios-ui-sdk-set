@@ -205,6 +205,16 @@
     return indexPath;
 }
 
+- (RCMessageModel *)modelByMessageID:(NSInteger)messageID {
+    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
+        if (msg.messageId == messageID && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
+            return msg;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)alertDestructMessageRemind {
     if (![[NSUserDefaults standardUserDefaults] valueForKey:@"FirstTimeBeginBurnMode"]) {
         [[NSUserDefaults standardUserDefaults] setValue:@"YES" forKey:@"FirstTimeBeginBurnMode"];

@@ -642,11 +642,14 @@ static BOOL msgRoamingServiceAvailable = YES;
                 weakSelf.recordTime = message.sentTime;
             }
         }
-        if (messages.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
-            weakSelf.allMessagesAreLoaded = YES;
-        }else{
+        //断档接口不能仅通过消息个数来决定消息是否已经拉完
+        //断档消息接口从远端拿完之后再从数据库拿时，如果拿到 cmd 消息，其会被排掉
+        //导致消息个数不匹配
+//        if (messages.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
+//            weakSelf.allMessagesAreLoaded = YES;
+//        }else{
             weakSelf.allMessagesAreLoaded = NO;
-        }
+//        }
     }];
 }
 

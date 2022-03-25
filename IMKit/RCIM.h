@@ -325,8 +325,8 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 
  @discussion 设置IMKit的连接状态监听器，请参考RCIM的connectionStatusDelegate属性。
 
- @warning 如果您使用IMKit，可以设置并实现此Delegate监听消息接收；
- 如果您使用IMLib，请使用RCIMClient中的RCIMClientReceiveMessageDelegate监听消息接收，而不要使用此监听器。
+ @warning 如果您使用IMKit，可以设置并实现此Delegate监听连接状态；
+ 如果您使用IMLib，请使用RCIMClient中的RCConnectionStatusChangeDelegate监听连接状态，而不要使用此监听器。
  */
 @protocol RCIMConnectionStatusDelegate <NSObject>
 

@@ -54,6 +54,14 @@
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongCustomerService/RongCustomerService.h>
 #import "RCButton.h"
+
+#import "RCTranslationClient+Internal.h"
+#import "RCMessageModel+Translation.h"
+#import "RCTextTranslationMessageCell.h"
+#import "RCVoiceTranslationMessageCell.h"
+#import "RCTextMessageTranslatingCell.h"
+#import "RCVoiceMessageTranslatingCell.h"
+
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
 
@@ -183,6 +191,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.chatSessionInputBarControl.pluginBoardView removeItemWithTag:PLUGIN_BOARD_ITEM_DESTRUCT_TAG];
     }
     [self.chatSessionInputBarControl.pluginBoardView removeItemWithTag:PLUGIN_BOARD_ITEM_TRANSFER_TAG];
+    
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (cls) {// 添加翻译监听
+        [[[cls class] sharedInstance] addTranlationgDelegate:self];
+    }
 }
 
 - (void)viewWillLayoutSubviews {
@@ -319,12 +332,31 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     for (RCExtensionMessageCellInfo *cellInfo in self.extensionMessageCellInfoList) {
         [self registerClass:cellInfo.messageCellClass forMessageClass:cellInfo.messageContentClass];
     }
+    
+    [self customRegisterClass:[RCTextTranslationMessageCell class]
+                      withKey:RCTextTranslationMessageCellIdentifier];
+  
+    [self customRegisterClass:[RCTextMessageTranslatingCell class]
+                      withKey:RCTextTranslatingMessageCellIdentifier];
+    [self customRegisterClass:[RCVoiceMessageTranslatingCell class]
+                      withKey:RCVoiceTranslatingMessageCellIdentifier];
+    [self customRegisterClass:[RCVoiceTranslationMessageCell class]
+                      withKey:RCVoiceTranslationMessageCellIdentifier];
 }
 
 - (void)registerClass:(Class)cellClass forMessageClass:(Class)messageClass {
     [self.conversationMessageCollectionView registerClass:cellClass
                                forCellWithReuseIdentifier:[messageClass getObjectName]];
     [self.cellMsgDict setObject:cellClass forKey:[messageClass getObjectName]];
+}
+
+- (void)customRegisterClass:(Class)cellClass withKey:(NSString *)key {
+    if (!cellClass || !key) {
+        return;
+    }
+    [self.conversationMessageCollectionView registerClass:cellClass
+                               forCellWithReuseIdentifier:key];
+    [self.cellMsgDict setObject:cellClass forKey:key];
 }
 
 - (void)registerClass:(Class)cellClass forCellWithReuseIdentifier:(NSString *)identifier {
@@ -818,6 +850,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     RCMessageContent *messageContent = model.content;
     RCMessageBaseCell *cell = nil;
     NSString *objName = [[messageContent class] getObjectName];
+    if ([model isTranslated]||[model translating]) {
+        objName = [model translationCellIdentifier];
+    }
+    
     if (self.cellMsgDict[objName]) {
         cell = [collectionView dequeueReusableCellWithReuseIdentifier:objName forIndexPath:indexPath];
 
@@ -881,12 +917,19 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     RCMessageModel *model = [self.conversationDataRepository objectAtIndex:indexPath.row];
     model = [self.dataSource setModelIsDisplayNickName:model];
+    // 文本消息
     if (model.cellSize.height > 0 &&
         !(model.conversationType == ConversationType_CUSTOMERSERVICE &&
           [model.content isKindOfClass:[RCTextMessage class]])) {
-        return model.cellSize;
+        if (model.isTranslated) { // 如果是翻译过的消息
+            return model.finalSize; // 返回最终大小: 文本size + 翻译size
+        } else if (model.translating) { // 如果是翻译中的消息
+            return model.translatingSize;
+        } else {
+            return model.cellSize; // 只返回文本size
+        }
     }
-
+    
     RCMessageContent *messageContent = model.content;
     NSString *objectName = [[messageContent class] getObjectName];
     Class cellClass = self.cellMsgDict[objectName];
@@ -1622,6 +1665,60 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
     [self deleteMessage:model];
 }
+
+- (BOOL)isTranslationEnable {
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (!cls
+        || ![cls respondsToSelector:@selector(sharedInstance)]) {
+        return NO;
+    }
+    id instance = [[cls class] sharedInstance];
+    if ([instance respondsToSelector:@selector(isTextTranslationSupported)]) {
+        return [instance isTextTranslationSupported];
+    }
+    return NO;
+}
+/// 翻译消息
+/// @param sender sender
+- (void)onTranslateMessageCell:(id)sender {
+    RCMessageModel *model = self.currentSelectedModel;
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (!cls
+        || ![model.content isKindOfClass:[RCTextMessage class]]
+        || ![cls respondsToSelector:@selector(sharedInstance)]) {
+        return;
+    }
+    NSString *srcLanguage = [RCKitConfig defaultConfig].message.translationConfig.srcLanguage;
+    NSString *targetLanguage = [RCKitConfig defaultConfig].message.translationConfig.targetLanguage;
+    RCTextMessage *txtMessage = (RCTextMessage *)(model.content);
+    model.translating = YES;
+    model.translationCategory = RCTranslationCategoryText;
+    [self uploadTranslationByModel:model];
+    id instance = [[cls class] sharedInstance];
+    if ([instance respondsToSelector:@selector(translate:text:srcLanguage:targetLanguage:)]) {
+        // 验证是否可以翻译
+        [instance translate:model.messageId
+                       text:txtMessage.content
+                srcLanguage:srcLanguage
+             targetLanguage:targetLanguage];
+    }
+}
+
+- (void)uploadTranslationByModel:(RCMessageModel *)model {
+    NSIndexPath *indexPath = [self.util findDataIndexFromMessageList:model];
+    if (indexPath) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[indexPath]];
+            [self scrollToShowCellAt:indexPath];
+        });
+    }
+}
+- (void)scrollToShowCellAt:(NSIndexPath *)indexPath {
+   
+    [self.conversationMessageCollectionView scrollToItemAtIndexPath:indexPath
+                                                   atScrollPosition:UICollectionViewScrollPositionCenteredVertically
+                                                           animated:YES];
+}
 //撤回消息动作
 - (void)onRecallMessage:(id)sender {
     if ([self.util canRecallMessageOfModel:self.currentSelectedModel]) {
@@ -2082,9 +2179,18 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             [items addObject:referItem];
         }        
     }
+    
+    BOOL translateEnable = [self isTranslationEnable] && !model.isTranslated && [model.content isKindOfClass:[RCTextMessage class]] && !model.translating;
+    if (translateEnable) {
+        UIMenuItem *transItem =
+        [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Translate")
+                                   action:@selector(onTranslateMessageCell:)];
+        [items addObject:transItem];
+    }
     if (self.conversationType != ConversationType_SYSTEM) {
         [items addObject:multiSelectItem];
     }
+    
     return items.copy;
 }
 
@@ -2662,7 +2768,29 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         }];
     [self.navigationController pushViewController:forwardSelectedVC animated:NO];
 }
+#pragma mark -- RCTranslationClientDelegate
 
+/// 翻译结束
+/// @param translation model
+/// @param code 返回码
+- (void)onTranslation:(RCTranslation *)translation
+         finishedWith:(NSInteger)code {
+    Class cls = NSClassFromString(@"RCTranslation");
+    if (cls) {
+        RCMessageModel *model = [self.util modelByMessageID:translation.messageId];
+        if (!model) {
+            return;
+        }
+            model.translating = NO;
+        if (code == 26200) {
+            model.translationString = translation.translationString;
+        } else {
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"TranslateFailed") cancelTitle:RCLocalizedString(@"OK") inViewController:self];
+        }
+        [self uploadTranslationByModel:model];
+
+    }
+}
 #pragma mark - Helper
 - (void)registerSectionHeaderView {
     [self.conversationMessageCollectionView registerClass:[RCConversationCollectionViewHeader class]
