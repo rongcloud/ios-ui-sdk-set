@@ -6,7 +6,8 @@
 //  Copyright © 2022 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RongIMKit.h>
+
+#import "RCMessageModel.h"
 #import <UIKit/UIKit.h>
 NS_ASSUME_NONNULL_BEGIN
 

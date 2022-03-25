@@ -6,7 +6,7 @@
 //  Copyright © 2022 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RongIMKit.h>
+#import "RCVoiceMessageCell.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -7,7 +7,10 @@
 //
 
 #import "RCMessageModel+Translation.h"
-#include <objc/runtime.h>
+#import <objc/runtime.h>
+#import "RCMessageCellTool.h"
+#import "RCKitUtility.h"
+#import "RCKitConfig.h"
 
 NSString * const RCTextTranslationMessageCellIdentifier = @"RCTextTranslationMessageCellIdentifier";
 NSString * const RCVoiceTranslationMessageCellIdentifier = @"RCVoiceTranslationMessageCellIdentifier";

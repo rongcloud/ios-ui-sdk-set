@@ -44,7 +44,7 @@
 
 static NSString *const __RongCallKit__Version = @"5.2.1_opensource";
 static NSString *const __RongCallKit__Commit = @"2b1ab660";
-static NSString *const __RongCallKit__Time = @"202203241848";
+static NSString *const __RongCallKit__Time = @"202203251637";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
