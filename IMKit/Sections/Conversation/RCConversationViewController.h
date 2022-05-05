@@ -284,7 +284,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, assign) int defaultHistoryMessageCountOfChatRoom;
 
 /*!
- 设置进入会话页面后下拉刷新从远端获取消息的条数，默认是 10，defaultRemoteHistoryMessageCount 传入 1~20 之间的数值。
+ 设置进入会话页面后下拉刷新从远端获取消息的条数，默认是 10，defaultRemoteHistoryMessageCount 传入 2~20 之间的数值。
  @discussion 此属性需要在viewDidLoad之前进行设置。
  */
 @property (nonatomic, assign) int defaultRemoteHistoryMessageCount;

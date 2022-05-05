@@ -18,11 +18,11 @@
 
 /// 添加翻译代理
 /// @param delegate 代理
-- (void)addTranlationgDelegate:(id)delegate;
+- (void)addTranslationDelegate:(id)delegate;
 
 /// 移除翻译代理
 /// @param delegate 代理
-- (void)removeTranlationgDelegate:(id)delegate;
+- (void)removeTranslationDelegate:(id)delegate;
 
 /// 翻译
 /// @param messageId 消息ID

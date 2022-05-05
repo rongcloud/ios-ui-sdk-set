@@ -48,8 +48,8 @@
         }
         cacheConversationInfo = dbConversationInfo;
     }
-
-    return cacheConversationInfo;
+    RCConversationInfo *conInfo = [[RCConversationInfo alloc] initWithConversationId:cacheConversationInfo.targetId conversationType:cacheConversationInfo.conversationType name:cacheConversationInfo.name portraitUri:cacheConversationInfo.portraitUri];
+    return conInfo;
 }
 
 - (void)updateConversationInfo:(RCConversationInfo *)conversationInfo

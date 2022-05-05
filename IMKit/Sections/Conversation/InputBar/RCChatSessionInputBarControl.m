@@ -468,6 +468,12 @@
     return shouldUseDefaultChangeText;
 }
 
+- (void)inputTextViewDidChange:(UITextView *)inputTextView {
+    if ([self.delegate respondsToSelector:@selector(inputTextViewDidChange:)]) {
+        [self.delegate inputTextViewDidChange:inputTextView];
+    }
+}
+
 #pragma mark - RCMenuContainerViewDelegate
 - (void)onPublicServiceMenuItemSelected:(RCPublicServiceMenuItem *)selectedMenuItem {
     if ([self.delegate respondsToSelector:@selector(onPublicServiceMenuItemSelected:)]) {

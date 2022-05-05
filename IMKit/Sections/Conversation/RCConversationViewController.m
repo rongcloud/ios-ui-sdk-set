@@ -193,8 +193,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self.chatSessionInputBarControl.pluginBoardView removeItemWithTag:PLUGIN_BOARD_ITEM_TRANSFER_TAG];
     
     Class cls = NSClassFromString(@"RCTranslationClient");
-    if (cls) {// 添加翻译监听
-        [[[cls class] sharedInstance] addTranlationgDelegate:self];
+    if (cls && [cls respondsToSelector:@selector(sharedInstance)]) {// 添加翻译监听
+        id obj = [[cls class] sharedInstance];
+        if ([obj respondsToSelector:@selector(addTranslationDelegate:)]) {
+            [obj addTranslationDelegate:self];
+        }
     }
 }
 
@@ -1381,10 +1384,16 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     if (self.dataSource.isLoadingHistoryMessage || [self isRemainMessageExisted]) {
         [self loadRemainMessageAndScrollToBottom:YES];
     }
-    if ((range.location == 0 && [text isEqualToString:@""]) || [text isEqualToString:@"\n"]) {
-        self.placeholderLabel.hidden = NO;
-    } else {
+}
+
+- (void)inputTextViewDidChange:(UITextView *)textView {
+    if (!self.placeholderLabel) {
+        return;
+    }
+    if (textView.text.length > 0) {
         self.placeholderLabel.hidden = YES;
+    } else {
+        self.placeholderLabel.hidden = NO;
     }
 }
 
@@ -2067,7 +2076,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         RCVoiceMessageCell *cell =
             (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell) {
+        if (cell && [cell isKindOfClass:[RCVoiceMessageCell class]]) {
             [cell playVoice];
         }
     } else if ([_messageContent isMemberOfClass:[RCHQVoiceMessage class]]) {
@@ -2088,7 +2097,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         RCHQVoiceMessageCell *cell =
             (RCHQVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell) {
+        if (cell && [cell isKindOfClass:[RCHQVoiceMessageCell class]]) {
             [cell playVoice];
         }
     } else if ([_messageContent isMemberOfClass:[RCLocationMessage class]]) {
@@ -2374,7 +2383,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         // 刷新可视范围的 Cell
         [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
     }
-    // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 http://zt.rongcloud.net/index.php?m=bug&f=view&t=html&id=44945 这个问题
+    // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 禅道 44945 这个问题
     [self.conversationMessageCollectionView reloadData];
 }
 
@@ -2785,7 +2794,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         if (code == 26200) {
             model.translationString = translation.translationString;
         } else {
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"TranslateFailed") cancelTitle:RCLocalizedString(@"OK") inViewController:self];
+            [RCAlertView showAlertController:RCLocalizedString(@"TranslateFailed")
+                                     message:nil
+                            hiddenAfterDelay:1
+                            inViewController:self];
         }
         [self uploadTranslationByModel:model];
 
@@ -3024,7 +3036,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             RCVoiceMessageCell *__cell =
                 (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
             //如果是空说明被回收了，重新dequeue一个cell
-            if (__cell) {
+            if (__cell && ([__cell isKindOfClass:[RCVoiceMessageCell class]] || [__cell isKindOfClass:[RCHQVoiceMessageCell class]])) {
                 rcMsg.receivedStatus = ReceivedStatus_LISTENED;
                 [__cell setDataModel:rcMsg];
                 [__cell playVoice];
@@ -3045,7 +3057,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                 [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
                 [__cell setDataModel:rcMsg];
                 [__cell setDelegate:self];
-                [__cell playVoice];
+                if (__cell && ([__cell isKindOfClass:[RCVoiceMessageCell class]] || [__cell isKindOfClass:[RCHQVoiceMessageCell class]])) {                
+                    [__cell playVoice];
+                }
             }
         }
     });

@@ -67,7 +67,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         self.cachedReloadMessages = [NSMutableArray new];
         self.chatVC = chatVC;
         self.loadHistoryMessageFromRemote = NO;
-        self.allMessagesAreLoaded = YES;
+        self.allMessagesAreLoaded = NO;
         self.isShowingLastestMessage = YES;
         self.customFlowLayout = [[RCConversationViewLayout alloc] init];
         self.isIndicatorLoading = NO;
@@ -167,18 +167,24 @@ static BOOL msgRoamingServiceAvailable = YES;
                 }
                 RCConversationViewController *chatVC = ws.chatVC;
                 NSUInteger dataRepositorycount = ws.chatVC.conversationDataRepository.count;
-                if(dataRepositorycount <=0) {
-                    dataRepositorycount = 0;
-                }
                 [chatVC.conversationDataRepository addObjectsFromArray:ws.cachedReloadMessages];
             
-                NSMutableArray *reloadIndexPaths = [NSMutableArray new];
-                for (int i=0 ; i<ws.cachedReloadMessages.count ; i++) {
-                    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(dataRepositorycount + i) inSection:0];
-                    [reloadIndexPaths addObject:indexPath];
-                }
+                NSInteger itemsCount = [chatVC.conversationMessageCollectionView numberOfItemsInSection:0];
+                NSInteger differenceValue = chatVC.conversationDataRepository.count - itemsCount;
             
-                [chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:reloadIndexPaths];
+                // 符合insert条件才执行
+                if (itemsCount > 0 && ws.cachedReloadMessages.count == differenceValue) {
+                    NSMutableArray *reloadIndexPaths = [NSMutableArray new];
+                    for (int i=0 ; i<ws.cachedReloadMessages.count ; i++) {
+                        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(dataRepositorycount + i) inSection:0];
+                        [reloadIndexPaths addObject:indexPath];
+                    }
+                    [chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:reloadIndexPaths];
+                    [chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:reloadIndexPaths];
+                } else {
+                    [chatVC.conversationMessageCollectionView reloadData];
+                }
+
                 [ws.cachedReloadMessages removeAllObjects];
        
                 if (chatVC.sendMsgAndNeedScrollToBottom || [ws isAtTheBottomOfTableView]) {
@@ -199,7 +205,14 @@ static BOOL msgRoamingServiceAvailable = YES;
 
 - (BOOL)appendMessageModel:(RCMessageModel *)model {
     long newId = model.messageId;
-    for (RCMessageModel *__item in self.chatVC.conversationDataRepository) {
+    /*
+     fix:PAASIOSDEV-392
+     */
+    NSMutableArray *array = [NSMutableArray arrayWithArray:self.chatVC.conversationDataRepository];
+    if (self.cachedReloadMessages.count) {
+        [array addObjectsFromArray:self.cachedReloadMessages];
+    }
+    for (RCMessageModel *__item in array) {
 
         /*
          * 当id为－1时，不检查是否重复，直接插入
@@ -257,6 +270,8 @@ static BOOL msgRoamingServiceAvailable = YES;
             [self loadHistorylocatedMessageV2];
         }else{
             [self loadHistoryMessageBeforeTimeV2:0];
+            //PAASIOSDEV-77 解决用户点击聊天列表中的"新消息"按钮后, 输入文字频繁刷新问题(isLoadingHistoryMessage为YES, 引起频繁刷新)
+            self.isLoadingHistoryMessage = NO;
         }
         
     }
@@ -509,8 +524,11 @@ static BOOL msgRoamingServiceAvailable = YES;
             [self.chatVC.conversationMessageCollectionView reloadData];
         } else {
             // ios15上可能出现只insert不reload，导致cell重用未刷新
-            [self.chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:indexPathes];
-            [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathes];
+            [self.chatVC.conversationMessageCollectionView performBatchUpdates:^{
+                [self.chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:indexPathes];
+                [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathes];
+            } completion:^(BOOL finished) {
+            }];
         }
         [UIView setAnimationsEnabled:YES];
         [self.chatVC.collectionViewHeader stopAnimating];
@@ -632,6 +650,15 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)loadHistoryMessageBeforeTimeV2:(long long)time{
     __weak typeof(self) weakSelf = self;
     [self getHistoryMessageV2:time order:RCHistoryMessageOrderDesc loadType:self.chatVC.loadMessageType complete:^(NSArray *messages, RCConversationLoadMessageType type) {
+        //断档接口不能仅通过消息个数来决定消息是否已经拉完
+        //断档消息接口从远端拿完之后再从数据库拿时，如果拿到 cmd 消息，其会被排掉
+        //导致消息个数不匹配
+//        if (messages.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
+//            weakSelf.allMessagesAreLoaded = YES;
+//        }else{
+            weakSelf.allMessagesAreLoaded = NO;
+//        }
+        
         if (messages.count > 0) {
             if (time == 0) {
                 [weakSelf loadLatestHistoryMessageV2:messages];
@@ -642,14 +669,6 @@ static BOOL msgRoamingServiceAvailable = YES;
                 weakSelf.recordTime = message.sentTime;
             }
         }
-        //断档接口不能仅通过消息个数来决定消息是否已经拉完
-        //断档消息接口从远端拿完之后再从数据库拿时，如果拿到 cmd 消息，其会被排掉
-        //导致消息个数不匹配
-//        if (messages.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
-//            weakSelf.allMessagesAreLoaded = YES;
-//        }else{
-            weakSelf.allMessagesAreLoaded = NO;
-//        }
     }];
 }
 
@@ -707,14 +726,13 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
     }
     if (indexPaths.count > 0) {
-        [self.chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:indexPaths];
-        if ([self.chatVC.conversationMessageCollectionView numberOfItemsInSection:0] !=
-            self.chatVC.conversationDataRepository.count) {
-            DebugLog(@"Error, datasource and collectionview are inconsistent!!");
-            [self.chatVC.conversationMessageCollectionView reloadData];
-        }else{
-            [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPaths];
-        }
+        /* bugfix:PAASIOSDEV-259
+         调用在 insertItemsAtIndexPaths 时, 需要满足以下公式:
+         要更新的indexPaths 数量 + 当前collectionView的cell数量 = 数据源数量
+         否则 会导致 App 在 iOS 12 crash
+         */
+        
+        [self.chatVC.conversationMessageCollectionView reloadData];
     }
 }
 
@@ -727,7 +745,6 @@ static BOOL msgRoamingServiceAvailable = YES;
     void (^completeHandle)(NSArray *messages, RCErrorCode code) = ^(NSArray *messages, RCErrorCode code) {
         dispatch_async(dispatch_get_main_queue(), ^{
             weakSelf.isIndicatorLoading = NO;
-            [weakSelf resetSectionHeaderView];
             [weakSelf.chatVC.collectionViewHeader stopAnimating];
             if (code == RC_SUCCESS) {
                 if (complete) {

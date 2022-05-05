@@ -379,6 +379,13 @@
             replacementText:(NSString *)text;
 
 /*!
+ 输入框中内容已经发生变化的回调
+
+ @param inputTextView 文本输入框
+ */
+- (void)inputTextViewDidChange:(UITextView *)inputTextView;
+
+/*!
  公众服务菜单的点击回调
 
  @param selectedMenuItem 点击的公众服务菜单项

@@ -497,6 +497,9 @@
 }
 
 - (void)scrubbedToTime:(NSTimeInterval)time {
+    if (!self.isAddStatusObserver) {
+        [self prepareWithBlock:self.completion error:self.error];
+    }
     [self.playerItem cancelPendingSeeks];
     [self.player seekToTime:CMTimeMakeWithSeconds(time, NSEC_PER_SEC)
             toleranceBefore:kCMTimeZero

@@ -22,7 +22,6 @@
 - (CGPoint)targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset {
     CGFloat offset = self.collectionViewNewContentSize.height - self.collectionView.contentSize.height;
     if (offset > 0) {
-        self.collectionViewNewContentSize = self.collectionView.contentSize;
         proposedContentOffset.y += offset;
     }
     return proposedContentOffset;
