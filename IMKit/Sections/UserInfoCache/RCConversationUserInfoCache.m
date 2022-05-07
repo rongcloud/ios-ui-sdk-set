@@ -59,6 +59,9 @@
             cacheUserInfo = dbUserInfo;
         }
     }
+    if (!cacheUserInfo) {
+        return nil;
+    }
     RCUserInfo *user = [[RCUserInfo alloc] initWithUserId:cacheUserInfo.userId name:cacheUserInfo.name portrait:cacheUserInfo.portraitUri];
     user.alias = cacheUserInfo.alias;
     user.extra = cacheUserInfo.extra;

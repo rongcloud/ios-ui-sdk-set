@@ -504,9 +504,15 @@ static dispatch_once_t onceToken;
 + (void)levelInfoInDBWith:(RCConversationType)type
                   success:(void (^)(RCPushNotificationLevel level))successBlock
                     error:(void (^)(RCErrorCode status))errorBlock {
+    /*
     [[RCChannelClient sharedChannelManager] getConversationTypeNotificationLevel:type
                                                                          success:successBlock
                                                                            error:errorBlock];
+     */
+    // 临时移除会话类型免打扰查询
+    if (successBlock) {
+        successBlock(RCPushNotificationLevelDefault);
+    }
 }
 
 /// 更新本地缓存数据
