@@ -57,7 +57,7 @@ static dispatch_once_t onceToken;
     if (self) {
         self.notificationInfo = [NSMutableDictionary dictionary];
         self.notificationRWQueue =  dispatch_queue_create("cn.rongcloud.notificationRWQueue", DISPATCH_QUEUE_CONCURRENT);
-        self.notificationWorkQueue =  dispatch_queue_create("cn.rongcloud.notificationWorkQueue", DISPATCH_QUEUE_CONCURRENT);
+        self.notificationWorkQueue =  dispatch_queue_create("cn.rongcloud.notificationWorkQueue", DISPATCH_QUEUE_SERIAL);
         dispatch_queue_set_specific(self.notificationRWQueue, _notificationWorkQueueTag, _notificationWorkQueueTag, NULL);
         [self registerObservers];
     }
@@ -282,7 +282,6 @@ static dispatch_once_t onceToken;
         channelId = @"";
         targetId = @"";
     }
-    RCDLog(@"开始通用查询-> type:%d, targetId:%@ ,channel: %@ , stratege: %ld, previousLevel: %ld", type, targetId, channelId, (long)strategy, (long)previousLevel);
 
     RCPushNotificationLevelStrategy nextStrategy = strategy-1;//下一个策略
     RCIMNotificationDataContext *context = [self currentDataContext];
@@ -504,15 +503,10 @@ static dispatch_once_t onceToken;
 + (void)levelInfoInDBWith:(RCConversationType)type
                   success:(void (^)(RCPushNotificationLevel level))successBlock
                     error:(void (^)(RCErrorCode status))errorBlock {
-    /*
+    
     [[RCChannelClient sharedChannelManager] getConversationTypeNotificationLevel:type
                                                                          success:successBlock
                                                                            error:errorBlock];
-     */
-    // 临时移除会话类型免打扰查询
-    if (successBlock) {
-        successBlock(RCPushNotificationLevelDefault);
-    }
 }
 
 /// 更新本地缓存数据

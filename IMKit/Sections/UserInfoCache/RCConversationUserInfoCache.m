@@ -65,7 +65,7 @@
     RCUserInfo *user = [[RCUserInfo alloc] initWithUserId:cacheUserInfo.userId name:cacheUserInfo.name portrait:cacheUserInfo.portraitUri];
     user.alias = cacheUserInfo.alias;
     user.extra = cacheUserInfo.extra;
-    return cacheUserInfo;
+    return user;
 }
 
 - (void)updateUserInfo:(RCUserInfo *)userInfo
