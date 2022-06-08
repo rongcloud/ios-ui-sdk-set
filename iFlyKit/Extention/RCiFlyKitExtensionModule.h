@@ -13,7 +13,9 @@
 #import "RongIMKit.h"
 #endif
 
-@interface RCiFlyKitExtensionModule : NSObject <RongIMKitExtensionModule>
+@interface RCiFlyKitExtensionModule : NSObject <RongIMKitExtensionModule, RCExtensionModule>
+@property (nonatomic, assign) BOOL isSpeechHolding;
+
 + (instancetype)sharedRCiFlyKitExtensionModule;
 - (void)setiFlyAppkey:(NSString *)key;
 @end

@@ -45,6 +45,11 @@
 
 - (void)destroyModule {
 }
+
+- (BOOL)isAudioHolding {
+    return self.isSpeechHolding;
+}
+
 - (void)setiFlyAppkey:(NSString *)key {
     _iflyAppKey = key;
 }
@@ -55,6 +60,8 @@
             return;
         }
         [_iflyInputView stopListening];
+        // 记录 audio 使用状态
+        self.isSpeechHolding = NO;
     }
     _currentStatus = status;
 }
@@ -101,6 +108,9 @@
 - (void)checkPermissionIfSuccess:(RCChatSessionInputBarControl *)chatSessionInputBar {
     __weak typeof(self) ws = self;
     [self checkRecordPermission:^{
+        // 记录 audio 使用状态
+        ws.isSpeechHolding = YES;
+        
         ws.chatBarControl = chatSessionInputBar;
         [chatSessionInputBar.pluginBoardView.extensionView setHidden:NO];
         [chatSessionInputBar.pluginBoardView.extensionView addSubview:ws.iflyInputView];

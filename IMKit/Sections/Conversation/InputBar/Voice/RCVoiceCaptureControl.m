@@ -70,9 +70,9 @@
     [self removeFromSuperview];
 }
 
-- (void)showMsgShortView {
+- (void)showViewWithErrorMsg:(NSString *)errorMsg {
     self.recordStatusView.image = RCResourceImage(@"audio_press_short");
-    self.textLabel.text = RCLocalizedString(@"message_too_short");
+    self.textLabel.text = errorMsg ?: RCLocalizedString(@"message_too_short");
     [self.textLabel setBackgroundColor:[UIColor clearColor]];
     self.textLabel.textColor = HEXCOLOR(0xffffff);
     self.textLabel.frame = CGRectMake(0, 127, self.contentView.frame.size.width, 22);

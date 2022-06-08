@@ -12,10 +12,13 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCloudImageLoader.h"
 
+static void *cacheRWQueueTag = &cacheRWQueueTag;
+
 @interface RCConversationUserInfoCache ()
 
 // key:GUID(conversationType;;;targetId), value:(NSMutableDictionary(key:userId, value:userInfo))
 @property (nonatomic, strong) RCThreadSafeMutableDictionary *cache;
+@property (nonatomic, strong) dispatch_queue_t conversationUserInfoCacheRWQueue;
 
 @end
 
@@ -33,29 +36,48 @@
     return defaultCache;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        self.conversationUserInfoCacheRWQueue =  dispatch_queue_create("cn.rongcloud.conversationUserInfoCacheRWQueue", NULL);
+        dispatch_queue_set_specific(self.conversationUserInfoCacheRWQueue, cacheRWQueueTag, cacheRWQueueTag, NULL);
+    }
+    return self;
+}
+
 - (RCUserInfo *)getUserInfo:(NSString *)userId
            conversationType:(RCConversationType)conversationType
                    targetId:(NSString *)targetId {
     NSString *conversationGUID = [RCConversationInfo getConversationGUID:conversationType targetId:targetId];
-    if (!conversationGUID) {
+    if (0 == conversationGUID.length || 0 == userId.length) {
         return nil;
     }
-    NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-    RCUserInfo *cacheUserInfo = nil;
+    
+    __block RCUserInfo *cacheUserInfo = nil;
+    
+    // 同步读取
+    [self performSyncRWQueueBlock:^{
+        NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
+        if (cacheUserInfoList) {
+            cacheUserInfo = cacheUserInfoList[userId];
+        }
+    }];
 
-    if (cacheUserInfoList && cacheUserInfoList[userId]) {
-        cacheUserInfo = cacheUserInfoList[userId];
-    } else {
-        //线程同步读取
+    // 缓存中没有
+    if (nil == cacheUserInfo) {
+        //读取数据库
         RCUserInfo *dbUserInfo =
             [rcUserInfoReadDBHelper selectUserInfoFromDB:userId conversationType:conversationType targetId:targetId];
         if (dbUserInfo) {
-            NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-            if (!cacheUserInfoList) {
-                NSMutableDictionary *cacheUserInfoList = [[NSMutableDictionary alloc] init];
-                [self.cache setObject:cacheUserInfoList forKey:conversationGUID];
-            }
-            [cacheUserInfoList setValue:dbUserInfo forKey:userId];
+            // 更新缓存，使用串行队列
+            [self performAsyncRWQueueBlock:^{
+                NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
+                if (!cacheUserInfoList) {
+                    cacheUserInfoList = [[NSMutableDictionary alloc] init];
+                    [self.cache setObject:cacheUserInfoList forKey:conversationGUID];
+                }
+                [cacheUserInfoList setValue:dbUserInfo forKey:userId];
+            }];
             cacheUserInfo = dbUserInfo;
         }
     }
@@ -73,24 +95,31 @@
       conversationType:(RCConversationType)conversationType
               targetId:(NSString *)targetId {
     NSString *conversationGUID = [RCConversationInfo getConversationGUID:conversationType targetId:targetId];
-    if (!conversationGUID) {
+    if (0 == conversationGUID.length || 0 == userId.length) {
         return;
     }
-    NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-    RCUserInfo *cacheUserInfo = nil;
-    if (cacheUserInfoList && cacheUserInfoList[userId]) {
-        cacheUserInfo = cacheUserInfoList[userId];
-    }
+    
+    __block RCUserInfo *cacheUserInfo = nil;
+    
+    // 同步读取
+    [self performSyncRWQueueBlock:^{
+        NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
+        if (cacheUserInfoList) {
+            cacheUserInfo = cacheUserInfoList[userId];
+        }
+    }];
 
     if (![userInfo isEqual:cacheUserInfo]) {
-        NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-        if (!cacheUserInfoList) {
-            cacheUserInfoList = [[NSMutableDictionary alloc] init];
-            [self.cache setObject:cacheUserInfoList forKey:conversationGUID];
-        }
-        [cacheUserInfoList setValue:userInfo forKey:userId];
-
-        __weak typeof(self) weakSelf = self;
+        // 更新缓存，使用串行队列
+        [self performAsyncRWQueueBlock:^{
+            NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
+            if (!cacheUserInfoList) {
+                cacheUserInfoList = [[NSMutableDictionary alloc] init];
+                [self.cache setObject:cacheUserInfoList forKey:conversationGUID];
+            }
+            [cacheUserInfoList setValue:userInfo forKey:userId];
+        }];
+            
         dispatch_async(rcUserInfoDBQueue, ^{
             [rcUserInfoWriteDBHelper replaceUserInfoFromDB:userInfo
                                                  forUserId:userId
@@ -99,7 +128,7 @@
             RCLogI(@"updateUserInfo:forUserId:conversationType;targetId:;;;conversationType=%lu,targerId=%@,userId=%@,"
                    @"name=%@,portrait=%@",
                    (unsigned long)conversationType, targetId, userInfo.userId, userInfo.name, userInfo.portraitUri);
-            [weakSelf.updateDelegate onConversationUserInfoUpdate:userInfo
+            [self.updateDelegate onConversationUserInfoUpdate:userInfo
                                                    inConversation:conversationType
                                                          targetId:targetId];
         });
@@ -110,11 +139,19 @@
                                  conversationType:(RCConversationType)conversationType
                                          targetId:(NSString *)targetId {
     NSString *conversationGUID = [RCConversationInfo getConversationGUID:conversationType targetId:targetId];
-    NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-    RCUserInfo *cacheUserInfo = nil;
-    if (cacheUserInfoList && cacheUserInfoList[userId]) {
-        cacheUserInfo = cacheUserInfoList[userId];
+    if (0 == conversationGUID.length || 0 == userId.length) {
+        return;
     }
+    
+    __block RCUserInfo *cacheUserInfo = nil;
+    
+    // 同步读取
+    [self performSyncRWQueueBlock:^{
+        NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
+        if (cacheUserInfoList) {
+            cacheUserInfo = cacheUserInfoList[userId];
+        }
+    }];
 
     if (!cacheUserInfo) {
         __weak typeof(self) weakSelf = self;
@@ -133,13 +170,20 @@
                  conversationType:(RCConversationType)conversationType
                          targetId:(NSString *)targetId {
     NSString *conversationGUID = [RCConversationInfo getConversationGUID:conversationType targetId:targetId];
-    NSMutableDictionary *cacheUserInfoList = self.cache[conversationGUID];
-    RCUserInfo *cacheUserInfo = nil;
-    if (cacheUserInfoList && cacheUserInfoList[userId]) {
-        cacheUserInfo = cacheUserInfoList[userId];
-        [cacheUserInfoList removeObjectForKey:userId];
-        [self.cache setValue:cacheUserInfoList forKey:conversationGUID];
+    if (0 == conversationGUID.length || 0 == userId.length) {
+        return;
     }
+    
+    __block RCUserInfo *cacheUserInfo = nil;
+    __block NSMutableDictionary *cacheUserInfoList = nil;
+    
+    // 同步读取
+    [self performSyncRWQueueBlock:^{
+        cacheUserInfoList = self.cache[conversationGUID];
+        if (cacheUserInfoList) {
+            cacheUserInfo = cacheUserInfoList[userId];
+        }
+    }];
 
     if (!cacheUserInfo) {
         __weak typeof(self) weakSelf = self;
@@ -150,7 +194,11 @@
             [weakSelf deleteImageCache:dbUserInfo];
         });
     } else {
-        [self deleteImageCache:cacheUserInfo];
+        [self performAsyncRWQueueBlock:^{
+            [cacheUserInfoList removeObjectForKey:userId];
+            [self.cache setValue:cacheUserInfoList forKey:conversationGUID];
+            [self deleteImageCache:cacheUserInfo];
+        }];
     }
     dispatch_async(rcUserInfoDBQueue, ^{
         [rcUserInfoWriteDBHelper deleteConversationUserInfoFromDB:userId
@@ -165,7 +213,10 @@
     //            [self deleteImageCache:cacheUserInfo];
     //        }
     //    }
-    [self.cache removeAllObjects];
+    
+    [self performAsyncRWQueueBlock:^{
+        [self.cache removeAllObjects];
+    }];
 
     //    __weak typeof(self) weakSelf = self;
     dispatch_async(rcUserInfoDBQueue, ^{
@@ -182,6 +233,24 @@
     //    if ([userInfo.portraitUri length] > 0) {
     //        [[RCloudImageLoader sharedImageLoader] clearCacheForURL:[NSURL URLWithString:userInfo.portraitUri]];
     //    }
+}
+
+- (void)performAsyncRWQueueBlock:(dispatch_block_t)block {
+    if (dispatch_get_specific(cacheRWQueueTag)) {
+        block();
+    }
+    else {
+        dispatch_async(self.conversationUserInfoCacheRWQueue, block);
+    }
+}
+
+- (void)performSyncRWQueueBlock:(dispatch_block_t)block {
+    if (dispatch_get_specific(cacheRWQueueTag)) {
+        block();
+    }
+    else {
+        dispatch_sync(self.conversationUserInfoCacheRWQueue, block);
+    }
 }
 
 @end

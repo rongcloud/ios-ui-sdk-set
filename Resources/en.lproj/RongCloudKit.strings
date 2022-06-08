@@ -3,6 +3,7 @@
 "release_to_send_title"="Release to send";
 "message_too_short"="Message too short";
 "message_too_long"="Message too long";
+"recordvoice_failed"="Recording failed, please try again later";
 "slide_up_to_cancel_title"="Slide up to cancel";
 "release_to_cancel_title"="Release to cancel";
 "whiteSpaceMessage"="Can't send white space message";
@@ -272,9 +273,10 @@
 "Reference"="Quote";
 "Translate"="Translate";
 "CanNotRecall" = "This message has passed the recall time limit. Unable to recall.";
-"TranslateFailed" = "翻译失败，请重试";
+"TranslateFailed" = "Translation failed, please try again";
 "ChatFiles"="Chat Files";
 "CannotUploadFiles"="Cannot upload 0KB file.";
 "DownloadFailFromiCloud"="Download Fail From iCloud";
 "VideoExpired"="Video Deleted or Expired";
 "LoadMsgAskInfo"="Network Error，View local history messages?";
+"SightCaptureFailed"="Unable to record at this time, please try again later";

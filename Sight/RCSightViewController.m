@@ -17,6 +17,9 @@
 #import <CoreMotion/CoreMotion.h>
 #import <Photos/Photos.h>
 #import "RongSightAdaptiveHeader.h"
+#import "RCSightExtensionModule.h"
+#import "RCToastView.h"
+
 #define ActionBtnSize 120
 #define BottomSpace 10
 #define OKBtnSize 74
@@ -71,6 +74,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 }
 
 - (void)dealloc {
+    [RCSightExtensionModule sharedInstance].isSightCameraHolding = NO;
     [self.motionManager stopAccelerometerUpdates];
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:UIApplicationDidChangeStatusBarOrientationNotification
@@ -244,7 +248,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
+    [RCSightExtensionModule sharedInstance].isSightCameraHolding = YES;
     [self registerNotification];
     // Do any additional setup after loading the view.
     [self setAudioSessionCategory];
@@ -531,6 +535,25 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         }];
 }
 
+- (void)sightFailed {
+    self.actionButton.hidden = YES;
+    self.okBtn.hidden = YES;
+    self.playBtn.hidden = YES;
+    [UIView animateWithDuration:AnimateDuration
+        animations:^{
+            CGSize screenSize = [UIScreen mainScreen].bounds.size;
+            self.cancelBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
+            self.okBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
+        }
+        completion:^(BOOL finished) {
+            // 录制失败 只显示取消按钮
+            self.cancelBtn.hidden = NO;
+            self.cancelBtn.enabled = YES;
+        }];
+    [self resetCapture];
+    [RCToastView showToast:RCLocalizedString(@"SightCaptureFailed") rootView:self.view];
+}
+
 - (void)hideTipsLabel {
     __weak typeof(self) weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -561,6 +584,16 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
                                          withOptions:AVAudioSessionCategoryOptionMixWithOthers
                                                error:nil];
     }
+}
+
+- (void)resetCapture {
+#if !(TARGET_OS_SIMULATOR)
+    if (self.capturer) {
+        [self.capturer stopRunning];
+        self.capturer = nil;
+        [self.capturer startRunning];
+    }
+#endif
 }
 
 #pragma mark - RCSightViewDelegate
@@ -603,11 +636,13 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
             self.playBtn.selected = NO;
 #if !(TARGET_OS_SIMULATOR)
             [self.playerController reset];
+            [self.capturer resetAudioSession];
+            [self.capturer resetSessionInput];
 #endif
             [self setAudioSessionCategory];
-            [self.capturer resetSessionInput];
             self.playerController.view.hidden = YES;
         }];
+    
 }
 
 - (void)okAction:(UIButton *)sender {
@@ -683,6 +718,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     if (0 == duration) {
         self.playBtn.hidden = YES;
         [self takeAPhoto];
+    }else {
+        // 录制失败 并且超过1s 给出失败提示
+        [self sightFailed];
     }
 }
 

@@ -206,10 +206,6 @@ CGAffineTransform transformBaseOnCaptureOrientation(AVCaptureVideoOrientation or
 
 #pragma mark - Notification Selector
 - (void)sessionWasInterrupted:(NSNotification *)notification {
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(self.dispatchQueue, ^{
-        weakSelf.audioSettings = nil;
-    });
 }
 
 @end

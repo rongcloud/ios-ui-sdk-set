@@ -5,6 +5,7 @@
 "release_to_cancel_title"="松开手指，取消发送";
 "message_too_short"="录音时间太短";
 "message_too_long"="录音时间超长";
+"recordvoice_failed"="录音失败，请稍后重试";
 "whiteSpaceMessage"="不能发送空白消息";
 "OK"="确定";
 "Cancel"="取消";
@@ -278,3 +279,4 @@
 "DownloadFailFromiCloud"="从 iCloud 下载图片失败，请稍后重试";
 "VideoExpired"="视频被删除或过期";
 "LoadMsgAskInfo"="网络异常，查看本地历史消息？";
+"SightCaptureFailed"="目前无法录制，请稍后再试";

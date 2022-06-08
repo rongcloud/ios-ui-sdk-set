@@ -176,6 +176,9 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.row >= self.dataSource.dataList.count) {
+        return;
+    }
     RCConversationModel *model = self.dataSource.dataList[indexPath.row];
 
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE) {

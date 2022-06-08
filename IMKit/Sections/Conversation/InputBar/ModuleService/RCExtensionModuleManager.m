@@ -9,8 +9,8 @@
 #import "RCExtensionModuleManager.h"
 
 NSString *const rcExtensionModelNames =
-    @"RCCallKitExtensionModule,RCStickerModule,"
-    @"RCiFlyKitExtensionModule,RCCCExtensionModule";
+    @"RCLocationKitExtensionModule,RCCallKitExtensionModule,RCStickerModule,"
+    @"RCiFlyKitExtensionModule,RCCCExtensionModule,RCSightExtensionModule";
 
 #define RCDisplayEmoticonConversationType                                                                              \
     [NSArray arrayWithObjects:@(ConversationType_PRIVATE), @(ConversationType_DISCUSSION), @(ConversationType_GROUP),  \

@@ -21,7 +21,9 @@
 #define IS_IPAD (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
 
 NSString *const RCKitExtensionEmoticonTabNeedReloadNotification = @"RCKitExtensionEmoticonTabNeedReloadNotification";
-@interface RCEmojiBoardView ()<RCEmojiTabViewDelegate>
+@interface RCEmojiBoardView ()<RCEmojiTabViewDelegate> {
+    BOOL _disableDefaultEmoji;
+}
 @property (nonatomic, assign) int emojiTotal;
 @property (nonatomic, assign) int emojiTotalPage;
 @property (nonatomic, assign) int emojiColumn;
@@ -42,6 +44,8 @@ NSString *const RCKitExtensionEmoticonTabNeedReloadNotification = @"RCKitExtensi
  app 通过调用 addEmojiTab 方法添加的自定义表情的 Model 数组
  */
 @property (nonatomic, strong) NSMutableArray *appAddEmojiModelList;
+// 禁用系统表情
+@property (nonatomic, assign, readwrite) BOOL disableDefaultEmoji;
 
 @end
 
@@ -159,8 +163,14 @@ static int rc_currentSelectIndexPage;
 }
 
 #pragma mark - Public Methods
+- (void)disableSystemDefaultEmoji {
+    self.disableDefaultEmoji = YES;
+}
+
 - (void)loadLabelView {
-    [self loadEmojiViewPartly];
+    if (!self.disableDefaultEmoji) {
+        [self loadEmojiViewPartly];
+    }
     if (pageCtrl) {
         [pageCtrl removeFromSuperview];
         pageCtrl = nil;
@@ -309,7 +319,6 @@ static int rc_currentSelectIndexPage;
     if (currentIndex >= self.emojiTotalPage) {
         int emotionPackageIndex = currentIndex - self.emojiTotalPage;
         RCEmoticonPackage *model = self.emojiModelList[emotionPackageIndex];
-        pageCtrl.numberOfPages = model.totalPage;
         selectIndex = 0;
         if (model.tabSource) {
             if (_preSelectEmoticonPackageIndex > emotionPackageIndex) {
@@ -323,7 +332,11 @@ static int rc_currentSelectIndexPage;
             }
         }
         pageCtrl.numberOfPages = model.totalPage;
-        rc_currentSelectIndexPackage = emotionPackageIndex + 1; //当前选择的表情包
+        if (self.disableDefaultEmoji) {
+            rc_currentSelectIndexPackage = emotionPackageIndex; //当前选择的表情包
+        } else {
+            rc_currentSelectIndexPackage = emotionPackageIndex + 1; //当前选择的表情包
+        }
         rc_currentSelectIndexPage = 0;
     } else {
         pageCtrl.numberOfPages = self.emojiTotalPage;
@@ -391,6 +404,9 @@ static int rc_currentSelectIndexPage;
 
 //延迟加载
 - (void)loadEmojiViewPartly {
+    if (self.disableDefaultEmoji) {
+        return;
+    }
     //每次加载两页，防止快速移动
     int beginEmojiBtn = self.emojiLoadedPage * self.emojiMaxCountPerPage;
     int endEmojiBtn = MIN(self.emojiTotal, (self.emojiLoadedPage + 2) * self.emojiMaxCountPerPage);
@@ -451,7 +467,13 @@ static int rc_currentSelectIndexPage;
 }
 
 - (void)loadCustomerEmoticonPackage {
-    NSMutableArray *emojiList = @[RCResourceImage(@"emoji_btn_normal")].mutableCopy;
+    NSMutableArray *emojiList = [NSMutableArray array];
+    if(!self.disableDefaultEmoji) {
+        UIImage *img = RCResourceImage(@"emoji_btn_normal");
+        if (img) {
+            [emojiList addObject:img];
+        }
+    }
     for (int i = 0; i < _emojiModelList.count; i++) {
         RCEmoticonPackage *model = _emojiModelList[i];
         int offsetX = self.frame.size.width * i;
@@ -463,7 +485,9 @@ static int rc_currentSelectIndexPage;
         CGSize size = self.emojiContentSize;
         size.width = self.emojiContentSize.width + self.frame.size.width * _emojiModelList.count;
         self.emojiBackgroundView.contentSize = size;
-        [emojiList addObject:model.tabImage];
+        if (model.tabImage) {
+            [emojiList addObject:model.tabImage];
+        }
     }
     [self.tabbarView reloadTabView:emojiList.copy];
     if (rc_currentSelectIndexPackage <= self.emojiModelList.count)
@@ -478,17 +502,29 @@ static int rc_currentSelectIndexPage;
 
 - (void)showEmoticonPackage:(int)index {
     int selectIndex = index;
-    if (selectIndex > 0) {
-        selectIndex = selectIndex + self.emojiTotalPage - 1;
-        RCEmoticonPackage *model = self.emojiModelList[index - 1];
+    if (self.disableDefaultEmoji) {
+        if (index>=self.emojiModelList.count) {
+            return;
+        }
+        RCEmoticonPackage *model = self.emojiModelList[index];
         pageCtrl.numberOfPages = model.totalPage;
         [model showEmoticonView:0];
         if (rc_currentSelectIndexPage > model.totalPage) {
             rc_currentSelectIndexPage = 0;
         }
+    } else {
+        if (selectIndex > 0) {
+            selectIndex = selectIndex + self.emojiTotalPage - 1;
+            RCEmoticonPackage *model = self.emojiModelList[index - 1];
+            pageCtrl.numberOfPages = model.totalPage;
+            [model showEmoticonView:0];
+            if (rc_currentSelectIndexPage > model.totalPage) {
+                rc_currentSelectIndexPage = 0;
+            }
 
     } else {
         pageCtrl.numberOfPages = self.emojiTotalPage;
+    }
     }
     CGSize viewSize = self.emojiBackgroundView.frame.size;
     CGRect rect = CGRectMake(selectIndex * viewSize.width, 0, viewSize.width, viewSize.height);
@@ -501,6 +537,17 @@ static int rc_currentSelectIndexPage;
 }
 
 - (void)showEmoticonView:(int)index {
+    if (self.disableDefaultEmoji) {
+        if (rc_currentSelectIndexPackage>= self.emojiModelList.count) {
+            return;
+        }
+        RCEmoticonPackage *model = _emojiModelList[rc_currentSelectIndexPackage];
+        if (rc_currentSelectIndexPage < model.totalPage) {
+            [model showEmoticonView:rc_currentSelectIndexPage];
+            [self setCurrentIndex:rc_currentSelectIndexPage withTotalPages:model.totalPage];
+        }
+        return;
+    }
     //    //令UIScrollView做出相应的滑动显示
     if (rc_currentSelectIndexPackage > 0) {
         if ((rc_currentSelectIndexPackage - 1) < _emojiModelList.count) {
@@ -561,5 +608,33 @@ static int rc_currentSelectIndexPage;
         _tabbarView.delegate = self;
     }
     return _tabbarView;
+}
+
+
+- (void)setDisableDefaultEmoji:(BOOL)disableDefaultEmoji {
+    _disableDefaultEmoji = disableDefaultEmoji;
+    if (disableDefaultEmoji) {
+        [self cleanDefaultEmoji];
+       
+        [self generateDefaultLayoutParameters];
+//        [self reloadExtensionEmoticonTabSource];
+//        [self loadLabelView];
+        [self loadCustomerEmoticonPackage];
+    }
+}
+
+- (void)cleanDefaultEmoji {
+    self.emojiBackgroundView.contentSize = self.emojiBackgroundView.frame.size;
+    self.emojiContentSize = CGSizeMake(0, self.emojiBackgroundView.contentSize.height);
+    self.faceEmojiArray = @[];
+    rc_currentSelectIndexPackage = 0;
+    rc_currentSelectIndexPage = 0;
+    for (UIView *subView in self.emojiBackgroundView.subviews) {
+        [subView removeFromSuperview];
+    }
+}
+
+- (BOOL)disableDefaultEmoji {
+    return _disableDefaultEmoji;
 }
 @end

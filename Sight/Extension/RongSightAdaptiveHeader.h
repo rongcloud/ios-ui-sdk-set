@@ -1,6 +1,6 @@
 //
 //  RongSightAdaptiveHeader.h
-//  RongIMKit
+//  RongSight
 //
 //  Created by Sin on 2021/1/21.
 //  Copyright © 2021 RongCloud. All rights reserved.

@@ -13,12 +13,11 @@
 #import "RCKitUtility.h"
 #import "RCCombineMessageUtility.h"
 #import "RCCombineMsgFilePreviewViewController.h"
-#import "RCLocationViewController.h"
 #import <objc/runtime.h>
 #import "RCImageSlideController.h"
 #import "RCSightSlideViewController.h"
 #import "RCKitConfig.h"
-
+#import "RCLocationViewController+imkit.h"
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
 
@@ -399,18 +398,20 @@
 }
 
 - (void)presentLocationVC:(NSString *)locationName latitude:(NSString *)latitude longitude:(NSString *)longitude {
-    //默认方法跳转
-    RCLocationViewController *locationViewController = [[RCLocationViewController alloc] init];
-    locationViewController.locationName = locationName;
-    locationViewController.location = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
-    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
-    if (self.navigationController) {
-        //导航和原有的配色保持一直
-        UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
-        [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+    Class type = NSClassFromString(@"RCLocationViewController");
+    if (type) {
+        RCLocationViewController *locationViewController = [[type alloc] init];
+        locationViewController.locationName = locationName;
+        [locationViewController setLatitude:[latitude doubleValue] longitude:[longitude doubleValue]];
+        UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
+        if (self.navigationController) {
+            //导航和原有的配色保持一直
+            UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
+            [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+        }
+        navc.modalPresentationStyle = UIModalPresentationFullScreen;
+        [self presentViewController:navc animated:YES completion:NULL];
     }
-    navc.modalPresentationStyle = UIModalPresentationFullScreen;
-    [self presentViewController:navc animated:YES completion:NULL];
 }
 
 - (void)startAnimation {

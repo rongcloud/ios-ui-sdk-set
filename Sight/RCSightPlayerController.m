@@ -12,6 +12,7 @@
 #import <RongIMLib/RongIMLib.h>
 #import "RCDownloadHelper.h"
 #import "RongSightAdaptiveHeader.h"
+#import "RCSightExtensionModule.h"
 
 // AVPlayerItem's status property
 #define STATUS_KEYPATH @"status"
@@ -53,6 +54,7 @@
 - (instancetype)initWithURL:(NSURL *)assetURL autoPlay:(BOOL)isauto;
 {
     if (self = [super init]) {
+        [RCSightExtensionModule sharedInstance].isSightPlayerHolding = YES;
         self.transport.delegate = self;
         self.autoPlay = isauto;
         self.rcSightURL = assetURL;
@@ -64,6 +66,7 @@
 
 - (instancetype)init {
     if (self = [super init]) {
+        [RCSightExtensionModule sharedInstance].isSightPlayerHolding = YES;
         self.transport.delegate = self;
         [self registerNotificationCenter];
     }
@@ -73,6 +76,7 @@
 #pragma mark - Deinit
 
 - (void)dealloc {
+    [RCSightExtensionModule sharedInstance].isSightPlayerHolding = NO;
     if (self.isAddStatusObserver) {
         [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
     }

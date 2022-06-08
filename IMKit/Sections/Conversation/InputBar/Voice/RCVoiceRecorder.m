@@ -137,8 +137,18 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
     return NO;
 }
 - (void)stopRecord:(void (^)(NSData *, NSTimeInterval))compeletion {
-    if (!self.recorder.url)
+    if (!self.recorder.url) {
+        if (compeletion) {
+            compeletion(nil, 0);
+        }
         return;
+    }
+    if (!self.recorder.isRecording) {
+        if (compeletion) {
+            compeletion(nil, 0);
+        }
+        return;
+    }
     NSURL *url = [[NSURL alloc] initWithString:self.recorder.url.absoluteString];
     NSTimeInterval audioLength = self.recorder.currentTime;
     [self.recorder stop];
@@ -157,8 +167,9 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
         [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
         [audioSession setActive:YES error:nil];
     }
-
-    compeletion(currentRecordData, audioLength);
+    if (compeletion) {
+        compeletion(currentRecordData, audioLength);
+    }
 }
 - (CGFloat)updateMeters {
     if (nil != self.recorder) {

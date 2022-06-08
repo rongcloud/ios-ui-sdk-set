@@ -35,7 +35,7 @@
 
 - (void)hideCancelView;
 
-- (void)showMsgShortView;
+- (void)showViewWithErrorMsg:(NSString *)errorMsg;
 
 - (void)stopTimer;
 @end

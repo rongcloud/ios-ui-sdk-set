@@ -12,9 +12,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCExtensionService.h"
 #import "RCFileSelectorViewController.h"
-#import "RCLocationPickerViewController.h"
 #import "RCMentionedStringRangeInfo.h"
-
 #import "RCUserListViewController.h"
 #import "RCExtNavigationController.h"
 #import <CoreText/CoreText.h>
@@ -25,7 +23,7 @@
 #import "RCActionSheetView.h"
 #import "RCInputContainerView+internal.h"
 #import "RCSightViewController+imkit.h"
-
+#import "RCLocationPickerViewController+imkit.h"
 //单个cell的高度是70（RCPlaginBoardCellSize）*2 + 上下padding的高度14*2 ＋
 //上下两个图标之间的padding
 #define Height_EmojBoardView 223.5f
@@ -44,7 +42,7 @@
 #define SwitchButtonWidth 44
 
 @interface RCChatSessionInputBarControl () <RCEmojiViewDelegate, RCPluginBoardViewDelegate, UINavigationControllerDelegate,
-    UIImagePickerControllerDelegate, RCLocationPickerViewControllerDelegate, RCAlbumListViewControllerDelegate,
+    UIImagePickerControllerDelegate, RCAlbumListViewControllerDelegate,
     RCFileSelectorViewControllerDelegate, RCSelectingUserDataSource,
     RCCommonPhrasesListViewDelegate, RCVoiceRecordControlDelegate, RCInputContainerViewDelegate,
     RCMenuContainerViewDelegate>
@@ -239,24 +237,16 @@
     }
 }
 
-- (void)locationPicker:(RCLocationPickerViewController *)locationPicker
-     didSelectLocation:(CLLocationCoordinate2D)location
-          locationName:(NSString *)locationName
-         mapScreenShot:(UIImage *)mapScreenShot {
-    if ([self.delegate respondsToSelector:@selector(locationDidSelect:locationName:mapScreenShot:)]) {
-        [self.delegate locationDidSelect:location locationName:locationName mapScreenShot:mapScreenShot];
-    }
-}
-
 //打开地理位置拾取器
 - (void)openLocationPicker {
-    RCLocationPickerViewController *picker = [[RCLocationPickerViewController alloc] init];
-    picker.delegate = self;
-    UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
-
-    dispatch_async(dispatch_get_main_queue(), ^{
+    Class locationPickType = NSClassFromString(@"RCLocationPickerViewController");
+    if (locationPickType) {
+        RCLocationPickerViewController *picker = [[locationPickType alloc] init];
+        picker.conversationType = self.conversationType;
+        picker.targetId = self.targetId;
+        UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
         [self.delegate presentViewController:rootVC functionTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
-    });
+    }
 }
 
 //进入选择文件页面
@@ -716,6 +706,21 @@
                 
             }];
         }
+    }else {
+        /*
+         bugFix: PAASIOSDEV-407
+         补发 KeyboardWillShow 原因:
+         1. 使用系统标准键盘(非表情)情况下, 弹出的alert 隐藏后, 会恢复之前的第一响应这 即 self.inputContainerView.inputTextView, 在这期间, 会调用两次 KeyboardWillShow, 其中, 第二次调用 是在 textViewBeginEditing 变为YES 之后;
+         2. 如果是表情键盘后者第三方键盘,如 搜狗, 只会调用一次 KeyboardWillShow,在 textViewBeginEditing 变为YES 之后, 也不会调用KeyboardWillShow(标准情况下要再调一次)
+         3. 因此需要使用异步的方式, 重新发送一次 KeyboardWillShow, 即可解决输入框被假盘遮挡的问题, 但也引入两个体验问题:
+         (1)  标准模式下输入框动画会执行两次(动画不会穿帮)
+         (2) 非标准情况下, 输入框会稍晚与键盘(因为补发是异步处理的)
+         */
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.inputContainerView.textViewBeginEditing) {
+                [self rcInputBar_didReceiveKeyboardWillShowNotification:notification];
+            }
+        });
     }
     if (@available(iOS 13.0, *)) {
         [[UIMenuController sharedMenuController] hideMenuFromView:self];
@@ -1338,12 +1343,7 @@
                                title:RCLocalizedString(@"Camera")
                              atIndex:1
                                  tag:PLUGIN_BOARD_ITEM_CAMERA_TAG];
-        
-        [_pluginBoardView insertItem:RCResourceImage(@"plugin_item_location")
-                    highlightedImage:RCResourceImage(@"plugin_item_location_highlighted")
-                               title:RCLocalizedString(@"Location")
-                             atIndex:2
-                                 tag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
+
         if (self.conversationType == ConversationType_PRIVATE) {
             [_pluginBoardView insertItem:RCResourceImage(@"plugin_item_burn")
                         highlightedImage:RCResourceImage(@"plugin_item_burn_highlighted")

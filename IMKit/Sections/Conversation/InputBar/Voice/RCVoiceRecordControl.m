@@ -75,7 +75,17 @@
     }
 
     NSData *recordData = [self.voiceCaptureControl stopRecord];
-    if (self.voiceCaptureControl.duration > 1.0f && nil != recordData) {
+    if (recordData.length == 0) {
+        // 录制失败 
+        [self.voiceCaptureControl showViewWithErrorMsg:RCLocalizedString(@"recordvoice_failed")];
+        [self performSelector:@selector(destroyVoiceCaptureControl) withObject:nil afterDelay:1.0f];
+        if ([self.delegate respondsToSelector:@selector(voiceRecordControlDidCancel:)]) {
+            [self.delegate voiceRecordControlDidCancel:self];
+        }
+        return;
+    }
+    
+    if (self.voiceCaptureControl.duration > 1.0f) {
         if ([self.delegate respondsToSelector:@selector(voiceRecordControl:didEnd:duration:error:)]) {
             [self.delegate voiceRecordControl:self
                                        didEnd:recordData
@@ -87,7 +97,7 @@
         // message too short
         if (!self.isAudioRecoderTimeOut) {
             self.isAudioRecoderTimeOut = NO;
-            [self.voiceCaptureControl showMsgShortView];
+            [self.voiceCaptureControl showViewWithErrorMsg:RCLocalizedString(@"message_too_short")];
             [self performSelector:@selector(destroyVoiceCaptureControl) withObject:nil afterDelay:1.0f];
             if ([self.delegate respondsToSelector:@selector(voiceRecordControlDidCancel:)]) {
                 [self.delegate voiceRecordControlDidCancel:self];

@@ -88,6 +88,14 @@ static void playSoundEnd(SystemSoundID mySSID, void *myself) {
         return;
     }
 
+    // 播放小视频时接收新的消息应不响铃且小视频应不停止播放
+    // 录制小视频时接收新的消息应不响铃
+    if ([RCKitUtility isCameraHolding] || [RCKitUtility isAudioHolding]) {
+        self.completion(NO);
+        return;
+    }
+    
+    
     if (self.isPlaying) {
         self.completion(NO);
         return;

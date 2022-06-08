@@ -57,6 +57,8 @@ static BOOL msgRoamingServiceAvailable = YES;
 
 @property (nonatomic, assign) RCConversationLoadMessageVersion loadMessageVersion;
 
+//是否因为点击@人按钮, 检查清空未读按钮
+@property (nonatomic, assign) BOOL hideUnreadBtnForMentioned;
 
 @end
 
@@ -440,11 +442,12 @@ static BOOL msgRoamingServiceAvailable = YES;
     self.isIndicatorLoading = NO;
     return count;
 }
-
 - (void)handleMessagesAfterLoadMore:(NSArray *)__messageArray {
+    [self handleMessagesAfterLoadMore:__messageArray checkUnreadMessage:YES];
+}
+- (void)handleMessagesAfterLoadMore:(NSArray *)__messageArray checkUnreadMessage:(BOOL)check {
     CGFloat increasedHeight = 0;
     NSMutableArray *indexPathes = [[NSMutableArray alloc] initWithCapacity:self.chatVC.defaultLocalHistoryMessageCount];
-
     int indexPathCount = 0;
     for (int i = 0; i < __messageArray.count; i++) {
         RCMessage *rcMsg = [__messageArray objectAtIndex:i];
@@ -493,9 +496,11 @@ static BOOL msgRoamingServiceAvailable = YES;
                                 sizeForItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]];
                 increasedHeight += itemSize.height;
             }
-            [self.chatVC.unReadButton removeFromSuperview];
-            self.chatVC.unReadButton = nil;
-            self.chatVC.unReadMessage = 0;
+            if (check) {
+                [self.chatVC.unReadButton removeFromSuperview];
+                self.chatVC.unReadButton = nil;
+                self.chatVC.unReadMessage = 0;
+            }
         }
     }
 
@@ -523,12 +528,14 @@ static BOOL msgRoamingServiceAvailable = YES;
                 self.chatVC.conversationDataRepository.count) {
             [self.chatVC.conversationMessageCollectionView reloadData];
         } else {
-            // ios15上可能出现只insert不reload，导致cell重用未刷新
-            [self.chatVC.conversationMessageCollectionView performBatchUpdates:^{
-                [self.chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:indexPathes];
-                [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathes];
-            } completion:^(BOOL finished) {
-            }];
+            if (check) { // @人按钮点击后(check=NO) 前边的数据源已经刷新过, 后续scrollToSpecifiedPosition 会重新刷新, 此时, 已无需更新
+                // ios15上可能出现只insert不reload，导致cell重用未刷新
+                [self.chatVC.conversationMessageCollectionView performBatchUpdates:^{
+                    [self.chatVC.conversationMessageCollectionView insertItemsAtIndexPaths:indexPathes];
+                } completion:^(BOOL finished) {
+                }];
+            }
+           
         }
         [UIView setAnimationsEnabled:YES];
         [self.chatVC.collectionViewHeader stopAnimating];
@@ -640,7 +647,8 @@ static BOOL msgRoamingServiceAvailable = YES;
             }else{
                 weakSelf.isLoadingHistoryMessage = YES;
             }
-            NSMutableArray *msgArr = [[newMsgs reverseObjectEnumerator] allObjects].mutableCopy;
+            NSMutableArray *msgArr = [[NSMutableArray alloc] init];
+            [msgArr addObjectsFromArray:[[newMsgs reverseObjectEnumerator] allObjects]];
             [msgArr addObjectsFromArray:oldMsgs];
             [weakSelf loadLatestHistoryMessageV2:msgArr];
         }];
@@ -930,6 +938,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     } else {
         model.isDisplayNickname = NO;
     }
+    [self hideUnreadButtonAfterLoadMetionedMessageWith:model];
     return model;
 }
 
@@ -1050,13 +1059,12 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)tapRightBottomMsgCountIcon:(UIGestureRecognizer *)gesture {
     [self.unreadNewMsgArr removeAllObjects];
     if (gesture.state == UIGestureRecognizerStateEnded) {
-        NSInteger count = 0;
         if (self.isLoadingHistoryMessage) {
-            count = [self appendLastestMessageToDataSource];
-            NSInteger totalcount = self.chatVC.conversationDataRepository.count;
             /// 0.35 的作用时在滚动动画完成后执行 滚动动画的执行时间大约是0.35
             dispatch_after(
                 dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    NSInteger count = [self appendLastestMessageToDataSource];
+                    NSInteger totalcount = self.chatVC.conversationDataRepository.count;
                     [self.chatVC.conversationDataRepository removeObjectsInRange:NSMakeRange(0, totalcount - count)];
                     [self.chatVC.conversationMessageCollectionView reloadData];
                 });
@@ -1103,14 +1111,29 @@ static BOOL msgRoamingServiceAvailable = YES;
             time = msg.sentTime;
         }
         [self getHistoryMessageV2:time order:RCHistoryMessageOrderAsc loadType:type complete:^(NSArray *newMsgs, RCConversationLoadMessageType type) {
-            NSMutableArray *msgArr = [[newMsgs reverseObjectEnumerator] allObjects].mutableCopy;
+
+            NSMutableArray *msgArr = [NSMutableArray array];
+            if (newMsgs != nil) {
+                msgArr = [[newMsgs reverseObjectEnumerator] allObjects].mutableCopy;
+            }
             [msgArr addObjectsFromArray:oldMsgs];
             //移除所有的已经加载的消息
             [weakSelf.chatVC.conversationDataRepository removeAllObjects];
             [weakSelf.chatVC.conversationMessageCollectionView reloadData];
+            /*
+             bugID=50466:
+             reloadData 之后 collectionView 还没有完成渲染, 此时直接访问 collectionView 的 UI 内容会有问题, 需要先标记视图
+             为脏数据, 再启用渲染, 之后的 UI 访问才能正常
+             */
+            [weakSelf.chatVC.conversationMessageCollectionView setNeedsLayout];
+            [weakSelf.chatVC.conversationMessageCollectionView layoutIfNeeded];
+
             [weakSelf.chatVC.util sendReadReceiptResponseForMessages:msgArr];
-            [weakSelf handleMessagesAfterLoadMore:msgArr];
+            [weakSelf handleMessagesAfterLoadMore:msgArr checkUnreadMessage:NO];
             [weakSelf scrollToSpecifiedPosition:YES baseMeassage:firstUnReadMentionedMessagge];
+            // message 加载完成后, 再次滚动需要检测是否移除未读消息按钮
+            weakSelf.hideUnreadBtnForMentioned = YES;
+
             //判断是否是最后一条消息,如果是，隐藏底部新消息按钮
             NSArray *latestMessageArray = [[RCIMClient sharedRCIMClient] getLatestMessages:weakSelf.chatVC.conversationType targetId:weakSelf.chatVC.targetId count:1];
             if (latestMessageArray.count > 0) {
@@ -1125,6 +1148,23 @@ static BOOL msgRoamingServiceAvailable = YES;
             [weakSelf setupUnReadMentionedButton];
         }];
     }];
+}
+
+- (void)hideUnreadButtonAfterLoadMetionedMessageWith:(RCMessageModel *)message {
+// bugfix: 50540
+    if (!self.hideUnreadBtnForMentioned) {
+        return;
+    }
+    if (self.chatVC.unReadMessage == 0) {
+        self.hideUnreadBtnForMentioned = NO;
+        return;
+    }
+    if(message.messageId == self.firstUnreadMessage.messageId) {
+        self.hideUnreadBtnForMentioned = NO;
+        [self.chatVC.unReadButton removeFromSuperview];
+        self.chatVC.unReadButton = nil;
+        self.chatVC.unReadMessage = 0;
+    }
 }
 
 - (void)loadRightTopUnreadMessages{
@@ -1150,6 +1190,8 @@ static BOOL msgRoamingServiceAvailable = YES;
 
 - (void)scrollToSpecifiedPosition:(BOOL)ifUnReadMentioned baseMeassage:(RCMessage *)baseMeassage{
     [self.chatVC.conversationMessageCollectionView reloadData];
+    [self.chatVC.conversationMessageCollectionView setNeedsLayout];
+    [self.chatVC.conversationMessageCollectionView layoutIfNeeded];
     if (self.chatVC.conversationDataRepository.count > 0) {
         if (ifUnReadMentioned) {
             for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {

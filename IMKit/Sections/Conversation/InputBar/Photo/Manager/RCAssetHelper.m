@@ -25,18 +25,6 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     if (self = [super init]) {
         _assetLibrary = [[ALAssetsLibrary alloc] init];
         __rc__photo__working_queue = dispatch_queue_create("com.rongcloud.photoWorkingQueue", NULL);
-        if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-            PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
-            BOOL authed = NO;
-            if (@available(iOS 14, *)) {
-                authed = (status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited);
-            } else {
-                authed = (status == PHAuthorizationStatusAuthorized);
-            }
-            if (authed) {
-                [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-            }
-        }
     }
     return self;
 }
@@ -53,7 +41,27 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
         }
                                groupType:ALAssetsGroupAll];
     });
+    [assetHelper addRegisterIfNeed];
     return assetHelper;
+}
+
+//bugID=50382
+- (void)addRegisterIfNeed {
+    if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+        PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+        BOOL authed = NO;
+        if (@available(iOS 14, *)) {
+            authed = (status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited);
+        } else {
+            authed = (status == PHAuthorizationStatusAuthorized);
+        }
+        if (authed) {
+            static dispatch_once_t onceToken2;
+            dispatch_once(&onceToken2, ^{
+                [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+            });
+        }
+    }
 }
 
 - (BOOL)hasAuthorizationStatusAuthorized {
