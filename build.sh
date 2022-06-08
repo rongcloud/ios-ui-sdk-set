@@ -38,6 +38,7 @@ update_sdk RongSticker Sticker
 update_sdk RongSight Sight
 update_sdk RongiFlyKit iFlyKit
 update_sdk RongContactCard ContactCard
+update_sdk RongLocationKit LocationKit
 update_sdk RongCallKit CallKit
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
