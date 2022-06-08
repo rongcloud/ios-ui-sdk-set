@@ -6,7 +6,7 @@
 //
 
 #import "RCLocationKitExtensionModule.h"
-#import <RongLocationKit.h>
+#import "RongLocationKit.h"
 @implementation RCLocationKitExtensionModule
  
 + (instancetype)loadRongExtensionModule {
