@@ -14,7 +14,18 @@ FOUNDATION_EXPORT double RongLocationKitVersionNumber;
 FOUNDATION_EXPORT const unsigned char RongLocationKitVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <RongLocationKit/PublicHeader.h>
+
+#if __has_include(<RongLocationKit/RongLocationKit.h>)
+
 #import <RongLocationKit/RCLocationMessageCell.h>
 #import <RongLocationKit/RCLocationPickerViewController.h>
 #import <RongLocationKit/RCLocationViewController.h>
+
+#else
+
+#import "RCLocationMessageCell.h"
+#import "RCLocationPickerViewController.h"
+#import "RCLocationViewController.h"
+
+#endif
 
