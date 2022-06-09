@@ -110,8 +110,8 @@ pod 'RongCloudOpenSource/ContactCard','5.0.0'
 > podfile
 
 ```
-pod 'RongCloudIM/ContactCard','5.1.8'			#framework
-pod 'RongCloudOpenSource/ContactCard','5.0.0' 	#源码
+pod 'RongCloudIM/ContactCard','5.1.8'			# framework
+pod 'RongCloudOpenSource/ContactCard','5.0.0' 	# 源码
 ```
 
 ## 5. 讯飞语音输入插件特殊说明
