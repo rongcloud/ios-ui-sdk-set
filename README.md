@@ -97,14 +97,22 @@ pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 
 ### 5.1.8(不含)以前版本
 名片插件，没有以 framework 形式推到 pod，如果需要使用名片 SDK，建议使用源码方式导入
+> podfile
+
+```
 pod 'RongCloudOpenSource/ContactCard','5.0.0' 
+```
 
 如果必须使用名片的 framework，那么请在 [SealTalk 源码](https://github.com/rongcloud/sealtalk-ios/tags)中找到对应版本的 tag，下载源码压缩包解压后，找到(工程路径为 ios-sealtalk/framework/RongContactCard)中的名片 SDK 并手动导入，并将 xcframework 的 Embed 设置为 Embed & Sign
 
 ### 5.1.8(含)以后版本
 名片插件，已支持以 framework 形式推到 pod， 集成方式任选以下两种之一
+> podfile
+
+```
 pod 'RongCloudIM/ContactCard','5.1.8'			#framework
 pod 'RongCloudOpenSource/ContactCard','5.0.0' 	#源码
+```
 
 ## 5. 讯飞语音输入插件特殊说明
 
