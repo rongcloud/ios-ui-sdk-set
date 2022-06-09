@@ -59,6 +59,7 @@ CallKit|可选|音视频 UI 库
 pod 'RongCloudIM/IMKit','5.0.0'           # IMKit
 pod 'RongCloudIM/Sight','5.0.0'           # 小视频
 pod 'RongCloudIM/RongSticker','5.0.0'     # 表情
+pod 'RongCloudIM/LocationKit', 5.2.3'	  # 地图Kit 注意：5.2.3(含)版本以后才支持 pod
 
 pod 'RongCloudRTC/RongCallKit','5.0.0'    # CallKit
 ```
@@ -80,6 +81,7 @@ pod 'RongCloudOpenSource/Sight','5.0.0'           # 小视频
 pod 'RongCloudOpenSource/RongSticker','5.0.0'     # 表情
 pod 'RongCloudOpenSource/IFly','5.0.0'            # 语音输入
 pod 'RongCloudOpenSource/ContactCard','5.0.0'     # 名片
+pod 'RongCloudOpenSource/LocationKit','5.2.3'     # 地图Kit 注意：5.2.3(含)版本以后才支持 pod
 
 pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 ```
@@ -93,12 +95,16 @@ pod 'RongCloudOpenSource/RongCallKit','5.0.0'     # CallKit
 
 ## 4. 名片插件特殊说明
 
-名片插件没有以 framework 形式推到 pod，如果需要使用名片 SDK，建议使用源码方式导入
+### 5.1.8(不含)以前版本
+名片插件，没有以 framework 形式推到 pod，如果需要使用名片 SDK，建议使用源码方式导入
+pod 'RongCloudOpenSource/ContactCard','5.0.0' 
 
-如果必须使用名片的 framework，那么请在 [SealTalk 源码](https://github.com/rongcloud/sealtalk-ios/tree/master/ios-sealtalk/framework/RongContactCard)中下载名片 SDK 并手动导入，并将 xcframework 的 Embed 设置为 Embed & Sign
+如果必须使用名片的 framework，那么请在 [SealTalk 源码](https://github.com/rongcloud/sealtalk-ios/tags)中找到对应版本的 tag，下载源码压缩包解压后，找到(工程路径为 ios-sealtalk/framework/RongContactCard)中的名片 SDK 并手动导入，并将 xcframework 的 Embed 设置为 Embed & Sign
 
-备注：名片插件自 5.1.8(含)版本以后，已支持以 framework 形式推到 pod
-集成方式 pod 'RongCloudIM/ContactCard', '5.1.8'
+### 5.1.8(含)以后版本
+名片插件，已支持以 framework 形式推到 pod， 集成方式任选以下两种之一
+pod 'RongCloudIM/ContactCard','5.1.8'			#framework
+pod 'RongCloudOpenSource/ContactCard','5.0.0' 	#源码
 
 ## 5. 讯飞语音输入插件特殊说明
 
