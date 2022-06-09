@@ -63,7 +63,6 @@ Pod::Spec.new do |s|
 
   s.subspec 'LocationKit' do |lokit|
     lokit.source_files = 'locationkit/**/*.{h,m,c}'
-    lokit.private_header_files = 'locationkit/RongLocationKitAdaptiveHeader.h'
     lokit.dependency 'RongCloudOpenSource/IMKit'
   end
 
