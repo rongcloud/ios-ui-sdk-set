@@ -59,7 +59,7 @@ CallKit|可选|音视频 UI 库
 pod 'RongCloudIM/IMKit','5.0.0'           # IMKit
 pod 'RongCloudIM/Sight','5.0.0'           # 小视频
 pod 'RongCloudIM/RongSticker','5.0.0'     # 表情
-pod 'RongCloudIM/LocationKit', 5.2.3'	  # 地图Kit 注意：5.2.3(含)版本以后才支持 pod
+pod 'RongCloudIM/LocationKit','5.2.3'	  # 地图Kit 注意：5.2.3(含)版本以后才支持 pod
 
 pod 'RongCloudRTC/RongCallKit','5.0.0'    # CallKit
 ```
