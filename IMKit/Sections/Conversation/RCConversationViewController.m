@@ -1312,7 +1312,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     //                [NSThread sleepForTimeInterval:0.2];
     //            }
     //            RCImageMessage *imageMsg = (RCImageMessage*)message.content;
-    //            imageMsg.imageUrl = @"http://www.rongcloud.cn/images/newVersion/bannerInner.png?0717";
+    //            imageMsg.remoteUrl = @"http://www.rongcloud.cn/images/newVersion/bannerInner.png?0717";
     //            uploadListener.successBlock(imageMsg);
     //        });
 }

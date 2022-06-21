@@ -356,7 +356,7 @@
     NSString *imageUrl = [dict objectForKey:@"fileUrl"];
     NSString *thumbnailBase64Str = [dict objectForKey:@"imgUrl"];
     RCImageMessage *msgContent = [[RCImageMessage alloc] init];
-    msgContent.imageUrl = imageUrl;
+    msgContent.localPath = imageUrl;
     msgContent.thumbnailImage = [self getThumbImage:thumbnailBase64Str];
     RCMessage *message = [[RCMessage alloc] initWithType:self.conversationType
                                                 targetId:self.targetId
