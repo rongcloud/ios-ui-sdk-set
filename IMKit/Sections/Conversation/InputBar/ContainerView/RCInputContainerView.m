@@ -70,7 +70,6 @@
     BOOL isShould = [self.delegate inputTextView:textView shouldChangeTextInRange:range replacementText:text];
     if ([text isEqualToString:@"\n"]) {
         self.inputTextView.text = @"";
-        [self textViewDidChange:textView];
     }else{
         [self changeInputTextViewRange];
     }
@@ -94,9 +93,6 @@
 - (void)textViewDidChange:(UITextView *)textView {
     [self changeInputTextViewRange];
     [[RCExtensionService sharedService] inputTextViewDidChange:textView inInputBar:(RCChatSessionInputBarControl *)self.superview];
-    if ([self.delegate respondsToSelector:@selector(inputTextViewDidChange:)]) {
-        [self.delegate inputTextViewDidChange:textView];
-    }
 }
 
 #pragma mark - RCTextViewDelegate

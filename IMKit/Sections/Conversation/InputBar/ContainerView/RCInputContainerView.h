@@ -72,6 +72,4 @@
 - (void)inputContainerView:(RCInputContainerView *)inputContainerView didChangeFrame:(CGRect)frame;
 
 - (BOOL)inputTextView:(UITextView *)inputTextView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text;
-
-- (void)inputTextViewDidChange:(UITextView *)textView;
 @end
