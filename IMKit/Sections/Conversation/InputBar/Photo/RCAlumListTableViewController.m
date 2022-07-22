@@ -17,7 +17,6 @@
 #import "RCKitConfig.h"
 
 static NSString *const cellReuseIdentifier = @"cell";
-static NSString *const lastIndexStr = @"rc_last_album_index";
 
 @interface RCAlumListTableViewController ()
 @property (nonatomic, strong) UILabel *tipsLabel;
@@ -69,8 +68,6 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     RCAlbumModel *assetsGroup = self.libraryList[indexPath.row];
     [self pushImagePickerController:assetsGroup animated:YES];
-    [[NSUserDefaults standardUserDefaults] setObject:@(indexPath.row) forKey:lastIndexStr];
-    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 #pragma mark - Private Methods
@@ -131,15 +128,7 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
                                   [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
 
                                   if (weakSelf.libraryList.count) {
-                                      int lastIndex =
-                                          [[[NSUserDefaults standardUserDefaults] objectForKey:lastIndexStr] intValue];
-                                      RCAlbumModel *assetsGroup;
-                                      if (lastIndex >= weakSelf.libraryList.count) {
-                                          assetsGroup = weakSelf.libraryList[0];
-                                      } else {
-                                          assetsGroup = weakSelf.libraryList[lastIndex];
-                                      }
-
+                                      RCAlbumModel *assetsGroup = weakSelf.libraryList[0];
                                       [weakSelf pushImagePickerController:assetsGroup animated:NO];
                                       //能获取到相册说明有权限，此时隐藏权限提示
                                       [weakSelf.tipsLabel setHidden:YES];
@@ -228,19 +217,6 @@ static NSString *const lastIndexStr = @"rc_last_album_index";
                         weakself.isShowHUD = NO;
                     }
                 }];
-            PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
-            options.networkAccessAllowed = YES;
-            options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
-            options.version = PHVideoRequestOptionsVersionOriginal;
-
-            [[PHImageManager defaultManager]
-                requestAVAssetForVideo:model.asset
-                               options:options
-                         resultHandler:^(AVAsset *_Nullable asset, AVAudioMix *_Nullable audioMix,
-                                         NSDictionary *_Nullable info){
-
-                         }];
-
         } else {
             __weak typeof(self) weakself = self;
             [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model

@@ -637,12 +637,12 @@ static BOOL msgRoamingServiceAvailable = YES;
             time = msg.sentTime;
         }
         [self getHistoryMessageV2:time order:RCHistoryMessageOrderAsc loadType:type complete:^(NSArray *newMsgs, RCConversationLoadMessageType type) {
-            if (oldMsgs.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
+            if (oldMsgs.count < weakSelf.chatVC.defaultRemoteHistoryMessageCount) {
                 weakSelf.allMessagesAreLoaded = YES;
             }else{
                 weakSelf.allMessagesAreLoaded = NO;
             }
-            if (newMsgs.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
+            if (newMsgs.count < weakSelf.chatVC.defaultRemoteHistoryMessageCount) {
                 weakSelf.isLoadingHistoryMessage = NO;
             }else{
                 weakSelf.isLoadingHistoryMessage = YES;

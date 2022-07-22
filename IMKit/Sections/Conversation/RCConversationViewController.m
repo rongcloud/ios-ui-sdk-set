@@ -168,6 +168,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
     [self initializedSubViews];
     [self registerAllInternalClass];
+    [self registerCustomCellsAndMessages];
     [self registerNotification];
 
     [RCMessageSelectionUtility sharedManager].delegate = self;
@@ -298,7 +299,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 
 #pragma mark - Register Message
-
+- (void)registerCustomCellsAndMessages {
+    
+}
 - (void)registerAllInternalClass {
     //常见消息
     [self registerClass:[RCTextMessageCell class] forMessageClass:[RCTextMessage class]];
@@ -1635,6 +1638,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self sendMessage:sightMessage pushContent:nil];
 }
 
+- (void)sightDidRecordFailedWith:(NSError *)error status:(NSInteger)status {
+    NSLog(@"sightDidRecordFailedWith: error %ld status %ld", error.code,status);
+}
+
 //文件列表被选中
 - (void)fileDidSelect:(NSArray *)filePathList {
     [self becomeFirstResponder];
@@ -2755,7 +2762,19 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                 }
             }
         } else {
-            [self deleteMessage:[RCMessageModel modelWithMessage:message]];
+            /*
+             * 焚毁消息在倒计时会缓存一份 RCMessage 未结束前，消息被删除， 再次拉取远端消息后， cell 持有的 RCMessageModel.messageId 会变更
+             * 后续的删除消息是依据 messageId 的，此时需要使用正确的 messageId，执行焚毁逻辑
+             */
+            
+            RCMessageModel *delModel = [RCMessageModel modelWithMessage:message];
+            for (RCMessageModel *msgModel in self.conversationDataRepository) {
+                if ([msgModel.messageUId isEqualToString:message.messageUId]) {
+                    delModel.messageId = msgModel.messageId;
+                    break;
+                }
+            }
+            [self deleteMessage:delModel];
             UIMenuController *menu = [UIMenuController sharedMenuController];
             menu.menuVisible = NO;
         }
@@ -3053,7 +3072,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _defaultHistoryMessageCountOfChatRoom = defaultHistoryMessageCountOfChatRoom;
 }
 
-- (void)setdefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
+- (void)setDefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
     if (defaultLocalHistoryMessageCount > 100) {
         defaultLocalHistoryMessageCount = 100;
     }else if (defaultLocalHistoryMessageCount < 0){

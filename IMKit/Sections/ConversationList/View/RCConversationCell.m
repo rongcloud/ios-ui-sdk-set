@@ -82,6 +82,7 @@
 - (void)addSubViewConstraints {
     [self.conversationTitle setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
                                                             forAxis:UILayoutConstraintAxisHorizontal];
+    [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     // fix: rce "部门"标签视图与时间视图重叠
     NSDictionary *cellSubViews =
         NSDictionaryOfVariableBindings(_headerView, _conversationTitle, _messageCreatedTimeLabel, _detailContentView,

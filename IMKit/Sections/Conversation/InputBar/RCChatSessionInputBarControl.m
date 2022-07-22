@@ -590,6 +590,13 @@
                            }];
 }
 
+- (void)sightViewController:(RCSightViewController *)sightVC
+         didWriteFailedWith:(NSError *)error
+                     status:(NSInteger)status {
+    if ([self.delegate respondsToSelector:@selector(sightDidRecordFailedWith:status:)]) {
+        [self.delegate sightDidRecordFailedWith:error status:status];
+    }
+}
 #pragma mark - RCFileSelectorViewControllerDelegate
 - (void)fileDidSelect:(NSArray *)filePathList {
     if ([self.delegate respondsToSelector:@selector(fileDidSelect:)]) {
@@ -647,8 +654,7 @@
 }
 
 #pragma mark - RCPictureEditDelegate
-
-- (void)setphotoEditorDelegate:(id<RCPictureEditDelegate>)photoEditorDelegate {
+- (void)setPhotoEditorDelegate:(id<RCPictureEditDelegate>)photoEditorDelegate {
     if (photoEditorDelegate &&
         [photoEditorDelegate respondsToSelector:@selector(onClickEditPicture:originalImage:editCompletion:)]) {
         _photoEditorDelegate = photoEditorDelegate;

@@ -11,8 +11,13 @@
 #import "RCKitUtility.h"
 #import "RCUserInfoCacheManager.h"
 #import "RCloudImageView.h"
+#import "RCConversationModel.h"
 
 @interface RCSelectConversationCell ()
+/*!
+ Cell的数据模型
+ */
+@property (nonatomic, strong) RCConversation *model;
 
 @property (nonatomic, strong) UIImageView *selectedImageView;
 
@@ -34,8 +39,26 @@
         [self.contentView addSubview:self.selectedImageView];
         [self.contentView addSubview:self.headerImageView];
         [self.contentView addSubview:self.nameLabel];
+        
+        [self registerObserver];
     }
     return self;
+}
+
+- (void)registerObserver {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onUserInfoUpdate:)
+                                                 name:RCKitDispatchUserInfoUpdateNotification
+                                               object:nil];
+   
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onGroupInfoUpdate:)
+                                                 name:RCKitDispatchGroupInfoUpdateNotification
+                                               object:nil];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #pragma mark - Public Methods
@@ -44,13 +67,18 @@
     if (!conversation) {
         return;
     }
+    self.model = conversation;
+    RCConversationModel *rcModel = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
+    UIImage *defaultHeaderImg = [RCKitUtility defaultConversationHeaderImage:rcModel];
+    [self.headerImageView setPlaceholderImage:defaultHeaderImg];
+    
     if (ifSelected) {
         [self.selectedImageView setImage:RCResourceImage(@"message_cell_select")];
     } else {
         [self.selectedImageView setImage:RCResourceImage(@"message_cell_unselect")];
     }
     if (conversation.conversationType == ConversationType_GROUP) {
-        RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfoFromCacheOnly:conversation.targetId];
+        RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfo:conversation.targetId];
         if (group) {
             [self.headerImageView setImageURL:[NSURL URLWithString:group.portraitUri]];
             [self.nameLabel setText:group.groupName];
@@ -76,6 +104,45 @@
     [self.selectedImageView setImage:RCResourceImage(@"message_cell_unselect")];
     [self.headerImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
     self.nameLabel.text = nil;
+}
+
+#pragma mark - Notification selector
+- (void)onUserInfoUpdate:(NSNotification *)notification {
+    NSDictionary *userInfoDic = notification.object;
+    RCUserInfo *updateUserInfo = userInfoDic[@"userInfo"];
+    NSString *updateUserId = userInfoDic[@"userId"];
+
+    if (![updateUserId isEqualToString:self.model.targetId]) {
+        return;
+    }
+    if (self.model.conversationType == ConversationType_GROUP) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (updateUserInfo) {
+            [self.headerImageView setImageURL:[NSURL URLWithString:updateUserInfo.portraitUri]];
+            [self.nameLabel setText:[RCKitUtility getDisplayName:updateUserInfo]];
+        }
+    });
+}
+
+- (void)onGroupInfoUpdate:(NSNotification *)notification {
+    NSDictionary *groupInfoDic = (NSDictionary *)notification.object;
+    RCGroup *groupInfo = groupInfoDic[@"groupInfo"];
+    if (![self.model.targetId isEqualToString:groupInfo.groupId]) {
+        return;
+    }
+    
+    if (self.model.conversationType != ConversationType_GROUP) {
+        return;
+    }
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (groupInfo) {
+            [self.headerImageView setImageURL:[NSURL URLWithString:groupInfo.portraitUri]];
+            [self.nameLabel setText:groupInfo.groupName];
+        }
+    });
 }
 
 #pragma mark - Getters and Setters
