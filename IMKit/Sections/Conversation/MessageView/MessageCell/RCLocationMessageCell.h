@@ -6,7 +6,7 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
-#import "RongLocationKitAdaptiveHeader.h"
+#import "RCMessageCell.h"
 
 /*!
  位置消息Cell

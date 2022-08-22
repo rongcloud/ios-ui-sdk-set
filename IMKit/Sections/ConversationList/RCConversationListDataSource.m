@@ -13,7 +13,7 @@
 #import <RongIMLib/RongIMLib.h>
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
-#import "RCIMNotificationDataContext.h"
+
 #define PagingCount 100
 
 @interface RCConversationListDataSource ()
@@ -56,7 +56,6 @@
                 [[RCIMClient sharedRCIMClient] getConversationList:ws.displayConversationTypeArray
                                                              count:PagingCount
                                                          startTime:sentTime];
-            [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
             ws.currentCount += conversationList.count;
             for (RCConversation *conversation in conversationList) {
                 RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
@@ -103,7 +102,6 @@
                 [[RCIMClient sharedRCIMClient] getConversationList:self.displayConversationTypeArray
                                                              count:c
                                                          startTime:0];
-            [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
             for (RCConversation *conversation in conversationList) {
                 RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
                 model.topCellBackgroundColor = self.topCellBackgroundColor;

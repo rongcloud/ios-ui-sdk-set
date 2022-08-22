@@ -64,6 +64,7 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     }
 }
 
+
 - (BOOL)hasAuthorizationStatusAuthorized {
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
         return [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusAuthorized;
@@ -178,6 +179,7 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
                      resultHandler:^(AVAsset *_Nullable avAsset, AVAudioMix *_Nullable audioMix,
                                      NSDictionary *_Nullable info) {
                          if (asset && resultBlock) {
+                             avAsset = [self convertAVAssetIfNeed:avAsset];
                              resultBlock(avAsset, info, [[RCAssetHelper shareAssetHelper] getAssetIdentifier:asset]);
                          }
                      }];
@@ -436,6 +438,17 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
     }
 }
 
+- (AVAsset *)convertAVAssetIfNeed:(AVAsset *)asset {
+    if ([asset isKindOfClass:[AVComposition class]]) {
+        AVComposition *comp = (AVComposition *)asset;
+        AVCompositionTrack *track = comp.tracks.firstObject;
+        AVCompositionTrackSegment *seg = track.segments.firstObject;
+        if (seg.sourceURL){
+            asset = [AVURLAsset assetWithURL:seg.sourceURL];
+        }
+    }
+    return asset;
+}
 
 - (void)dealloc {
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {

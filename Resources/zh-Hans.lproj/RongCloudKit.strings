@@ -271,9 +271,7 @@
 "SaveFailed" = "保存失败";
 "RecallEdit" = "重新编辑";
 "Reference"="引用";
-"Translate"="翻译";
 "CanNotRecall" = "该消息超过撤回时间，不能被撤回。";
-"TranslateFailed" = "翻译失败，请重试";
 "ChatFiles"="聊天文件";
 "CannotUploadFiles"="不能上传 0kb 的文件";
 "DownloadFailFromiCloud"="从 iCloud 下载图片失败，请稍后重试";

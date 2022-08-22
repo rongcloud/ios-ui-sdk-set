@@ -55,14 +55,6 @@ typedef NS_ENUM(NSInteger, RCSightViewControllerCameraCaptureMode) {
                   thumbnail:(UIImage *)thumnail
                    duration:(NSUInteger)duration;
 
-@optional
-/// 小视频录制失败回调
-/// @param sightVC 视频预览视图控制器实例
-/// @param error 失败描述
-/// @param status AVAssetWriter 状态
-- (void)sightViewController:(RCSightViewController *)sightVC
-         didWriteFailedWith:(NSError *)error
-                  status:(NSInteger)status;
 @end
 
 NS_ASSUME_NONNULL_END

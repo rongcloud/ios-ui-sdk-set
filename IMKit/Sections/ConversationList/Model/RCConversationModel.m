@@ -31,7 +31,6 @@
         self.extend = extend;
         self.conversationModelType = conversationModelType;
         self.targetId = conversation.targetId;
-        self.channelId = conversation.channelId;
         self.conversationTitle = conversation.conversationTitle;
         self.unreadMessageCount = conversation.unreadMessageCount;
         self.isTop = conversation.isTop;
@@ -75,7 +74,6 @@
 
 - (void)updateWithMessage:(RCMessage *)message {
     self.targetId = message.targetId;
-    self.channelId = message.channelId;
     self.sentStatus = message.sentStatus;
     self.receivedStatus = message.receivedStatus;
     self.receivedTime = message.receivedTime;

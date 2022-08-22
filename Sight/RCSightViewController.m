@@ -713,9 +713,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 #endif
 }
 
-- (void)sightRecorder:(RCSightRecorder *)recorder
-     didFailWithError:(NSError *)error
-               status:(NSInteger)status {
+- (void)sightRecorder:(RCSightRecorder *)recorder didFailWithError:(NSError *)error {
     self.endTime = [[NSDate date] timeIntervalSince1970];
     long duration = round(self.endTime - self.beginTime);
     if (0 == duration) {
@@ -724,11 +722,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     }else {
         // 录制失败 并且超过1s 给出失败提示
         [self sightFailed];
-    }
-    if ([self.delegate respondsToSelector:@selector(sightViewController:didWriteFailedWith:status:)]) {
-        [self.delegate sightViewController:self
-                        didWriteFailedWith:error
-                                    status:status];
     }
 }
 

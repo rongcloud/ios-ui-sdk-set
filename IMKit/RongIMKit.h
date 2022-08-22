@@ -21,6 +21,8 @@
 /// 会话页面相关类
 #import <RongIMKit/RCConversationViewController.h>
 #import <RongIMKit/RCImageSlideController.h>
+#import <RongIMKit/RCLocationPickerViewController.h>
+#import <RongIMKit/RCLocationViewController.h>
 #import <RongIMKit/RCPublicServiceSearchViewController.h>
 
 /// 会话列表Cell相关类
@@ -33,6 +35,7 @@
 #import <RongIMKit/RCImageMessageCell.h>
 #import <RongIMKit/RCGIFMessageCell.h>
 #import <RongIMKit/RCImageMessageProgressView.h>
+#import <RongIMKit/RCLocationMessageCell.h>
 #import <RongIMKit/RCMessageBaseCell.h>
 #import <RongIMKit/RCMessageCell.h>
 #import <RongIMKit/RCMessageCellDelegate.h>
@@ -57,7 +60,7 @@
 #import <RongIMKit/RCKitFontConf.h>
 #import <RongIMKit/RCKitMessageConf.h>
 #import <RongIMKit/RCKitUIConf.h>
-#import <RongIMKit/RCKitTranslationConfig.h>
+
 /// 其他
 #import <RongIMKit/RCAttributedLabel.h>
 #import <RongIMKit/RCBaseViewController.h>
@@ -83,6 +86,8 @@
 /// 会话页面相关类
 #import "RCConversationViewController.h"
 #import "RCImageSlideController.h"
+#import "RCLocationPickerViewController.h"
+#import "RCLocationViewController.h"
 #import "RCPublicServiceSearchViewController.h"
 
 /// 会话列表Cell相关类
@@ -95,6 +100,7 @@
 #import "RCImageMessageCell.h"
 #import "RCGIFMessageCell.h"
 #import "RCImageMessageProgressView.h"
+#import "RCLocationMessageCell.h"
 #import "RCMessageBaseCell.h"
 #import "RCMessageCell.h"
 #import "RCMessageCellDelegate.h"
@@ -119,7 +125,7 @@
 #import "RCKitFontConf.h"
 #import "RCKitMessageConf.h"
 #import "RCKitUIConf.h"
-#import "RCKitTranslationConfig.h"
+
 /// 其他
 #import "RCAttributedLabel.h"
 #import "RCBaseViewController.h"

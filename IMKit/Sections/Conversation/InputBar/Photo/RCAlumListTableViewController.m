@@ -217,6 +217,19 @@ static NSString *const cellReuseIdentifier = @"cell";
                         weakself.isShowHUD = NO;
                     }
                 }];
+            PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+            options.networkAccessAllowed = YES;
+            options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
+            options.version = PHVideoRequestOptionsVersionOriginal;
+
+            [[PHImageManager defaultManager]
+                requestAVAssetForVideo:model.asset
+                               options:options
+                         resultHandler:^(AVAsset *_Nullable asset, AVAudioMix *_Nullable audioMix,
+                                         NSDictionary *_Nullable info){
+
+                         }];
+
         } else {
             __weak typeof(self) weakself = self;
             [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model

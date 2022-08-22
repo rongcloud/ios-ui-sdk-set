@@ -167,12 +167,12 @@
 - (void)saveDraftIfNeed {
     NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
     if (draft && [draft length] > 0) {
-        NSString *draftInDB = [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId];
+        NSString *draftInDB = [[RCIMClient sharedRCIMClient] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId];
         if(![draft isEqualToString:draftInDB]) {
-            [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft];
+            [[RCIMClient sharedRCIMClient] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId content:draft];
         }
     } else {
-        [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId];
+        [[RCIMClient sharedRCIMClient] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId];
     }
 }
 
@@ -203,16 +203,6 @@
         }
     }
     return indexPath;
-}
-
-- (RCMessageModel *)modelByMessageID:(NSInteger)messageID {
-    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
-        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
-        if (msg.messageId == messageID && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
-            return msg;
-        }
-    }
-    return nil;
 }
 
 - (BOOL)alertDestructMessageRemind {
@@ -253,7 +243,7 @@
             RCKitConfigCenter.message.enableMessageRecall && model.sentStatus != SentStatus_SENDING &&
             model.sentStatus != SentStatus_FAILED && model.sentStatus != SentStatus_CANCELED &&
             (model.conversationType == ConversationType_PRIVATE || model.conversationType == ConversationType_GROUP ||
-             model.conversationType == ConversationType_DISCUSSION || model.conversationType == ConversationType_ULTRAGROUP) &&
+             model.conversationType == ConversationType_DISCUSSION) &&
             ![model.content isKindOfClass:NSClassFromString(@"JrmfRedPacketMessage")] &&
             ![model.content isKindOfClass:NSClassFromString(@"RCCallSummaryMessage")]
             &&
@@ -350,7 +340,9 @@
                             NSUInteger duration = round(CMTimeGetSeconds(model.duration));
                             RCSightMessage *sightMsg =
                                 [RCSightMessage messageWithAsset:model thumbnail:image duration:duration];
-                            sightMsg.localPath = localPath;
+                            if (localPath.length > 0) {                            
+                                sightMsg.localPath = localPath;
+                            }
                             [chatVC sendMessage:sightMsg pushContent:nil];
                         });
                     } else {

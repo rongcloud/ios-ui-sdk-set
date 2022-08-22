@@ -64,8 +64,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                 return;
         }
         [self postLocalNotification:senderName pushContent:pushContent message:message userInfo:userInfo];
-    } errorBlock:^(NSString *errorDescription) {
-        NSLog(@"%@", errorDescription);
     }];
 }
 
@@ -164,8 +162,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
 }
 
 - (void)getNotificationInfo:(RCMessage *)message
-                     result:(void (^)(NSString *senderName, NSString *pushContent))resultBlock
-                 errorBlock:(void (^)(NSString *errorDescription))errorBlock {
+                     result:(void (^)(NSString *senderName, NSString *pushContent))resultBlock {
     __block NSString *showMessage = nil;
     if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.objectName && !message.content) {
         showMessage = NSLocalizedStringFromTable(@"unknown_message_notification_tip", @"RongCloudKit", nil);
@@ -183,10 +180,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         [[RCUserInfoCacheManager sharedManager] getGroupInfo:message.targetId
                                                     complete:^(RCGroup *groupInfo) {
                                                         if (nil == groupInfo) {
-                                                            if (errorBlock) {
-                                                                NSString *errorDes = @"...................postLocalNotification failed, groupInfo is NULL, please call [[RCIM sharedRCIM] refreshGroupInfoCache:(RCGroup *)groupInfo withGroupId:(NSString *)groupId] ...................";
-                                                                errorBlock(errorDes);
-                                                            }
                                                             return;
                                                         }
                                                         [[RCUserInfoCacheManager sharedManager]
@@ -200,11 +193,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                                                                                                     user:userInfo
                                                                                              showMessage:showMessage];
                                                                        resultBlock(groupInfo.groupName, showMessage);
-                                                                   }else {
-                                                                       if (errorBlock) {
-                                                                           NSString *errorDes = @"...................postLocalNotification failed, groupUserInfo is NULL, please call  [[RCIM sharedRCIM] refreshGroupUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId withGroupId:(NSString *)groupId] ...................";
-                                                                           errorBlock(errorDes);
-                                                                       }
                                                                    }
                                                                }];
                                                     }];
@@ -213,10 +201,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         [[RCDiscussionClient sharedDiscussionClient] getDiscussion:message.targetId
             success:^(RCDiscussion *discussion) {
                 if (nil == discussion) {
-                    if (errorBlock) {
-                        NSString *errorDes = @"...................postLocalNotification failed, discussion is NULL ...................";
-                        errorBlock(errorDes);
-                    }
                     return;
                 }
                 showMessage = [self formatDiscussionNotification:message discussion:discussion showMessage:showMessage];
@@ -224,10 +208,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
 
             }
             error:^(RCErrorCode status){
-                if (errorBlock) {
-                    NSString *errorDes = @"...................postLocalNotification failed, getDiscussion error ...................";
-                    errorBlock(errorDes);
-                }
+
             }];
     } else if (ConversationType_CUSTOMERSERVICE == message.conversationType) {
         NSString *customeServiceName = [RCKitUtility getDisplayName:message.content.senderUserInfo] ?: @"客服";
@@ -248,19 +229,10 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         if (serviceProfile) {
             showMessage = [self formatOtherNotification:message name:serviceProfile.name showMessage:showMessage];
             resultBlock(serviceProfile.name, showMessage);
-        }else {
-            if (errorBlock) {
-                NSString *errorDes = @"...................postLocalNotification failed, serviceProfile is NULL ...................";
-                errorBlock(errorDes);
-            }
         }
     } else if (ConversationType_SYSTEM == message.conversationType) {
         [[RCUserInfoCacheManager sharedManager] getUserInfo:message.targetId complete:^(RCUserInfo *userInfo) {
             if (nil == userInfo) {
-                if (errorBlock) {
-                    NSString *errorDes = @"...................postLocalNotification failed, userInfo is NULL, please call  [[RCIM sharedRCIM] refreshUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId] ...................";
-                    errorBlock(errorDes);
-                }
                 return;
             }
             NSString *dispalyName = [RCKitUtility getDisplayName:userInfo];
@@ -270,10 +242,6 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     } else {
         [[RCUserInfoCacheManager sharedManager] getUserInfo:message.targetId complete:^(RCUserInfo *userInfo) {
             if (nil == userInfo) {
-                if (errorBlock) {
-                    NSString *errorDes = @"...................postLocalNotification failed, userInfo is NULL, please call  [[RCIM sharedRCIM] refreshUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId] ...................";
-                    errorBlock(errorDes);
-                }
                 return;
             }
             NSString *dispalyName = [RCKitUtility getDisplayName:userInfo];

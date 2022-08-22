@@ -15,6 +15,7 @@
 #import "RCExtensionModule.h"
 #import "RCExtensionPluginItemInfo.h"
 #import "RCExtensionService.h"
+#import "RCLocationPickerViewController.h"
 #import "RCPluginBoardView.h"
 #import "RCTextView.h"
 #import "RCVoiceRecorder.h"

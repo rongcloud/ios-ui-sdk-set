@@ -6,7 +6,7 @@
 //  Copyright (c) 2014年 RongCloud. All rights reserved.
 //
 
-#import "RongLocationKitAdaptiveHeader.h"
+#import "RCBaseViewController.h"
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 
