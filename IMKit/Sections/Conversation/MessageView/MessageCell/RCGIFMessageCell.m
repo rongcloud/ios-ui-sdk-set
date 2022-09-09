@@ -20,6 +20,8 @@
 #define GIFLABLEWIGHT 40.0f
 #define GIFLABLEHEIGHT 10.0f
 
+extern NSString *const RCKitDispatchDownloadMediaNotification;
+
 @interface RCGIFMessageCell ()
 
 @property (nonatomic, strong) RCMessageModel *currentModel;
@@ -160,6 +162,12 @@
                                              selector:@selector(networkChanged:)
                                                  name:@"kRCNetworkReachabilityChangedNotification"
                                                object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateDownloadMediaStatus:)
+                                                 name:RCKitDispatchDownloadMediaNotification
+                                               object:nil];
+
 }
 
 - (void)prepareForReuse {
@@ -189,23 +197,10 @@
     __weak typeof(self) weakSelf = self;
     [[RCIM sharedRCIM] downloadMediaMessage:weakSelf.currentModel.messageId
         progress:^(int progress) {
-        dispatch_main_async_safe(^{
-            if (weakSelf.gifDownLoadPropressView.hidden) {
-                [weakSelf showView:weakSelf.gifDownLoadPropressView];
-            }
-            [weakSelf.gifDownLoadPropressView setProgress:progress];
-        });
         }
         success:^(NSString *mediaPath) {
-            dispatch_main_async_safe(^{
-                [weakSelf showView:weakSelf.gifImageView];
-                [weakSelf showGifImageView:mediaPath];
-            });
         }
         error:^(RCErrorCode errorCode) {
-            dispatch_main_async_safe(^{
-                [weakSelf showView:weakSelf.loadfailedImageView];
-            });
         }
         cancel:^{
 
@@ -382,6 +377,35 @@
     if (!self.progressView.hidden) {
         self.progressView.hidden = YES;
         [self.progressView stopAnimating];
+    }
+}
+
+#pragma mark - NSNotification
+- (void)updateDownloadMediaStatus:(NSNotification *)notify {
+    NSDictionary *statusDic = notify.userInfo;
+    if (self.model.messageId == [statusDic[@"messageId"] longValue]) {
+        if ([statusDic[@"type"] isEqualToString:@"progress"]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                CGFloat progress = (CGFloat)[statusDic[@"progress"] intValue];
+                if (self.gifDownLoadPropressView.hidden) {
+                    [self showView:self.gifDownLoadPropressView];
+                }
+                [self.gifDownLoadPropressView setProgress:progress];
+            });
+        } else if ([statusDic[@"type"] isEqualToString:@"success"]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                RCGIFMessage *gifContent = (RCGIFMessage *)self.model.content;
+                gifContent.localPath = statusDic[@"mediaPath"];
+                
+                [self showView:self.gifImageView];
+                [self showGifImageView:statusDic[@"mediaPath"]];
+
+            });
+        } else if ([statusDic[@"type"] isEqualToString:@"error"]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self showView:self.loadfailedImageView];
+            });
+        }
     }
 }
 

@@ -9,7 +9,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 #import <UIKit/UIKit.h>
-#import "RCBaseViewController.h"
+#import "RongLocationKitAdaptiveHeader.h"
 
 /*!
  POI搜索结束后的回调block
@@ -52,7 +52,6 @@ typedef void (^OnPoiSearchResult)(NSArray *pois, BOOL clearPreviousResult, BOOL 
  @return            地理位置选取的ViewController对象
  */
 - (instancetype)initWithDataSource:(id<RCLocationPickerViewControllerDataSource>)dataSource;
-
 /*!
  退出当前界面
 
@@ -172,7 +171,7 @@ typedef void (^OnPoiSearchResult)(NSArray *pois, BOOL clearPreviousResult, BOOL 
  地理位置选择完成之后的回调
  */
 @protocol RCLocationPickerViewControllerDelegate <NSObject>
-
+@optional
 /*!
  地理位置选择完成之后的回调
 
@@ -188,5 +187,7 @@ typedef void (^OnPoiSearchResult)(NSArray *pois, BOOL clearPreviousResult, BOOL 
      didSelectLocation:(CLLocationCoordinate2D)location
           locationName:(NSString *)locationName
          mapScreenShot:(UIImage *)mapScreenShot;
+
+
 
 @end

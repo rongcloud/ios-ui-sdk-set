@@ -51,7 +51,6 @@
     if (!cacheConversationInfo) {
         return nil;
     }
-
     RCConversationInfo *conInfo = [[RCConversationInfo alloc] initWithConversationId:cacheConversationInfo.targetId conversationType:cacheConversationInfo.conversationType name:cacheConversationInfo.name portraitUri:cacheConversationInfo.portraitUri];
     return conInfo;
 }

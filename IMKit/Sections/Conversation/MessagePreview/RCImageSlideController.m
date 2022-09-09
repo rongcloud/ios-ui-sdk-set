@@ -9,14 +9,15 @@
 #import "RCImageSlideController.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
+#import "RCAssetHelper.h"
 #import "RCMessageModel.h"
 #import "RCloudImageLoader.h"
 #import "RCloudImageView.h"
-#import <AssetsLibrary/AssetsLibrary.h>
 #import "RCIM.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
 #import "RCImagePreviewCell.h"
+#import "RCPhotoPreviewCollectionViewFlowLayout.h"
 
 @interface RCImageSlideController () <UIScrollViewDelegate, RCImagePreviewCellDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
@@ -27,7 +28,7 @@
 
 @property (nonatomic, assign) long previousMessageId;
 
-@property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
+@property (nonatomic, strong) RCPhotoPreviewCollectionViewFlowLayout *flowLayout;
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 
@@ -332,10 +333,10 @@
 }
 
 - (void)imagePreviewCellDidLongTap:(UILongPressGestureRecognizer *)sender{
-    [self longPressed];
+    [self longPressed:sender];
 }
 
-- (void)longPressed{
+- (void)longPressed:(id)sender {
     [RCActionSheetView showActionSheetView:nil cellArray:@[RCLocalizedString(@"Save")] cancelTitle:RCLocalizedString(@"Cancel") selectedBlock:^(NSInteger index) {
         [self saveImage];
     } cancelBlock:^{
@@ -392,44 +393,43 @@
 }
 
 - (void)saveImage {
-    ALAuthorizationStatus status = [ALAssetsLibrary authorizationStatus];
-    if (status == ALAuthorizationStatusRestricted || status == ALAuthorizationStatusDenied) {
-        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
-                          message:RCLocalizedString(@"photoAccessRight")
-                      cancelTitle:RCLocalizedString(@"OK")];
-        return;
-    }
     RCImageMessage *cImageMessage = (RCImageMessage *)self.messageModelArray[self.currentIndex].content;
-    NSData *imageData;
+    UIImage *image;
     if (cImageMessage.localPath.length > 0 &&
         [[NSFileManager defaultManager] fileExistsAtPath:[RCUtilities getCorrectedFilePath:cImageMessage.localPath]]) {
         NSString *path = [RCUtilities getCorrectedFilePath:cImageMessage.localPath];
-        imageData = [[NSData alloc] initWithContentsOfFile:path];
+        NSData *imageData = [[NSData alloc] initWithContentsOfFile:path];
+        image = [UIImage imageWithData:imageData];
     } else {
-        imageData = [NSData dataWithContentsOfURL:[NSURL URLWithString:cImageMessage.remoteUrl]];
-        if (!imageData) {
-            imageData = UIImageJPEGRepresentation(cImageMessage.thumbnailImage, 1.0);
+        NSData *imageData = [RCKitUtility getImageDataForURLString:cImageMessage.imageUrl];
+        if (imageData) {
+            image = [UIImage imageWithData:imageData];
+        } else {
+            image = cImageMessage.thumbnailImage;
         }
     }
-    ALAssetsLibrary *assetsLibrary = [[ALAssetsLibrary alloc] init];
-    [assetsLibrary
-        writeImageDataToSavedPhotosAlbum:imageData
-                                metadata:nil
-                         completionBlock:^(NSURL *assetURL, NSError *error) {
-                             if (error != NULL) {
-                                 //失败
-                                 DebugLog(@" save image fail");
-                                 [self showAlertController:nil
-                                                   message:RCLocalizedString(@"SavePhotoFailed")
-                                               cancelTitle:RCLocalizedString(@"OK")];
-                             } else {
-                                 //成功
-                                 DebugLog(@"save image succeed");
-                                 [self showAlertController:nil
-                                                   message:RCLocalizedString(@"SavePhotoSuccess")
-                                               cancelTitle:RCLocalizedString(@"OK")];
-                             }
-                         }];
+
+    [RCAssetHelper savePhotosAlbumWithImage:image authorizationStatusBlock:^{
+        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
+                          message:RCLocalizedString(@"photoAccessRight")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } resultBlock:^(BOOL success) {
+        [self showAlertWithSuccess:success];
+    }];
+}
+
+- (void)showAlertWithSuccess:(BOOL)success {
+    if (success) {
+        DebugLog(@"save image succeed");
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SavePhotoSuccess")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } else {
+        DebugLog(@" save image fail");
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SavePhotoFailed")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    }
 }
 
 - (void)showAlertController:(NSString *)title message:(NSString *)message cancelTitle:(NSString *)cancelTitle {
@@ -458,7 +458,7 @@
 
 - (UICollectionView *)collectionView {
     if(!_collectionView) {
-        self.flowLayout = [[UICollectionViewFlowLayout alloc] init];
+        self.flowLayout = [[RCPhotoPreviewCollectionViewFlowLayout alloc] init];
         [self.flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
         self.flowLayout.itemSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height);
         self.flowLayout.minimumLineSpacing = 0;

@@ -280,8 +280,7 @@ static NSUInteger gcd(NSUInteger a, NSUInteger b) {
 
             [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:self.runLoopMode];
         }
-
-        // 修改方案: https://github.com/Flipboard/FLAnimatedImage/commit/46402a3ee1fef0fdf211e7f0fd69d0e193694521
+// 修改方案: https://github.com/Flipboard/FLAnimatedImage/commit/46402a3ee1fef0fdf211e7f0fd69d0e193694521
         if (@available(iOS 10, *)) {
             // Adjusting preferredFramesPerSecond allows us to skip unnecessary calls to displayDidRefresh: when showing GIFs
             // that don't animate quickly. Use ceil to err on the side of too many FPS so we don't miss a frame transition moment.
@@ -290,8 +289,6 @@ static NSUInteger gcd(NSUInteger a, NSUInteger b) {
             const NSTimeInterval kDisplayRefreshRate = 60.0; // 60Hz
             self.displayLink.frameInterval = MAX([self frameDelayGreatestCommonDivisor] * kDisplayRefreshRate, 1);
         }
-
-
         self.displayLink.paused = NO;
     } else {
         [super startAnimating];
@@ -374,7 +371,6 @@ static NSUInteger gcd(NSUInteger a, NSUInteger b) {
                 [self.layer setNeedsDisplay];
                 self.needsDisplayWhenImageBecomesAvailable = NO;
             }
-
             // 修改方案: https://github.com/Flipboard/FLAnimatedImage/commit/46402a3ee1fef0fdf211e7f0fd69d0e193694521
             if (@available(iOS 10, *)) {
                 self.accumulator += displayLink.targetTimestamp - CACurrentMediaTime();

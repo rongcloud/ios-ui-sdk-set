@@ -13,6 +13,7 @@
 #import "RCKitUtility.h"
 #import "RCIMClient+Destructing.h"
 #import "RCKitCommonDefine.h"
+#import "RCLocationMessage+imkit.h"
 
 #define BASE_HEAD @"baseHead"
 #define BASE_BOTTOM @"baseBottom"
@@ -201,8 +202,8 @@
         [summaryContent appendString:RCLocalizedString(RCCombineMessageTypeIdentifier)];
     } else if ([messageModel.objectName isEqualToString:RCSightMessageTypeIdentifier]) {
         [summaryContent appendString:RCLocalizedString(RCSightMessageTypeIdentifier)];
-    } else if ([messageModel.objectName isEqualToString:RCLocationMessageTypeIdentifier]) {
-        [summaryContent appendString:RCLocalizedString(RCLocationMessageTypeIdentifier)];
+    } else if ([messageModel.objectName isEqualToString:@"RC:LBSMsg"]) {
+        [summaryContent appendString:RCLocalizedString(@"RC:LBSMsg")];
     } else if ([messageModel.objectName isEqualToString:@"RC:CardMsg"]) {
         [summaryContent appendString:RCLocalizedString(@"RC:CardMsg")];
     } else if ([messageModel.objectName isEqualToString:@"RC:StkMsg"] ||
@@ -267,16 +268,16 @@
                                            sentTime:model.sentTime
                                     ifSplitPortrait:ifSplitPortrait
                                             htmlKey:@"RC:CardMsg"];
-    } else if ([model.objectName isEqualToString:RCLocationMessageTypeIdentifier]) {
+    } else if ([model.objectName isEqualToString:@"RC:LBSMsg"]) {
         RCLocationMessage *message = (RCLocationMessage *)model.content;
-        templateString = [[self.templateJsonDic objectForKey:RCLocationMessageTypeIdentifier] mutableCopy];
+        templateString = [[self.templateJsonDic objectForKey:@"RC:LBSMsg"] mutableCopy];
         templateString = [self generalTitleStyle:templateString
                                         userInfo:userInfo
                                         sentTime:model.sentTime
                                  ifSplitPortrait:ifSplitPortrait];
         RCForwardReplace(templateString, TAG_LOCATIONNAME, message.locationName ? message.locationName : @"");
-        RCForwardReplace(templateString, TAG_LATITUDE, [NSString stringWithFormat:@"%f", message.location.latitude]);
-        RCForwardReplace(templateString, TAG_LONGTITUDE, [NSString stringWithFormat:@"%f", message.location.longitude]);
+        RCForwardReplace(templateString, TAG_LATITUDE, [NSString stringWithFormat:@"%f", message.latitude]);
+        RCForwardReplace(templateString, TAG_LONGTITUDE, [NSString stringWithFormat:@"%f", message.longitude]);
     } else if ([model.objectName isEqualToString:RCSightMessageTypeIdentifier]) {
         RCSightMessage *message = (RCSightMessage *)model.content;
         templateString = [[self.templateJsonDic objectForKey:RCSightMessageTypeIdentifier] mutableCopy];

@@ -42,9 +42,9 @@
     }
 #endif
 
-static NSString *const __RongCallKit__Version = @"5.1.9_opensource";
-static NSString *const __RongCallKit__Commit = @"bd48b3a9";
-static NSString *const __RongCallKit__Time = @"202208191840";
+static NSString *const __RongCallKit__Version = @"5.2.5_opensource";
+static NSString *const __RongCallKit__Commit = @"dc706f84";
+static NSString *const __RongCallKit__Time = @"202209091137";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
@@ -115,10 +115,15 @@ static NSString *const __RongCallKit__Time = @"202208191840";
     }
 }
 
+- (void)startSingleCrossCall:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
+    RCCallSingleCallViewController *singleCallViewController =
+        [[RCCallSingleCallViewController alloc] initWithOutgoingCrossCall:targetId mediaType:mediaType];
+    [self presentCallViewController:singleCallViewController];
+}
+
 - (void)startSingleCallViewController:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
     RCCallSingleCallViewController *singleCallViewController =
         [[RCCallSingleCallViewController alloc] initWithOutgoingCall:targetId mediaType:mediaType];
-
     [self presentCallViewController:singleCallViewController];
 }
 

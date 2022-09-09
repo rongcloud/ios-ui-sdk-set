@@ -7,16 +7,13 @@
 //
 
 #import "RCLocationViewController.h"
-#import "RCIM.h"
-#import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
-#import "RCKitConfig.h"
+#import "RongLocationKitAdaptiveHeader.h"
+#import <RongLocation/RongLocation.h>
 
 @interface RCLocationViewControllerAnnotation : NSObject <MKAnnotation>
 @property (nonatomic, assign) CLLocationCoordinate2D coordinate;
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, copy) NSString *subTitle;
-
 @end
 
 @implementation RCLocationViewControllerAnnotation
@@ -34,10 +31,24 @@
 @interface RCLocationViewController ()
 @property (nonatomic, strong) MKMapView *mapView;
 @property (nonatomic, strong) RCLocationViewControllerAnnotation *annotation;
+- (void)setLatitude:(double)latitude longitude:(double)longitude locationName:(NSString *)locationName;
+@property (nonatomic, assign) CLLocationCoordinate2D location;
+@property (nonatomic, copy) NSString *locationName;
 @end
 
 @implementation RCLocationViewController
+
 #pragma mark - Life Cycle
+
+- (instancetype)initWithLocationMessage:(RCLocationMessage *)locationMessage {
+    self = [super init];
+    if (self) {
+        self.locationName = locationMessage.locationName;
+        self.location = CLLocationCoordinate2DMake(locationMessage.location.latitude, locationMessage.location.longitude);
+    }
+    return self;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.mapView = [[MKMapView alloc] initWithFrame:self.view.bounds];
@@ -86,5 +97,10 @@
 
 - (void)configureNavigationBar {
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:nil target:self action:@selector(leftBarButtonItemPressed:)];
+}
+
+- (void)setLatitude:(double)latitude longitude:(double)longitude locationName:(NSString *)locationName {
+    self.location = CLLocationCoordinate2DMake(latitude, longitude);
+    self.locationName = locationName;
 }
 @end

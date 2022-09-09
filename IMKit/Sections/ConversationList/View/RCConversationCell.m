@@ -82,8 +82,8 @@
 - (void)addSubViewConstraints {
     [self.conversationTitle setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
                                                             forAxis:UILayoutConstraintAxisHorizontal];
-    [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired
-                                              forAxis:UILayoutConstraintAxisHorizontal];
+    [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    // fix: rce "部门"标签视图与时间视图重叠
     NSDictionary *cellSubViews =
         NSDictionaryOfVariableBindings(_headerView, _conversationTitle, _messageCreatedTimeLabel, _detailContentView,
                                        _statusView, _conversationTagView);
@@ -106,12 +106,14 @@
                                                        @(RCKitConfigCenter.ui.globalConversationPortraitSize.height)
                                                }
                                                  views:cellSubViews]];
+    
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]-4-[_detailContentView]"
+                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
+
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"V:[_conversationTagView(21)]"
@@ -148,6 +150,14 @@
                                                                  relatedBy:NSLayoutRelationEqual
                                                                     toItem:self.detailContentView
                                                                  attribute:NSLayoutAttributeBottom
+                                                                multiplier:1
+                                                                  constant:0]];
+
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTitle
+                                                                 attribute:NSLayoutAttributeTop
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:self.messageCreatedTimeLabel
+                                                                 attribute:NSLayoutAttributeTop
                                                                 multiplier:1
                                                                   constant:0]];
 
@@ -232,10 +242,29 @@
                     [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
                 [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
             }
+        } else {
+            [self.detailContentView updateContent:model prefixName:nil];
+            [self updateConversationTitle:[NSString stringWithFormat:@"name<%@>", model.targetId]];
         }
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        [self updateConversationTitle:[RCKitUtility defaultTitleForCollectionConversation:model.conversationType]];
+        // 聚合类型优先使用全局配置，再次使用默认标题
+        NSString *conversationCollectionTitle = @"";
+        NSDictionary<NSNumber *, NSString *> *glConversationCollectionTitleDic = RCKitConfigCenter.ui.globalConversationCollectionTitleDic;
+        NSString *collectionTitle = glConversationCollectionTitleDic[@(model.conversationType)];
+        if (collectionTitle && [collectionTitle isKindOfClass:[NSString class]]) {
+            conversationCollectionTitle = collectionTitle;
+        }else {
+            conversationCollectionTitle = [RCKitUtility defaultTitleForCollectionConversation:model.conversationType];
+        }
+        [self updateConversationTitle:conversationCollectionTitle];
 
+        //聚合会话优先查看是否有全局配置，再使用默认头像
+        NSDictionary<NSNumber *, NSString *> *glCollectionAvatarDic = RCKitConfigCenter.ui.globalConversationCollectionAvatarDic;
+        NSString *dicAvatarUrl = glCollectionAvatarDic[@(model.conversationType)];
+        if (dicAvatarUrl && [dicAvatarUrl isKindOfClass:[NSString class]]) {
+            self.headerView.headerImageView.imageURL = [NSURL URLWithString:dicAvatarUrl];
+        }
+        
         if (model.conversationType == ConversationType_PRIVATE ||
             model.conversationType == ConversationType_CUSTOMERSERVICE ||
             model.conversationType == ConversationType_SYSTEM) {
@@ -502,6 +531,7 @@
     if(!_conversationTagView) {
         _conversationTagView = [[UIView alloc] init];
         _conversationTagView.translatesAutoresizingMaskIntoConstraints = NO;
+        _conversationTagView.clipsToBounds = YES;
     }
     return _conversationTagView;
 }

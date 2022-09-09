@@ -9,6 +9,7 @@
 #import "RCSightSlideViewController.h"
 #import "RCIM.h"
 #import "RCKitUtility.h"
+#import "RCAssetHelper.h"
 #import "RCMessageModel.h"
 #import "RCSightCollectionView.h"
 #import "RCSightCollectionViewCell.h"
@@ -450,37 +451,31 @@
     if (!localPath) {
         return;
     }
-    UISaveVideoAtPathToSavedPhotosAlbum(localPath, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
+    [RCAssetHelper savePhotosAlbumWithVideoPath:localPath authorizationStatusBlock:^{
+        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
+                          message:RCLocalizedString(@"photoAccessRight")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } resultBlock:^(BOOL success) {
+        [self showAlertWithSuccess:success];
+    }];
 }
 
-- (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
-    [self handleError:error];
+- (void)showAlertWithSuccess:(BOOL)success {
+    if (success) {
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SaveSuccess")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } else {
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SaveFailed")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    }
 }
 
 - (NSString *)formatSeconds:(NSInteger)value {
     NSInteger seconds = value % 60;
     NSInteger minutes = value / 60;
     return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)seconds];
-}
-
-/**
- 错误处理
- */
-- (void)handleError:(NSError *)error {
-    if (error != NULL) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self showAlertController:nil
-                              message:RCLocalizedString(@"SaveFailed")
-                          cancelTitle:RCLocalizedString(@"OK")];
-        });
-
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self showAlertController:nil
-                              message:RCLocalizedString(@"SaveSuccess")
-                          cancelTitle:RCLocalizedString(@"OK")];
-        });
-    }
 }
 
 - (void)showAlertController:(NSString *)title message:(NSString *)message cancelTitle:(NSString *)cancelTitle {

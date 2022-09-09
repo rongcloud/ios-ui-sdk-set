@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "RCKitTranslationConfig.h"
 
 @interface RCKitMessageConf : NSObject
 #pragma mark - Config
@@ -163,6 +164,8 @@
  视频上传的时长限制，单位是秒，等于 [RCCoreClient  getVideoDurationLimit]。
 */
 @property (nonatomic, assign, readonly) NSTimeInterval uploadVideoDurationLimit;
+
+@property (nonatomic, strong) RCKitTranslationConfig *translationConfig;
 
 @end
 

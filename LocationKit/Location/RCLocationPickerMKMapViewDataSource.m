@@ -7,7 +7,7 @@
 //
 
 #import "RCLocationPickerMKMapViewDataSource.h"
-#import "RCKitCommonDefine.h"
+#import "RongLocationKitAdaptiveHeader.h"
 
 @interface RCLocationPickerMKMapViewDataSource ()
 

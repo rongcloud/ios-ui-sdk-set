@@ -10,8 +10,8 @@
 #import "RCGIFImage.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
-#import <AssetsLibrary/AssetsLibrary.h>
 #import "RCGIFUtility.h"
+#import "RCAssetHelper.h"
 #import <RongIMLib/RongIMLib.h>
 #import "RCIM.h"
 #import "RCKitConfig.h"
@@ -59,31 +59,29 @@
 
 
 - (void)saveGIF {
-    ALAuthorizationStatus status = [ALAssetsLibrary authorizationStatus];
-    if (status == ALAuthorizationStatusRestricted || status == ALAuthorizationStatusDenied) {
-        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
-                          message:RCLocalizedString(@"photoAccessRight")
-                      cancelTitle:RCLocalizedString(@"OK")];
-        return;
-    }
     if (self.gifData) {
-        ALAssetsLibrary *assetsLibrary = [[ALAssetsLibrary alloc] init];
-        [assetsLibrary
-            writeImageDataToSavedPhotosAlbum:self.gifData
-                                    metadata:nil
-                             completionBlock:^(NSURL *assetURL, NSError *error) {
-                                 if (error != NULL) {
-                                     DebugLog(@" save image fail");
-                                     [self showAlertController:nil
-                                                       message:RCLocalizedString(@"SavePhotoFailed")
-                                                   cancelTitle:RCLocalizedString(@"OK")];
-                                 } else {
-                                     DebugLog(@"save image suceed");
-                                     [self showAlertController:nil
-                                                       message:RCLocalizedString(@"SavePhotoSuccess")
-                                                   cancelTitle:RCLocalizedString(@"OK")];
-                                 }
-                             }];
+        [RCAssetHelper savePhotosAlbumWithImage:[UIImage imageWithData:self.gifData] authorizationStatusBlock:^{
+            [self showAlertController:RCLocalizedString(@"AccessRightTitle")
+                              message:RCLocalizedString(@"photoAccessRight")
+                          cancelTitle:RCLocalizedString(@"OK")];
+        } resultBlock:^(BOOL success) {
+            [self showAlertWithSuccess:success];
+        }];
+
+    }
+}
+
+- (void)showAlertWithSuccess:(BOOL)success {
+    if (success) {
+        DebugLog(@"save image suceed");
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SavePhotoSuccess")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } else {
+        DebugLog(@" save image fail");
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SavePhotoFailed")
+                      cancelTitle:RCLocalizedString(@"OK")];
     }
 }
 

@@ -194,7 +194,6 @@
     if (messageContent.destructDuration > 0) {
         return NSLocalizedStringFromTable(@"BurnAfterRead", @"RongCloudKit", nil);
     }
-
     if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
         return [RCKitUtility __formatDiscussionNotificationMessageContent:notification];
