@@ -64,6 +64,7 @@ Pod::Spec.new do |s|
   s.subspec 'LocationKit' do |lokit|
     lokit.source_files = 'locationkit/**/*.{h,m,c}'
     lokit.dependency 'RongCloudOpenSource/IMKit'
+    lokit.dependency 'RongCloudIM/Location'
   end
 
   s.subspec 'RongCallKit' do |ck|
