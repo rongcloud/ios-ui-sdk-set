@@ -7,7 +7,6 @@
 //
 
 #import "RCLocationMessageCell.h"
-#import "RongLocationKitAdaptiveHeader.h"
 #import <RongLocation/RongLocation.h>
 
 @interface RCLocalConfiguration : NSObject

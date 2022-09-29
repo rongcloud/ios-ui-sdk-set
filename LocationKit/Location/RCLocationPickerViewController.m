@@ -8,7 +8,6 @@
 
 #import "RCLocationPickerViewController.h"
 #import "RCLocationPickerMKMapViewDataSource.h"
-#import "RongLocationKitAdaptiveHeader.h"
 #import <RongLocation/RongLocation.h>
 
 @interface RCLocationPickerViewController () <RCLocationPickerViewControllerDataSource>

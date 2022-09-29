@@ -19,9 +19,9 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>202209091043</string>
+	<string>202209291657</string>
     <key>RCVersion</key>
-    <string>5.2.5</string>
+    <string>5.2.5.1</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
 </dict>

@@ -7,7 +7,6 @@
 //
 
 #import "RCLocationViewController.h"
-#import "RongLocationKitAdaptiveHeader.h"
 #import <RongLocation/RongLocation.h>
 
 @interface RCLocationViewControllerAnnotation : NSObject <MKAnnotation>

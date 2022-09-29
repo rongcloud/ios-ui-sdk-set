@@ -23,10 +23,10 @@
 	<key>NSPrincipalClass</key>
 	<string></string>
 	<key>RCVersion</key>
-	<string>5.2.5</string>
+	<string>5.2.5.1</string>
 	<key>RCCommitId</key>
-	<string>dc706f84</string>
+	<string>0ad50d95</string>
 	<key>RCDate</key>
-	<string>202209091137</string>
+	<string>202209291709</string>
 </dict>
 </plist>

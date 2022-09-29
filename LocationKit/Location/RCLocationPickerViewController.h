@@ -9,7 +9,16 @@
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 #import <UIKit/UIKit.h>
-#import "RongLocationKitAdaptiveHeader.h"
+#if __has_include(<RongIMKit/RongIMKit.h>)
+
+#import <RongIMKit/RongIMKit.h>
+
+#else
+
+#import "RongIMKit.h"
+
+#endif
+
 
 /*!
  POI搜索结束后的回调block

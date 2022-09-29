@@ -6,7 +6,16 @@
 //  Copyright (c) 2014年 RongCloud. All rights reserved.
 //
 
-#import "RongLocationKitAdaptiveHeader.h"
+#if __has_include(<RongIMKit/RongIMKit.h>)
+
+#import <RongIMKit/RongIMKit.h>
+
+#else
+
+#import "RongIMKit.h"
+
+#endif
+
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 
