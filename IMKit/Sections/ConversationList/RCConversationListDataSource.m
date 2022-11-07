@@ -225,7 +225,7 @@
         }else {
             int left = [notification.userInfo[@"left"] intValue];
             if (left == 0) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
+                if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
                     [weakSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
                 }
             }
@@ -481,10 +481,10 @@
     if (!_throttleReloadAction) {
         __weak typeof(self) weakSelf = self;
         _throttleReloadAction = [self getThrottleActionWithTimeInteval:0.5 action:^{
-            if (self.delegate && [self.delegate respondsToSelector:@selector(refreshConversationTableViewIfNeededInDataSource:)]) {
+            if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(refreshConversationTableViewIfNeededInDataSource:)]) {
                 [weakSelf.delegate refreshConversationTableViewIfNeededInDataSource:weakSelf];
             }
-            if (self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
+            if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
                 [weakSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
             }
         }];

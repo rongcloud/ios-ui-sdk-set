@@ -22,6 +22,7 @@
 #import "RCExtensionService.h"
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
+#import <UIKit/UIKit.h>
 @interface RCKitWeakRefObject : NSObject
 @property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
@@ -725,7 +726,13 @@
 }
 
 + (BOOL)isRTL {
-    return (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_9_0 && [UIView appearance].semanticContentAttribute == UISemanticContentAttributeForceRightToLeft);
+    if (@available(iOS 9.0, *)) {
+        UIWindow *window = [self getKeyWindow];
+        UISemanticContentAttribute attr = window.semanticContentAttribute;
+        UIUserInterfaceLayoutDirection _layoutDirection = [UIView userInterfaceLayoutDirectionForSemanticContentAttribute:attr];
+        return _layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    }
+    return NO;
 }
 
 + (BOOL)isAudioHolding {

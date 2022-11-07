@@ -13,6 +13,8 @@
 #import <WebKit/WebKit.h>
 #import "RCKitConfig.h"
 #import "RCActionSheetView.h"
+#import "RCSemanticContext.h"
+
 @interface RCCombineMsgFilePreviewViewController ()
 
 @property (nonatomic, copy) NSString *remoteURL;
@@ -74,7 +76,9 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:rightBtn];
 
     //设置左键
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 
     if ([self isFileDownloaded] && [self isFileSupported]) {
         [self layoutAndPreviewFile];

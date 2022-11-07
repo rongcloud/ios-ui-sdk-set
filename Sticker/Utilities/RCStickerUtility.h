@@ -85,4 +85,12 @@
  @return 修正后的图片
 */
 + (UIColor *)generateDynamicColor:(UIColor *)lightColor darkColor:(UIColor *)darkColor;
+
+/*
+ 根据 RongCoreClient 是否设置代理，统一构造 NSURLSessionConfiguration
+
+ @return 代理设置好的 NSURLSessionConfiguration 实例
+*/
++ (NSURLSessionConfiguration *)rcSessionConfiguration;
+
 @end

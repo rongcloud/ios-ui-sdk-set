@@ -336,6 +336,12 @@
         }
         self.networkIndicatorView.hidden = NO;
         [self.networkIndicatorView setText:RCLocalizedString(@"KickedOfflineByOtherClient")];
+    } else if (status == ConnectionStatus_PROXY_UNAVAILABLE) {
+        if (self.networkIndicatorView.hidden) {
+            needReloadTableView = YES;
+        }
+        self.networkIndicatorView.hidden = NO;
+        [self.networkIndicatorView setText:RCLocalizedString(@"ConnectionstatusProxyUnavailable")];
     } else if (status != ConnectionStatus_Connecting) {
         if (!self.networkIndicatorView.hidden) {
             needReloadTableView = YES;

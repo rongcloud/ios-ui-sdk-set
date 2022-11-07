@@ -18,6 +18,8 @@
 #import "RCSightSlideViewController.h"
 #import "RCKitConfig.h"
 #import "RCLocationViewController+imkit.h"
+#import "RCSemanticContext.h"
+
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
 
@@ -231,7 +233,9 @@
 
 #pragma mark - Private Methods
 - (void)setNav {
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     self.navigationItem.title = self.navTitle;
 }
 
@@ -240,9 +244,10 @@
         return;
     }
     RCCombineMessage *combineMsg = (RCCombineMessage *)self.messageModel.content;
-    if (combineMsg.localPath && combineMsg.localPath.length > 0 &&
-        [[NSFileManager defaultManager] fileExistsAtPath:combineMsg.localPath]) {
-        [self showWebView:[RCUtilities getCorrectedFilePath:combineMsg.localPath]];
+    NSString *localPath = [RCUtilities getCorrectedFilePath:combineMsg.localPath];
+    if (localPath && localPath.length > 0 &&
+        [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
+        [self showWebView:localPath];
     } else if (combineMsg.remoteUrl.length > 0) {
         if ([RCUtilities isRemoteUrl:combineMsg.remoteUrl]) {
             [self showLoadingTipView];

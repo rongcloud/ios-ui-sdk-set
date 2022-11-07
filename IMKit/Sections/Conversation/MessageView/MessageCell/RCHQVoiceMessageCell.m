@@ -23,7 +23,9 @@ static long hq_messageId = 0;
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
 #define Play_Voice_View_Width 16
-
+@interface RCMessageCell()
+- (void)messageContentViewFrameDidChanged;
+@end
 
 @interface RCHQVoiceMessageCell () <RCVoicePlayerObserver>
 @property (nonatomic) CGSize voiceViewSize;
@@ -345,6 +347,7 @@ static long hq_messageId = 0;
         }
         if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
             self.voiceUnreadTagView = [[UIImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
+            self.voiceUnreadTagView.accessibilityLabel = @"voiceUnreadTagView";
             if (voiceMessage.localPath.length > 0) {
                 [self.voiceUnreadTagView setHidden:NO];
             } else {
@@ -356,6 +359,24 @@ static long hq_messageId = 0;
     }
 }
 
+#pragma mark - Overwrite
+- (void)messageContentViewFrameDidChanged {
+    [super messageContentViewFrameDidChanged];
+    if (MessageDirection_RECEIVE == self.model.messageDirection) {
+        CGSize size = self.messageContentView.contentSize;
+        CGFloat voiceHeight = size.height;
+        if (MessageDirection_RECEIVE == self.model.messageDirection) {
+            CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
+            if ([RCKitUtility isRTL]) {
+                x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
+            }
+            if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
+                self.voiceUnreadTagView.frame = CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width);
+                
+            }
+        }
+    }
+}
 #pragma mark - stop and disable timer during background mode.
 - (void)resetActiveEventInBackgroundMode {
     [self stopPlayingVoiceData];
@@ -532,7 +553,11 @@ static long hq_messageId = 0;
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    self.playVoiceView.image = RCResourceImage(playingIndicatorIndex);
+    UIImage *image = RCResourceImage(playingIndicatorIndex);;
+    if ([RCKitUtility isRTL]) {
+        image = [image imageFlippedForRightToLeftLayoutDirection];
+    }
+    self.playVoiceView.image = image;
 }
 
 - (void)disableCurrentAnimationTimer {

@@ -471,6 +471,9 @@
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor blackColor];
+        if (([RCKitUtility isRTL])) {
+            _collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
     }
     return _collectionView;
 }

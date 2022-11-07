@@ -304,7 +304,7 @@
     
     task.display = ^(CGContextRef context, CGSize size, BOOL(^isCancelled)(void)) {
         [self translateCTM:context size:size];
-        if (isCancelled()) return;
+        if (isCancelled && isCancelled()) return;
         NSMutableAttributedString *string = [self attibuteStringWith:text font:font];
         CTFrameRef frame = [self createFrameWith:string size:size];
         [self resetCurrentFrameWith:frame];

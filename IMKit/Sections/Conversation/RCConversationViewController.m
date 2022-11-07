@@ -43,6 +43,7 @@
 #import "RCForwardManager.h"
 #import "RCCombineMessageCell.h"
 #import "RCReeditMessageManager.h"
+#import "RCResendManager.h"
 #import "RCReferencingView.h"
 #import "RCReferenceMessageCell.h"
 #import "RCConversationDataSource.h"
@@ -62,7 +63,7 @@
 #import "RCVoiceMessageTranslatingCell.h"
 #import "RCLocationViewController+imkit.h"
 #import "RCLocationMessage+imkit.h"
-
+#import "RCSemanticContext.h"
 
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
@@ -1122,7 +1123,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _imagePreviewVC.messageModel = model;
     _imagePreviewVC.onlyPreviewCurrentMessage = onlyPreviewCurrentMessage;
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:_imagePreviewVC];
-
     if (self.navigationController) {
         //导航和原有的配色保持一直
         UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
@@ -1396,6 +1396,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)cancelUploadMedia:(RCMessageModel *)model {
     dispatch_async(dispatch_get_main_queue(), ^{
         [[RCIM sharedRCIM] cancelSendMediaMessage:model.messageId];
+    });
+}
+
+- (void)cancelResendMessageIfNeed:(RCMessageModel *)model {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([[RCResendManager sharedManager] needResend:model.messageId]) {
+            [[RCResendManager sharedManager] removeResendMessage:model.messageId];
+        }
     });
 }
 
@@ -1874,11 +1882,15 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         }
     }
     
-    long msgId = model.messageId;
     if ([model.content isKindOfClass:[RCMediaMessageContent class]]) {
+        // 多媒体消息此刻要取消上传并停止重发逻辑
         [self cancelUploadMedia:model];
+    }else {
+        // 普通消息此刻要直接停止重发逻辑
+        [self cancelResendMessageIfNeed:model];
     }
-    
+
+    long msgId = model.messageId;
     if (self.needDeleteRemoteMessage) {
         // 用户设置需要删除远端消息
         RCMessage *delMsg = [[RCIMClient sharedRCIMClient] getMessage:msgId];
@@ -3070,13 +3082,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _locatedMessageSentTime = locatedMessageSentTime;
 }
 
-- (void)setDefaultHistoryMessageCountOfChatRoom:(int)defaultHistoryMessageCountOfChatRoom {
-    if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"8.0") && defaultHistoryMessageCountOfChatRoom > 30) {
-        defaultHistoryMessageCountOfChatRoom = 30;
-    }
-    _defaultHistoryMessageCountOfChatRoom = defaultHistoryMessageCountOfChatRoom;
-}
-
 - (void)setDefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
     if (defaultLocalHistoryMessageCount > 100) {
         defaultLocalHistoryMessageCount = 100;
@@ -3411,10 +3416,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         backString = RCLocalizedString(@"Back");
     }
     NSArray *items;
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     if (self.conversationType == ConversationType_CUSTOMERSERVICE) {
-        items = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:backString target:self action:@selector(customerServiceLeftCurrentViewController)];
+        items = [RCKitUtility getLeftNavigationItems:imgMirror title:backString target:self action:@selector(customerServiceLeftCurrentViewController)];
     } else {
-        items = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:backString target:self action:@selector(leftBarButtonItemPressed:)];
+        items = [RCKitUtility getLeftNavigationItems:imgMirror title:backString target:self action:@selector(leftBarButtonItemPressed:)];
     }
     return items;
 }

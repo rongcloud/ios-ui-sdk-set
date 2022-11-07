@@ -204,6 +204,12 @@ static void *cacheRWQueueTag = &cacheRWQueueTag;
         [rcUserInfoWriteDBHelper deleteConversationUserInfoFromDB:userId
                                                  conversationType:conversationType
                                                          targetId:targetId];
+        RCLogI(@"clearConversationUserInfo:conversationType;targetId:;;;userId:%@,conversationType=%lu,targerId=%@",userId, (unsigned long)conversationType, targetId);
+        RCUserInfo *userInfo = [[RCUserInfo alloc] init];
+        userInfo.userId = userId;
+        [self.updateDelegate onConversationUserInfoUpdate:userInfo
+                                               inConversation:conversationType
+                                                     targetId:targetId];
     });
 }
 

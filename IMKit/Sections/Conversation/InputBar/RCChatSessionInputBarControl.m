@@ -24,6 +24,7 @@
 #import "RCInputContainerView+internal.h"
 #import "RCSightViewController+imkit.h"
 #import "RCLocationPickerViewController+imkit.h"
+#import "RCSemanticContext.h"
 //单个cell的高度是70（RCPlaginBoardCellSize）*2 + 上下padding的高度14*2 ＋
 //上下两个图标之间的padding
 #define Height_EmojBoardView 223.5f
@@ -245,6 +246,9 @@
         picker.conversationType = self.conversationType;
         picker.targetId = self.targetId;
         UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
+        if ([RCSemanticContext isRTL]) {
+            rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
         [self.delegate presentViewController:rootVC functionTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
     }
 }
@@ -255,7 +259,9 @@
         [[RCFileSelectorViewController alloc] initWithRootPath:[RCIMClient sharedRCIMClient].fileStoragePath];
     picker.delegate = self;
     UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
-
+    if ([RCSemanticContext isRTL]) {
+        rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate presentViewController:rootVC functionTag:PLUGIN_BOARD_ITEM_FILE_TAG];
     });
@@ -574,7 +580,9 @@
 
 #pragma mark - RCSightViewControllerDelegate
 - (void)sightViewController:(UIViewController *)sightVC didFinishCapturingStillImage:(UIImage *)image {
-    [self.delegate imageDidCapture:image];
+    if ([self.delegate respondsToSelector:@selector(imageDidCapture:)]) {
+        [self.delegate imageDidCapture:image];
+    }
     [sightVC dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -584,10 +592,12 @@
                    duration:(NSUInteger)duration {
     __weak typeof(self) weakSelf = self;
     [sightVC
-        dismissViewControllerAnimated:YES
-                           completion:^{
-                               [weakSelf.delegate sightDidFinishRecord:url.path thumbnail:thumnail duration:duration];
-                           }];
+     dismissViewControllerAnimated:YES
+     completion:^{
+        if ([weakSelf.delegate respondsToSelector:@selector(sightDidFinishRecord:thumbnail:duration:)]) {
+            [weakSelf.delegate sightDidFinishRecord:url.path thumbnail:thumnail duration:duration];
+        }
+    }];
 }
 
 - (void)sightViewController:(RCSightViewController *)sightVC
@@ -637,11 +647,15 @@
 - (void)getSelectingUserIdList:(void (^)(NSArray<NSString *> *userIdList))completion {
     if ([self.dataSource respondsToSelector:@selector(getSelectingUserIdList:functionTag:)]) {
         [self.dataSource getSelectingUserIdList:^(NSArray<NSString *> *userIdList) {
-            completion(userIdList);
+            if (completion) {
+                completion(userIdList);
+            }
         }
                                     functionTag:INPUT_MENTIONED_SELECT_TAG];
     } else {
-        completion(nil);
+        if (completion) {
+            completion(nil);
+        }
     }
 }
 
@@ -855,7 +869,9 @@
     userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
     userListVC.maxSelectedUserNumber = 1;
     UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:userListVC];
-
+    if ([RCSemanticContext isRTL]) {
+        rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate presentViewController:rootVC functionTag:INPUT_MENTIONED_SELECT_TAG];
     });

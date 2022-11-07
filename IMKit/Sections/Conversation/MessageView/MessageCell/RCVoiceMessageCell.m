@@ -332,7 +332,11 @@ static long s_messageId = 0;
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    self.playVoiceView.image = RCResourceImage(playingIndicatorIndex);
+    UIImage *image = RCResourceImage(playingIndicatorIndex);;
+    if ([RCKitUtility isRTL]) {
+        image = [image imageFlippedForRightToLeftLayoutDirection];
+    }
+    self.playVoiceView.image = image;
 }
 
 - (void)disableCurrentAnimationTimer {

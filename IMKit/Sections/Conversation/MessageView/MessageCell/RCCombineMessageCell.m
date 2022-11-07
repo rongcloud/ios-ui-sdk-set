@@ -181,7 +181,9 @@
         DebugLog(@"long press end");
         return;
     } else if (press.state == UIGestureRecognizerStateBegan) {
-        [self.delegate didLongTouchMessageCell:self.model inView:self.backView];
+        if ([self.delegate respondsToSelector:@selector(didLongTouchMessageCell:inView:)]) {
+            [self.delegate didLongTouchMessageCell:self.model inView:self.backView];
+        }
     }
 }
 

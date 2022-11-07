@@ -16,7 +16,7 @@
 #import "RCKitConfig.h"
 #import <RongPublicService/RongPublicService.h>
 #import <RongDiscussion/RongDiscussion.h>
-
+#import "RCSemanticContext.h"
 @interface RCConversationCell ()
 
 @property (nonatomic, strong) RCConversationHeaderView *headerView;
@@ -543,7 +543,9 @@
         _messageCreatedTimeLabel.backgroundColor = [UIColor clearColor];
         _messageCreatedTimeLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
         _messageCreatedTimeLabel.textColor = RCDYCOLOR(0xC7CbCe, 0x3c3c3c);
-        _messageCreatedTimeLabel.textAlignment = NSTextAlignmentRight;
+        BOOL isRTL = [RCSemanticContext isRTL];
+        _messageCreatedTimeLabel.textAlignment = isRTL ? NSTextAlignmentLeft : NSTextAlignmentRight;
+        _messageCreatedTimeLabel.accessibilityLabel = @"messageCreatedTimeLabel";
     }
     return _messageCreatedTimeLabel;
 }

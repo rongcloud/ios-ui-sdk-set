@@ -199,7 +199,7 @@ typedef NS_ENUM(NSUInteger, RCEAnimationStatus) {
     self.animationstatus = AnimationStopStatus;
 }
 
-- (void)reset {
+- (void)resetStatus {
     [self setProgress:0 animated:NO];
     self.animationstatus = AnimationIdleStatus;
     [self startIndeterminateAnimation];

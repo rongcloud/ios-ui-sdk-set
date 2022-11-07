@@ -17,6 +17,7 @@
 #import "RCAlertView.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
 #import "RCKitConfig.h"
+#import "RCSemanticContext.h"
 
 static NSString *const reuseIdentifier = @"Cell";
 static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
@@ -367,7 +368,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     _topView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_topView];
     UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [backButton setImage:RCResourceImage(@"navigator_white_back") forState:UIControlStateNormal];
+    UIImage *img = RCResourceImage(@"navigator_white_back");
+    img = [RCSemanticContext imageflippedForRTL:img];
+    [backButton setImage:img forState:UIControlStateNormal];
     [backButton setContentEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 6)];
     [backButton sizeToFit];
     if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
@@ -390,7 +393,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         stateButton.frame =
             CGRectMake(_topView.frame.size.width - 10 - 44, _topView.frame.size.height / 2 - 44 / 2, 44, 44);
     }
-
+    // RTL 切换
+    [RCSemanticContext swapFrameForRTL:backButton withView:stateButton];
+    
     [stateButton addTarget:self action:@selector(isSelectedButtonAction:) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:self.selectedButton = stateButton];
 }
@@ -575,7 +580,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                  }
                         progressHandler:nil];
     } else {
-        completeBlock(YES);
+        if (completeBlock) {
+            completeBlock(YES);
+        }
     }
 }
 

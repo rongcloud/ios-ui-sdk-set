@@ -136,7 +136,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
                 overlayView.centerPlayBtn.hidden = YES;
                 NSArray<NSLayoutConstraint *> *constraints = overlayView.slider.superview.constraints;
                 for (NSLayoutConstraint *constraint in constraints) {
-                    if (constraint.firstItem == overlayView.currentTimeLabel &&
+                    if (constraint.firstItem == overlayView.currentTimeLab &&
                         constraint.secondItem == overlayView.playBtn) {
                         constraint.constant = -22;
                     }

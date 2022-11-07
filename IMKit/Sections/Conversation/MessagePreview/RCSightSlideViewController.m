@@ -21,6 +21,7 @@
 #import "RCSightModel.h"
 #import "RCSightModel+internal.h"
 #import "RCSightPlayerController+imkit.h"
+#import "RCPhotoPreviewCollectionViewFlowLayout.h"
 
 @interface RCSightSlideViewController () <UIScrollViewDelegate, RCSightCollectionViewCellDelegate,
                                           UICollectionViewDataSource, UICollectionViewDelegate,
@@ -193,7 +194,6 @@
         NSArray<RCMessageModel *> *backMessageArray = [self getBackMessagesForModel:model count:5 times:0];
         [modelsArray addObjectsFromArray:backMessageArray];
     }
-    
     NSUInteger index = [modelsArray indexOfObject:model];
     self.currentIndex = index;
     self.messageModelArray = [self getSightModels:modelsArray].mutableCopy;
@@ -496,7 +496,7 @@
 
 - (RCSightCollectionView *)collectionView {
     if(!_collectionView) {
-        UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+        UICollectionViewFlowLayout *flowLayout = [[RCPhotoPreviewCollectionViewFlowLayout alloc] init];
         [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
         flowLayout.minimumLineSpacing = 0;
         flowLayout.minimumInteritemSpacing = 0;
@@ -508,6 +508,9 @@
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor blackColor];
+        if (([RCKitUtility isRTL])) {
+            _collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
     }
     return _collectionView;
 }

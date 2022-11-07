@@ -204,7 +204,7 @@
 "chatDate"="yyyy/M/d";
 "chatListDate"="yyyy/M/d";
 "SameYearDate"="M/d";
-"locale"="en_US";
+"locale"="ar";
 "readNum"="%d قراءة";
 "read"="قرأ";
 "punctuation"=", ";
@@ -277,8 +277,9 @@
 "i_know_it"="فهمت";
 "ChatFiles"="ملفات الدردشة";
 "CannotUploadFiles"="لا يمكن تحميل وسائط 0kb.";
-"DownloadFailFromiCloud"="Download Fail From iCloud";
-"KickedOfflineByOtherClient"="This account has been logged-in on other devices";
-"VideoExpired"="Video Deleted or Expired";
-"LoadMsgAskInfo"="Network Error，View local history messages?";
+"DownloadFailFromiCloud"="فشل تنزيل الصور من iCloud، يرجى المحاولة مرة أخرى لاحقًا";
+"KickedOfflineByOtherClient"="تم تسجيل دخول هذا الحساب على أجهزة أخرى";
+"VideoExpired"="تم حذف الفيديو أو انتهاء صلاحيته";
+"LoadMsgAskInfo"="خطأ في الشبكة، يرجى التحقق من سجل الرسائل المحلية؟";
 "SightCaptureFailed"="غير قادر على التسجيل في هذا الوقت ، يرجى المحاولة مرة أخرى في وقت لاحق";
+"ConnectionstatusProxyUnavailable"="الوكيل الحالي غير متوفر";

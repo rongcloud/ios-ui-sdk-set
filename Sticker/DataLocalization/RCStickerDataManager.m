@@ -178,10 +178,10 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
             [weakSelf refreshStickersModule];
 
             //下载icon和cover
-            [self handleIconAndCover];
+            [weakSelf handleIconAndCover];
 
             //处理预加载数据
-            [self handlePreloadPackages];
+            [weakSelf handlePreloadPackages];
         }
     }];
 }

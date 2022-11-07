@@ -13,6 +13,8 @@
 #import "RCSelectFilesTableViewCell.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
+#import "RCSemanticContext.h"
+
 @interface RCFileSelectorViewController ()
 
 @property (nonatomic, strong) NSString *rootPath;
@@ -57,9 +59,10 @@ static NSString *const RCListValue = @"List";
     }
 
     self.navigationItem.title = RCLocalizedString(@"SendFile");
-
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     if (self.isSubDirectory) {
-        self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+        self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     } else {
         UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithTitle:RCLocalizedString(@"Cancel")
                                                                      style:UIBarButtonItemStylePlain

@@ -217,12 +217,21 @@
 - (void)onConnectionStatusChangedNotification:(NSNotification *)status {
     dispatch_main_async_safe(^{
         RCLogI(@"connection status changed");
-        if (ConnectionStatus_Connected == [status.object integerValue]) {
-            if (!self.isProcessing) {
-                [self beginResend];
-            }
-        } else if (ConnectionStatus_SignOut == [status.object integerValue]) {
-            [self removeAllResendMessage];
+        RCConnectionStatus connectionStatus = [status.object integerValue];
+        switch (connectionStatus) {
+            case ConnectionStatus_Connected: {
+                if (!self.isProcessing) {
+                    [self beginResend];
+                }
+            } break;
+            //Since 5.3.0 signout/timeout/proxy unavailable 直接显示发送失败
+            case ConnectionStatus_SignOut:
+            case ConnectionStatus_Timeout:
+            case ConnectionStatus_PROXY_UNAVAILABLE: {
+                [self removeAllResendMessage];
+            } break;
+            default:
+                break;
         }
     });
 }

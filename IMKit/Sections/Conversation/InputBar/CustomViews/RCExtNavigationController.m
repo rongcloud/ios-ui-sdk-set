@@ -7,15 +7,26 @@
 //
 
 #import "RCExtNavigationController.h"
-
+#import "RCSemanticContext.h"
 @interface RCExtNavigationController ()
 
 @end
 
 @implementation RCExtNavigationController
 
+- (instancetype)initWithRootViewController:(UIViewController *)rootViewController {
+    self = [super initWithRootViewController:rootViewController];
+    if (self) {
+        if ([RCSemanticContext isRTL]) {
+            self.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+            self.navigationBar.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
+    }
+    return self;
+}
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
     // Do any additional setup after loading the view.
 }
 - (BOOL)shouldAutorotate {

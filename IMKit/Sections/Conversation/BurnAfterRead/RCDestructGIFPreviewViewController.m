@@ -15,6 +15,8 @@
 #import "RCDestructCountDownButton.h"
 #import "RCIMClient+Destructing.h"
 #import "RCImageMessageProgressView.h"
+#import "RCSemanticContext.h"
+
 @interface RCDestructGIFPreviewViewController ()
 
 @property (nonatomic, strong) NSData *gifData;
@@ -47,7 +49,9 @@
 
 - (void)setNav {
     //设置左键
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }
 
 - (void)addSubViews {

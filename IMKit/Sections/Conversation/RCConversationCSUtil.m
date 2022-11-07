@@ -18,6 +18,7 @@
 #import "RCCSLeaveMessageController.h"
 #import "RCKitUtility.h"
 #import <RongCustomerService/RongCustomerService.h>
+#import "RCSemanticContext.h"
 @interface RCConversationCSUtil ()<RCCSAlertViewDelegate, RCAdminEvaluationViewDelegate, RCRobotEvaluationViewDelegate>
 @property (nonatomic, weak) RCConversationViewController *chatVC;
 @property (nonatomic, strong) RCCustomerServiceConfig *csConfig;
@@ -374,6 +375,9 @@
                 [[RCCustomerServiceGroupListController alloc] init];
             UINavigationController *rootVC =
                 [[UINavigationController alloc] initWithRootViewController:customerGroupListController];
+            if ([RCSemanticContext isRTL]) {
+                rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+            }
             customerGroupListController.groupList = __groupList;
             [customerGroupListController setSelectGroupBlock:^(NSString *groupId) {
                 if (resultBlock) {

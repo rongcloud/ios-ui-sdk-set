@@ -22,6 +22,6 @@
 
 - (void)stopIndeterminateAnimation;
 
-- (void)reset;
+- (void)resetStatus;
 
 @end

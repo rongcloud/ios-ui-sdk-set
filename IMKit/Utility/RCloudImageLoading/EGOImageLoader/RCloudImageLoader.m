@@ -94,7 +94,9 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 }
 
 - (RCloudImageLoadConnection *)loadingConnectionForURL:(NSURL *)aURL {
+    [connectionsLock lock];
     RCloudImageLoadConnection *connection = (self.currentConnections)[aURL];
+    [connectionsLock unlock];
     if (!connection)
         return nil;
     else
@@ -326,9 +328,11 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
         [[RCloudCache currentCache] setData:targetData
                                      forKey:keyForURL(connection.imageURL, nil)
                         withTimeoutInterval:[RCloudCache currentCache].defaultTimeoutInterval];
+        [connectionsLock lock];
         [currentConnections removeObjectForKey:connection.imageURL];
 
         self.currentConnections = [currentConnections copy];
+        [connectionsLock unlock];
 #if __EGOIL_USE_NOTIF
         NSNotification *notification =
             [NSNotification notificationWithName:kImageNotificationLoaded(connection.imageURL)
@@ -353,9 +357,11 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 }
 
 - (void)imageLoadConnection:(RCloudImageLoadConnection *)connection didFailWithError:(NSError *)error {
+    [connectionsLock lock];
     [currentConnections removeObjectForKey:connection.imageURL];
-
     self.currentConnections = [currentConnections copy];
+    [connectionsLock unlock];
+
 #if __EGOIL_USE_NOTIF
     NSNotification *notification =
         [NSNotification notificationWithName:kImageNotificationLoadFailed(connection.imageURL)

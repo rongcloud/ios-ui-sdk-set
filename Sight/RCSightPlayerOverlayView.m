@@ -15,7 +15,7 @@
 
 @property (nonatomic, strong) UIButton *playBtn;
 @property (nonatomic, strong) UIButton *closeBtn;
-@property (nonatomic, strong) UILabel *currentTimeLabel;
+@property (nonatomic, strong) UILabel *currentTimeLab;
 @property (nonatomic, strong) UILabel *durationTimeLabel;
 @property (nonatomic, strong) UISlider *slider;
 @property (nonatomic, strong) UIButton *centerPlayBtn;
@@ -81,13 +81,14 @@
     return _slider;
 }
 
-- (UILabel *)currentTimeLabel {
-    if (!_currentTimeLabel) {
-        _currentTimeLabel = [[UILabel alloc] init];
-        _currentTimeLabel.textColor = [UIColor whiteColor];
-        _currentTimeLabel.text = @"00:00";
+- (UILabel *)currentTimeLab {
+    if (!_currentTimeLab) {
+        _currentTimeLab = [[UILabel alloc] init];
+        _currentTimeLab.textColor = [UIColor whiteColor];
+        _currentTimeLab.text = @"00:00";
+        _currentTimeLab.accessibilityLabel = @"currentTimeLab";
     }
-    return _currentTimeLabel;
+    return _currentTimeLab;
 }
 
 - (UIButton *)extraButton {
@@ -155,11 +156,11 @@
         [self constraintAlignSuperView:self.playBtn alignSpace:0 AlignMent:CCSightLayoutAlignLeading];
         [self constraintAlignSuperView:self.playBtn alignSpace:0 AlignMent:CCSightLayoutAlignBottom];
 
-        [self constrainView:self.currentTimeLabel toSize:50 direction:CCSightLayoutDirectionHorizontal];
-        [contentView addSubview:self.currentTimeLabel];
+        [self constrainView:self.currentTimeLab toSize:50 direction:CCSightLayoutDirectionHorizontal];
+        [contentView addSubview:self.currentTimeLab];
 
-        [self constraintCenterYInSuperview:self.currentTimeLabel];
-        [self constraintView:self.playBtn toView:self.currentTimeLabel horizontalSpace:8];
+        [self constraintCenterYInSuperview:self.currentTimeLab];
+        [self constraintView:self.playBtn toView:self.currentTimeLab horizontalSpace:8];
 
         [self constrainView:self.durationTimeLabel toSize:50 direction:CCSightLayoutDirectionHorizontal];
         [contentView addSubview:self.durationTimeLabel];
@@ -168,7 +169,7 @@
 
         [contentView addSubview:self.slider];
         [self constraintCenterYInSuperview:self.slider];
-        [self constraintView:self.currentTimeLabel toView:self.slider horizontalSpace:8];
+        [self constraintView:self.currentTimeLab toView:self.slider horizontalSpace:8];
         [self constraintView:self.slider toView:self.durationTimeLabel horizontalSpace:8];
     }
     return _bottomView;
@@ -471,7 +472,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
 #pragma mark - CCSightTransport
 
 - (void)setControlBarHidden:(BOOL)hidden {
-    if ([self.delegate prefersControlBardHidden]) {
+    if ([self.delegate respondsToSelector:@selector(prefersControlBardHidden)] && [self.delegate prefersControlBardHidden]) {
         return;
     }
     if (hidden) {
@@ -489,7 +490,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
 }
 
 - (void)toggleControls {
-    if ([self.delegate prefersControlBardHidden]) {
+    if ([self.delegate respondsToSelector:@selector(prefersControlBardHidden)] && [self.delegate prefersControlBardHidden]) {
         return;
     }
     if (self.bottomView.hidden) {
@@ -531,14 +532,14 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
     NSInteger currentSeconds = round(time);
     NSInteger durationSeconds = round(duration);
     self.durationTimeLabel.text = [self formatSeconds:durationSeconds];
-    self.currentTimeLabel.text = [self formatSeconds:currentSeconds];
+    self.currentTimeLab.text = [self formatSeconds:currentSeconds];
     self.slider.minimumValue = 0.0f;
     self.slider.maximumValue = duration;
     self.slider.value = time;
 }
 
 - (void)setScrubbingTime:(NSTimeInterval)time {
-    self.currentTimeLabel.text = [self formatSeconds:time];
+    self.currentTimeLab.text = [self formatSeconds:time];
 }
 
 - (void)playbackComplete {

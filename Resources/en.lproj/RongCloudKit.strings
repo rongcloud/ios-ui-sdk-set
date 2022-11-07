@@ -280,3 +280,4 @@
 "VideoExpired"="Video Deleted or Expired";
 "LoadMsgAskInfo"="Network Error，View local history messages?";
 "SightCaptureFailed"="Unable to record at this time, please try again later";
+"ConnectionstatusProxyUnavailable"="The current proxy is not available.";

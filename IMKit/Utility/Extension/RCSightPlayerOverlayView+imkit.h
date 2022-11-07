@@ -10,7 +10,7 @@
 #define RCSightPlayerOverlayView_imkit_h
 
 @interface RCSightPlayerOverlayView : UIView
-@property (nonatomic, strong) UILabel *currentTimeLabel;
+@property (nonatomic, strong) UILabel *currentTimeLab;
 @property (nonatomic, strong) UILabel *durationTimeLabel;
 @property (nonatomic, strong) UIButton *playBtn;
 @property (nonatomic, strong) UISlider *slider;
