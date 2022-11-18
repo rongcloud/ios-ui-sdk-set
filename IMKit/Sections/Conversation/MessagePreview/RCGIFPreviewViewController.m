@@ -49,7 +49,7 @@
     if (gifMessage && gifMessage.localPath.length > 0) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            weakSelf.gifData = [NSData dataWithContentsOfFile:[RCUtilities getCorrectedFilePath:gifMessage.localPath]];
+            weakSelf.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (weakSelf.gifData) {
                     weakSelf.gifView.animatedImage = [RCGIFImage animatedImageWithGIFData:weakSelf.gifData];

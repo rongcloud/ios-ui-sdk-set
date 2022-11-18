@@ -118,6 +118,8 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
         if (self.allowsSelection) {
             self.selectButton.hidden = NO;
             [self.contentView addGestureRecognizer:self.multiSelectTap];
+        } else {
+            self.selectButton.hidden = YES;
         }
     } else {
         self.baseContentView.userInteractionEnabled = YES;

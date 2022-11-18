@@ -52,7 +52,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.3.0_opensource";
+static NSString *const RCIMKitVersion = @"5.3.1_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -307,6 +307,10 @@ static NSString *const RCIMKitVersion = @"5.3.0_opensource";
 //    if ([self checkNoficationQuietStatus]) {
 //        return;
 //    }
+    
+    if ([message.content isKindOfClass:RCCommandNotificationMessage.class]){
+        return;
+    }
     
     if (message.conversationType == ConversationType_Encrypted) {
         [RCMessageNotificationHelper checkNotifyAbilityWith:message completion:^(BOOL show) {

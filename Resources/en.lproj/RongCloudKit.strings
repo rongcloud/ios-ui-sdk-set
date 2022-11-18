@@ -281,3 +281,5 @@
 "LoadMsgAskInfo"="Network Error，View local history messages?";
 "SightCaptureFailed"="Unable to record at this time, please try again later";
 "ConnectionstatusProxyUnavailable"="The current proxy is not available.";
+"restartApp"="Restart Application";
+"PhotoLibraryBugErrorAlert"="The system album cannot be accessed temporarily. Restart the application or mobile phone and try again";

@@ -396,8 +396,8 @@
     RCImageMessage *cImageMessage = (RCImageMessage *)self.messageModelArray[self.currentIndex].content;
     UIImage *image;
     if (cImageMessage.localPath.length > 0 &&
-        [[NSFileManager defaultManager] fileExistsAtPath:[RCUtilities getCorrectedFilePath:cImageMessage.localPath]]) {
-        NSString *path = [RCUtilities getCorrectedFilePath:cImageMessage.localPath];
+        [[NSFileManager defaultManager] fileExistsAtPath:cImageMessage.localPath]) {
+        NSString *path = cImageMessage.localPath;
         NSData *imageData = [[NSData alloc] initWithContentsOfFile:path];
         image = [UIImage imageWithData:imageData];
     } else {

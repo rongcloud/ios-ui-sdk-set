@@ -34,12 +34,6 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         assetHelper = [[RCAssetHelper alloc] init];
-        assetHelper.isSynchronizing = YES;
-        [assetHelper getAlbumsFromSystem:^(NSArray *albums) {
-            assetHelper.isSynchronizing = NO;
-            assetHelper.assetsGroups = albums;
-        }
-                               groupType:ALAssetsGroupAll];
     });
     [assetHelper addRegisterIfNeed];
     return assetHelper;
@@ -76,9 +70,18 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
                       resultCompletion:(void (^)(NSArray *assetGroup))result {
     if (_assetsGroups && _assetsGroups.count > 0 && RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
         NSArray *photos = [NSArray arrayWithArray:_assetsGroups];
-        result(photos);
+        if (result) {
+            result(photos);
+        }
     } else {
-        [self getAlbumsFromSystem:result groupType:groupType];
+        self.isSynchronizing = YES;
+        [self getAlbumsFromSystem:^(NSArray *albums) {
+            self.isSynchronizing = NO;
+            self.assetsGroups = albums;
+            if (result) {
+                result(albums);
+            }
+        } groupType:groupType];
     }
 }
 

@@ -110,7 +110,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
     //需要根据用户设置的大小去决定是否自动下载
     NSInteger maxAutoSize = RCKitConfigCenter.message.GIFMsgAutoDownloadSize;
-    NSString *localPath = [RCUtilities getCorrectedFilePath:gifMessage.localPath];
+    NSString *localPath = gifMessage.localPath;
     if (localPath && [RCFileUtility isFileExist:localPath]) {
         [self showGifImageView:localPath];
     } else {

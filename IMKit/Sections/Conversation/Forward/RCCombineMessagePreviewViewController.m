@@ -244,8 +244,8 @@
         return;
     }
     RCCombineMessage *combineMsg = (RCCombineMessage *)self.messageModel.content;
-    NSString *localPath = [RCUtilities getCorrectedFilePath:combineMsg.localPath];
-    if (localPath && localPath.length > 0 &&
+    NSString *localPath = combineMsg.localPath;
+    if (localPath.length > 0 &&
         [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
         [self showWebView:localPath];
     } else if (combineMsg.remoteUrl.length > 0) {

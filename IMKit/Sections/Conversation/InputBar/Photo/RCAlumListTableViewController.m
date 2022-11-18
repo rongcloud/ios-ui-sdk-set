@@ -15,6 +15,7 @@
 #import "RCMBProgressHUD.h"
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCKitConfig.h"
+#import "RCAlertView.h"
 
 static NSString *const cellReuseIdentifier = @"cell";
 
@@ -123,8 +124,31 @@ static NSString *const cellReuseIdentifier = @"cell";
                               if (assetGroup) {
                                   weakSelf.libraryList = assetGroup;
                               }
-
+            
                               dispatch_async(dispatch_get_main_queue(), ^{
+                                  BOOL isFirstRun = [[NSUserDefaults standardUserDefaults] boolForKey:@"rckit_first_happen"];
+                                  //处理过，不要再处理，除非重装app
+                                  if (assetGroup.count == 0 && !isFirstRun) {
+                                      if (@available(iOS 15, *)) {
+                                          // nothing to do
+                                      } else if (@available(iOS 14, *)) {
+                                          [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                                          // 相册bug https://developer.apple.com/forums/thread/658114
+                                          [RCAlertView showAlertController:RCLocalizedString(@"PhotoLibraryBugErrorAlert") message:nil actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"restartApp") preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:nil confirmBlock:^{
+                                              // 首次发生并重启后问题解决，记录一下， 下次不必再处理此case
+                                              [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"rckit_first_happen"];
+                                              [[NSUserDefaults standardUserDefaults] synchronize];
+                                              
+                                              exit(0);
+                                          } inViewController:self];
+                                          
+                                          return;
+                                      } else {
+                                          // nothing to do
+                                      }
+                                  }
+
+                                  
                                   [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
 
                                   if (weakSelf.libraryList.count) {

@@ -161,13 +161,9 @@
     self.destructTextImage.hidden = YES;
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
         ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
-        self.textLabel.text = RCLocalizedString(@"ClickToView");
         self.destructTextImage.hidden = NO;
-    }else if(textMessage){
-        self.textLabel.text = textMessage.content;
-    }else{
-        DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
     }
+    
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
         [self.textLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
         if ([RCKitUtility isRTL] && !self.destructTextImage.hidden) {
@@ -180,7 +176,14 @@
         self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
     
-   
+    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
+        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
+        self.textLabel.text = RCLocalizedString(@"ClickToView");
+    }else if(textMessage){
+        self.textLabel.text = textMessage.content;
+    }else{
+        DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
+    }
 }
 
 - (NSDictionary *)attributeDictionary {
