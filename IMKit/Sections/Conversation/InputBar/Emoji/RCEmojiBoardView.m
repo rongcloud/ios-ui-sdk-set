@@ -620,8 +620,10 @@ static int rc_currentSelectIndexPage;
         [self cleanDefaultEmoji];
        
         [self generateDefaultLayoutParameters];
-//        [self reloadExtensionEmoticonTabSource];
-//        [self loadLabelView];
+        if (pageCtrl) {
+            [pageCtrl removeFromSuperview];
+            pageCtrl = nil;
+        }
         [self loadCustomerEmoticonPackage];
     }
 }

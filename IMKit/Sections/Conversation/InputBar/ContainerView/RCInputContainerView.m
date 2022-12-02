@@ -18,8 +18,12 @@
 #define TextViewMaxInputLines 6 //输入框最大行数设置
 #define TextViewMinInputLines 1 //输入框最小行数设置
 @interface RCInputContainerView ()<UITextViewDelegate, RCTextViewDelegate>
+{
+    BOOL _hideEmojiButton;
+}
 @property (nonatomic, strong) NSMutableArray *inputContainerSubViewConstraints;
 @property (nonatomic, assign) BOOL textViewBeginEditing;
+@property (nonatomic, assign) RCChatSessionInputBarControlStyle style;
 @end
 @implementation RCInputContainerView
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -34,8 +38,21 @@
     self.maxInputLines = 4;
 }
 
+- (BOOL)hideEmojiButton {
+    return _hideEmojiButton;
+}
+
+- (void)setHideEmojiButton:(BOOL)hideEmojiButton {
+    if (hideEmojiButton != _hideEmojiButton) {
+        _hideEmojiButton = hideEmojiButton;
+        [self resetInputContainerView];
+        [self setupSubViews];
+        [self setLayoutForInputContainerView:self.style];
+    }
+}
 #pragma mark - Public API
 - (void)setInputBarStyle:(RCChatSessionInputBarControlStyle)style {
+    self.style = style;
     [self resetInputContainerView];
     [self setupSubViews];
     [self setLayoutForInputContainerView:style];
@@ -356,48 +373,49 @@
     switch (style) {
     case RC_CHAT_INPUT_BAR_STYLE_SWITCH_CONTAINER_EXTENTION:
         format = @"H:|-8-[_switchButton(BUTTONWIDTH)]-8-[_recordButton]-8-[_emojiButton("
-                @"BUTTONWIDTH)]-8-[_additionalButton(BUTTONWIDTH)]-8-|";
+                @"EMOJIBUTTONWIDTH)]-8-[_additionalButton(BUTTONWIDTH)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_EXTENTION_CONTAINER_SWITCH:
         format = @"H:|-8-[_additionalButton(BUTTONWIDTH)]-8-[_recordButton]-8-[_"
-                @"emojiButton(BUTTONWIDTH)]-8-[_switchButton(BUTTONWIDTH)]-8-|";
+                @"emojiButton(EMOJIBUTTONWIDTH)]-8-[_switchButton(BUTTONWIDTH)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_CONTAINER_SWITCH_EXTENTION:
-        format = @"H:|-8-[_recordButton]-8-[_emojiButton(BUTTONWIDTH)]-8-[_switchButton("
+        format = @"H:|-8-[_recordButton]-8-[_emojiButton(EMOJIBUTTONWIDTH)]-8-[_switchButton("
                 @"BUTTONWIDTH)]-8-[_additionalButton(BUTTONWIDTH)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_CONTAINER_EXTENTION_SWITCH:
-        format = @"H:|-8-[_recordButton]-8-[_emojiButton(BUTTONWIDTH)]-8-[_"
+        format = @"H:|-8-[_recordButton]-8-[_emojiButton(EMOJIBUTTONWIDTH)]-8-[_"
                 @"additionalButton(BUTTONWIDTH)]-8-[_switchButton(BUTTONWIDTH)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_SWITCH_CONTAINER:
         format = @"H:|-8-[_switchButton(BUTTONWIDTH)]-8-[_recordButton]-8-[_emojiButton("
-                @"BUTTONWIDTH)]-8-[_additionalButton(0)]-8-|";
+                @"EMOJIBUTTONWIDTH)]-8-[_additionalButton(0)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_CONTAINER_SWITCH:
-        format = @"H:|-8-[_recordButton]-8-[_emojiButton(BUTTONWIDTH)]-8-[_switchButton("
+        format = @"H:|-8-[_recordButton]-8-[_emojiButton(EMOJIBUTTONWIDTH)]-8-[_switchButton("
                 @"BUTTONWIDTH)]-8-[_additionalButton(0)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_EXTENTION_CONTAINER:
         format = @"H:|-8-[_additionalButton(BUTTONWIDTH)]-8-[_recordButton]-8-[_"
-                @"emojiButton(BUTTONWIDTH)]-8-[_switchButton(0)]-8-|";
+                @"emojiButton(EMOJIBUTTONWIDTH)]-8-[_switchButton(0)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_CONTAINER_EXTENTION:
-        format = @"H:|-8-[_recordButton]-8-[_emojiButton(BUTTONWIDTH)]-8-[_"
+        format = @"H:|-8-[_recordButton]-8-[_emojiButton(EMOJIBUTTONWIDTH)]-8-[_"
                 @"additionalButton(BUTTONWIDTH)]-8-[_switchButton(0)]-8-|";
         break;
     case RC_CHAT_INPUT_BAR_STYLE_CONTAINER:
-        format = @"H:|-0-[_switchButton(0)]-8-[_recordButton]-8-[_emojiButton(BUTTONWIDTH)"
+        format = @"H:|-0-[_switchButton(0)]-8-[_recordButton]-8-[_emojiButton(EMOJIBUTTONWIDTH)"
                 @"]-8-[_additionalButton(0)]-8-|";
         break;
     default:
         break;
     }
 
+    NSInteger emojiBtnWidth = self.hideEmojiButton ? 0 : 32;
     [self.inputContainerSubViewConstraints
         addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:format
                                                                     options:0
-                                                                    metrics:@{@"BUTTONWIDTH":@(32)}
+                                                                    metrics:@{@"BUTTONWIDTH":@(32), @"EMOJIBUTTONWIDTH":@(emojiBtnWidth)}
                                                                       views:_bindingViews]];
 
     [self.inputContainerSubViewConstraints
@@ -517,6 +535,7 @@
         [_emojiButton setImage:RCResourceImage(@"inputbar_emoji") forState:UIControlStateNormal];
         [_emojiButton setExclusiveTouch:YES];
         [_emojiButton addTarget:self action:@selector(didTouchEmojiDown:) forControlEvents:UIControlEventTouchUpInside];
+        _emojiButton.hidden = self.hideEmojiButton;
     }
     return _emojiButton;
 }

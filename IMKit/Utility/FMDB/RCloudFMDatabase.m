@@ -794,7 +794,7 @@ void RCloudFMDBBlockSQLiteCallBackFunction(sqlite3_context *context, int argc, s
     if (_shouldCacheStatements) {
         statement = [self cachedStatementForQuery:sql];
         pStmt = statement ? [statement statement] : 0x00;
-        [statement reset];
+        [statement resetStatement];
     }
 
     if (!pStmt) {
@@ -979,7 +979,7 @@ void RCloudFMDBBlockSQLiteCallBackFunction(sqlite3_context *context, int argc, s
     if (_shouldCacheStatements) {
         cachedStmt = [self cachedStatementForQuery:sql];
         pStmt = cachedStmt ? [cachedStmt statement] : 0x00;
-        [cachedStmt reset];
+        [cachedStmt resetStatement];
     }
 
     if (!pStmt) {
@@ -1447,7 +1447,7 @@ void RCloudFMDBBlockSQLiteCallBackFunction(sqlite3_context *context, int argc, s
     _inUse = NO;
 }
 
-- (void)reset {
+- (void)resetStatement {
     if (_statement) {
         sqlite3_reset(_statement);
     }

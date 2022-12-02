@@ -1282,7 +1282,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Reset statement */
 
-- (void)reset;
+- (void)resetStatement;
 
 @end
 

@@ -48,7 +48,7 @@
 }
 
 - (void)close {
-    [_statement reset];
+    [_statement resetStatement];
     RCloudFMDBRelease(_statement);
     _statement = nil;
 

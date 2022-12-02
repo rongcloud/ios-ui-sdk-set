@@ -108,6 +108,7 @@
                 RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
                 model.topCellBackgroundColor = self.topCellBackgroundColor;
                 model.cellBackgroundColor = self.cellBackgroundColor;
+                RCLogI(@"conversation targetid:%@,type:%@,unreadMessageCount:%@", conversation.targetId, @(conversation.conversationType), @(model.unreadMessageCount));
                 [modelList addObject:model];
             }
         }
