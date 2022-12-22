@@ -32,6 +32,7 @@ NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMe
 NSString *const RCKitSendingMessageNotification = @"RCKitSendingMessageNotification";
 NSString *const RCKitDispatchConnectionStatusChangedNotification = @"RCKitDispatchConnectionStatusChangedNotification";
 NSString *const RCKitDispatchRecallMessageNotification = @"RCKitDispatchRecallMessageNotification";
+NSString *const RCKitDispatchRecallMessageDetailNotification = @"RCKitDispatchRecallMessageDetailNotification";
 
 NSString *const RCKitDispatchDownloadMediaNotification = @"RCKitDispatchDownloadMediaNotification";
 NSString *const RCKitDispatchMessageReceiptRequestNotification = @"RCKitDispatchMessageReceiptRequestNotification";
@@ -52,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.3.2_opensource";
+static NSString *const RCIMKitVersion = @"5.3.3_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -548,6 +549,9 @@ static NSString *const RCIMKitVersion = @"5.3.2_opensource";
 - (void)messageDidRecall:(RCMessage *)message {
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageNotification
                                                         object:@(message.messageId)
+                                                      userInfo:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageDetailNotification
+                                                        object:message
                                                       userInfo:nil];
     for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
 #pragma clang diagnostic push

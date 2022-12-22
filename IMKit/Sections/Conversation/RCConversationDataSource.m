@@ -837,6 +837,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             if (self.chatVC.isConversationAppear && [self.chatVC.targetId isEqualToString:model.targetId] &&
                 self.chatVC.conversationType == model.conversationType && model.messageDirection == MessageDirection_RECEIVE &&
                 (persistentFlag & MessagePersistent_ISPERSISTED)) {
+                [self.chatVC.util syncReadStatus:rcMessage.sentTime needDelay:YES];
                 if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)] &&
                     (self.chatVC.conversationType == ConversationType_PRIVATE ||
                      self.chatVC.conversationType == ConversationType_Encrypted)) {
@@ -873,7 +874,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                 UIMenuController *menu = [UIMenuController sharedMenuController];
                 menu.menuVisible = NO;
                 // 是否显示右下未读消息数
-                if (__blockSelf.chatVC.enableNewComingMessageIcon == YES && (persistentFlag & MessagePersistent_ISPERSISTED)) {
+                if (__blockSelf.chatVC.enableNewComingMessageIcon == YES && (MessagePersistent_ISCOUNTED == persistentFlag)) {
                     if (![__blockSelf isAtTheBottomOfTableView] &&
                         ![rcMessage.senderUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
                         [__blockSelf.unreadNewMsgArr addObject:rcMessage];

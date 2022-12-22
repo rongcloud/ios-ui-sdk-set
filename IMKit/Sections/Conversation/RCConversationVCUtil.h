@@ -22,6 +22,7 @@
 - (void)doSendSelectedMediaMessage:(NSArray *)selectedImages fullImageRequired:(BOOL)full;
 //同步未读数
 - (void)syncReadStatus;
+- (void)syncReadStatus:(long long)sentTime needDelay:(BOOL)needDelay;
 //发送已读回执
 - (void)sendReadReceipt;
 //批量发送已读回执

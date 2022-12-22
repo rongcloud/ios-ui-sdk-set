@@ -336,6 +336,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         };
         [self updateImageSize];
     } else {
+        _fullButton.titleLabel.text = [NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")];
         [_fullButton setTitle:[NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")]
                      forState:UIControlStateNormal];
     }
@@ -672,10 +673,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     if (self.previewPhotosArr.count <= self.currentIndex) {
         return;
     }
+    _fullButton.titleLabel.text = [NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")];
     [_fullButton setTitle:[NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")]
                  forState:UIControlStateNormal];
 
     RCAssetModel *model = self.previewPhotosArr[self.currentIndex];
+    if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        return;
+    }
     if (model.imageSize) {
         [self getImageSize:model.imageSize];
     } else {
@@ -709,6 +714,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         imageSize = [NSString stringWithFormat:@"%0.2fM", size / 1024 / 1024];
     }
     [self.indicatorView stopAnimating];
+    self.fullButton.titleLabel.text = [NSString stringWithFormat:@"%@ (%@)", RCLocalizedString(@"Full_Image"), imageSize];
     [self.fullButton
         setTitle:[NSString stringWithFormat:@"%@ (%@)", RCLocalizedString(@"Full_Image"), imageSize]
         forState:UIControlStateNormal];
@@ -721,7 +727,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         if ([RCKitUtility isRTL]) {
             _indicatorView.frame = CGRectMake(CGRectGetMinX(self.fullButton.frame) - 20 - 6, 18, 20, 20);
         } else {
-            _indicatorView.frame = CGRectMake(CGRectGetMinX(self.fullButton.frame) + self.fullButton.titleLabel.frame.size.width + 6, 18, 20, 20);
+            _indicatorView.frame = CGRectMake(CGRectGetMaxX(self.fullButton.titleLabel.frame) + 20, 18, 20, 20);
         }
         [self.bottomView addSubview:_indicatorView];
     }

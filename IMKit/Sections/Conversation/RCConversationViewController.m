@@ -565,7 +565,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didReceiveRecallMessageNotification:)
-                                                 name:RCKitDispatchRecallMessageNotification
+                                                 name:RCKitDispatchRecallMessageDetailNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onReceiveMessageReadReceiptResponse:)
@@ -702,12 +702,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     __weak typeof(self) __blockSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        long recalledMsgId = [notification.object longValue];
+        RCMessage *recalledMsg = notification.object;
+        long recalledMsgId = recalledMsg.messageId;
         if ([RCVoicePlayer defaultPlayer].isPlaying &&
             [RCVoicePlayer defaultPlayer].messageId == recalledMsgId) {
             [[RCVoicePlayer defaultPlayer] stopPlayVoice];
         }
-        RCMessage *recalledMsg = [[RCIMClient sharedRCIMClient] getMessage:recalledMsgId];
         [__blockSelf.dataSource didRecallMessage:recalledMsg];
         if (self.enableUnreadMentionedIcon && recalledMsg.conversationType == self.conversationType &&
             [recalledMsg.targetId isEqual:self.targetId] &&
