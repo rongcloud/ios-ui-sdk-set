@@ -11,7 +11,6 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import "RCExtensionService.h"
 #import "RCVoiceCaptureControl.h"
 #import "RCAlertView.h"
 #import "RCVoicePlayer.h"

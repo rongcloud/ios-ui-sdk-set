@@ -11,7 +11,6 @@
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #import <AssetsLibrary/AssetsLibrary.h>
-#import "RCGIFUtility.h"
 #import "RCDestructCountDownButton.h"
 #import "RCIMClient+Destructing.h"
 #import "RCImageMessageProgressView.h"

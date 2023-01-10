@@ -10,7 +10,6 @@
 #import "RCPageControl.h"
 #import "RCEmoticonPackage.h"
 #import "RCKitCommonDefine.h"
-#import "RCExtensionModule.h"
 #import "RCExtensionService.h"
 #import "RCKitConfig.h"
 #import "RCEmojiTabView.h"

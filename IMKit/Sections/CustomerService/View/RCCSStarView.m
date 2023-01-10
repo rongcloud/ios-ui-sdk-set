@@ -7,7 +7,6 @@
 //
 
 #import "RCCSStarView.h"
-#import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 @interface RCCSStarView ()
 @property (nonatomic) int starValue; // 0-4

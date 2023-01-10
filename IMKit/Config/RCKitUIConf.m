@@ -8,6 +8,12 @@
 
 #import "RCKitUIConf.h"
 
+@interface RCKitUIConf ()
+
+@property (nonatomic, copy) NSDictionary *fileSuffixDictionary;
+
+@end
+
 @implementation RCKitUIConf
 - (instancetype)init
 {
@@ -19,6 +25,7 @@
         self.globalMessageAvatarStyle = RC_USER_AVATAR_RECTANGLE;
         self.globalMessagePortraitSize = CGSizeMake(40, 40);
         self.portraitImageViewCornerRadius = 5;
+        self.fileSuffixDictionary = [NSDictionary dictionary];
     }
     return self;
 }
@@ -42,4 +49,20 @@
     _globalMessagePortraitSize.width = width;
     _globalMessagePortraitSize.height = height;
 }
+
+- (BOOL)registerFileSuffixTypes:(NSDictionary<NSString *, NSString *> *)types {
+    for (NSString *key in types) {
+        if (![key isKindOfClass:[NSString class]]) {
+            return NO;
+        }
+        if (![types[key] isKindOfClass:[NSString class]]) {
+            return NO;
+        }
+    }
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict addEntriesFromDictionary:types?:@{}];
+    self.fileSuffixDictionary = [dict copy];
+    return YES;
+}
+
 @end

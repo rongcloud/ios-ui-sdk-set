@@ -10,7 +10,6 @@
 #import "RCAlbumModel.h"
 #import "RCAssetModel.h"
 #import "RCKitCommonDefine.h"
-#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 
 dispatch_queue_t __rc__photo__working_queue = NULL;

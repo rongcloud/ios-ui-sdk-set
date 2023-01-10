@@ -9,8 +9,6 @@
 #import "RCConversationViewController.h"
 #import "RCCSPullLeaveMessageCell.h"
 #import "RCConversationCollectionViewHeader.h"
-#import "RCCustomerServiceMessageModel.h"
-#import "RCExtensionService.h"
 #import "RCFilePreviewViewController.h"
 #import "RCDestructImageBrowseController.h"
 #import "RCKitCommonDefine.h"
@@ -2107,115 +2105,58 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 
     if ([_messageContent isMemberOfClass:[RCImageMessage class]]) {
-        RCImageMessage *imageMsg = (RCImageMessage *)_messageContent;
-        if (imageMsg.destructDuration > 0) {
-            [self presentDestructImagePreviewController:model];
-        } else {
-            [self presentImagePreviewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCSightMessage class]]) {
-        if ([RCKitUtility isCameraHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"VoIPVideoCallExistedWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"VoIPAudioCallExistedWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        RCSightMessage *sightMsg = (RCSightMessage *)_messageContent;
-        if (sightMsg.destructDuration > 0) {
-            [self presentDestructSightViewPreviewViewController:model];
-        } else {
-            [self presentSightViewPreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCGIFMessage class]]) {
-        RCGIFMessage *gifMsg = (RCGIFMessage *)_messageContent;
-        if (gifMsg.destructDuration > 0) {
-            [self pushDestructGIFPreviewViewController:model];
-        } else {
-            [self pushGIFPreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCCombineMessage class]]) {
-        RCCombineMessage *combineMsg = (RCCombineMessage *)_messageContent;
-        if (combineMsg.destructDuration > 0) {
-        } else {
-            [self pushCombinePreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCVoiceMessage class]]) {
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
-            self.isContinuousPlaying = YES;
-        } else {
-            self.isContinuousPlaying = NO;
-        }
-        model.receivedStatus = ReceivedStatus_LISTENED;
-        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        RCVoiceMessageCell *cell =
-            (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell && [cell isKindOfClass:[RCVoiceMessageCell class]]) {
-            [cell playVoice];
-        }
-    } else if ([_messageContent isMemberOfClass:[RCHQVoiceMessage class]]) {
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
-            self.isContinuousPlaying = YES;
-        } else {
-            self.isContinuousPlaying = NO;
-        }
-        if (((RCHQVoiceMessage *)_messageContent).localPath.length > 0) {
-            model.receivedStatus = ReceivedStatus_LISTENED;
-        }
-        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        RCHQVoiceMessageCell *cell =
-            (RCHQVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell && [cell isKindOfClass:[RCHQVoiceMessageCell class]]) {
-            [cell playVoice];
-        }
-    } else if ([model.objectName isEqualToString:@"RC:LBSMsg"]) {
-        // Show the location view controller
-        RCLocationMessage *locationMessage = (RCLocationMessage *)(_messageContent);
-        [self presentLocationViewController:locationMessage];
-    } else if ([_messageContent isMemberOfClass:[RCTextMessage class]]) {
-        // link
-        RCTextMessage *textMsg = (RCTextMessage *)(_messageContent);
-        if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
-            NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-            if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
-                [[RCIMClient sharedRCIMClient]
-                    messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:model.messageId]];
-            }
-            model.cellSize = CGSizeZero;
-            //更新UI
-            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-            // 滚动到最底部
-            [self.conversationMessageCollectionView setNeedsLayout];
-            [self.conversationMessageCollectionView layoutIfNeeded];
-            [self scrollToBottomAnimated:YES];
-        }
-        // phoneNumber
-    } else if ([self isExtensionCell:_messageContent]) {
+        [self p_didTapMessageCellForImageMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCSightMessage class]]) {
+        [self p_didTapMessageCellForSightMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCGIFMessage class]]) {
+        [self p_didTapMessageCellForGIFMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCCombineMessage class]]) {
+        [self p_didTapMessageCellForCombineMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCVoiceMessage class]]) {
+        [self p_didTapMessageCellForVoiceMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCHQVoiceMessage class]]) {
+        [self p_didTapMessageCellForHQVoiceMessage:model];
+        return;
+    }
+    
+    if ([model.objectName isEqualToString:@"RC:LBSMsg"]) {
+        [self p_didTapMessageCellForLocationMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCTextMessage class]]) {
+        [self p_didTapMessageCellForTextMessage:model];
+        return;
+    }
+    
+    if ([self isExtensionCell:_messageContent]) {
         [[RongIMKitExtensionManager sharedManager] didTapMessageCell:model];
-    } else if ([_messageContent isMemberOfClass:[RCFileMessage class]]) {
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCFileMessage class]]) {
         [self presentFilePreviewViewController:model];
-    } else if ([_messageContent isMemberOfClass:[RCCSPullLeaveMessage class]]) {
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCCSPullLeaveMessage class]]) {
         [self.csUtil didTapCSPullLeaveMessage:model];
+        return;
     }
 }
 
@@ -3450,5 +3391,130 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.view addSubview:_extensionView];
     }
     return _extensionView;
+}
+
+#pragma -mark private method
+- (void)p_didTapMessageCellForImageMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCImageMessage *imageMsg = (RCImageMessage *)_messageContent;
+    if (imageMsg.destructDuration > 0) {
+        [self presentDestructImagePreviewController:model];
+    } else {
+        [self presentImagePreviewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForSightMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    if ([RCKitUtility isCameraHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"VoIPVideoCallExistedWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"VoIPAudioCallExistedWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    RCSightMessage *sightMsg = (RCSightMessage *)_messageContent;
+    if (sightMsg.destructDuration > 0) {
+        [self presentDestructSightViewPreviewViewController:model];
+    } else {
+        [self presentSightViewPreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForGIFMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCGIFMessage *gifMsg = (RCGIFMessage *)_messageContent;
+    if (gifMsg.destructDuration > 0) {
+        [self pushDestructGIFPreviewViewController:model];
+    } else {
+        [self pushGIFPreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForCombineMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCCombineMessage *combineMsg = (RCCombineMessage *)_messageContent;
+    if (combineMsg.destructDuration > 0) {
+    } else {
+        [self pushCombinePreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForVoiceMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+        self.isContinuousPlaying = YES;
+    } else {
+        self.isContinuousPlaying = NO;
+    }
+    model.receivedStatus = ReceivedStatus_LISTENED;
+    NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    RCVoiceMessageCell *cell =
+        (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
+    if (cell && [cell isKindOfClass:[RCVoiceMessageCell class]]) {
+        [cell playVoice];
+    }
+}
+
+- (void)p_didTapMessageCellForHQVoiceMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+        self.isContinuousPlaying = YES;
+    } else {
+        self.isContinuousPlaying = NO;
+    }
+    if (((RCHQVoiceMessage *)_messageContent).localPath.length > 0) {
+        model.receivedStatus = ReceivedStatus_LISTENED;
+    }
+    NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    RCHQVoiceMessageCell *cell =
+        (RCHQVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
+    if (cell && [cell isKindOfClass:[RCHQVoiceMessageCell class]]) {
+        [cell playVoice];
+    }
+}
+
+- (void)p_didTapMessageCellForLocationMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    // Show the location view controller
+    RCLocationMessage *locationMessage = (RCLocationMessage *)(_messageContent);
+    [self presentLocationViewController:locationMessage];
+}
+
+- (void)p_didTapMessageCellForTextMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    // link
+    RCTextMessage *textMsg = (RCTextMessage *)(_messageContent);
+    if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
+        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+        if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
+            [[RCIMClient sharedRCIMClient]
+                messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:model.messageId]];
+        }
+        model.cellSize = CGSizeZero;
+        //更新UI
+        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
+        // 滚动到最底部
+        [self.conversationMessageCollectionView setNeedsLayout];
+        [self.conversationMessageCollectionView layoutIfNeeded];
+        [self scrollToBottomAnimated:YES];
+    }
+    // phoneNumber
 }
 @end

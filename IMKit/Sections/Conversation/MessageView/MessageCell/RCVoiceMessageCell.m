@@ -11,7 +11,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCVoicePlayer.h"
-#import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #define Voice_Height 40
 #define voice_Unread_View_Width 8

@@ -73,7 +73,7 @@
     NSURLSessionConfiguration *configuration = [self rcSessionConfiguration];
     _session = [NSURLSession sessionWithConfiguration:configuration
                                              delegate:self
-                                        delegateQueue:nil];
+                                        delegateQueue:[NSOperationQueue mainQueue]];
     _dataTask = [_session dataTaskWithRequest:request];
     [_dataTask resume];
 }

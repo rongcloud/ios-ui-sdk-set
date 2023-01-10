@@ -7,7 +7,6 @@
 //
 
 #import "RCAdminEvaluationView.h"
-#import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #define STAR_COUNT 5
 #define CLIENT_VIEW_HEIGHT 120

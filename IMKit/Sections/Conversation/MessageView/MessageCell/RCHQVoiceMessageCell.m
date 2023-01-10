@@ -14,7 +14,6 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
-#import "RCResendManager.h"
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;

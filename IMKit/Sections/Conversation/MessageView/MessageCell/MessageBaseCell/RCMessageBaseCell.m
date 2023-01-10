@@ -10,7 +10,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCMessageSelectionUtility.h"
-#import "RCIM.h"
 #import "RCAlertView.h"
 #import "RCKitConfig.h"
 NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificationMessageBaseCellUpdateSendingStatus";

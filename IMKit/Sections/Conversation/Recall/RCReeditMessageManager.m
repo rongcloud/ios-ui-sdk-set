@@ -7,7 +7,7 @@
 //
 
 #import "RCReeditMessageManager.h"
-#import "RCIM.h"
+//#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 

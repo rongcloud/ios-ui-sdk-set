@@ -8,7 +8,6 @@
 
 #import "RCFileSelectorViewController.h"
 #import "RCKitCommonDefine.h"
-#import "RCExtensionService.h"
 #import "RCSelectDirectoryTableViewCell.h"
 #import "RCSelectFilesTableViewCell.h"
 #import "RCKitConfig.h"
@@ -121,8 +120,7 @@ static NSString *const RCListValue = @"List";
         }
         NSString *fileName = list[indexPath.row];
         cell.fileNameLabel.text = fileName;
-        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:[fileName pathExtension]];
-        cell.fileIconImageView.image = RCResourceImage(fileTypeIcon);
+        cell.fileIconImageView.image = [RCKitUtility imageWithFileSuffix:[fileName pathExtension]];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         retCell = cell;
     } else {
@@ -187,8 +185,7 @@ static NSString *const RCListValue = @"List";
                                                         row:(NSInteger)row {
     NSString *fileName = [source objectAtIndex:row];
     cell.fileNameLabel.text = fileName;
-    NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:[fileName pathExtension]];
-    cell.fileIconImageView.image = RCResourceImage(fileTypeIcon);
+    cell.fileIconImageView.image = [RCKitUtility imageWithFileSuffix:[fileName pathExtension]];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
 }

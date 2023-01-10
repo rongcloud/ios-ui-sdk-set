@@ -8,7 +8,6 @@
 
 #import "RCCSLeaveMessageController.h"
 #import "RCCSLeaveMessagesCell.h"
-#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"

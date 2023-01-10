@@ -42,6 +42,8 @@
 
 #define SwitchButtonWidth 44
 
+NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotification";
+
 @interface RCChatSessionInputBarControl () <RCEmojiViewDelegate, RCPluginBoardViewDelegate, UINavigationControllerDelegate,
     UIImagePickerControllerDelegate, RCAlbumListViewControllerDelegate,
     RCFileSelectorViewControllerDelegate, RCSelectingUserDataSource,
@@ -684,6 +686,11 @@
                                              selector:@selector(rcInputBar_didReceiveKeyboardWillShowNotification:)
                                                  name:UIKeyboardWillShowNotification
                                                object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(rcInputBar_didReceiveKeyboardWillShowNotification:)
+                                                 name:RCKitKeyboardWillShowNotification
+                                               object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(rcInputBar_didReceiveKeyboardWillHideNotification:)
@@ -735,10 +742,13 @@
          3. 因此需要使用异步的方式, 重新发送一次 KeyboardWillShow, 即可解决输入框被假盘遮挡的问题, 但也引入两个体验问题:
          (1)  标准模式下输入框动画会执行两次(动画不会穿帮)
          (2) 非标准情况下, 输入框会稍晚与键盘(因为补发是异步处理的)
+         (3) 第一次回调中键盘高度是不正确的，所以这里用记录的 keyboardFrame 重新赋值发通知
          */
         dispatch_async(dispatch_get_main_queue(), ^{
             if (self.inputContainerView.textViewBeginEditing) {
-                [self rcInputBar_didReceiveKeyboardWillShowNotification:notification];
+                NSMutableDictionary *userInfo = notification.userInfo.mutableCopy;
+                userInfo[UIKeyboardFrameEndUserInfoKey] = @(self.keyboardFrame);
+                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitKeyboardWillShowNotification object:notification.object userInfo:userInfo.copy];
             }
         });
     }

@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.3.3_opensource";
+static NSString *const RCIMKitVersion = @"5.3.4_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -358,37 +358,8 @@ static NSString *const RCIMKitVersion = @"5.3.3_opensource";
     if (!message) {
         return;
     }
-    if (message.content.senderUserInfo.userId) {
-        if (![message.content.senderUserInfo.userId
-                isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId]) {
-            if (message.content.senderUserInfo.name.length > 0 ||
-                message.content.senderUserInfo.portraitUri.length > 0) {
-                if (message.content.senderUserInfo.portraitUri == nil ||
-                    [RCUtilities isLocalPath:message.content.senderUserInfo.portraitUri]) {
-                    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager]
-                        getUserInfoFromCacheOnly:message.content.senderUserInfo.userId];
-                    if (userInfo) {
-                        message.content.senderUserInfo.portraitUri = [userInfo.portraitUri copy];
-                    }
-                }
-                [[RCUserInfoCacheManager sharedManager] updateUserInfo:message.content.senderUserInfo
-                                                             forUserId:message.content.senderUserInfo.userId];
-            }
-        }
-    }
-
-    if ([message.content isMemberOfClass:[RCUserInfoUpdateMessage class]]) {
-        RCUserInfoUpdateMessage *userInfoMesasge = (RCUserInfoUpdateMessage *)message.content;
-        if ([userInfoMesasge.userInfoList count] > 0) {
-            for (RCUserInfo *userInfo in userInfoMesasge.userInfoList) {
-                if (![userInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId] &&
-                    ![[RCUserInfoCacheManager sharedManager] getUserInfo:userInfo.userId]) {
-                    if (userInfo.name.length > 0 || userInfo.portraitUri.length > 0) {
-                        [[RCUserInfoCacheManager sharedManager] updateUserInfo:userInfo forUserId:userInfo.userId];
-                    }
-                }
-            }
-        }
+    
+    if ([self p_updateUserInfoCache:message.content]){
         return;
     }
 
@@ -420,13 +391,62 @@ static NSString *const RCIMKitVersion = @"5.3.3_opensource";
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchMessageNotification
                                                         object:message
                                                       userInfo:dic_left];
+    
+    if ([self p_disbaleCustomMessageAlert:message left:nLeft]){
+        return;
+    }
+    
+    // 调用声音提示-内部有判断逻辑
+    [self playSoundByMessageIfNeed:message];
+    
+    
+    // 调用展示通知-内部有判断逻辑
+    [self postLocalNotificationIfNeed:message];
+}
+
+- (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
+    RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
+    if (senderUserInfo.userId) {
+        if (![senderUserInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId]) {
+            if (senderUserInfo.name.length > 0 || senderUserInfo.portraitUri.length > 0) {
+                if (senderUserInfo.portraitUri == nil || [RCUtilities isLocalPath:senderUserInfo.portraitUri]) {
+                    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager]
+                                            getUserInfoFromCacheOnly:senderUserInfo.userId];
+                    if (userInfo) {
+                        senderUserInfo.portraitUri = [userInfo.portraitUri copy];
+                    }
+                }
+                [[RCUserInfoCacheManager sharedManager] updateUserInfo:senderUserInfo
+                                                             forUserId:senderUserInfo.userId];
+            }
+        }
+    }
+    
+    if ([messageContent isMemberOfClass:[RCUserInfoUpdateMessage class]]) {
+        RCUserInfoUpdateMessage *userInfoMesasge = (RCUserInfoUpdateMessage *)messageContent;
+        if ([userInfoMesasge.userInfoList count] > 0) {
+            for (RCUserInfo *userInfo in userInfoMesasge.userInfoList) {
+                if (![userInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId] &&
+                    ![[RCUserInfoCacheManager sharedManager] getUserInfo:userInfo.userId]) {
+                    if (userInfo.name.length > 0 || userInfo.portraitUri.length > 0) {
+                        [[RCUserInfoCacheManager sharedManager] updateUserInfo:userInfo forUserId:userInfo.userId];
+                    }
+                }
+            }
+        }
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)p_disbaleCustomMessageAlert:(RCMessage *)message left:(int)nLeft{
     //发出去的消息，不需要本地铃声和通知
     if (message.messageDirection == MessageDirection_SEND) {
-        return;
+        return YES;
     }
 
     if (0 != nLeft) {
-        return;
+        return YES;
     }
     
     BOOL isCustomMessageAlert = YES;
@@ -440,15 +460,10 @@ static NSString *const RCIMKitVersion = @"5.3.3_opensource";
     }
     
     if (!isCustomMessageAlert) {
-        return;
+        return YES;
     }
     
-    // 调用声音提示-内部有判断逻辑
-    [self playSoundByMessageIfNeed:message];
-    
-    
-    // 调用展示通知-内部有判断逻辑
-    [self postLocalNotificationIfNeed:message];
+    return NO;
 }
 
 - (void)playSoundByMessageIfNeed:(RCMessage *)message {

@@ -8,7 +8,6 @@
 
 #import "UIImage+RCDynamicImage.h"
 #include <objc/runtime.h>
-#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 static const NSString *RCImageLocalPathKey = @"RCImageLocalPathKey";
 

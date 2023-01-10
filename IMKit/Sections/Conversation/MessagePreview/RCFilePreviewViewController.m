@@ -354,8 +354,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_typeIconView) {
         _typeIconView =
             [[UIImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
-        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:self.fileMessage.type];
-        _typeIconView.image = RCResourceImage(fileTypeIcon);
+        _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileMessage.type];
 
         [self.view addSubview:_typeIconView];
     }

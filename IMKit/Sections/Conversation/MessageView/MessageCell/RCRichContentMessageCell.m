@@ -7,7 +7,6 @@
 //
 
 #import "RCRichContentMessageCell.h"
-#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCloudImageView.h"

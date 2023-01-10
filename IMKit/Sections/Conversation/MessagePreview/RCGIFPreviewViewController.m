@@ -10,11 +10,9 @@
 #import "RCGIFImage.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
-#import "RCGIFUtility.h"
 #import "RCAssetHelper.h"
 #import <RongIMLib/RongIMLib.h>
 #import "RCIM.h"
-#import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"

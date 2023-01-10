@@ -278,8 +278,7 @@
     if (!_typeIconView) {
         _typeIconView = [[UIImageView alloc]
             initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 30 + self.extentLayoutForY, 75, 75)];
-        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:self.fileType];
-        _typeIconView.image = RCResourceImage(fileTypeIcon);
+        _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileType];
 
         [self.view addSubview:_typeIconView];
     }

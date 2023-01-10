@@ -7,7 +7,6 @@
 //
 
 #import "RCVoiceRecorder.h"
-#import "RCExtensionService.h"
 #import <AVFoundation/AVFoundation.h>
 #import "RCKitConfig.h"
 #import "RCKitCommonDefine.h"

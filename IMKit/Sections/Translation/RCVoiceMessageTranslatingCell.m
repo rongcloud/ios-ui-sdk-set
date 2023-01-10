@@ -8,12 +8,9 @@
 
 #import "RCVoiceMessageTranslatingCell.h"
 #import "RCMessageModel+Translation.h"
-#import "RCCustomerServiceMessageModel.h"
 #import "RCIM.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
-#import "RCKitConfig.h"
 #import "RCIMClient+Destructing.h"
 
 @interface RCVoiceMessageCell()

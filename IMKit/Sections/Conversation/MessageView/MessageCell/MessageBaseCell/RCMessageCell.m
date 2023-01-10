@@ -198,87 +198,113 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 #pragma mark - Public Methods
 
 - (void)updateStatusContentView:(RCMessageModel *)model {
-    self.messageActivityIndicatorView.hidden = YES;
-    if (model.messageDirection == MessageDirection_RECEIVE) {
-        return;
-    }
     __weak typeof(self) __blockSelf = self;
-
     dispatch_async(dispatch_get_main_queue(), ^{
-
-        if (__blockSelf.model.sentStatus == SentStatus_SENDING) {
-            __blockSelf.messageFailedStatusView.hidden = YES;
-            if (__blockSelf.messageActivityIndicatorView) {
-                __blockSelf.messageActivityIndicatorView.hidden = NO;
-                if (__blockSelf.messageActivityIndicatorView.isAnimating == NO) {
-                    [__blockSelf.messageActivityIndicatorView startAnimating];
-                }
-            }
-        } else if (__blockSelf.model.sentStatus == SentStatus_FAILED) {
-            __blockSelf.receiptView.hidden = YES;
-            __blockSelf.receiptStatusLabel.hidden = YES;
-            __blockSelf.messageFailedStatusView.hidden = YES;
-            if ([[RCResendManager sharedManager] needResend:model.messageId]) {
-                if (__blockSelf.messageActivityIndicatorView) {
-                    __blockSelf.messageActivityIndicatorView.hidden = NO;
-                    if (__blockSelf.messageActivityIndicatorView.isAnimating == NO) {
-                        [__blockSelf.messageActivityIndicatorView startAnimating];
-                    }
-                }
-            } else {
-                __blockSelf.messageFailedStatusView.hidden = NO;
-                if (__blockSelf.messageActivityIndicatorView) {
-                    __blockSelf.messageActivityIndicatorView.hidden = YES;
-                    if (__blockSelf.messageActivityIndicatorView.isAnimating == YES) {
-                        [__blockSelf.messageActivityIndicatorView stopAnimating];
-                    }
-                }
-            }
-        } else if (__blockSelf.model.sentStatus == SentStatus_CANCELED) {
-            __blockSelf.messageFailedStatusView.hidden = YES;
-            if (__blockSelf.messageActivityIndicatorView) {
-                __blockSelf.messageActivityIndicatorView.hidden = YES;
-                if (__blockSelf.messageActivityIndicatorView.isAnimating == YES) {
-                    [__blockSelf.messageActivityIndicatorView stopAnimating];
-                }
-            }
-        } else if (__blockSelf.model.sentStatus == SentStatus_SENT) {
-            __blockSelf.messageFailedStatusView.hidden = YES;
-            if (__blockSelf.messageActivityIndicatorView) {
-                __blockSelf.messageActivityIndicatorView.hidden = YES;
-                if (__blockSelf.messageActivityIndicatorView.isAnimating == YES) {
-                    [__blockSelf.messageActivityIndicatorView stopAnimating];
-                }
-            }
-
-            if (model.isCanSendReadReceipt) {
-                __blockSelf.receiptView.hidden = NO;
-                __blockSelf.receiptView.userInteractionEnabled = YES;
-                __blockSelf.receiptStatusLabel.hidden = YES;
-            } else {
-                __blockSelf.receiptView.hidden = YES;
-                __blockSelf.receiptStatusLabel.hidden = NO;
-            }
-
-        } //更新成已读状态
-        else if (__blockSelf.model.sentStatus == SentStatus_READ && __blockSelf.isDisplayReadStatus &&
-                 (__blockSelf.model.conversationType == ConversationType_PRIVATE ||
-                  __blockSelf.model.conversationType == ConversationType_Encrypted)) {
-            if (__blockSelf.model && __blockSelf.model.messageUId && __blockSelf.model.messageUId.length > 0) {
-                __blockSelf.receiptStatusLabel.hidden = YES;
-                __blockSelf.receiptStatusLabel.userInteractionEnabled = NO;
-                __blockSelf.receiptView.hidden = NO;
-            }
-
-            __blockSelf.messageFailedStatusView.hidden = YES;
-            if (__blockSelf.messageActivityIndicatorView) {
-                __blockSelf.messageActivityIndicatorView.hidden = YES;
-                if (__blockSelf.messageActivityIndicatorView.isAnimating == YES) {
-                    [__blockSelf.messageActivityIndicatorView stopAnimating];
-                }
-            }
+        __blockSelf.messageActivityIndicatorView.hidden = YES;
+        if (model.messageDirection == MessageDirection_RECEIVE) {
+            return;
+        }
+        switch (model.sentStatus) {
+            case SentStatus_SENDING:
+                [__blockSelf updateStatusContentViewForSending:model];
+                break;
+            case SentStatus_FAILED:
+                [__blockSelf updateStatusContentViewForFailed:model];
+                break;
+            case SentStatus_CANCELED:
+                [__blockSelf updateStatusContentViewForCanceled:model];
+                break;
+            case SentStatus_SENT:
+                [__blockSelf updateStatusContentViewForSent:model];
+                break;
+            case SentStatus_READ:
+                [__blockSelf updateStatusContentViewForRead:model];
+                break;
+            default:
+                break;
         }
     });
+}
+
+- (void)updateStatusContentViewForSending:(RCMessageModel *)model {
+    self.messageFailedStatusView.hidden = YES;
+    if (self.messageActivityIndicatorView) {
+        self.messageActivityIndicatorView.hidden = NO;
+        if (self.messageActivityIndicatorView.isAnimating == NO) {
+            [self.messageActivityIndicatorView startAnimating];
+        }
+    }
+}
+
+- (void)updateStatusContentViewForFailed:(RCMessageModel *)model {
+    self.receiptView.hidden = YES;
+    self.receiptStatusLabel.hidden = YES;
+    self.messageFailedStatusView.hidden = YES;
+    if ([[RCResendManager sharedManager] needResend:model.messageId]) {
+        if (self.messageActivityIndicatorView) {
+            self.messageActivityIndicatorView.hidden = NO;
+            if (self.messageActivityIndicatorView.isAnimating == NO) {
+                [self.messageActivityIndicatorView startAnimating];
+            }
+        }
+    } else {
+        self.messageFailedStatusView.hidden = NO;
+        if (self.messageActivityIndicatorView) {
+            self.messageActivityIndicatorView.hidden = YES;
+            if (self.messageActivityIndicatorView.isAnimating == YES) {
+                [self.messageActivityIndicatorView stopAnimating];
+            }
+        }
+    }
+}
+
+- (void)updateStatusContentViewForCanceled:(RCMessageModel *)model {
+    self.messageFailedStatusView.hidden = YES;
+    if (self.messageActivityIndicatorView) {
+        self.messageActivityIndicatorView.hidden = YES;
+        if (self.messageActivityIndicatorView.isAnimating == YES) {
+            [self.messageActivityIndicatorView stopAnimating];
+        }
+    }
+}
+
+- (void)updateStatusContentViewForSent:(RCMessageModel *)model {
+    self.messageFailedStatusView.hidden = YES;
+    if (self.messageActivityIndicatorView) {
+        self.messageActivityIndicatorView.hidden = YES;
+        if (self.messageActivityIndicatorView.isAnimating == YES) {
+            [self.messageActivityIndicatorView stopAnimating];
+        }
+    }
+    if (model.isCanSendReadReceipt) {
+        self.receiptView.hidden = NO;
+        self.receiptView.userInteractionEnabled = YES;
+        self.receiptStatusLabel.hidden = YES;
+    } else {
+        self.receiptView.hidden = YES;
+        self.receiptStatusLabel.hidden = NO;
+    }
+}
+
+- (void)updateStatusContentViewForRead:(RCMessageModel *)model {
+    BOOL isDisplayReadStatus = self.isDisplayReadStatus;
+    BOOL isReadStatusType = model.conversationType == ConversationType_PRIVATE ||
+    model.conversationType == ConversationType_Encrypted;
+    if (!isDisplayReadStatus || !isReadStatusType) {
+        return;
+    }
+    if (model.messageUId.length > 0) {
+        self.receiptStatusLabel.hidden = YES;
+        self.receiptStatusLabel.userInteractionEnabled = NO;
+        self.receiptView.hidden = NO;
+    }
+    self.messageFailedStatusView.hidden = YES;
+    if (self.messageActivityIndicatorView) {
+        self.messageActivityIndicatorView.hidden = YES;
+        if (self.messageActivityIndicatorView.isAnimating == YES) {
+            [self.messageActivityIndicatorView stopAnimating];
+        }
+    }
 }
 
 - (void)showBubbleBackgroundView:(BOOL)show{

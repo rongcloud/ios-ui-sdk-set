@@ -7,12 +7,10 @@
 //
 
 #import "RCCombineMessageCell.h"
-#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCCombineMessageUtility.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
-#import "RCResendManager.h"
 #define RCCOMBINECELLWIDTH 230.0f
 #define RCCOMBINEBACKVIEWLEFT 12.0f
 #define RCCOMBINETITLELABLETOP 6.0f

@@ -9,7 +9,6 @@
 #import "RCMessageModel+Txt.h"
 #import <objc/runtime.h>
 #import "RCMessageCellTool.h"
-#import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import <CoreText/CoreText.h>
 

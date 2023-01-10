@@ -8,7 +8,6 @@
 
 #import "RCNetworkIndicatorView.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCKitConfig.h"
 @interface RCNetworkIndicatorView ()
 @property (nonatomic, strong) UILabel *networkUnreachableDescriptionLabel;
