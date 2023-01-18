@@ -6,16 +6,7 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
-#if __has_include(<RongIMKit/RongIMKit.h>)
-
-#import <RongIMKit/RongIMKit.h>
-
-#else
-
-#import "RongIMKit.h"
-
-#endif
-
+#import "RCMessageCell.h"
 
 /*!
  位置消息Cell

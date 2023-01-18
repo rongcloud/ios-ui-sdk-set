@@ -10,6 +10,7 @@
 #import "RCCustomerServiceGroupCell.h"
 #import "RCKitCommonDefine.h"
 #import <RongIMLib/RongIMLib.h>
+#import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import <RongCustomerService/RongCustomerService.h>
 #define CellIdentifier @"customerGroupCell"

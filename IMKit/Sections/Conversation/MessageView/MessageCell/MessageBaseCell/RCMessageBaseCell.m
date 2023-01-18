@@ -10,6 +10,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCMessageSelectionUtility.h"
+#import "RCIM.h"
 #import "RCAlertView.h"
 #import "RCKitConfig.h"
 NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificationMessageBaseCellUpdateSendingStatus";
@@ -117,8 +118,6 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
         if (self.allowsSelection) {
             self.selectButton.hidden = NO;
             [self.contentView addGestureRecognizer:self.multiSelectTap];
-        } else {
-            self.selectButton.hidden = YES;
         }
     } else {
         self.baseContentView.userInteractionEnabled = YES;

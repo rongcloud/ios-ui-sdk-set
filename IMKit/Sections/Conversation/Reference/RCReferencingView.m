@@ -10,6 +10,7 @@
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #import "RCUserInfoCacheManager.h"
+#import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;

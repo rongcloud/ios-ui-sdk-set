@@ -534,265 +534,257 @@ static const char ReplaceContainerElementClass = '\0';
 }
 
 + (id)handleDataModelEngine:(id)object class:(Class) class {
-    if (!object) {
-        return nil;
-    }
-    if ([object isKindOfClass:[NSDictionary class]]) {
-        return [self p_handleDictionaryDataModelEngine:object class:class];
-    } else if ([object isKindOfClass:[NSArray class]]) {
-        return [self p_handleArrayDataModelEngine:object class:class];
-    } else {
-        return object;
-    }
-}
-
-#pragma -mark private method
-+ (id)p_handleDictionaryDataModelEngine:(id)object class:(Class) class {
-    __block NSObject *modelObject = nil;
-    NSDictionary *dictionary = object;
-    __block NSDictionary<NSString *, NSString *> *replacePropertyNameMap =
-        [class getModelReplacePropertyMapper];
-    __block NSDictionary<NSString *, Class> *replacePropertyClassMap = [class getModelPropertyClassMapper];
-    __block NSDictionary<NSString *, Class> *replaceContainerElementClassMap =
-        [class getContainerElementClassMapper];
-    if (replacePropertyNameMap == nil && [class respondsToSelector:@selector(ModelReplacePropertyMapper)]) {
-        replacePropertyNameMap = [class ModelReplacePropertyMapper];
-        [class setModelReplacePropertyMapper:replacePropertyNameMap];
-    }
-    if ([class isSubclassOfClass:[NSDictionary class]]) {
-        modelObject = [NSMutableDictionary dictionary];
-        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj, BOOL *_Nonnull stop) {
-            if ([obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSArray class]]) {
-                Class subModelClass = NSClassFromString(key);
-                if (subModelClass == nil) {
-                    subModelClass = NSClassFromString(
-                        [NSString stringWithFormat:@"%@%@:", [key substringToIndex:1].uppercaseString,
-                                                   [key substringFromIndex:1]]);
-                    if (subModelClass == nil) {
-                        subModelClass = [obj class];
+    if (object) {
+        if ([object isKindOfClass:[NSDictionary class]]) {
+            __block NSObject *modelObject = nil;
+            NSDictionary *dictionary = object;
+            __block NSDictionary<NSString *, NSString *> *replacePropertyNameMap =
+                [class getModelReplacePropertyMapper];
+            __block NSDictionary<NSString *, Class> *replacePropertyClassMap = [class getModelPropertyClassMapper];
+            __block NSDictionary<NSString *, Class> *replaceContainerElementClassMap =
+                [class getContainerElementClassMapper];
+            if (replacePropertyNameMap == nil && [class respondsToSelector:@selector(ModelReplacePropertyMapper)]) {
+                replacePropertyNameMap = [class ModelReplacePropertyMapper];
+                [class setModelReplacePropertyMapper:replacePropertyNameMap];
+            }
+            if ([class isSubclassOfClass:[NSDictionary class]]) {
+                modelObject = [NSMutableDictionary dictionary];
+                [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj, BOOL *_Nonnull stop) {
+                    if ([obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSArray class]]) {
+                        Class subModelClass = NSClassFromString(key);
+                        if (subModelClass == nil) {
+                            subModelClass = NSClassFromString(
+                                [NSString stringWithFormat:@"%@%@:", [key substringToIndex:1].uppercaseString,
+                                                           [key substringFromIndex:1]]);
+                            if (subModelClass == nil) {
+                                subModelClass = [obj class];
+                            }
+                        }
+                        [(NSMutableDictionary *)modelObject
+                            setObject:[self handleDataModelEngine:obj class:subModelClass]
+                               forKey:key];
+                    } else {
+                        [(NSMutableDictionary *)modelObject setObject:obj forKey:key];
                     }
-                }
-                [(NSMutableDictionary *)modelObject
-                    setObject:[self handleDataModelEngine:obj class:subModelClass]
-                       forKey:key];
+                }];
             } else {
-                [(NSMutableDictionary *)modelObject setObject:obj forKey:key];
-            }
-        }];
-    } else {
-        modelObject = [class new];
-        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj, BOOL *_Nonnull stop) {
-            NSString *actualProperty = key;
-            id subObject = obj;
-            if (replacePropertyNameMap != nil) {
-                NSString *replaceName = replacePropertyNameMap[actualProperty];
-                if (replaceName) {
-                    actualProperty = replaceName;
-                }
-            }
-            ModelPropInfo *propertyInfo = [class getPropertyInfo:actualProperty];
-            if (propertyInfo == nil || (propertyInfo != nil && propertyInfo->type == _Unknown)) {
-                if (replacePropertyClassMap) {
-                    propertyInfo = [ModelPropInfo new];
-                    [propertyInfo setClass:replacePropertyClassMap[actualProperty] valueClass:[obj class]];
-                } else {
-                    if ([class respondsToSelector:@selector(ModelReplacePropertyClassMapper)]) {
-                        [class setModelPropertyClassMapper:[class ModelReplacePropertyClassMapper]];
-                    }
-                    propertyInfo =
-                        [self classExistProperty:actualProperty withObject:modelObject valueClass:[obj class]];
-                }
-                if (propertyInfo) {
-                    [class setModelInfo:propertyInfo property:actualProperty];
-                } else {
-                    return;
-                }
-                SEL setter = nil;
-                if (actualProperty.length > 1) {
-                    setter = NSSelectorFromString([NSString
-                        stringWithFormat:@"set%@%@:", [actualProperty substringToIndex:1].uppercaseString,
-                                         [actualProperty substringFromIndex:1]]);
-                } else {
-                    setter = NSSelectorFromString(
-                        [NSString stringWithFormat:@"set%@:", actualProperty.uppercaseString]);
-                }
-                if (![modelObject respondsToSelector:setter]) {
-                    actualProperty = [self existproperty:actualProperty withObject:modelObject];
-                    if (actualProperty == nil) {
-                        return;
-                    }
-                    if (actualProperty.length > 1) {
-                        setter = NSSelectorFromString([NSString
-                            stringWithFormat:@"set%@%@:", [actualProperty substringToIndex:1].uppercaseString,
-                                             [actualProperty substringFromIndex:1]]);
-                    } else {
-                        setter = NSSelectorFromString(
-                            [NSString stringWithFormat:@"set%@:", actualProperty.uppercaseString]);
-                    }
-                }
-                propertyInfo->setter = setter;
-            }
-            switch (propertyInfo->type) {
-            case _Array:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    Class subModelClass = NULL;
-                    if (replaceContainerElementClassMap) {
-                        subModelClass = replaceContainerElementClassMap[actualProperty];
-                    } else if ([class respondsToSelector:@selector(ModelReplaceContainerElementClassMapper)]) {
-                        replaceContainerElementClassMap = [class ModelReplaceContainerElementClassMapper];
-                        subModelClass = replaceContainerElementClassMap[actualProperty];
-                        [class setContainerElementClassMapper:replaceContainerElementClassMap];
-                    }
-                    if (subModelClass == NULL) {
-                        subModelClass = NSClassFromString(actualProperty);
-                        if (subModelClass == nil) {
-                            NSString *first = [actualProperty substringToIndex:1];
-                            NSString *other = [actualProperty substringFromIndex:1];
-                            subModelClass = NSClassFromString(
-                                [NSString stringWithFormat:@"%@%@", [first uppercaseString], other]);
+                modelObject = [class new];
+                [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj, BOOL *_Nonnull stop) {
+                    NSString *actualProperty = key;
+                    id subObject = obj;
+                    if (replacePropertyNameMap != nil) {
+                        NSString *replaceName = replacePropertyNameMap[actualProperty];
+                        if (replaceName) {
+                            actualProperty = replaceName;
                         }
                     }
-                    if (subModelClass) {
-                        ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)(
+                    ModelPropInfo *propertyInfo = [class getPropertyInfo:actualProperty];
+                    if (propertyInfo == nil || (propertyInfo != nil && propertyInfo->type == _Unknown)) {
+                        if (replacePropertyClassMap) {
+                            propertyInfo = [ModelPropInfo new];
+                            [propertyInfo setClass:replacePropertyClassMap[actualProperty] valueClass:[obj class]];
+                        } else {
+                            if ([class respondsToSelector:@selector(ModelReplacePropertyClassMapper)]) {
+                                [class setModelPropertyClassMapper:[class ModelReplacePropertyClassMapper]];
+                            }
+                            propertyInfo =
+                                [self classExistProperty:actualProperty withObject:modelObject valueClass:[obj class]];
+                        }
+                        if (propertyInfo) {
+                            [class setModelInfo:propertyInfo property:actualProperty];
+                        } else {
+                            return;
+                        }
+                        SEL setter = nil;
+                        if (actualProperty.length > 1) {
+                            setter = NSSelectorFromString([NSString
+                                stringWithFormat:@"set%@%@:", [actualProperty substringToIndex:1].uppercaseString,
+                                                 [actualProperty substringFromIndex:1]]);
+                        } else {
+                            setter = NSSelectorFromString(
+                                [NSString stringWithFormat:@"set%@:", actualProperty.uppercaseString]);
+                        }
+                        if (![modelObject respondsToSelector:setter]) {
+                            actualProperty = [self existproperty:actualProperty withObject:modelObject];
+                            if (actualProperty == nil) {
+                                return;
+                            }
+                            if (actualProperty.length > 1) {
+                                setter = NSSelectorFromString([NSString
+                                    stringWithFormat:@"set%@%@:", [actualProperty substringToIndex:1].uppercaseString,
+                                                     [actualProperty substringFromIndex:1]]);
+                            } else {
+                                setter = NSSelectorFromString(
+                                    [NSString stringWithFormat:@"set%@:", actualProperty.uppercaseString]);
+                            }
+                        }
+                        propertyInfo->setter = setter;
+                    }
+                    switch (propertyInfo->type) {
+                    case _Array:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            Class subModelClass = NULL;
+                            if (replaceContainerElementClassMap) {
+                                subModelClass = replaceContainerElementClassMap[actualProperty];
+                            } else if ([class respondsToSelector:@selector(ModelReplaceContainerElementClassMapper)]) {
+                                replaceContainerElementClassMap = [class ModelReplaceContainerElementClassMapper];
+                                subModelClass = replaceContainerElementClassMap[actualProperty];
+                                [class setContainerElementClassMapper:replaceContainerElementClassMap];
+                            }
+                            if (subModelClass == NULL) {
+                                subModelClass = NSClassFromString(actualProperty);
+                                if (subModelClass == nil) {
+                                    NSString *first = [actualProperty substringToIndex:1];
+                                    NSString *other = [actualProperty substringFromIndex:1];
+                                    subModelClass = NSClassFromString(
+                                        [NSString stringWithFormat:@"%@%@", [first uppercaseString], other]);
+                                }
+                            }
+                            if (subModelClass) {
+                                ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)(
+                                    (id)modelObject, propertyInfo->setter,
+                                    [self handleDataModelEngine:subObject class:subModelClass]);
+                            } else {
+                                ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject,
+                                                                                     propertyInfo->setter, subObject);
+                            }
+
+                        } else {
+                            ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                 @[]);
+                        }
+                        break;
+                    case _Dictionary:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            Class subModelClass = NULL;
+                            if (replaceContainerElementClassMap) {
+                                subModelClass = replaceContainerElementClassMap[actualProperty];
+                            } else if ([class respondsToSelector:@selector(ModelReplaceContainerElementClassMapper)]) {
+                                replaceContainerElementClassMap = [class ModelReplaceContainerElementClassMapper];
+                                if (replaceContainerElementClassMap) {
+                                    subModelClass = replaceContainerElementClassMap[actualProperty];
+                                    [class setContainerElementClassMapper:replaceContainerElementClassMap];
+                                }
+                            }
+                            if (subModelClass == NULL) {
+                                subModelClass = NSClassFromString(actualProperty);
+                                if (subModelClass == nil) {
+                                    NSString *first = [actualProperty substringToIndex:1];
+                                    NSString *other = [actualProperty substringFromIndex:1];
+                                    subModelClass = NSClassFromString(
+                                        [NSString stringWithFormat:@"%@%@", [first uppercaseString], other]);
+                                }
+                            }
+                            if (subModelClass) {
+                                NSMutableDictionary *subObjectDictionary = [NSMutableDictionary dictionary];
+                                [subObject enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj,
+                                                                               BOOL *_Nonnull stop) {
+                                    [subObjectDictionary setObject:[self handleDataModelEngine:obj class:subModelClass]
+                                                            forKey:key];
+                                }];
+                                ((void (*)(id, SEL, NSDictionary *))(void *)objc_msgSend)(
+                                    (id)modelObject, propertyInfo->setter, subObjectDictionary);
+                            } else {
+                                ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject,
+                                                                                     propertyInfo->setter, subObject);
+                            }
+
+                        } else {
+                            ((void (*)(id, SEL, NSDictionary *))(void *)objc_msgSend)((id)modelObject,
+                                                                                      propertyInfo->setter, @{});
+                        }
+                        break;
+                    case _String:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            ((void (*)(id, SEL, NSString *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                  subObject);
+                        } else {
+                            ((void (*)(id, SEL, NSString *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                  @"");
+                        }
+                        break;
+                    case _Number:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            ((void (*)(id, SEL, NSNumber *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                  subObject);
+                        } else {
+                            ((void (*)(id, SEL, NSNumber *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                  @(0));
+                        }
+                        break;
+                    case _Integer:
+                        ((void (*)(id, SEL, NSInteger))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                             [subObject integerValue]);
+                        break;
+                    case _UInteger:
+                        ((void (*)(id, SEL, NSUInteger))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                              [subObject unsignedIntegerValue]);
+                        break;
+                    case _Boolean:
+                        ((void (*)(id, SEL, BOOL))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                        [subObject boolValue]);
+                        break;
+                    case _Float:
+                        ((void (*)(id, SEL, float))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                         [subObject floatValue]);
+                        break;
+                    case _Double:
+                        ((void (*)(id, SEL, double))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                          [subObject doubleValue]);
+                        break;
+                    case _Char:
+                        ((void (*)(id, SEL, int8_t))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                          (int8_t)[subObject charValue]);
+                        break;
+                    case _UChar:
+                        ((void (*)(id, SEL, uint8_t))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                           (uint8_t)[subObject unsignedCharValue]);
+                        break;
+                    case _Model:
+                        ((void (*)(id, SEL, id))(void *)objc_msgSend)(
                             (id)modelObject, propertyInfo->setter,
-                            [self handleDataModelEngine:subObject class:subModelClass]);
-                    } else {
-                        ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject,
-                                                                             propertyInfo->setter, subObject);
-                    }
-
-                } else {
-                    ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                         @[]);
-                }
-                break;
-            case _Dictionary:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    Class subModelClass = NULL;
-                    if (replaceContainerElementClassMap) {
-                        subModelClass = replaceContainerElementClassMap[actualProperty];
-                    } else if ([class respondsToSelector:@selector(ModelReplaceContainerElementClassMapper)]) {
-                        replaceContainerElementClassMap = [class ModelReplaceContainerElementClassMapper];
-                        if (replaceContainerElementClassMap) {
-                            subModelClass = replaceContainerElementClassMap[actualProperty];
-                            [class setContainerElementClassMapper:replaceContainerElementClassMap];
+                            [self handleDataModelEngine:subObject class:propertyInfo->class]);
+                        break;
+                    case _Date:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            ((void (*)(id, SEL, NSDate *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                subObject);
                         }
-                    }
-                    if (subModelClass == NULL) {
-                        subModelClass = NSClassFromString(actualProperty);
-                        if (subModelClass == nil) {
-                            NSString *first = [actualProperty substringToIndex:1];
-                            NSString *other = [actualProperty substringFromIndex:1];
-                            subModelClass = NSClassFromString(
-                                [NSString stringWithFormat:@"%@%@", [first uppercaseString], other]);
+                        break;
+                    case _Value:
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            ((void (*)(id, SEL, NSValue *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                 subObject);
                         }
+                        break;
+                    case _Data: {
+                        if (![subObject isKindOfClass:[NSNull class]]) {
+                            ((void (*)(id, SEL, NSData *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
+                                                                                subObject);
+                        }
+                        break;
                     }
-                    if (subModelClass) {
-                        NSMutableDictionary *subObjectDictionary = [NSMutableDictionary dictionary];
-                        [subObject enumerateKeysAndObjectsUsingBlock:^(NSString *key, id _Nonnull obj,
-                                                                       BOOL *_Nonnull stop) {
-                            [subObjectDictionary setObject:[self handleDataModelEngine:obj class:subModelClass]
-                                                    forKey:key];
-                        }];
-                        ((void (*)(id, SEL, NSDictionary *))(void *)objc_msgSend)(
-                            (id)modelObject, propertyInfo->setter, subObjectDictionary);
-                    } else {
-                        ((void (*)(id, SEL, NSArray *))(void *)objc_msgSend)((id)modelObject,
-                                                                             propertyInfo->setter, subObject);
+                    default:
+
+                        break;
                     }
-
-                } else {
-                    ((void (*)(id, SEL, NSDictionary *))(void *)objc_msgSend)((id)modelObject,
-                                                                              propertyInfo->setter, @{});
-                }
-                break;
-            case _String:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    ((void (*)(id, SEL, NSString *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                          subObject);
-                } else {
-                    ((void (*)(id, SEL, NSString *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                          @"");
-                }
-                break;
-            case _Number:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    ((void (*)(id, SEL, NSNumber *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                          subObject);
-                } else {
-                    ((void (*)(id, SEL, NSNumber *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                          @(0));
-                }
-                break;
-            case _Integer:
-                ((void (*)(id, SEL, NSInteger))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                     [subObject integerValue]);
-                break;
-            case _UInteger:
-                ((void (*)(id, SEL, NSUInteger))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                      [subObject unsignedIntegerValue]);
-                break;
-            case _Boolean:
-                ((void (*)(id, SEL, BOOL))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                [subObject boolValue]);
-                break;
-            case _Float:
-                ((void (*)(id, SEL, float))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                 [subObject floatValue]);
-                break;
-            case _Double:
-                ((void (*)(id, SEL, double))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                  [subObject doubleValue]);
-                break;
-            case _Char:
-                ((void (*)(id, SEL, int8_t))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                  (int8_t)[subObject charValue]);
-                break;
-            case _UChar:
-                ((void (*)(id, SEL, uint8_t))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                   (uint8_t)[subObject unsignedCharValue]);
-                break;
-            case _Model:
-                ((void (*)(id, SEL, id))(void *)objc_msgSend)(
-                    (id)modelObject, propertyInfo->setter,
-                    [self handleDataModelEngine:subObject class:propertyInfo->class]);
-                break;
-            case _Date:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    ((void (*)(id, SEL, NSDate *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                        subObject);
-                }
-                break;
-            case _Value:
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    ((void (*)(id, SEL, NSValue *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                         subObject);
-                }
-                break;
-            case _Data: {
-                if (![subObject isKindOfClass:[NSNull class]]) {
-                    ((void (*)(id, SEL, NSData *))(void *)objc_msgSend)((id)modelObject, propertyInfo->setter,
-                                                                        subObject);
-                }
-                break;
+                }];
             }
-            default:
-
-                break;
-            }
-        }];
-    }
-    return modelObject;
-}
-
-+ (id)p_handleArrayDataModelEngine:(id)object class:(Class) class {
-    NSMutableArray *modelObjectArr = [NSMutableArray new];
-    [object enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
-        id subModelObject = [self handleDataModelEngine:obj class:class];
-        if (subModelObject) {
-            [modelObjectArr addObject:subModelObject];
+            return modelObject;
+        } else if ([object isKindOfClass:[NSArray class]]) {
+            NSMutableArray *modelObjectArr = [NSMutableArray new];
+            [object enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
+                id subModelObject = [self handleDataModelEngine:obj class:class];
+                if (subModelObject) {
+                    [modelObjectArr addObject:subModelObject];
+                }
+            }];
+            return modelObjectArr;
+        } else {
+            return object;
         }
-    }];
-    return modelObjectArr;
+    }
+    return nil;
 }
+
 @end

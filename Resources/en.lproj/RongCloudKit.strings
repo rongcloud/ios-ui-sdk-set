@@ -271,15 +271,10 @@
 "SaveFailed" = "Save failed";
 "RecallEdit" = "Edit";
 "Reference"="Quote";
-"Translate"="Translate";
 "CanNotRecall" = "This message has passed the recall time limit. Unable to recall.";
-"TranslateFailed" = "Translation failed, please try again";
 "ChatFiles"="Chat Files";
 "CannotUploadFiles"="Cannot upload 0KB file.";
 "DownloadFailFromiCloud"="Download Fail From iCloud";
 "VideoExpired"="Video Deleted or Expired";
 "LoadMsgAskInfo"="Network Error，View local history messages?";
 "SightCaptureFailed"="Unable to record at this time, please try again later";
-"ConnectionstatusProxyUnavailable"="The current proxy is not available.";
-"restartApp"="Restart Application";
-"PhotoLibraryBugErrorAlert"="The system album cannot be accessed temporarily. Restart the application or mobile phone and try again";

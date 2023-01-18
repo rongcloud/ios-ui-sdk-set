@@ -11,8 +11,10 @@
 #import "RCKitCommonDefine.h"
 #import "RCPhotoPickerCollectCell.h"
 #import "RCPhotoPreviewCollectionViewController.h"
+#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
+#import "RCKitConfig.h"
 #import "RCMBProgressHUD.h"
 
 

@@ -13,8 +13,6 @@
 #import "RCKitUtility.h"
 #import "RCIMClient+Destructing.h"
 #import "RCKitCommonDefine.h"
-#import "RCLocationMessage+imkit.h"
-#import "RCForwardKeyItem.h"
 
 #define BASE_HEAD @"baseHead"
 #define BASE_BOTTOM @"baseBottom"
@@ -49,7 +47,6 @@
 
 @property (nonatomic, strong) dispatch_queue_t rcForwardQueue;
 
-@property(nonatomic, strong) NSDictionary *commonMessageInfo;
 @end
 
 @implementation RCForwardManager
@@ -71,44 +68,10 @@
         NSData *templateJsonData = [NSData dataWithContentsOfFile:templateFilePath];
         _templateJsonDic = [NSJSONSerialization JSONObjectWithData:templateJsonData options:1 error:nil];
         _rcForwardQueue = dispatch_queue_create("com.rongcloud.forwardQueue", DISPATCH_QUEUE_SERIAL);
-        self.commonMessageInfo = [self makeCommonMessageInfo];
     }
     return self;
 }
 
-- (NSDictionary *)makeCommonMessageInfo {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    RCForwardKeyItem *txt = [[RCForwardKeyItem alloc] initWithTitle:@""
-                                                                 key:RCTextMessageTypeIdentifier];
-    dic[RCTextMessageTypeIdentifier] = txt;
-    
-    RCForwardKeyItem *vc = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:VcMsg")
-                                                                 key:RCVoiceMessageTypeIdentifier];
-    dic[RCHQVoiceMessageTypeIdentifier] = vc;
-    dic[RCVoiceMessageTypeIdentifier] = vc;
-    
-    RCForwardKeyItem *imgText = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:ImgTextMsg")
-                                                                    key:@"RC:ImgTextMsg"];
-    dic[@"RC:ImgTextMsg"] = imgText;
-    
-    RCForwardKeyItem *summary = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:VCSummary")
-                                                                    key:@"RC:VCSummary"];
-    dic[@"RC:VCSummary"] = summary;
-    
-    RCForwardKeyItem *stkMsg = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:StkMsg")
-                                                                    key:@"RC:StkMsg"];
-    dic[@"RC:StkMsg"] = stkMsg;
-    
-    RCForwardKeyItem *gif = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:StkMsg")
-                                                                    key:RCGIFMessageTypeIdentifier];
-    dic[RCGIFMessageTypeIdentifier] = gif;
-    
-    RCForwardKeyItem *cardMsg = [[RCForwardKeyItem alloc] initWithTitle:RCLocalizedString(@"RC:CardMsg")
-                                                                    key:@"RC:CardMsg"];
-    dic[@"RC:CardMsg"] = cardMsg;
-
-    return dic;
-}
 - (void)doForwardMessageList:(NSArray *)messageList
             conversationList:(NSArray *)conversationList
                    isCombine:(BOOL)isCombine
@@ -238,8 +201,8 @@
         [summaryContent appendString:RCLocalizedString(RCCombineMessageTypeIdentifier)];
     } else if ([messageModel.objectName isEqualToString:RCSightMessageTypeIdentifier]) {
         [summaryContent appendString:RCLocalizedString(RCSightMessageTypeIdentifier)];
-    } else if ([messageModel.objectName isEqualToString:@"RC:LBSMsg"]) {
-        [summaryContent appendString:RCLocalizedString(@"RC:LBSMsg")];
+    } else if ([messageModel.objectName isEqualToString:RCLocationMessageTypeIdentifier]) {
+        [summaryContent appendString:RCLocalizedString(RCLocationMessageTypeIdentifier)];
     } else if ([messageModel.objectName isEqualToString:@"RC:CardMsg"]) {
         [summaryContent appendString:RCLocalizedString(@"RC:CardMsg")];
     } else if ([messageModel.objectName isEqualToString:@"RC:StkMsg"] ||
@@ -251,15 +214,13 @@
     return summaryContent;
 }
 
-- (NSMutableString *)p_generateCommonStringWith:(RCMessageModel *)model
-                                       userInfo:(RCUserInfo *)userInfo
-                                ifSplitPortrait:(BOOL)ifSplitPortrait {
-    NSMutableString *templateString = [[NSMutableString alloc] init];
-
-    BOOL ret = model && model.objectName;
-    if (!ret) {
-        return [templateString mutableCopy];
+- (NSString *)packageHTMLBody:(RCMessageModel *)model
+                     userInfo:(RCUserInfo *)userInfo
+              ifSplitPortrait:(BOOL)ifSplitPortrait {
+    if (!userInfo || !model) {
+        return @"";
     }
+    NSMutableString *templateString = [[NSMutableString alloc] init];
     if ([model.objectName isEqualToString:RCTextMessageTypeIdentifier]) {
         RCTextMessage *message = (RCTextMessage *)model.content;
         templateString = [self generateCommonString:message.content
@@ -267,64 +228,55 @@
                                            sentTime:model.sentTime
                                     ifSplitPortrait:ifSplitPortrait
                                             htmlKey:RCTextMessageTypeIdentifier];
-    } else {
-        RCForwardKeyItem *item = self.commonMessageInfo[model.objectName];
-        if (!item) {
-            return nil;
-        }
-        templateString = [self generateCommonString:item.title
+    } else if ([model.objectName isEqualToString:RCHQVoiceMessageTypeIdentifier] ||
+               [model.objectName isEqualToString:RCVoiceMessageTypeIdentifier]) {
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:VcMsg")
+                                           userInfo:userInfo
+                                           sentTime:model.sentTime
+                                    ifSplitPortrait:(BOOL)ifSplitPortrait
+                                            htmlKey:RCVoiceMessageTypeIdentifier];
+    } else if ([model.objectName isEqualToString:@"RC:ImgTextMsg"]) {
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:ImgTextMsg")
                                            userInfo:userInfo
                                            sentTime:model.sentTime
                                     ifSplitPortrait:ifSplitPortrait
-                                            htmlKey:item.htmlKey];
-        if ([model.objectName isEqualToString:RCGIFMessageTypeIdentifier]) {
-            RCGIFMessage *message = (RCGIFMessage *)model.content;
-            RCForwardReplace(templateString, TAG_FILEURL, message.remoteUrl ? message.remoteUrl : @"");
-        }
-    }
-    NSLog(@"[W] [%@] - 0: %@", model.objectName, templateString);
-    return [templateString mutableCopy];
-}
-
-- (BOOL)p_isCommonMessage:(RCMessageModel *)model {
-    NSArray *array = [self.commonMessageInfo allKeys];
-    if (model.objectName) {
-        return [array containsObject:model.objectName];
-    }
-
-    return NO;
-}
-
-- (long)p_getSightSize:(RCSightMessage *)message {
-    long long sightSize = 0;
-    if (message.size) {
-        sightSize = message.size;
-    } else if (message.localPath) {
-        sightSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:message.localPath error:nil] fileSize];
-    } else {
-        NSString *localPath = [RCFileUtility getSightCachePath:message.sightUrl];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
-            sightSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:localPath error:nil] fileSize];
-        }
-    }
-    return sightSize;
-}
-
-- (NSMutableString *)p_generalTitleStyle:(RCMessageModel *)model
-                                userInfo:(RCUserInfo *)userInfo
-                         ifSplitPortrait:(BOOL)ifSplitPortrait {
-    NSMutableString *templateString = [[NSMutableString alloc] init];
-
-    if ([model.objectName isEqualToString:@"RC:LBSMsg"]) {
+                                            htmlKey:@"RC:ImgTextMsg"];
+    } else if ([model.objectName isEqualToString:@"RC:VCSummary"]) {
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:VCSummary")
+                                           userInfo:userInfo
+                                           sentTime:model.sentTime
+                                    ifSplitPortrait:ifSplitPortrait
+                                            htmlKey:@"RC:VCSummary"];
+    } else if ([model.objectName isEqualToString:@"RC:StkMsg"]) {
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:StkMsg")
+                                           userInfo:userInfo
+                                           sentTime:model.sentTime
+                                    ifSplitPortrait:ifSplitPortrait
+                                            htmlKey:@"RC:StkMsg"];
+    } else if ([model.objectName isEqualToString:RCGIFMessageTypeIdentifier]) {
+        RCGIFMessage *message = (RCGIFMessage *)model.content;
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:StkMsg")
+                                           userInfo:userInfo
+                                           sentTime:model.sentTime
+                                    ifSplitPortrait:ifSplitPortrait
+                                            htmlKey:RCGIFMessageTypeIdentifier];
+        RCForwardReplace(templateString, TAG_FILEURL, message.remoteUrl ? message.remoteUrl : @"");
+    } else if ([model.objectName isEqualToString:@"RC:CardMsg"]) {
+        templateString = [self generateCommonString:RCLocalizedString(@"RC:CardMsg")
+                                           userInfo:userInfo
+                                           sentTime:model.sentTime
+                                    ifSplitPortrait:ifSplitPortrait
+                                            htmlKey:@"RC:CardMsg"];
+    } else if ([model.objectName isEqualToString:RCLocationMessageTypeIdentifier]) {
         RCLocationMessage *message = (RCLocationMessage *)model.content;
-        templateString = [[self.templateJsonDic objectForKey:@"RC:LBSMsg"] mutableCopy];
+        templateString = [[self.templateJsonDic objectForKey:RCLocationMessageTypeIdentifier] mutableCopy];
         templateString = [self generalTitleStyle:templateString
                                         userInfo:userInfo
                                         sentTime:model.sentTime
                                  ifSplitPortrait:ifSplitPortrait];
         RCForwardReplace(templateString, TAG_LOCATIONNAME, message.locationName ? message.locationName : @"");
-        RCForwardReplace(templateString, TAG_LATITUDE, [NSString stringWithFormat:@"%f", message.latitude]);
-        RCForwardReplace(templateString, TAG_LONGTITUDE, [NSString stringWithFormat:@"%f", message.longitude]);
+        RCForwardReplace(templateString, TAG_LATITUDE, [NSString stringWithFormat:@"%f", message.location.latitude]);
+        RCForwardReplace(templateString, TAG_LONGTITUDE, [NSString stringWithFormat:@"%f", message.location.longitude]);
     } else if ([model.objectName isEqualToString:RCSightMessageTypeIdentifier]) {
         RCSightMessage *message = (RCSightMessage *)model.content;
         templateString = [[self.templateJsonDic objectForKey:RCSightMessageTypeIdentifier] mutableCopy];
@@ -335,7 +287,17 @@
         RCForwardReplace(templateString, TAG_FILEURL, message.sightUrl ? message.sightUrl : @"");
         RCForwardReplace(templateString, TAG_FILENAME,
                          RCLocalizedString(@"RC:SightMsg"));
-        long long sightSize = [self p_getSightSize:message];
+        long long sightSize = 0;
+        if (message.size) {
+            sightSize = message.size;
+        } else if (message.localPath) {
+            sightSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:message.localPath error:nil] fileSize];
+        } else {
+            NSString *localPath = [RCFileUtility getSightCachePath:message.sightUrl];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
+                sightSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:localPath error:nil] fileSize];
+            }
+        }
 
         RCForwardReplace(templateString, TAG_SIZE, [RCKitUtility getReadableStringForFileSize:sightSize]);
         RCForwardReplace(templateString, TAG_IMGEBASE64, [self UIImageToBase64Str:message.thumbnailImage]);
@@ -357,7 +319,7 @@
                                  ifSplitPortrait:ifSplitPortrait];
         RCForwardReplace(templateString, TAG_FILEURL, message.fileUrl ? message.fileUrl : @"");
         RCForwardReplace(templateString, TAG_FILETYPE, message.type ? message.type : @"");
-        NSString *fileBase64 = [self UIImageToBase64Str:[RCKitUtility imageWithFileSuffix:message.type]];
+        NSString *fileBase64 = [self UIImageToBase64Str:RCResourceImage([RCKitUtility getFileTypeIcon:message.type])];
         RCForwardReplace(templateString, TAG_FILEICON, fileBase64 ? fileBase64 : @"");
         RCForwardReplace(templateString, TAG_FILENAME, message.name ? message.name : @"");
         RCForwardReplace(templateString, TAG_SIZE, [RCKitUtility getReadableStringForFileSize:message.size]);
@@ -381,29 +343,6 @@
         }
         RCForwardReplace(templateString, TAG_COMBINEBODY, summmryContent);
     }
-    return [templateString mutableCopy];
-}
-
-- (NSString *)packageHTMLBody:(RCMessageModel *)model
-                     userInfo:(RCUserInfo *)userInfo
-              ifSplitPortrait:(BOOL)ifSplitPortrait {
-    BOOL ret = !userInfo || !model;
-    if (ret) {
-        return @"";
-    }
-    
-    NSMutableString *templateString = [[NSMutableString alloc] init];
-    if ([self p_isCommonMessage:model]) {
-        templateString = [self p_generateCommonStringWith:model
-                                                 userInfo:userInfo
-                                          ifSplitPortrait:ifSplitPortrait];
-        
-    } else {
-        templateString = [self p_generalTitleStyle:model
-                                          userInfo:userInfo
-                                   ifSplitPortrait:ifSplitPortrait];
-    }
-
     return [templateString copy];
 }
 

@@ -9,7 +9,6 @@
 #import "RCCombineMessageUtility.h"
 #import "RCMessageModel.h"
 #import "RCKitCommonDefine.h"
-
 @implementation RCCombineMessageUtility
 
 + (NSString *)getCombineMessagePreviewVCTitle:(RCCombineMessage *)message {
@@ -87,7 +86,7 @@
             @"RC:ImgTextMsg",
             @"RC:StkMsg",
             @"RC:CardMsg",
-            @"RC:LBSMsg",
+            RCLocationMessageTypeIdentifier,
             RCSightMessageTypeIdentifier,
             RCImageMessageTypeIdentifier,
             RCFileMessageTypeIdentifier,
@@ -122,7 +121,7 @@
             @"RC:ImgTextMsg",
             @"RC:StkMsg",
             @"RC:CardMsg",
-            @"RC:LBSMsg",
+            RCLocationMessageTypeIdentifier,
             RCSightMessageTypeIdentifier,
             RCImageMessageTypeIdentifier,
             RCFileMessageTypeIdentifier,

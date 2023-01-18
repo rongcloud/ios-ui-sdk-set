@@ -51,23 +51,10 @@
     [self refreshDataSource];
 }
 
-- (UIImage *)imageflippedForRTL:(UIImage *)image
-{
-    if (@available(iOS 9.0, *)) {
-        if ([RCKitUtility isRTL]) {
-            return [UIImage imageWithCGImage:image.CGImage
-                                       scale:image.scale
-                                 orientation:UIImageOrientationUpMirrored];
-        }
-    }
-    return image;
-}
-
 - (void)setNav {
     self.navigationController.navigationBar.translucent = NO;
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
-    imgMirror = [self imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RongStickerString(@"back") target:self action:@selector(backAction)];
+    
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RongStickerString(@"back") target:self action:@selector(backAction)];
 }
 
 - (void)viewWillAppear:(BOOL)animated {

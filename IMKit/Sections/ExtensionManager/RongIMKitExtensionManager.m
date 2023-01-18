@@ -7,6 +7,8 @@
 //
 
 #import "RongIMKitExtensionManager.h"
+#import "RCIM.h"
+#import "RCKitUtility.h"
 #import "RCloudImageView.h"
 #import "RongExtensionKit.h"
 #import "RCKitCommonDefine.h"

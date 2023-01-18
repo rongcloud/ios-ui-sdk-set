@@ -115,16 +115,9 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 
 - (UILabel *)durationLabel {
     if (!_durationLabel) {
-        CGRect frame = CGRectMake(33, 9.5, self.typeBackgroundView.frame.size.width-33, 14);
-        if ([RCKitUtility isRTL]) {
-            frame = CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-33, 14);
-        }
-        _durationLabel = [[UILabel alloc] initWithFrame:frame];
+        _durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(33, 9.5, self.typeBackgroundView.frame.size.width-33, 14)];
         _durationLabel.textColor = [UIColor whiteColor];
         _durationLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
-        if ([RCKitUtility isRTL]) {
-            _durationLabel.textAlignment = NSTextAlignmentRight;
-        }
         [self.typeBackgroundView addSubview:_durationLabel];
     }
     return _durationLabel;
@@ -132,14 +125,8 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 
 - (UIImageView *)videoIcon {
     if (!_videoIcon) {
-        CGRect frame = (CGRect){6, self.typeBackgroundView.frame.size.height-21, 19, 19};
-        UIImage *image = RCResourceImage(@"fileicon_video_wall");
-        if ([RCKitUtility isRTL]) {
-            frame =(CGRect){self.typeBackgroundView.frame.size.width - 6-19, self.typeBackgroundView.frame.size.height-21, 19, 19};
-            image = [image imageFlippedForRightToLeftLayoutDirection];
-        }
-        _videoIcon = [[UIImageView alloc] initWithFrame:frame];
-        _videoIcon.image = image;
+        _videoIcon = [[UIImageView alloc] initWithFrame:(CGRect){6, self.typeBackgroundView.frame.size.height-21, 19, 19}];
+        _videoIcon.image = RCResourceImage(@"fileicon_video_wall");
         [self.typeBackgroundView addSubview:_videoIcon];
     }
     return _videoIcon;
@@ -147,17 +134,10 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 
 - (UILabel *)gifLabel {
     if (!_gifLabel) {
-        CGRect frame = CGRectMake(6, 9.5, self.typeBackgroundView.frame.size.width-6, 14);
-        if ([RCKitUtility isRTL]) {
-            frame =CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-6, 14);
-        }
-        _gifLabel = [[UILabel alloc] initWithFrame:frame];
+        _gifLabel = [[UILabel alloc] initWithFrame:CGRectMake(6, 9.5, self.typeBackgroundView.frame.size.width-6, 14)];
         _gifLabel.textColor = [UIColor whiteColor];
         _gifLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
         _gifLabel.text = @"GIF";
-        if ([RCKitUtility isRTL]) {
-            _gifLabel.textAlignment = NSTextAlignmentRight;
-        }
         [self.typeBackgroundView addSubview:_gifLabel];
     }
     return _gifLabel;

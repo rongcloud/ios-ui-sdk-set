@@ -12,7 +12,6 @@
 #import "RCMessageModel.h"
 #import "RCSightSlideViewController.h"
 #import "RCKitCommonDefine.h"
-#import "RCSemanticContext.h"
 @interface RCSightFileBrowserViewController ()
 
 @property (nonatomic, strong) RCMessageModel *messageModel;
@@ -127,10 +126,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     ssv.messageModel = model;
     ssv.topRightBtnHidden = YES;
     UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:ssv];
-    
-    if ([RCSemanticContext isRTL]) {
-        navc.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-    }
     navc.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:navc animated:YES completion:nil];
 }

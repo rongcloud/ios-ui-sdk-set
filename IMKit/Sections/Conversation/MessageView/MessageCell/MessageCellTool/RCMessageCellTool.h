@@ -18,6 +18,5 @@
 + (CGFloat)getMessageContentViewMaxWidth;
 + (CGSize)getThumbnailImageSize:(UIImage *)image;
 + (NSDictionary *)getTextLinkOrPhoneNumberAttributeDictionary:(RCMessageDirection)msgDirection;
-+ (UIImage *)translationTextBackgroundImage;
 @end
 

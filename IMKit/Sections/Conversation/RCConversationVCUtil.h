@@ -22,7 +22,6 @@
 - (void)doSendSelectedMediaMessage:(NSArray *)selectedImages fullImageRequired:(BOOL)full;
 //同步未读数
 - (void)syncReadStatus;
-- (void)syncReadStatus:(long long)sentTime needDelay:(BOOL)needDelay;
 //发送已读回执
 - (void)sendReadReceipt;
 //批量发送已读回执
@@ -56,10 +55,6 @@
 //是否可以引用消息
 - (BOOL)canReferenceMessage:(RCMessageModel *)message;
 
-
-/// 根据消息ID获取model
-/// @param messageID <#messageID description#>
-- (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
 #pragma mark - Util
 //保存草稿
 - (void)saveDraftIfNeed;

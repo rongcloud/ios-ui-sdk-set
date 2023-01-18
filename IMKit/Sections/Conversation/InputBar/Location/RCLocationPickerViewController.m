@@ -7,8 +7,11 @@
 //
 
 #import "RCLocationPickerViewController.h"
+#import "RCKitCommonDefine.h"
+#import "RCExtensionService.h"
 #import "RCLocationPickerMKMapViewDataSource.h"
-#import <RongLocation/RongLocation.h>
+#import "RCKitConfig.h"
+#import "RCAlertView.h"
 
 @interface RCLocationPickerViewController () <RCLocationPickerViewControllerDataSource>
 
@@ -24,15 +27,6 @@
 @property (nonatomic, strong) UILabel *moreLabel;
 @property (nonatomic, strong) UIActivityIndicatorView *busyIndicator;
 @property (nonatomic, assign) BOOL hasMore;
-/*!
- 当前会话的会话类型
- */
-@property (nonatomic) RCConversationType conversationType;
-
-/*!
- 目标会话ID
- */
-@property (nonatomic, copy) NSString *targetId;
 /** 设置UINavigationController的NavigationBar
 
  设置返回按钮、标题、完成按钮。用户可以根据情况编写自己的configureNavigationBar。
@@ -374,18 +368,11 @@
 }
 
 - (void)rightBarButtonItemPressed:(id)sender {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(locationPicker:didSelectLocation:locationName:mapScreenShot:)]) {
+    if (self.delegate) {
         [self.delegate locationPicker:self
                     didSelectLocation:[self currentLocationCoordinate2D]
                          locationName:[self currentLocationName]
                         mapScreenShot:[self currentMapScreenShot]];
-    }else if(self.conversationType && self.targetId.length > 0){
-        RCLocationMessage *locationMessage = [RCLocationMessage messageWithLocationImage:[self currentMapScreenShot] location:[self currentLocationCoordinate2D] locationName:[self currentLocationName]];
-        [[RCIM sharedRCIM] sendMessage:self.conversationType targetId:self.targetId content:locationMessage pushContent:nil pushData:nil success:^(long messageId) {
-            
-        } error:^(RCErrorCode nErrorCode, long messageId) {
-            
-        }];
     }
     [self dismissViewControllerAnimated:YES completion:nil];
 }

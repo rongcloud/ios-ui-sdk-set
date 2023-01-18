@@ -7,6 +7,7 @@
 //
 
 #import "RCButton.h"
+#import "RCExtensionService.h"
 #import "UIImage+RCDynamicImage.h"
 #import "RCKitConfig.h"
 @implementation RCButton

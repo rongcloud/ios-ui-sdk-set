@@ -6,6 +6,7 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
+#import "RCThemeDefine.h"
 #import <Foundation/Foundation.h>
 #import <RongIMLib/RongIMLib.h>
 
@@ -34,20 +35,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchMessageNotification;
  RCKitDispatchRecallMessageNotification只要注册都可以收到通知；RCIMReceiveMessageDelegate需要设置监听，并同时只能存在一个监听。
  */
 FOUNDATION_EXPORT NSString *const RCKitDispatchRecallMessageNotification;
-
-/*!
- @const 消息被撤回的Notification
-
- @discussion 消息被撤回后，SDK会分发此通知。
-
- Notification的object为 RCMessage 对象
-
- 与RCIMReceiveMessageDelegate的区别:
- RCKitDispatchRecallMessageDetailNotification只要注册都可以收到通知；RCIMReceiveMessageDelegate需要设置监听，并同时只能存在一个监听。
- 
- @since 5.3.3
- */
-FOUNDATION_EXPORT NSString *const RCKitDispatchRecallMessageDetailNotification;
 
 /*!
  @const 连接状态变化的Notification
@@ -302,15 +289,14 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 
  @discussion 被撤回的消息会变更为RCRecallNotificationMessage，App需要在UI上刷新这条消息。
  */
-- (void)onRCIMMessageRecalled:(long)messageId __deprecated_msg("Use  messageDidRecall on RCIM instead");
+- (void)onRCIMMessageRecalled:(long)messageId __deprecated_msg("已废弃，请使用 RCIM 的 messageDidRecall");
 
 /*!
  消息被撤回的回调方法
 
  @param message 被撤回的消息
 
- @discussion 如果不删除被撤回的消息，被撤回的原消息会变更为RCRecallNotificationMessage ，参数 message 就是变更后的消息，App需要在UI上刷新这条消息。
- @discussion 如果删除被撤回的消息，参数 message 就是被撤回的原消息，App需要在UI上找到删除这条消息。
+ @discussion 被撤回的消息会变更为RCRecallNotificationMessage，App需要在UI上刷新这条消息。
  @discussion 和上面的 - (void)onRCIMMessageRecalled:(long)messageId 功能完全一致，只能选择其中一个使用。
  */
 - (void)messageDidRecall:(RCMessage *)message;
@@ -339,8 +325,8 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 
  @discussion 设置IMKit的连接状态监听器，请参考RCIM的connectionStatusDelegate属性。
 
- @warning 如果您使用IMKit，可以设置并实现此Delegate监听连接状态；
- 如果您使用IMLib，请使用RCIMClient中的RCConnectionStatusChangeDelegate监听连接状态，而不要使用此监听器。
+ @warning 如果您使用IMKit，可以设置并实现此Delegate监听消息接收；
+ 如果您使用IMLib，请使用RCIMClient中的RCIMClientReceiveMessageDelegate监听消息接收，而不要使用此监听器。
  */
 @protocol RCIMConnectionStatusDelegate <NSObject>
 
@@ -760,7 +746,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  如果您使用IMKit，使用此方法发送定向消息SDK会自动更新UI；
  如果您使用IMLib，请使用RCIMClient中的同名方法发送定向消息，不会自动更新UI。
 
- @warning 此方法目前仅支持普通群组和讨论组。
+ @warning 此方法目前仅支持群组和讨论组。
  */
 - (RCMessage *)sendDirectionalMessage:(RCConversationType)conversationType
                              targetId:(NSString *)targetId
@@ -817,7 +803,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)createDiscussion:(NSString *)name
               userIdList:(NSArray *)userIdList
                  success:(void (^)(RCDiscussion *discussion))successBlock
-                   error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                   error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  讨论组加人，将用户加入讨论组
@@ -832,7 +818,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)addMemberToDiscussion:(NSString *)discussionId
                    userIdList:(NSArray *)userIdList
                       success:(void (^)(RCDiscussion *discussion))successBlock
-                        error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                        error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  讨论组踢人，将用户移出讨论组
@@ -850,7 +836,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)removeMemberFromDiscussion:(NSString *)discussionId
                             userId:(NSString *)userId
                            success:(void (^)(RCDiscussion *discussion))successBlock
-                             error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                             error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  退出当前讨论组
@@ -861,7 +847,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  */
 - (void)quitDiscussion:(NSString *)discussionId
                success:(void (^)(RCDiscussion *discussion))successBlock
-                 error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                 error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  获取讨论组的信息
@@ -872,7 +858,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  */
 - (void)getDiscussion:(NSString *)discussionId
               success:(void (^)(RCDiscussion *discussion))successBlock
-                error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  设置讨论组名称
@@ -887,7 +873,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)setDiscussionName:(NSString *)discussionId
                      name:(NSString *)discussionName
                   success:(void (^)(void))successBlock
-                    error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                    error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 /*!
  设置讨论组是否开放加人权限
@@ -903,7 +889,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)setDiscussionInviteStatus:(NSString *)discussionId
                            isOpen:(BOOL)isOpen
                           success:(void (^)(void))successBlock
-                            error:(void (^)(RCErrorCode status))errorBlock __attribute__((deprecated));
+                            error:(void (^)(RCErrorCode status))errorBlock __deprecated_msg("已废弃，请勿使用。");
 
 #pragma mark - 用户信息、群组信息相关
 

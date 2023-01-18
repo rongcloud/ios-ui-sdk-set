@@ -36,7 +36,7 @@
 #endif
 
 @protocol RCloudImageLoaderObserver;
-@interface RCloudImageLoader : NSObject {
+@interface RCloudImageLoader : NSObject /*<NSURLConnectionDelegate>*/ {
   @private
     NSDictionary *_currentConnections;
     NSMutableDictionary *currentConnections;

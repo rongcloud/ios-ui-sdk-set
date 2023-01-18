@@ -12,9 +12,6 @@
 #import "RCCallKitUtility.h"
 #import "RCCallTipMessageCell.h"
 
-// appkey 默认长度
-static NSInteger kAppkeyLength = 13;
-
 @implementation RCCallKitExtensionModule
 
 /*!
@@ -52,7 +49,7 @@ static NSInteger kAppkeyLength = 13;
         //  其他端接听显示的消息不可点击
         if (messageModel.conversationType == ConversationType_PRIVATE &&
             callMessage.hangupReason != RCCallDisconnectReasonAcceptByOtherClient) {
-            [self startSingleCall:messageModel.targetId mediaType:callMessage.mediaType];
+            [[RCCall sharedRCCall] startSingleCall:messageModel.targetId mediaType:callMessage.mediaType];
         }
     }
 }
@@ -73,7 +70,7 @@ static NSInteger kAppkeyLength = 13;
 
         if (conversationType == ConversationType_PRIVATE) {
             audioItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                [self startSingleCall:targetId mediaType:RCCallMediaAudio];
+                [[RCCall sharedRCCall] startSingleCall:targetId mediaType:RCCallMediaAudio];
             };
         } else if (conversationType == ConversationType_GROUP || conversationType == ConversationType_DISCUSSION) {
             audioItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
@@ -91,11 +88,11 @@ static NSInteger kAppkeyLength = 13;
         videoItem.title = RCCallKitLocalizedString(@"VoIPVideoCall");
 
         videoItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-            [self startSingleCall:targetId mediaType:RCCallMediaVideo];
+            [[RCCall sharedRCCall] startSingleCall:targetId mediaType:RCCallMediaVideo];
         };
         if (conversationType == ConversationType_PRIVATE) {
             videoItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                [self startSingleCall:targetId mediaType:RCCallMediaVideo];
+                [[RCCall sharedRCCall] startSingleCall:targetId mediaType:RCCallMediaVideo];
             };
         } else if (conversationType == ConversationType_GROUP || conversationType == ConversationType_DISCUSSION) {
             videoItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
@@ -106,27 +103,6 @@ static NSInteger kAppkeyLength = 13;
         [itemList addObject:videoItem];
     }
     return itemList;
-}
-
-- (void)startSingleCall:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
-    if ([self isCrossCallWithCheckString:targetId]) {
-        [[RCCall sharedRCCall] startSingleCrossCall:targetId mediaType:mediaType];
-    } else {
-        [[RCCall sharedRCCall] startSingleCall:targetId mediaType:mediaType];
-    }
-}
-
-- (BOOL)isCrossCallWithCheckString:(NSString *)targetId {
-    if ([targetId containsString:@"_"]) {
-        NSArray *targetIds = [targetId componentsSeparatedByString:@"_"];
-        if (targetIds.count > 1) {
-            NSString *tAppkey = targetIds[0];
-            if (tAppkey.length == kAppkeyLength) {
-                return YES;
-            }
-        }
-    }
-    return NO;
 }
 
 - (void)onMessageReceived:(RCMessage *)message {

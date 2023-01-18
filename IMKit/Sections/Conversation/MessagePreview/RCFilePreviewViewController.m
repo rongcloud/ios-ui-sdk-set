@@ -14,8 +14,6 @@
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
-#import "RCSemanticContext.h"
-
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 @interface RCFilePreviewViewController ()
@@ -320,9 +318,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:rightBtn];
 
     //设置左键
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
-    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }
 
 #pragma mark - Getters and Setters
@@ -354,7 +350,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_typeIconView) {
         _typeIconView =
             [[UIImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
-        _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileMessage.type];
+        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:self.fileMessage.type];
+        _typeIconView.image = RCResourceImage(fileTypeIcon);
 
         [self.view addSubview:_typeIconView];
     }

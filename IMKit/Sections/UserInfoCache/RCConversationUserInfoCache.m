@@ -84,6 +84,7 @@ static void *cacheRWQueueTag = &cacheRWQueueTag;
     if (!cacheUserInfo) {
         return nil;
     }
+
     RCUserInfo *user = [[RCUserInfo alloc] initWithUserId:cacheUserInfo.userId name:cacheUserInfo.name portrait:cacheUserInfo.portraitUri];
     user.alias = cacheUserInfo.alias;
     user.extra = cacheUserInfo.extra;
@@ -204,12 +205,6 @@ static void *cacheRWQueueTag = &cacheRWQueueTag;
         [rcUserInfoWriteDBHelper deleteConversationUserInfoFromDB:userId
                                                  conversationType:conversationType
                                                          targetId:targetId];
-        RCLogI(@"clearConversationUserInfo:conversationType;targetId:;;;userId:%@,conversationType=%lu,targerId=%@",userId, (unsigned long)conversationType, targetId);
-        RCUserInfo *userInfo = [[RCUserInfo alloc] init];
-        userInfo.userId = userId;
-        [self.updateDelegate onConversationUserInfoUpdate:userInfo
-                                               inConversation:conversationType
-                                                     targetId:targetId];
     });
 }
 

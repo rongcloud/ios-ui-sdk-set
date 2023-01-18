@@ -7,7 +7,6 @@
 //
 
 #import "RCStickerNetworking.h"
-#import "RCStickerUtility.h"
 
 NSInteger const timeoutInterval = 30;
 
@@ -52,7 +51,7 @@ NSInteger const timeoutInterval = 30;
     }
     request.timeoutInterval = timeoutInterval;
 
-    NSURLSessionDataTask *task = [[NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]]
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
           completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response, NSError *_Nullable error) {
               if (completionHandler) {
@@ -83,7 +82,7 @@ NSInteger const timeoutInterval = 30;
     }
     request.timeoutInterval = timeoutInterval;
 
-    NSURLSessionTask *task = [[NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]]
+    NSURLSessionTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
           completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response, NSError *_Nullable error) {
               if (completionHandler) {
@@ -99,7 +98,7 @@ NSInteger const timeoutInterval = 30;
                                         NSError *_Nullable error))completionHandler {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:URLString]];
     request.timeoutInterval = timeoutInterval;
-    NSURLSessionTask *task = [[NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]]
+    NSURLSessionTask *task = [[NSURLSession sharedSession]
         downloadTaskWithRequest:request
               completionHandler:^(NSURL *_Nullable location, NSURLResponse *_Nullable response,
                                   NSError *_Nullable error) {

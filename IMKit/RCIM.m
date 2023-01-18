@@ -24,15 +24,11 @@
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
 #import "RCKitListenerManager.h"
-#import "RCMessageNotificationHelper.h"
-#import "RCIMNotificationDataContext.h"
-
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
 NSString *const RCKitSendingMessageNotification = @"RCKitSendingMessageNotification";
 NSString *const RCKitDispatchConnectionStatusChangedNotification = @"RCKitDispatchConnectionStatusChangedNotification";
 NSString *const RCKitDispatchRecallMessageNotification = @"RCKitDispatchRecallMessageNotification";
-NSString *const RCKitDispatchRecallMessageDetailNotification = @"RCKitDispatchRecallMessageDetailNotification";
 
 NSString *const RCKitDispatchDownloadMediaNotification = @"RCKitDispatchDownloadMediaNotification";
 NSString *const RCKitDispatchMessageReceiptRequestNotification = @"RCKitDispatchMessageReceiptRequestNotification";
@@ -50,10 +46,11 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @property (nonatomic, assign) BOOL hasNotifydExtensionModuleUserId;
 @property (nonatomic, copy) NSString *token;
 @property (nonatomic, strong) NSMutableArray *downloadingMeidaMessageIds;
+
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.3.4_opensource";
+static NSString *const RCIMKitVersion = @"5.1.9.3_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -68,6 +65,7 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             __rongUIKit.enablePersistentUserInfoCache = NO;
             __rongUIKit.hasNotifydExtensionModuleUserId = NO;
             __rongUIKit.automaticDownloadHQVoiceMsgEnable = YES;
+            __rongUIKit.downloadingMeidaMessageIds = [[NSMutableArray alloc] init];
             [[RongIMKitExtensionManager sharedManager] loadAllExtensionModules];
         }
     });
@@ -269,15 +267,8 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
 }
 
 - (void)postLocalNotificationIfNeed:(RCMessage *)message {
-    
     //聊天室消息不做本地通知
     if (ConversationType_CHATROOM == message.conversationType) {
-        
-        return;
-    }
-    //在 IMKit 明确不支持超级群的情况下，超级群消息不做本地通知
-    //后续如果 IMKit 明确支持超级群，此限制需放开
-    if (ConversationType_ULTRAGROUP == message.conversationType) {
         return;
     }
     
@@ -292,12 +283,11 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     }
     
     //@me 要做本地通知
-    // 这个地方有冲突 @me  @other  @all 如何处理
     NSDictionary *dictionary = [RCKitUtility getNotificationUserInfoDictionary:message];
-//    if (message.content.mentionedInfo.isMentionedMe) {
-//        [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
-//        return;
-//    }
+    if (message.content.mentionedInfo.isMentionedMe) {
+        [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message userInfo:dictionary];
+        return;
+    }
 
     //全局禁止本地通知，不做本地通知
     if (RCKitConfigCenter.message.disableMessageNotificaiton) {
@@ -305,32 +295,10 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     }
     
     //用户开启免打扰，不做本地通知
-//    if ([self checkNoficationQuietStatus]) {
-//        return;
-//    }
-    
-    if ([message.content isKindOfClass:RCCommandNotificationMessage.class]){
+    if ([self checkNoficationQuietStatus]) {
         return;
     }
-    
-    if (message.conversationType == ConversationType_Encrypted) {
-        [RCMessageNotificationHelper checkNotifyAbilityWith:message completion:^(BOOL show) {
-            if (show) {
-                [[RCLocalNotification defaultCenter]
-                 postLocalNotification:RCLocalizedString(@"receive_new_message")
-                 userInfo:dictionary];
-            }
-        }];
-    } else {
-        [RCMessageNotificationHelper checkNotifyAbilityWith:message completion:^(BOOL show) {
-            if (show) {
-                [[RCLocalNotification defaultCenter] postLocalNotificationWithMessage:message
-                                                                             userInfo:dictionary];
 
-            }
-        }];
-    }
-    /*
     if (message.conversationType == ConversationType_Encrypted) {
         [[RCLocalNotification defaultCenter]
          postLocalNotification:RCLocalizedString(@"receive_new_message")
@@ -346,7 +314,7 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             }
         } error:nil];
     }
-*/
+
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object {
@@ -358,8 +326,37 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     if (!message) {
         return;
     }
-    
-    if ([self p_updateUserInfoCache:message.content]){
+    if (message.content.senderUserInfo.userId) {
+        if (![message.content.senderUserInfo.userId
+                isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId]) {
+            if (message.content.senderUserInfo.name.length > 0 ||
+                message.content.senderUserInfo.portraitUri.length > 0) {
+                if (message.content.senderUserInfo.portraitUri == nil ||
+                    [RCUtilities isLocalPath:message.content.senderUserInfo.portraitUri]) {
+                    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager]
+                        getUserInfoFromCacheOnly:message.content.senderUserInfo.userId];
+                    if (userInfo) {
+                        message.content.senderUserInfo.portraitUri = [userInfo.portraitUri copy];
+                    }
+                }
+                [[RCUserInfoCacheManager sharedManager] updateUserInfo:message.content.senderUserInfo
+                                                             forUserId:message.content.senderUserInfo.userId];
+            }
+        }
+    }
+
+    if ([message.content isMemberOfClass:[RCUserInfoUpdateMessage class]]) {
+        RCUserInfoUpdateMessage *userInfoMesasge = (RCUserInfoUpdateMessage *)message.content;
+        if ([userInfoMesasge.userInfoList count] > 0) {
+            for (RCUserInfo *userInfo in userInfoMesasge.userInfoList) {
+                if (![userInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId] &&
+                    ![[RCUserInfoCacheManager sharedManager] getUserInfo:userInfo.userId]) {
+                    if (userInfo.name.length > 0 || userInfo.portraitUri.length > 0) {
+                        [[RCUserInfoCacheManager sharedManager] updateUserInfo:userInfo forUserId:userInfo.userId];
+                    }
+                }
+            }
+        }
         return;
     }
 
@@ -391,62 +388,13 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchMessageNotification
                                                         object:message
                                                       userInfo:dic_left];
-    
-    if ([self p_disbaleCustomMessageAlert:message left:nLeft]){
-        return;
-    }
-    
-    // 调用声音提示-内部有判断逻辑
-    [self playSoundByMessageIfNeed:message];
-    
-    
-    // 调用展示通知-内部有判断逻辑
-    [self postLocalNotificationIfNeed:message];
-}
-
-- (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
-    RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
-    if (senderUserInfo.userId) {
-        if (![senderUserInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId]) {
-            if (senderUserInfo.name.length > 0 || senderUserInfo.portraitUri.length > 0) {
-                if (senderUserInfo.portraitUri == nil || [RCUtilities isLocalPath:senderUserInfo.portraitUri]) {
-                    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager]
-                                            getUserInfoFromCacheOnly:senderUserInfo.userId];
-                    if (userInfo) {
-                        senderUserInfo.portraitUri = [userInfo.portraitUri copy];
-                    }
-                }
-                [[RCUserInfoCacheManager sharedManager] updateUserInfo:senderUserInfo
-                                                             forUserId:senderUserInfo.userId];
-            }
-        }
-    }
-    
-    if ([messageContent isMemberOfClass:[RCUserInfoUpdateMessage class]]) {
-        RCUserInfoUpdateMessage *userInfoMesasge = (RCUserInfoUpdateMessage *)messageContent;
-        if ([userInfoMesasge.userInfoList count] > 0) {
-            for (RCUserInfo *userInfo in userInfoMesasge.userInfoList) {
-                if (![userInfo.userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId] &&
-                    ![[RCUserInfoCacheManager sharedManager] getUserInfo:userInfo.userId]) {
-                    if (userInfo.name.length > 0 || userInfo.portraitUri.length > 0) {
-                        [[RCUserInfoCacheManager sharedManager] updateUserInfo:userInfo forUserId:userInfo.userId];
-                    }
-                }
-            }
-        }
-        return YES;
-    }
-    return NO;
-}
-
-- (BOOL)p_disbaleCustomMessageAlert:(RCMessage *)message left:(int)nLeft{
     //发出去的消息，不需要本地铃声和通知
     if (message.messageDirection == MessageDirection_SEND) {
-        return YES;
+        return;
     }
 
     if (0 != nLeft) {
-        return YES;
+        return;
     }
     
     BOOL isCustomMessageAlert = YES;
@@ -460,18 +408,18 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     }
     
     if (!isCustomMessageAlert) {
-        return YES;
-    }
-    
-    return NO;
-}
-
-- (void)playSoundByMessageIfNeed:(RCMessage *)message {
-    //在 IMKit 明确不支持超级群的情况下，超级群消息不做提醒
-    if (ConversationType_ULTRAGROUP == message.conversationType) {
         return;
     }
     
+    // 调用声音提示-内部有判断逻辑
+    [self playSoundByMessageIfNeed:message];
+    
+    
+    // 调用展示通知-内部有判断逻辑
+    [self postLocalNotificationIfNeed:message];
+}
+
+- (void)playSoundByMessageIfNeed:(RCMessage *)message {
     //APP在后台，不响铃
     if (RCSDKRunningMode_Foreground != [RCIMClient sharedRCIMClient].sdkRunningMode) {
         return;
@@ -565,9 +513,6 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageNotification
                                                         object:@(message.messageId)
                                                       userInfo:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageDetailNotification
-                                                        object:message
-                                                      userInfo:nil];
     for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -621,14 +566,6 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
  *  @param status 网络状态。
  */
 - (void)onConnectionStatusChanged:(RCConnectionStatus)status {
-    /*
-     每次重连之后都需要清理免打扰的缓存数据, 防止以下问题:
-     1. A登录设置免打扰后退出, B在同一个设备登陆后, 启用A的免打扰设置
-     2. A在第一个手机登录, 进入后台, 又在另一台手机登陆后设置免打扰,此时, 重回第一部手机登录, 导致免打扰缓存数据不对的问题
-     */
-    if (status == ConnectionStatus_Connected) {
-        [RCIMNotificationDataContext clean];
-    }
     if (status == ConnectionStatus_KICKED_OFFLINE_BY_OTHER_CLIENT || status == ConnectionStatus_SignOut ||
         status == ConnectionStatus_TOKEN_INCORRECT) {
         self.hasNotifydExtensionModuleUserId = NO;
@@ -659,7 +596,6 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             [delegate onRCIMConnectionStatusChanged:status];
         }
     }
-    
 }
 
 - (void)setConnectionStatusDelegate:(id<RCIMConnectionStatusDelegate>)connectionStatusDelegate {
@@ -940,8 +876,8 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
     if ([self.downloadingMeidaMessageIds containsObject:@(messageId)]) {
         return;
     }
-    
-    [self addMeidaMessageId:@(messageId)];
+
+    [self.downloadingMeidaMessageIds addObject:@(messageId)];
 
     [[RCIMClient sharedRCIMClient] downloadMediaMessage:messageId
         progress:^(int progress) {
@@ -957,7 +893,7 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             }
         }
         success:^(NSString *mediaPath) {
-            [self removeMeidaMessageId:@(messageId)];
+            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"success", @"mediaPath" : mediaPath };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -968,7 +904,7 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             }
         }
         error:^(RCErrorCode errorCode) {
-            [self removeMeidaMessageId:@(messageId)];
+            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"error", @"errorCode" : @(errorCode) };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -979,7 +915,7 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
             }
         }
         cancel:^{
-            [self removeMeidaMessageId:@(messageId)];
+            [self.downloadingMeidaMessageIds removeObject:@(messageId)];
 
             NSDictionary *statusDic = @{ @"messageId" : @(messageId), @"type" : @"cancel" };
             [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
@@ -989,32 +925,6 @@ static NSString *const RCIMKitVersion = @"5.3.4_opensource";
                 cancelBlock();
             }
         }];
-}
-
-- (void)addMeidaMessageId:(NSNumber *)messageId {
-    if (self.downloadingMeidaMessageIds.count <= 0) {
-        self.downloadingMeidaMessageIds = [@[messageId] mutableCopy];
-        return;
-    }
-    
-    NSMutableArray *msgIds = [NSMutableArray arrayWithArray:self.downloadingMeidaMessageIds];
-    [msgIds addObject:messageId];
-    self.downloadingMeidaMessageIds = [msgIds copy];
-}
-
-- (void)removeMeidaMessageId:(NSNumber *)messageId {
-    if (self.downloadingMeidaMessageIds.count <= 0) {
-        return;
-    }
-    
-    NSMutableArray *msgIds = [NSMutableArray arrayWithArray:self.downloadingMeidaMessageIds];
-    [msgIds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([obj isEqualToNumber:messageId]) {
-            [msgIds removeObject:obj];
-            *stop = YES;
-        }
-    }];
-    self.downloadingMeidaMessageIds = [msgIds copy];
 }
 
 - (BOOL)cancelDownloadMediaMessage:(long)messageId {

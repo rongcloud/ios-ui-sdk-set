@@ -8,6 +8,7 @@
 
 #import "RCCSSolveView.h"
 #import "RCKitCommonDefine.h"
+#import "RCKitUtility.h"
 @interface RCCSSolveView ()
 @property (nonatomic, strong) UILabel *title;
 @property (nonatomic, strong) UIButton *solved;

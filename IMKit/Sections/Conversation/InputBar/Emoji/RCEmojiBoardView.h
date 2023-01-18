@@ -67,8 +67,6 @@
  */
 @property (nonatomic, assign, readonly) CGSize contentViewSize;
 
-// 禁用系统表情
-@property (nonatomic, assign, readonly, getter = isSystemEmojiDisable) BOOL disableDefaultEmoji;
 /**
  *  init
  *
@@ -104,6 +102,4 @@
  */
 - (void)reloadExtensionEmoticonTabSource;
 
-// 禁用系统表情
-- (void)disableSystemDefaultEmoji;
 @end

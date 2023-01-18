@@ -73,15 +73,13 @@
         } else {
             status = RCCallKitLocalizedString(@"VoIPCallNoResponse");
         }
-        // 多语言下英文和阿文 中间都有空格，中文没有空格。
-        NSString *space = [self getSpaceWithLocalLanguage];
-        
+
         if (message.mediaType == RCCallMediaAudio) {
-            [self.messageLabel setText:[NSString stringWithFormat:@" %@%@%@ ", RCCallKitLocalizedString(@"VoIPAudioCall"),space
-                                                                  ,status]
+            [self.messageLabel setText:[NSString stringWithFormat:@" %@%@ ", RCCallKitLocalizedString(@"VoIPAudioCall"),
+                                                                  status]
                    dataDetectorEnabled:NO];
         } else {
-            [self.messageLabel setText:[NSString stringWithFormat:@" %@%@%@ ", RCCallKitLocalizedString(@"VoIPVideoCall"),space ,
+            [self.messageLabel setText:[NSString stringWithFormat:@" %@%@ ", RCCallKitLocalizedString(@"VoIPVideoCall"),
                                                                   status]
                    dataDetectorEnabled:NO];
         }
@@ -102,18 +100,6 @@
 
     self.messageLabel.frame = CGRectMake((self.baseContentView.bounds.size.width - __labelSize.width) / 2.0f, 0,
                                          __labelSize.width, __labelSize.height);
-}
-
-- (NSString *) getSpaceWithLocalLanguage {
-    NSString * language = [NSLocale preferredLanguages].firstObject;
-    if ([language hasPrefix:@"zh-Hans"]) {
-        return @"";
-    } else if([language hasPrefix:@"en"]) {
-        return @" ";
-    } else if([language hasPrefix:@"ar"]) {
-        return @" ";
-    }
-    return @"";
 }
 
 @end

@@ -43,8 +43,8 @@
     RCImageMessage *imageContent = (RCImageMessage *)model.content;
     self.previewImageView.placeholderImage = imageContent.thumbnailImage;
     if (imageContent.localPath.length > 0 &&
-        [[NSFileManager defaultManager] fileExistsAtPath:imageContent.localPath]) {
-        [self.previewImageView setImageURL:[NSURL URLWithString:imageContent.localPath]];
+        [[NSFileManager defaultManager] fileExistsAtPath:[RCUtilities getCorrectedFilePath:imageContent.localPath]]) {
+        [self.previewImageView setImageURL:[NSURL URLWithString:[RCUtilities getCorrectedFilePath:imageContent.localPath]]];
         [self resizeSubviews];
     } else {
         if ([imageContent.imageUrl hasPrefix:@"http"]) {

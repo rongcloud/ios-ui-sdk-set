@@ -204,7 +204,7 @@
 "chatDate"="yyyy/M/d";
 "chatListDate"="yyyy/M/d";
 "SameYearDate"="M/d";
-"locale"="ar";
+"locale"="en_US";
 "readNum"="%d قراءة";
 "read"="قرأ";
 "punctuation"=", ";
@@ -259,9 +259,7 @@
 "SaveFailed"= "فشل الحفظ";
 "RecallEdit"= "تعديل";
 "Reference"="اقتبس";
-"Translate"="ترجمة";
 "CanNotRecall"= "إنتهت فترة السماح لحذف الرسالة، تعذر التراجع عن الإرسال";
-"TranslateFailed" = "فشلت الترجمة ، يرجى المحاولة مرة أخرى";
 "RC:ImgMsg"="الصورة";
 "RC:GIFMsg"="الصورة";
 "RC:LBSMsg"="الموقع";
@@ -277,11 +275,8 @@
 "i_know_it"="فهمت";
 "ChatFiles"="ملفات الدردشة";
 "CannotUploadFiles"="لا يمكن تحميل وسائط 0kb.";
-"DownloadFailFromiCloud"="فشل تنزيل الصور من iCloud، يرجى المحاولة مرة أخرى لاحقًا";
-"KickedOfflineByOtherClient"="تم تسجيل دخول هذا الحساب على أجهزة أخرى";
-"VideoExpired"="تم حذف الفيديو أو انتهاء صلاحيته";
-"LoadMsgAskInfo"="خطأ في الشبكة، يرجى التحقق من سجل الرسائل المحلية؟";
+"DownloadFailFromiCloud"="Download Fail From iCloud";
+"KickedOfflineByOtherClient"="This account has been logged-in on other devices";
+"VideoExpired"="Video Deleted or Expired";
+"LoadMsgAskInfo"="Network Error，View local history messages?";
 "SightCaptureFailed"="غير قادر على التسجيل في هذا الوقت ، يرجى المحاولة مرة أخرى في وقت لاحق";
-"ConnectionstatusProxyUnavailable"="الوكيل الحالي غير متوفر";
-"restartApp"="إعادة التشغيل";
-"PhotoLibraryBugErrorAlert"="ولا يمكن الوصول إلى ألبوم الصور في الوقت الراهن، ويمكن إعادة تشغيله أو إعادة تشغيله";

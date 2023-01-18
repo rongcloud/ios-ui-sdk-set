@@ -248,9 +248,7 @@
     if (press.state == UIGestureRecognizerStateEnded) {
         return;
     } else if (press.state == UIGestureRecognizerStateBegan) {
-        if (self.delegate && [self.delegate respondsToSelector:@selector(didLongTouchMessageCell:inView:)]) {
-            [self.delegate didLongTouchMessageCell:self.model inView:self];
-        }
+        [self.delegate didLongTouchMessageCell:self.model inView:self];
     }
 }
 

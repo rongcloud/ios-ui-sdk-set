@@ -8,6 +8,7 @@
 
 #import "RCUserListViewController.h"
 #import "RCKitCommonDefine.h"
+#import "RCExtensionService.h"
 #import "RCUserListTableViewCell.h"
 #import "RCKitConfig.h"
 #import "RCloudImageView.h"

@@ -120,9 +120,7 @@
     NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
     RCPublicServiceMultiRichContentMessage *content = (RCPublicServiceMultiRichContentMessage *)self.model.content;
     [content setValue:@(indexPath.row) forKey:@"selectedItemIndex"];
-    if (self.publicServiceDelegate && [self.publicServiceDelegate respondsToSelector:@selector(didLongTouchPublicServiceMessageCell:inView:)]) {
-        [self.publicServiceDelegate didLongTouchPublicServiceMessageCell:self.model inView:cell];
-    }
+    [self.publicServiceDelegate didLongTouchPublicServiceMessageCell:self.model inView:cell];
 }
 
 - (void)setup {

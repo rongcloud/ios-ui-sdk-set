@@ -41,7 +41,7 @@
     [self addSubview:self.messageContentLabel];
     [self addSubview:self.hightlineLabel];
     [self addSubview:self.sentStatusView];
-
+    
     [self addSubviewConstraint];
 }
 
@@ -94,16 +94,16 @@
     } else {
         messageContent = [self getOneLineString:messageContent];
     }
-    BOOL isVoiceMessage = [model.lastestMessage isKindOfClass:[RCVoiceMessage class]] || [model.lastestMessage isKindOfClass:[RCHQVoiceMessage class]];
+
     NSMutableAttributedString *attibuteText = [[NSMutableAttributedString alloc] initWithString:messageContent];
-    if (model.draft.length == 0 && model.lastestMessageId > 0 && isVoiceMessage
-         &&
+    if (model.draft.length == 0 && model.lastestMessageId > 0 &&
+        [model.lastestMessage isKindOfClass:[RCVoiceMessage class]] &&
         model.receivedStatus != ReceivedStatus_LISTENED && model.lastestMessageDirection == MessageDirection_RECEIVE) {
         NSRange range;
         if (self.prefixName.length == 0 || messageContent.length == 0) {
             range = NSMakeRange(0, messageContent.length);
         } else {
-            range = [messageContent rangeOfString:[self formatMessageContent:model]];
+            range = NSMakeRange(self.prefixName.length + 1, [self formatMessageContent:model].length);
         }
         [attibuteText addAttribute:NSForegroundColorAttributeName value:HEXCOLOR(0xcc3333) range:range];
     }
@@ -146,7 +146,7 @@
         ([objectName isEqualToString:RCTextMessageTypeIdentifier] ||
          [objectName isEqualToString:RCVoiceMessageTypeIdentifier] ||
          [objectName isEqualToString:RCImageMessageTypeIdentifier] || [objectName isEqualToString:@"RC:SightMsg"] ||
-         [objectName isEqualToString:@"RC:LBSMsg"] || [objectName isEqualToString:@"RC:CardMsg"])) {
+         [objectName isEqualToString:RCLocationMessageTypeIdentifier] || [objectName isEqualToString:@"RC:CardMsg"])) {
         return RCLocalizedString(@"Message");
     }
     if ([RCKitUtility isUnkownMessage:model.lastestMessageId content:model.lastestMessage] &&

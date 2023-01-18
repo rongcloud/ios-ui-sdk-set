@@ -31,7 +31,6 @@
         self.extend = extend;
         self.conversationModelType = conversationModelType;
         self.targetId = conversation.targetId;
-        self.channelId = conversation.channelId;
         self.conversationTitle = conversation.conversationTitle;
         self.unreadMessageCount = conversation.unreadMessageCount;
         self.isTop = conversation.isTop;
@@ -51,8 +50,6 @@
         if (RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE == conversationModelType) {
             // self.conversationTitle = conversation.conversationTitle;
         }
-        self.notificationLevel = conversation.notificationLevel;
-        self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
         if (conversation && conversation.draft.length > 0) {
             __autoreleasing NSError *error = nil;
             NSData *draftData = [conversation.draft dataUsingEncoding:NSUTF8StringEncoding];
@@ -77,7 +74,6 @@
 
 - (void)updateWithMessage:(RCMessage *)message {
     self.targetId = message.targetId;
-    self.channelId = message.channelId;
     self.sentStatus = message.sentStatus;
     self.receivedStatus = message.receivedStatus;
     self.receivedTime = message.receivedTime;

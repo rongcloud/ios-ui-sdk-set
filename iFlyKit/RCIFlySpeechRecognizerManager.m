@@ -101,7 +101,7 @@
 }
 //获取每次识别之后的结果
 - (NSString *)stringFromJson:(NSString *)params {
-    if (params.length <= 0) {
+    if (params == NULL) {
         return nil;
     }
     NSMutableString *tempStr = [[NSMutableString alloc] init];

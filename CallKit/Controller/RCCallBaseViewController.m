@@ -67,7 +67,10 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
     return self;
 }
 
-- (instancetype)initWithOutgoingCall:(RCConversationType)conversationType isCrossCallType:(BOOL)isCross targetId:(NSString *)targetId mediaType:(RCCallMediaType)mediaType userIdList:(NSArray *)userIdList {
+- (instancetype)initWithOutgoingCall:(RCConversationType)conversationType
+                            targetId:(NSString *)targetId
+                           mediaType:(RCCallMediaType)mediaType
+                          userIdList:(NSArray *)userIdList {
     self = [super init];
     if (self) {
         [self willChangeValueForKey:@"callSession"];
@@ -111,22 +114,12 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
         [[RCCallClient sharedRCCallClient] setInvitePushConfig:invitePushConfig];
         [[RCCallClient sharedRCCallClient] setHangupPushConfig:hangupPushConfig];
 
-        if (isCross) {
-            _callSession = [[RCCallClient sharedRCCallClient] startCrossCall:conversationType
-                                                               targetId:targetId
-                                                                     to:userIdList
-                                                              mediaType:mediaType
-                                                        sessionDelegate:self
-                                                                  extra:nil];
-        } else {
-            _callSession = [[RCCallClient sharedRCCallClient] startCall:conversationType
-                                                               targetId:targetId
-                                                                     to:userIdList
-                                                              mediaType:mediaType
-                                                        sessionDelegate:self
-                                                                  extra:nil];
-        }
-        
+        _callSession = [[RCCallClient sharedRCCallClient] startCall:conversationType
+                                                           targetId:targetId
+                                                                 to:userIdList
+                                                          mediaType:mediaType
+                                                    sessionDelegate:self
+                                                              extra:nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:RCCallNewSessionCreationNotification
                                                             object:_callSession];
         [self didChangeValueForKey:@"callSession"];
@@ -150,14 +143,6 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
         hangupButtonClick = NO;
     }
     return self;
-}
-
-- (instancetype)initWithOutgoingCrossCall:(RCConversationType)conversationType targetId:(NSString *)targetId mediaType:(RCCallMediaType)mediaType userIdList:(NSArray *)userIdList {
-    return [self initWithOutgoingCall:conversationType isCrossCallType:YES targetId:targetId mediaType:mediaType userIdList:userIdList];
-}
-
-- (instancetype)initWithOutgoingCall:(RCConversationType)conversationType targetId:(NSString *)targetId mediaType:(RCCallMediaType)mediaType userIdList:(NSArray *)userIdList {
-    return [self initWithOutgoingCall:conversationType isCrossCallType:NO targetId:targetId mediaType:mediaType userIdList:userIdList];
 }
 
 - (instancetype)initWithActiveCall:(RCCallSession *)callSession {
@@ -302,6 +287,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
                                                object:nil];
 
     [self registerTelephonyEvent];
+    [self addProximityMonitoringObserver];
 
     //    UIVisualEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
     //    self.blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
@@ -343,7 +329,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 
     //呼出后立刻振铃
     if (self.callSession.callStatus == RCCallDialing) {
-        [self checkApplicationStateAndAlert];
+        [self performSelector:@selector(checkApplicationStateAndAlert) withObject:nil afterDelay:1];
     }
 
     if (self.callSession.callStatus == RCCallDialing) {
@@ -774,9 +760,9 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 }
 
 - (void)cameraCloseButtonClicked {
+    [self didTapCameraCloseButton];
 
     if (!self.callSession.isMultiCall) {
-        [self didTapCameraCloseButton];
         [self.callSession setVideoView:nil userId:[RCIMClient sharedRCIMClient].currentUserInfo.userId];
         [self.callSession setVideoView:nil userId:self.callSession.targetId];
 
@@ -792,7 +778,6 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
     } else {
         [self.callSession setCameraEnabled:!self.callSession.cameraEnabled];
         [self.cameraCloseButton setSelected:!self.callSession.cameraEnabled];
-        [self didTapCameraCloseButton];
     }
 }
 
@@ -1297,7 +1282,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
             self.muteButton.hidden = NO;
             self.muteButton.enabled = NO;
         } else if (callStatus != RCCallHangup) {
-            self.muteButton.hidden = YES;
+            self.muteButton.hidden = NO;
             self.muteButton.enabled = NO;
         }
 
@@ -1626,6 +1611,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
         [[RCCall sharedRCCall] dismissCallViewController:self];
         [[RCCall sharedRCCall] stopReceiveCallVibrate];
     });
+    [self removeProximityMonitoringObserver];
 }
 
 /*!
@@ -1672,12 +1658,14 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 - (void)remoteUserDidChangeMediaType:(NSString *)userId mediaType:(RCCallMediaType)mediaType {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!self.callSession.isMultiCall) {
-            if (mediaType == RCCallMediaAudio) {
-                [self.callSession setVideoView:nil userId:[RCIMClient sharedRCIMClient].currentUserInfo.userId];
-                [self.callSession setVideoView:nil userId:self.callSession.targetId];
-                [self resetLayout:self.callSession.isMultiCall
-                        mediaType:RCCallMediaAudio
-                       callStatus:self.callSession.callStatus];
+            if (mediaType == RCCallMediaAudio && self.callSession.mediaType != RCCallMediaAudio) {
+                if ([self.callSession changeMediaType:RCCallMediaAudio]) {
+                    [self.callSession setVideoView:nil userId:[RCIMClient sharedRCIMClient].currentUserInfo.userId];
+                    [self.callSession setVideoView:nil userId:self.callSession.targetId];
+                    [self resetLayout:self.callSession.isMultiCall
+                            mediaType:RCCallMediaAudio
+                           callStatus:self.callSession.callStatus];
+                }
             }
         } else if (self.callSession.mediaType == mediaType && mediaType == RCCallMediaVideo) {
             [self remoteUserDidDisableCamera:NO byUser:userId];
@@ -1868,7 +1856,41 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
     };
 }
 
-#pragma mark - AVAudioSessionRouteChangeNotification
+#pragma mark - proximity
+- (void)addProximityMonitoringObserver {
+    if (self.callSession.mediaType == RCCallMediaAudio) {
+        [UIDevice currentDevice].proximityMonitoringEnabled = YES;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(proximityStatueChanged:)
+                                                     name:UIDeviceProximityStateDidChangeNotification
+                                                   object:nil];
+    }
+}
+
+- (void)removeProximityMonitoringObserver {
+    [UIDevice currentDevice].proximityMonitoringEnabled = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIDeviceProximityStateDidChangeNotification
+                                                  object:nil];
+}
+
+- (void)proximityStatueChanged:(NSNotificationCenter *)notification {
+    switch (self.mediaType) {
+        case RCCallMediaAudio: {
+        } break;
+        case RCCallMediaVideo: {
+            if (self.callSession.callStatus == RCCallActive) {
+                if ([UIDevice currentDevice].proximityState)
+                    [self.callSession setSpeakerEnabled:NO];
+                else
+                    [self.callSession setSpeakerEnabled:YES];
+            }
+        } break;
+        default:
+            break;
+    }
+}
+
 - (void)handleAudioRouteChange:(NSNotification *)notification {
     NSInteger reason = [[[notification userInfo] objectForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
     AVAudioSessionRouteDescription *route = [AVAudioSession sharedInstance].currentRoute;

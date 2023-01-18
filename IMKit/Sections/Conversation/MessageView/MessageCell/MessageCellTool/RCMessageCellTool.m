@@ -9,7 +9,6 @@
 #import "RCMessageCellTool.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
-
 @implementation RCMessageCellTool
 + (UIImage *)getDefaultMessageCellBackgroundImage:(RCMessageModel *)model{
     UIImage *bubbleImage;
@@ -29,14 +28,8 @@
     return bubbleImage;
 }
 
-+ (UIImage *)translationTextBackgroundImage {
-    UIImage *bubbleImage = RCResourceImage(@"translation_from_bg_normal");
-    bubbleImage = [self getResizableImage:bubbleImage];
-    return bubbleImage;
-}
-
 + (BOOL)isWhiteBubbleImageWithSendMesageCell:(NSString *)objectName{
-    NSArray *list = @[@"RC:FileMsg",@"RC:CardMsg",@"RC:LBSMsg"];
+    NSArray *list = @[@"RC:FileMsg",@"RC:CardMsg",[RCLocationMessage getObjectName]];
     if ([list containsObject:objectName]) {
         return YES;
     }

@@ -168,28 +168,32 @@ CGAffineTransform transformBaseOnCaptureOrientation(AVCaptureVideoOrientation or
         self.isWriting = NO;
         if (self.assetWriter.status == AVAssetWriterStatusWriting) {
             [self.assetWriter finishWritingWithCompletionHandler:^{
+
                 if (self.assetWriter.status == AVAssetWriterStatusCompleted) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         NSURL *fileURL = [self.assetWriter outputURL];
                         [self.delegate sightRecorder:self didWriteMovieAtURL:fileURL];
                     });
                 } else {
-                    [self reportFailedWith:self.assetWriter.error status:self.assetWriter.status];
+                    NSLog(@"Failed to write movie: %@", self.assetWriter.error);
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.delegate sightRecorder:self didFailWithError:self.assetWriter.error];
+                    });
                 }
             }];
         } else {
-            [self reportFailedWith:self.assetWriter.error status:self.assetWriter.status];
+            NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain
+                                                 code:-1
+                                             userInfo:@{
+                                                 @"assetWriter.status" : @(self.assetWriter.status)
+                                             }];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.delegate sightRecorder:self didFailWithError:error];
+            });
         }
     });
 }
 
-- (void)reportFailedWith:(NSError *)error status:(NSInteger)status {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if ([self.delegate respondsToSelector:@selector(sightRecorder:didFailWithError:status:)]) {
-            [self.delegate sightRecorder:self didFailWithError:error status:status];
-        }
-    });
-}
 #pragma mark - helpers
 - (NSURL *)outputURL {
     NSTimeInterval interval = [[NSDate date] timeIntervalSince1970];

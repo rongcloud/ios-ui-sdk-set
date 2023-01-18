@@ -46,6 +46,7 @@
     if (!cacheUserInfo) {
         return nil;
     }
+
     RCUserInfo *user = [[RCUserInfo alloc] initWithUserId:cacheUserInfo.userId name:cacheUserInfo.name portrait:cacheUserInfo.portraitUri];
     user.alias = cacheUserInfo.alias;
     user.extra = cacheUserInfo.extra;
@@ -83,26 +84,18 @@
 }
 
 - (void)clearUserInfo:(NSString *)userId {
-    RCLogI(@"clearUserInfo:;;;userId=%@", userId);
     RCUserInfo *cacheUserInfo = self.cache[userId];
-    if (cacheUserInfo) {
+    if (!cacheUserInfo) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(rcUserInfoDBQueue, ^{
+            RCUserInfo *dbUserInfo = [rcUserInfoWriteDBHelper selectUserInfoFromDB:userId];
+            [weakSelf deleteImageCache:dbUserInfo];
+            [rcUserInfoWriteDBHelper deleteUserInfoFromDB:userId];
+        });
+    } else {
         [self deleteImageCache:cacheUserInfo];
         [self.cache removeObjectForKey:userId];
     }
-//    else {
-//        __weak typeof(self) weakSelf = self;
-//        dispatch_async(rcUserInfoDBQueue, ^{
-//            RCUserInfo *dbUserInfo = [rcUserInfoWriteDBHelper selectUserInfoFromDB:userId];
-//            [weakSelf deleteImageCache:dbUserInfo];
-//        });
-//    }
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(rcUserInfoDBQueue, ^{
-        [rcUserInfoWriteDBHelper deleteUserInfoFromDB:userId];
-        RCUserInfo *userInfo = [[RCUserInfo alloc] init];
-        userInfo.userId = userId;
-        [weakSelf.updateDelegate onUserInfoUpdate:userInfo];
-    });
 }
 
 - (void)clearAllUserInfo {

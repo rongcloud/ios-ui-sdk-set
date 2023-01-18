@@ -8,6 +8,7 @@
 
 #import "RCVoiceCaptureControl.h"
 #import "RCKitCommonDefine.h"
+#import "RCExtensionService.h"
 #import "RCVoiceRecorder.h"
 #import "RCKitConfig.h"
 

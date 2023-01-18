@@ -8,6 +8,7 @@
 
 #import "RCCSAlertView.h"
 #import "RCKitCommonDefine.h"
+#import "RCKitUtility.h"
 #define STAR_COUNT 5
 #define CLIENT_VIEW_HEIGHT 120
 #define CLIENT_VIEW_WIDTH 220

@@ -146,23 +146,12 @@
             [self.portraitView setImageURL:[NSURL URLWithString:portraitUri]];
         }
     }
-    CGSize size = [[self class] sizeOfMessageCell];
-    self.messageContentView.contentSize = size;
-    self.typeLabel.accessibilityLabel = @"typeLabel";
-    self.nameLabel.accessibilityLabel  = @"nameLabel";
-    self.portraitView.accessibilityLabel  = @"portraitView";
-    if ([RCKitUtility isRTL]) {
-        self.typeLabel.textAlignment = NSTextAlignmentRight;
-        self.portraitView.frame = CGRectMake(size.width - Cart_Portrait_View_Width- 12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
-        self.nameLabel.frame = CGRectMake(12, 17.5,  self.portraitView.frame.origin.x - 24 , 25);
-        self.separationView.frame = CGRectMake(CGRectGetMinX(self.nameLabel.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
-        self.typeLabel.frame = CGRectMake(CGRectGetMinX(self.separationView.frame),CGRectGetMaxY(self.portraitView.frame)+16.5, self.separationView.frame.size.width, 16.5);
-    } else {
-        self.portraitView.frame = CGRectMake(12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
-        self.nameLabel.frame = CGRectMake(CGRectGetMaxX(self.portraitView.frame)+12, 17.5, 100, 25);
-        self.separationView.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
-        self.typeLabel.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+16.5, self.separationView.frame.size.width, 16.5);
-    }
+
+    self.messageContentView.contentSize = [[self class] sizeOfMessageCell];
+    self.portraitView.frame = CGRectMake(12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
+    self.nameLabel.frame = CGRectMake(CGRectGetMaxX(self.portraitView.frame)+12, 17.5, 100, 25);
+    self.separationView.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
+    self.typeLabel.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+16.5, 100, 16.5);
 }
 
 - (void)beginDestructing {

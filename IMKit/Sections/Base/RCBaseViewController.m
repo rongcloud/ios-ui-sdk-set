@@ -7,6 +7,7 @@
 //
 
 #import "RCBaseViewController.h"
+#import "RCIM.h"
 @interface RCBaseViewController ()
 
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;

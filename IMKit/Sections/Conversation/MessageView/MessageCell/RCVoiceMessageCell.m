@@ -11,6 +11,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCVoicePlayer.h"
+#import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
@@ -331,11 +332,7 @@ static long s_messageId = 0;
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    UIImage *image = RCResourceImage(playingIndicatorIndex);;
-    if ([RCKitUtility isRTL]) {
-        image = [image imageFlippedForRightToLeftLayoutDirection];
-    }
-    self.playVoiceView.image = image;
+    self.playVoiceView.image = RCResourceImage(playingIndicatorIndex);
 }
 
 - (void)disableCurrentAnimationTimer {

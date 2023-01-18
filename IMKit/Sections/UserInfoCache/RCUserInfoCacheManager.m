@@ -202,13 +202,12 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
 }
 
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId {
-    if (userId.length > 0 && !userInfo){
-        [[RCUserInfoCache sharedCache] clearUserInfo:userId];
-        return;
-    }
-    
     if (userId && userInfo) {
-        [[RCUserInfoCache sharedCache] updateUserInfo:userInfo forUserId:userId];
+        if (!userInfo.userId && !userInfo.name) {
+            [[RCUserInfoCache sharedCache] clearUserInfo:userId];
+        } else {
+            [[RCUserInfoCache sharedCache] updateUserInfo:userInfo forUserId:userId];
+        }
     } else if (!userId && userInfo.userId) {
         [[RCUserInfoCache sharedCache] updateUserInfo:userInfo forUserId:userInfo.userId];
     }
@@ -420,11 +419,6 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
 
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId inGroup:(NSString *)groupId {
     if (groupId) {
-        if (userId.length > 0 && !userInfo){
-            [[RCConversationUserInfoCache sharedCache] clearConversationUserInfo:userId conversationType:ConversationType_GROUP targetId:groupId];
-            return;
-        }
-
         if (userId && userInfo) {
             [[RCConversationUserInfoCache sharedCache] updateUserInfo:userInfo
                                                             forUserId:userId
@@ -537,10 +531,6 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
 }
 
 - (void)updateGroupInfo:(RCGroup *)groupInfo forGroupId:(NSString *)groupId {
-    if (groupId.length > 0 && !groupInfo){
-        [[RCConversationInfoCache sharedCache] clearConversationInfo:ConversationType_GROUP targetId:groupId];
-        return;
-    }
     if (groupId && groupInfo) {
         [[RCConversationInfoCache sharedCache]
             updateConversationInfo:[[RCConversationInfo alloc] initWithGroupInfo:groupInfo]

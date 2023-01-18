@@ -14,6 +14,7 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
+#import "RCResendManager.h"
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
@@ -22,9 +23,7 @@ static long hq_messageId = 0;
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
 #define Play_Voice_View_Width 16
-@interface RCMessageCell()
-- (void)messageContentViewFrameDidChanged;
-@end
+
 
 @interface RCHQVoiceMessageCell () <RCVoicePlayerObserver>
 @property (nonatomic) CGSize voiceViewSize;
@@ -266,24 +265,18 @@ static long hq_messageId = 0;
 
 - (void)updateSubViewsLayout:(RCHQVoiceMessage *)voiceMessage{
     CGFloat audioBubbleWidth = [self getBubbleWidth:voiceMessage.duration];
-    CGSize size = self.messageContentView.contentSize;
-    size.width = audioBubbleWidth;
-    if (size.height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
-        size.height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
-    }
-    self.messageContentView.contentSize = size;
-    CGFloat voiceHeight = size.height;
+    self.messageContentView.contentSize = CGSizeMake(audioBubbleWidth, Voice_Height);
     if ([RCKitUtility isRTL]) {
         if (self.model.messageDirection == MessageDirection_SEND) {
             self.playVoiceView.image = RCResourceImage(@"from_voice_3");
             [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
-            self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
+            self.playVoiceView.frame = CGRectMake(12, (Voice_Height - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), Voice_Height);
         } else {
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
-            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
+            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (Voice_Height - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, Voice_Height);
             [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
             self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }
@@ -291,16 +284,16 @@ static long hq_messageId = 0;
         
         if (self.model.messageDirection == MessageDirection_SEND) {
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
-            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
+            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (Voice_Height - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, Voice_Height);
             [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
             self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }else{
             self.playVoiceView.image = RCResourceImage(@"from_voice_3");
             [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
-            self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
+            self.playVoiceView.frame = CGRectMake(12, (Voice_Height - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), Voice_Height);
         }
     }
     
@@ -337,16 +330,13 @@ static long hq_messageId = 0;
     [self.voiceUnreadTagView removeFromSuperview];
     self.voiceUnreadTagView.image = nil;
     [self.voiceUnreadTagView setHidden:YES];
-    CGSize size = self.messageContentView.contentSize;
-    CGFloat voiceHeight = size.height;
     if (MessageDirection_RECEIVE == self.model.messageDirection) {
         CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
         if ([RCKitUtility isRTL]) {
             x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
         }
         if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
-            self.voiceUnreadTagView = [[UIImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
-            self.voiceUnreadTagView.accessibilityLabel = @"voiceUnreadTagView";
+            self.voiceUnreadTagView = [[UIImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (Voice_Height-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             if (voiceMessage.localPath.length > 0) {
                 [self.voiceUnreadTagView setHidden:NO];
             } else {
@@ -358,24 +348,6 @@ static long hq_messageId = 0;
     }
 }
 
-#pragma mark - Overwrite
-- (void)messageContentViewFrameDidChanged {
-    [super messageContentViewFrameDidChanged];
-    if (MessageDirection_RECEIVE == self.model.messageDirection) {
-        CGSize size = self.messageContentView.contentSize;
-        CGFloat voiceHeight = size.height;
-        if (MessageDirection_RECEIVE == self.model.messageDirection) {
-            CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
-            if ([RCKitUtility isRTL]) {
-                x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
-            }
-            if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
-                self.voiceUnreadTagView.frame = CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width);
-                
-            }
-        }
-    }
-}
 #pragma mark - stop and disable timer during background mode.
 - (void)resetActiveEventInBackgroundMode {
     [self stopPlayingVoiceData];
@@ -552,11 +524,7 @@ static long hq_messageId = 0;
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    UIImage *image = RCResourceImage(playingIndicatorIndex);;
-    if ([RCKitUtility isRTL]) {
-        image = [image imageFlippedForRightToLeftLayoutDirection];
-    }
-    self.playVoiceView.image = image;
+    self.playVoiceView.image = RCResourceImage(playingIndicatorIndex);
 }
 
 - (void)disableCurrentAnimationTimer {

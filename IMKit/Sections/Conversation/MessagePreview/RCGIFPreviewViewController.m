@@ -10,13 +10,13 @@
 #import "RCGIFImage.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
-#import "RCAssetHelper.h"
+#import <AssetsLibrary/AssetsLibrary.h>
+#import "RCGIFUtility.h"
 #import <RongIMLib/RongIMLib.h>
 #import "RCIM.h"
+#import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
-#import "RCSemanticContext.h"
-
 @interface RCGIFPreviewViewController ()
 
 @property (nonatomic, strong) NSData *gifData;
@@ -47,7 +47,7 @@
     if (gifMessage && gifMessage.localPath.length > 0) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            weakSelf.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
+            weakSelf.gifData = [NSData dataWithContentsOfFile:[RCUtilities getCorrectedFilePath:gifMessage.localPath]];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (weakSelf.gifData) {
                     weakSelf.gifView.animatedImage = [RCGIFImage animatedImageWithGIFData:weakSelf.gifData];
@@ -59,29 +59,31 @@
 
 
 - (void)saveGIF {
-    if (self.gifData) {
-        [RCAssetHelper savePhotosAlbumWithImage:[UIImage imageWithData:self.gifData] authorizationStatusBlock:^{
-            [self showAlertController:RCLocalizedString(@"AccessRightTitle")
-                              message:RCLocalizedString(@"photoAccessRight")
-                          cancelTitle:RCLocalizedString(@"OK")];
-        } resultBlock:^(BOOL success) {
-            [self showAlertWithSuccess:success];
-        }];
-
+    ALAuthorizationStatus status = [ALAssetsLibrary authorizationStatus];
+    if (status == ALAuthorizationStatusRestricted || status == ALAuthorizationStatusDenied) {
+        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
+                          message:RCLocalizedString(@"photoAccessRight")
+                      cancelTitle:RCLocalizedString(@"OK")];
+        return;
     }
-}
-
-- (void)showAlertWithSuccess:(BOOL)success {
-    if (success) {
-        DebugLog(@"save image suceed");
-        [self showAlertController:nil
-                          message:RCLocalizedString(@"SavePhotoSuccess")
-                      cancelTitle:RCLocalizedString(@"OK")];
-    } else {
-        DebugLog(@" save image fail");
-        [self showAlertController:nil
-                          message:RCLocalizedString(@"SavePhotoFailed")
-                      cancelTitle:RCLocalizedString(@"OK")];
+    if (self.gifData) {
+        ALAssetsLibrary *assetsLibrary = [[ALAssetsLibrary alloc] init];
+        [assetsLibrary
+            writeImageDataToSavedPhotosAlbum:self.gifData
+                                    metadata:nil
+                             completionBlock:^(NSURL *assetURL, NSError *error) {
+                                 if (error != NULL) {
+                                     DebugLog(@" save image fail");
+                                     [self showAlertController:nil
+                                                       message:RCLocalizedString(@"SavePhotoFailed")
+                                                   cancelTitle:RCLocalizedString(@"OK")];
+                                 } else {
+                                     DebugLog(@"save image suceed");
+                                     [self showAlertController:nil
+                                                       message:RCLocalizedString(@"SavePhotoSuccess")
+                                                   cancelTitle:RCLocalizedString(@"OK")];
+                                 }
+                             }];
     }
 }
 
@@ -117,9 +119,7 @@
 
 - (void)setNav {
     //设置左键
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
-    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }
 
 - (void)addSubViews {

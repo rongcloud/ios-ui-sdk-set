@@ -10,6 +10,7 @@
 #import "RCAlbumModel.h"
 #import "RCAssetModel.h"
 #import "RCKitCommonDefine.h"
+#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 
 dispatch_queue_t __rc__photo__working_queue = NULL;
@@ -33,6 +34,12 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         assetHelper = [[RCAssetHelper alloc] init];
+        assetHelper.isSynchronizing = YES;
+        [assetHelper getAlbumsFromSystem:^(NSArray *albums) {
+            assetHelper.isSynchronizing = NO;
+            assetHelper.assetsGroups = albums;
+        }
+                               groupType:ALAssetsGroupAll];
     });
     [assetHelper addRegisterIfNeed];
     return assetHelper;
@@ -57,6 +64,7 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
     }
 }
 
+
 - (BOOL)hasAuthorizationStatusAuthorized {
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
         return [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusAuthorized;
@@ -69,18 +77,9 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
                       resultCompletion:(void (^)(NSArray *assetGroup))result {
     if (_assetsGroups && _assetsGroups.count > 0 && RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
         NSArray *photos = [NSArray arrayWithArray:_assetsGroups];
-        if (result) {
-            result(photos);
-        }
+        result(photos);
     } else {
-        self.isSynchronizing = YES;
-        [self getAlbumsFromSystem:^(NSArray *albums) {
-            self.isSynchronizing = NO;
-            self.assetsGroups = albums;
-            if (result) {
-                result(albums);
-            }
-        } groupType:groupType];
+        [self getAlbumsFromSystem:result groupType:groupType];
     }
 }
 
@@ -180,6 +179,7 @@ dispatch_queue_t __rc__photo__working_queue = NULL;
                      resultHandler:^(AVAsset *_Nullable avAsset, AVAudioMix *_Nullable audioMix,
                                      NSDictionary *_Nullable info) {
                          if (asset && resultBlock) {
+                             avAsset = [self convertAVAssetIfNeed:avAsset];
                              resultBlock(avAsset, info, [[RCAssetHelper shareAssetHelper] getAssetIdentifier:asset]);
                          }
                      }];
@@ -438,45 +438,16 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
     }
 }
 
-+ (void)savePhotosAlbumWithImage:(UIImage *)image authorizationStatusBlock:(nullable dispatch_block_t)authorizationStatusBlock resultBlock:(nullable void (^)(BOOL success))resultBlock {
-    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
-    if (PHAuthorizationStatusRestricted == status || PHAuthorizationStatusDenied == status) {
-        if (authorizationStatusBlock) {
-            authorizationStatusBlock();
+- (AVAsset *)convertAVAssetIfNeed:(AVAsset *)asset {
+    if ([asset isKindOfClass:[AVComposition class]]) {
+        AVComposition *comp = (AVComposition *)asset;
+        AVCompositionTrack *track = comp.tracks.firstObject;
+        AVCompositionTrackSegment *seg = track.segments.firstObject;
+        if (seg.sourceURL){
+            asset = [AVURLAsset assetWithURL:seg.sourceURL];
         }
-        return;
     }
-    
-    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-        [PHAssetChangeRequest creationRequestForAssetFromImage:image];
-    } completionHandler:^(BOOL success, NSError * _Nullable error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (resultBlock) {
-                resultBlock(nil == error);
-            }
-        });
-    }];
-}
-
-+ (void)savePhotosAlbumWithVideoPath:(NSString *)videoPath authorizationStatusBlock:(nullable dispatch_block_t)authorizationStatusBlock resultBlock:(nullable void (^)(BOOL success))resultBlock {
-    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
-    if (PHAuthorizationStatusRestricted == status || PHAuthorizationStatusDenied == status) {
-        if (authorizationStatusBlock) {
-            authorizationStatusBlock();
-        }
-        return;
-    }
-
-    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-        [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:[NSURL fileURLWithPath:videoPath]];
-    } completionHandler:^(BOOL success, NSError * _Nullable error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (resultBlock) {
-                resultBlock(nil == error);
-            }
-        });
-    }];
-
+    return asset;
 }
 
 - (void)dealloc {

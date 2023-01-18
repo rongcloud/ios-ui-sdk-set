@@ -239,10 +239,9 @@
     if (model) {
         NSInteger index = [self.subUserModelList indexOfObject:model];
         if (index != NSNotFound) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
             [self.subUserModelList removeObject:model];
-            [self updateAllSubUserLayout];
-//            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
-//            [self.userCollectionView deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
+            [self.userCollectionView deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
         }
     }
 }
@@ -466,6 +465,7 @@
                        self.view.frame.size.width - RCCallHorizontalMargin * 2, RCCallMiniLabelHeight);
         self.userCollectionTitleLabel.hidden = NO;
         self.userCollectionTitleLabel.text = RCCallKitLocalizedString(@"VoIPAudioCall");
+        ;
         _userCollectionTitleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:18];
     }
 
@@ -512,12 +512,10 @@
 - (void)callDidConnect {
     [self.userCollectionView removeFromSuperview];
     _userCollectionView = nil;
-    [self.subUserModelList removeAllObjects];
-    for (RCCallUserProfile *userProfile in self.callSession.userProfileList) {
-       if (![userProfile.userId isEqualToString:currentUserId]) {
-           RCCallUserCallInfoModel *userModel = [self generateUserModel:userProfile.userId];
-           [self.subUserModelList addObject:userModel];
-       }
+    if (![self.callSession.caller isEqualToString:currentUserId]) {
+        [self.subUserModelList removeObject:[self getModelInSubUserModelList:currentUserId]];
+        [self.subUserModelList addObject:self.mainModel];
+        self.mainModel = nil;
     }
     [self userCollectionView];
     [self updateAllSubUserLayout];

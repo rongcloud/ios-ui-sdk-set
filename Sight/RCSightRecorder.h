@@ -71,10 +71,7 @@
 
  @param recorder 录制实例
  @param error 错误描述
- @param status AVAssetWriter 状态
  */
-- (void)sightRecorder:(RCSightRecorder *)recorder
-     didFailWithError:(NSError *)error
-               status:(NSInteger)status;
+- (void)sightRecorder:(RCSightRecorder *)recorder didFailWithError:(NSError *)error;
 
 @end

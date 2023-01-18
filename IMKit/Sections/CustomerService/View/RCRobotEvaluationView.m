@@ -7,6 +7,7 @@
 //
 
 #import "RCRobotEvaluationView.h"
+#import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 @interface RCRobotEvaluationView () <RCCustomIOSAlertViewDelegate>
 @property (nonatomic, weak) id<RCRobotEvaluationViewDelegate> robotEvaluationViewDelegate;

@@ -25,27 +25,4 @@
 + (UIColor *)generateDynamicColor:(UIColor *)lightColor darkColor:(UIColor *)darkColor {
     return [RCKitUtility generateDynamicColor:lightColor darkColor:darkColor];
 }
-
-+ (NSURLSessionConfiguration *)rcSessionConfiguration {
-    NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-    RCIMProxy *currentProxy = [[RCCoreClient sharedCoreClient] getCurrentProxy];
-    
-    if (currentProxy && [currentProxy isValid]) {
-        NSString *proxyHost = currentProxy.host;
-        NSNumber *proxyPort = @(currentProxy.port);
-        NSString *proxyUserName = currentProxy.userName;
-        NSString *proxyPassword = currentProxy.password;
-
-        NSDictionary *proxyDict = @{
-            (NSString *)kCFStreamPropertySOCKSProxyHost: proxyHost,
-            (NSString *)kCFStreamPropertySOCKSProxyPort: proxyPort,
-            (NSString *)kCFStreamPropertySOCKSUser : proxyUserName,
-            (NSString *)kCFStreamPropertySOCKSPassword: proxyPassword
-        };
-
-        sessionConfiguration.connectionProxyDictionary = proxyDict;
-    }
-    return sessionConfiguration;
-}
-
 @end

@@ -51,6 +51,7 @@
     if (!cacheConversationInfo) {
         return nil;
     }
+
     RCConversationInfo *conInfo = [[RCConversationInfo alloc] initWithConversationId:cacheConversationInfo.targetId conversationType:cacheConversationInfo.conversationType name:cacheConversationInfo.name portraitUri:cacheConversationInfo.portraitUri];
     return conInfo;
 }
@@ -97,32 +98,24 @@
 }
 
 - (void)clearConversationInfo:(RCConversationType)conversationType targetId:(NSString *)targetId {
-    RCLogI(@"clearConversationInfo:targetId:;;;conversationType=%lu,targerId=%@",
-           (unsigned long)conversationType, targetId);
     NSString *conversationGUID = [RCConversationInfo getConversationGUID:conversationType targetId:targetId];
     if (!conversationGUID) {
         return;
     }
     RCConversationInfo *cacheConversationInfo = self.cache[conversationGUID];
 
-    if (cacheConversationInfo) {
+    if (!cacheConversationInfo) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(rcUserInfoDBQueue, ^{
+            RCConversationInfo *dbConversationInfo =
+                [rcUserInfoWriteDBHelper selectConversationInfoFromDB:conversationType targetId:targetId];
+            [weakSelf deleteImageCache:dbConversationInfo];
+            [rcUserInfoWriteDBHelper deleteConversationInfoFromDB:conversationType targetId:targetId];
+        });
+    } else {
         [self deleteImageCache:cacheConversationInfo];
         [self.cache removeObjectForKey:conversationGUID];
     }
-//    else {
-//        __weak typeof(self) weakSelf = self;
-//        dispatch_async(rcUserInfoDBQueue, ^{
-//            RCConversationInfo *dbConversationInfo =
-//                [rcUserInfoWriteDBHelper selectConversationInfoFromDB:conversationType targetId:targetId];
-//            [weakSelf deleteImageCache:dbConversationInfo];
-//        });
-//    }
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(rcUserInfoDBQueue, ^{
-        [rcUserInfoWriteDBHelper deleteConversationInfoFromDB:conversationType targetId:targetId];
-        RCConversationInfo *conversationInfo = [[RCConversationInfo alloc] initWithConversationId:targetId conversationType:conversationType name:nil portraitUri:nil];
-        [weakSelf.updateDelegate onConversationInfoUpdate:conversationInfo];
-    });
 }
 
 - (void)clearAllConversationInfo {

@@ -16,7 +16,7 @@
  {"sn":1,"ls":true,"bg":0,"ed":0,"ws":[{"bg":0,"cw":[{"w":"白日","sc":0}]},{"bg":0,"cw":[{"w":"依山","sc":0}]},{"bg":0,"cw":[{"w":"尽","sc":0}]},{"bg":0,"cw":[{"w":"黄河入海流","sc":0}]},{"bg":0,"cw":[{"w":"。","sc":0}]}]}
  ****/
 + (NSString *)stringFromJson:(NSString *)params {
-    if (params.length <= 0) {
+    if (params == NULL) {
         return nil;
     }
 

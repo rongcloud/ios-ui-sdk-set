@@ -12,15 +12,15 @@
 @implementation RCPhotoPreviewCollectionViewFlowLayout
 
 - (BOOL)flipsHorizontallyInOppositeLayoutDirection {
-    return [RCKitUtility isRTL];
+    return YES;
 }
 
-//- (UIUserInterfaceLayoutDirection)effectiveUserInterfaceLayoutDirection {
-//
-//    if ([RCKitUtility isRTL]) {
-//        return UIUserInterfaceLayoutDirectionRightToLeft;
-//    }
-//    return UIUserInterfaceLayoutDirectionLeftToRight;
-//}
+- (UIUserInterfaceLayoutDirection)effectiveUserInterfaceLayoutDirection {
+
+    if ([RCKitUtility isRTL]) {
+        return UIUserInterfaceLayoutDirectionRightToLeft;
+    }
+    return UIUserInterfaceLayoutDirectionLeftToRight;
+}
 
 @end

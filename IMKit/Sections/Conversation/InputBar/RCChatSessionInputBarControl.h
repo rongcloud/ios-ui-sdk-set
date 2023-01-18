@@ -461,35 +461,15 @@
  */
 - (void)sightDidFinishRecord:(NSString *)url thumbnail:(UIImage *)image duration:(NSUInteger)duration;
 
-/**
- 相机录制小视频失败后调用
-
- @param error 错误
- @param status AVAssetWriter 状态
- */
-- (void)sightDidRecordFailedWith:(NSError *)error status:(NSInteger)status;
-
 /*!
  地理位置选择完成之后的回调
  @param location       位置的二维坐标
  @param locationName   位置的名称
  @param mapScreenShot  位置在地图中的缩略图
- @discussion 已废弃，请通过实现扩展区位置按钮点击跳转, 设置 RCLocationPickerViewController 的代理 RCLocationPickerViewControllerDelegate，来实现地理位置选择完成之后的代理回调方法。实现扩展区位置按钮点击跳转参考
- - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag {
-     if(tag == PLUGIN_BOARD_ITEM_LOCATION_TAG){
-         RCLocationPickerViewController *picker = [[RCLocationPickerViewController alloc] init];
-         picker.delegate = self;
-         UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
-         rootVC.modalPresentationStyle = UIModalPresentationFullScreen;
-         [self.navigationController presentViewController:rootVC animated:YES completion:nil];
-     }else{
-        [super pluginBoardView:pluginBoardView clickedItemWithTag:tag];
-     }
- }
  */
 - (void)locationDidSelect:(CLLocationCoordinate2D)location
              locationName:(NSString *)locationName
-            mapScreenShot:(UIImage *)mapScreenShot __deprecated_msg("Use RCLocationPickerViewControllerDelegate on RCLocationPickerViewController instead");
+            mapScreenShot:(UIImage *)mapScreenShot;
 
 /*!
  相册选择图片列表,返回图片的 NSData
@@ -558,6 +538,6 @@
  */
 - (void)onClickEditPicture:(UIViewController *)rootCtrl
              originalImage:(UIImage *)originalImage
-            editCompletion:(void (^)(UIImage *editedImage))editCompletion __attribute__((deprecated));
+            editCompletion:(void (^)(UIImage *editedImage))editCompletion __deprecated_msg("已废弃");
 
 @end
