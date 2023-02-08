@@ -8,7 +8,6 @@
 
 #import "RCVoiceCaptureControl.h"
 #import "RCKitCommonDefine.h"
-#import "RCExtensionService.h"
 #import "RCVoiceRecorder.h"
 #import "RCKitConfig.h"
 
@@ -122,7 +121,10 @@
     } else if ([RCIMClient sharedRCIMClient].voiceMsgType == RCVoiceMessageTypeHighQuality) {
         _myRecorder = [RCVoiceRecorder hqVoiceRecorder];
     }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     self.escapeTime = RCKitConfigCenter.message.maxVoiceDuration;
+#pragma clang diagnostic pop
     self.seconds = 0;
     self.isStopped = NO;
 }

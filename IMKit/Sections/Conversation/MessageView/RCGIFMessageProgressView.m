@@ -7,7 +7,6 @@
 //
 
 #import "RCGIFMessageProgressView.h"
-#import "RCKitUtility.h"
 
 @interface RCGIFMessageProgressView ()
 

@@ -13,11 +13,12 @@
 #import "RCKitUtility.h"
 #import "RCCombineMessageUtility.h"
 #import "RCCombineMsgFilePreviewViewController.h"
-#import "RCLocationViewController.h"
 #import <objc/runtime.h>
 #import "RCImageSlideController.h"
 #import "RCSightSlideViewController.h"
 #import "RCKitConfig.h"
+#import "RCLocationViewController+imkit.h"
+#import "RCSemanticContext.h"
 
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
@@ -168,7 +169,7 @@
             NSString *fileType = [dict objectForKey:@"fileType"];
             long long size = [[dict objectForKey:@"fileSize"] longLongValue];
             [self presentFilePreviewVC:fileUrl fileName:fileName fileSize:size fileType:fileType];
-        } else if ([templateType isEqualToString:RCLocationMessageTypeIdentifier]) {
+        } else if ([templateType isEqualToString:@"RC:LBSMsg"]) {
             NSString *locationName = [dict objectForKey:@"locationName"];
             NSString *latitude = [dict objectForKey:@"latitude"];
             NSString *longitude = [dict objectForKey:@"longitude"];
@@ -232,7 +233,9 @@
 
 #pragma mark - Private Methods
 - (void)setNav {
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     self.navigationItem.title = self.navTitle;
 }
 
@@ -241,9 +244,10 @@
         return;
     }
     RCCombineMessage *combineMsg = (RCCombineMessage *)self.messageModel.content;
-    if (combineMsg.localPath && combineMsg.localPath.length > 0 &&
-        [[NSFileManager defaultManager] fileExistsAtPath:combineMsg.localPath]) {
-        [self showWebView:[RCUtilities getCorrectedFilePath:combineMsg.localPath]];
+    NSString *localPath = combineMsg.localPath;
+    if (localPath.length > 0 &&
+        [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
+        [self showWebView:localPath];
     } else if (combineMsg.remoteUrl.length > 0) {
         if ([RCUtilities isRemoteUrl:combineMsg.remoteUrl]) {
             [self showLoadingTipView];
@@ -357,12 +361,11 @@
     NSString *imageUrl = [dict objectForKey:@"fileUrl"];
     NSString *thumbnailBase64Str = [dict objectForKey:@"imgUrl"];
     RCImageMessage *msgContent = [[RCImageMessage alloc] init];
-    msgContent.imageUrl = imageUrl;
+    msgContent.localPath = imageUrl;
     msgContent.thumbnailImage = [self getThumbImage:thumbnailBase64Str];
     RCMessage *message = [[RCMessage alloc] initWithType:self.conversationType
                                                 targetId:self.targetId
                                                direction:MessageDirection_SEND
-                                               messageId:-1
                                                  content:msgContent];
     RCMessageModel *model = [RCMessageModel modelWithMessage:message];
 
@@ -379,13 +382,12 @@
     NSString *thumbnailBase64Str = [dict objectForKey:@"imageBase64"];
     int duration = [[dict objectForKey:@"duration"] intValue];
     RCSightMessage *msgContent =
-        [RCSightMessage messageWithLocalPath:nil thumbnail:[self getThumbImage:thumbnailBase64Str] duration:duration];
+        [RCSightMessage messageWithLocalPath:@"" thumbnail:[self getThumbImage:thumbnailBase64Str] duration:duration];
     msgContent.remoteUrl = sightUrl;
 
     RCMessage *message = [[RCMessage alloc] initWithType:self.conversationType
                                                 targetId:self.targetId
                                                direction:MessageDirection_SEND
-                                               messageId:-1
                                                  content:msgContent];
     RCMessageModel *model = [RCMessageModel modelWithMessage:message];
 
@@ -399,18 +401,19 @@
 }
 
 - (void)presentLocationVC:(NSString *)locationName latitude:(NSString *)latitude longitude:(NSString *)longitude {
-    //默认方法跳转
-    RCLocationViewController *locationViewController = [[RCLocationViewController alloc] init];
-    locationViewController.locationName = locationName;
-    locationViewController.location = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
-    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
-    if (self.navigationController) {
-        //导航和原有的配色保持一直
-        UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
-        [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+    Class type = NSClassFromString(@"RCLocationViewController");
+    if (type) {
+        RCLocationViewController *locationViewController = [[type alloc] init];
+        [locationViewController setLatitude:[latitude doubleValue] longitude:[longitude doubleValue] locationName:locationName];
+        UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
+        if (self.navigationController) {
+            //导航和原有的配色保持一直
+            UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
+            [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+        }
+        navc.modalPresentationStyle = UIModalPresentationFullScreen;
+        [self presentViewController:navc animated:YES completion:NULL];
     }
-    navc.modalPresentationStyle = UIModalPresentationFullScreen;
-    [self presentViewController:navc animated:YES completion:NULL];
 }
 
 - (void)startAnimation {

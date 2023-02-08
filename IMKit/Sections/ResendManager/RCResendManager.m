@@ -21,6 +21,8 @@
 
 @property (nonatomic, assign) BOOL isProcessing;
 
+@property (nonatomic, strong) NSString *currentUserId;
+
 @end
 
 @implementation RCResendManager
@@ -39,6 +41,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        self.currentUserId = [RCIM sharedRCIM].currentUserInfo.userId;
         self.messageCacheDict = [[RCTSMutableDictionary alloc] init];
         self.messageIds = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -62,6 +65,13 @@
 }
 
 - (BOOL)isResendErrorCode:(RCErrorCode)code {
+    RCConnectionStatus status = [[RCIM sharedRCIM] getConnectionStatus];
+    if (ConnectionStatus_KICKED_OFFLINE_BY_OTHER_CLIENT == status ||
+        ConnectionStatus_SignOut == status ||
+        ConnectionStatus_USER_ABANDON == status ||
+        ConnectionStatus_PROXY_UNAVAILABLE == status){
+        return NO;
+    }
     if (code == RC_CHANNEL_INVALID ||
         code == RC_NETWORK_UNAVAILABLE ||
         code == RC_MSG_RESPONSE_TIMEOUT ||
@@ -217,12 +227,28 @@
 - (void)onConnectionStatusChangedNotification:(NSNotification *)status {
     dispatch_main_async_safe(^{
         RCLogI(@"connection status changed");
-        if (ConnectionStatus_Connected == [status.object integerValue]) {
-            if (!self.isProcessing) {
-                [self beginResend];
-            }
-        } else if (ConnectionStatus_SignOut == [status.object integerValue]) {
-            [self removeAllResendMessage];
+        RCConnectionStatus connectionStatus = [status.object integerValue];
+        switch (connectionStatus) {
+            case ConnectionStatus_Connected: {
+                if ([self.currentUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]){
+                    if (!self.isProcessing) {
+                        [self beginResend];
+                    }
+                }else{
+                    self.currentUserId = [RCIM sharedRCIM].currentUserInfo.userId;
+                    [self removeAllResendMessage];
+                }
+            } break;
+            //Since 5.3.0 signout/timeout/proxy unavailable 直接显示发送失败
+            //Since 5.3.1 kicked 直接显示发送失败
+            case ConnectionStatus_KICKED_OFFLINE_BY_OTHER_CLIENT:
+            case ConnectionStatus_SignOut:
+            case ConnectionStatus_Timeout:
+            case ConnectionStatus_PROXY_UNAVAILABLE: {
+                [self removeAllResendMessage];
+            } break;
+            default:
+                break;
         }
     });
 }

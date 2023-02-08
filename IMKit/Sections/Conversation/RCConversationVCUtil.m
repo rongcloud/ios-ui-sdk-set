@@ -167,12 +167,17 @@
 - (void)saveDraftIfNeed {
     NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
     if (draft && [draft length] > 0) {
-        NSString *draftInDB = [[RCIMClient sharedRCIMClient] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId];
-        if(![draft isEqualToString:draftInDB]) {
-            [[RCIMClient sharedRCIMClient] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId content:draft];
-        }
+        [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+            if(![draft isEqualToString:draftInDB]) {
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
+                    
+                }];
+            }
+        }];
     } else {
-        [[RCIMClient sharedRCIMClient] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId];
+        [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
+            
+        }];
     }
 }
 
@@ -203,6 +208,16 @@
         }
     }
     return indexPath;
+}
+
+- (RCMessageModel *)modelByMessageID:(NSInteger)messageID {
+    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
+        if (msg.messageId == messageID && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
+            return msg;
+        }
+    }
+    return nil;
 }
 
 - (BOOL)alertDestructMessageRemind {
@@ -243,7 +258,7 @@
             RCKitConfigCenter.message.enableMessageRecall && model.sentStatus != SentStatus_SENDING &&
             model.sentStatus != SentStatus_FAILED && model.sentStatus != SentStatus_CANCELED &&
             (model.conversationType == ConversationType_PRIVATE || model.conversationType == ConversationType_GROUP ||
-             model.conversationType == ConversationType_DISCUSSION) &&
+             model.conversationType == ConversationType_DISCUSSION || model.conversationType == ConversationType_ULTRAGROUP) &&
             ![model.content isKindOfClass:NSClassFromString(@"JrmfRedPacketMessage")] &&
             ![model.content isKindOfClass:NSClassFromString(@"RCCallSummaryMessage")]
             &&
@@ -340,9 +355,7 @@
                             NSUInteger duration = round(CMTimeGetSeconds(model.duration));
                             RCSightMessage *sightMsg =
                                 [RCSightMessage messageWithAsset:model thumbnail:image duration:duration];
-                            if (localPath.length > 0) {                            
-                                sightMsg.localPath = localPath;
-                            }
+                            sightMsg.localPath = localPath;
                             [chatVC sendMessage:sightMsg pushContent:nil];
                         });
                     } else {
@@ -395,8 +408,9 @@
 
 //自动回复机器人收到信令消息也会有自动回复，针对这些会话暂时不发 RC:SRSMsg 信令
 //包含融云客服/爱客服小助手/测试公众号客服
-- (BOOL)isAutoResponseRobot:(RCConversationType)type targetId:(NSString *)targetId {
-    if (type == ConversationType_APPSERVICE) {
+- (BOOL)isAutoResponseRobot{
+    NSString *targetId = self.chatVC.targetId;
+    if (self.chatVC.conversationType == ConversationType_APPSERVICE) {
         if ([targetId isEqualToString:@"aikefutest"] || [targetId isEqualToString:@"KEFU144595511648939"] ||
             [targetId isEqualToString:@"testkefu"] || [targetId isEqualToString:@"service"]) {
             return YES;
@@ -467,28 +481,50 @@
 
 #pragma mark - 回执请求及响应处理， 同步阅读状态
 - (void)syncReadStatus {
+    [self syncReadStatus:0 needDelay:NO];
+}
+
+- (void)syncReadStatus:(long long)sentTime needDelay:(BOOL)needDelay{
     if (!RCKitConfigCenter.message.enableSyncReadStatus)
         return;
-
+    if ([self isAutoResponseRobot]) {
+        return;
+    }
     //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
     if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
          ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
         self.chatVC.conversationType == ConversationType_PUBLICSERVICE) {
-        if ([self isAutoResponseRobot:self.chatVC.conversationType targetId:self.chatVC.targetId]) {
-            return;
-        }
-        for (long i = self.chatVC.conversationDataRepository.count - 1; i >= 0; i--) {
-            RCMessageModel *model = self.chatVC.conversationDataRepository[i];
-            if (model.messageDirection == MessageDirection_RECEIVE) {
-                [[RCIMClient sharedRCIMClient] syncConversationReadStatus:self.chatVC.conversationType
-                                                                 targetId:self.chatVC.targetId
-                                                                     time:model.sentTime
-                                                                  success:nil
-                                                                    error:nil];
-                break;
+        
+        if (0 == sentTime){
+            for (long i = self.chatVC.conversationDataRepository.count - 1; i >= 0; i--) {
+                RCMessageModel *model = self.chatVC.conversationDataRepository[i];
+                if (model.messageDirection == MessageDirection_RECEIVE) {
+                    [self startSyncConversationReadStatus:model.sentTime needDelay:needDelay];
+                    break;
+                }
             }
+        }else{
+            [self startSyncConversationReadStatus:sentTime needDelay:needDelay];
         }
+    }
+}
+
+- (void)startSyncConversationReadStatus:(long long)sentTime needDelay:(BOOL)needDelay{
+    if (needDelay) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [[RCIMClient sharedRCIMClient] syncConversationReadStatus:self.chatVC.conversationType
+                                                             targetId:self.chatVC.targetId
+                                                                 time:sentTime
+                                                              success:nil
+                                                                error:nil];
+        });
+    }else{
+        [[RCIMClient sharedRCIMClient] syncConversationReadStatus:self.chatVC.conversationType
+                                                         targetId:self.chatVC.targetId
+                                                             time:sentTime
+                                                          success:nil
+                                                            error:nil];
     }
 }
 

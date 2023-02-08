@@ -8,7 +8,6 @@
 
 #import "RCConversationStatusView.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCIM.h"
 #import "RCKitConfig.h"
 

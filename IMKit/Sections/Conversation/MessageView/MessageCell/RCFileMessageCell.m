@@ -7,7 +7,6 @@
 //
 
 #import "RCFileMessageCell.h"
-#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
@@ -62,8 +61,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     RCFileMessage *fileMessage = (RCFileMessage *)self.model.content;
     self.nameLabel.text = fileMessage.name;
     self.sizeLabel.text = [RCKitUtility getReadableStringForFileSize:fileMessage.size];
-    NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:fileMessage.type];
-    self.typeIconView.image = RCResourceImage(fileTypeIcon);
+    self.typeIconView.image = [RCKitUtility imageWithFileSuffix:fileMessage.type];
     [self setAutoLayout];
 }
 

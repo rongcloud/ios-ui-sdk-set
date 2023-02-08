@@ -9,6 +9,7 @@
 #import "RCSightSlideViewController.h"
 #import "RCIM.h"
 #import "RCKitUtility.h"
+#import "RCAssetHelper.h"
 #import "RCMessageModel.h"
 #import "RCSightCollectionView.h"
 #import "RCSightCollectionViewCell.h"
@@ -20,6 +21,7 @@
 #import "RCSightModel.h"
 #import "RCSightModel+internal.h"
 #import "RCSightPlayerController+imkit.h"
+#import "RCPhotoPreviewCollectionViewFlowLayout.h"
 
 @interface RCSightSlideViewController () <UIScrollViewDelegate, RCSightCollectionViewCellDelegate,
                                           UICollectionViewDataSource, UICollectionViewDelegate,
@@ -192,7 +194,6 @@
         NSArray<RCMessageModel *> *backMessageArray = [self getBackMessagesForModel:model count:5 times:0];
         [modelsArray addObjectsFromArray:backMessageArray];
     }
-    
     NSUInteger index = [modelsArray indexOfObject:model];
     self.currentIndex = index;
     self.messageModelArray = [self getSightModels:modelsArray].mutableCopy;
@@ -450,37 +451,31 @@
     if (!localPath) {
         return;
     }
-    UISaveVideoAtPathToSavedPhotosAlbum(localPath, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
+    [RCAssetHelper savePhotosAlbumWithVideoPath:localPath authorizationStatusBlock:^{
+        [self showAlertController:RCLocalizedString(@"AccessRightTitle")
+                          message:RCLocalizedString(@"photoAccessRight")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } resultBlock:^(BOOL success) {
+        [self showAlertWithSuccess:success];
+    }];
 }
 
-- (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
-    [self handleError:error];
+- (void)showAlertWithSuccess:(BOOL)success {
+    if (success) {
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SaveSuccess")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    } else {
+        [self showAlertController:nil
+                          message:RCLocalizedString(@"SaveFailed")
+                      cancelTitle:RCLocalizedString(@"OK")];
+    }
 }
 
 - (NSString *)formatSeconds:(NSInteger)value {
     NSInteger seconds = value % 60;
     NSInteger minutes = value / 60;
     return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)seconds];
-}
-
-/**
- 错误处理
- */
-- (void)handleError:(NSError *)error {
-    if (error != NULL) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self showAlertController:nil
-                              message:RCLocalizedString(@"SaveFailed")
-                          cancelTitle:RCLocalizedString(@"OK")];
-        });
-
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self showAlertController:nil
-                              message:RCLocalizedString(@"SaveSuccess")
-                          cancelTitle:RCLocalizedString(@"OK")];
-        });
-    }
 }
 
 - (void)showAlertController:(NSString *)title message:(NSString *)message cancelTitle:(NSString *)cancelTitle {
@@ -501,7 +496,7 @@
 
 - (RCSightCollectionView *)collectionView {
     if(!_collectionView) {
-        UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+        UICollectionViewFlowLayout *flowLayout = [[RCPhotoPreviewCollectionViewFlowLayout alloc] init];
         [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
         flowLayout.minimumLineSpacing = 0;
         flowLayout.minimumInteritemSpacing = 0;
@@ -513,6 +508,9 @@
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor blackColor];
+        if (([RCKitUtility isRTL])) {
+            _collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
     }
     return _collectionView;
 }

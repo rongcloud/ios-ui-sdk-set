@@ -11,7 +11,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCVoicePlayer.h"
-#import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
@@ -134,9 +133,12 @@ static long s_messageId = 0;
 }
 
 - (CGFloat)getBubbleWidth:(long)duration{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     CGFloat audioBubbleWidth =
         kAudioBubbleMinWidth +
         (kAudioBubbleMaxWidth - kAudioBubbleMinWidth) * duration / RCKitConfigCenter.message.maxVoiceDuration;
+#pragma clang diagnostic pop
     audioBubbleWidth = audioBubbleWidth > kAudioBubbleMaxWidth ? kAudioBubbleMaxWidth : audioBubbleWidth;
     return audioBubbleWidth;
 }
@@ -332,7 +334,11 @@ static long s_messageId = 0;
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    self.playVoiceView.image = RCResourceImage(playingIndicatorIndex);
+    UIImage *image = RCResourceImage(playingIndicatorIndex);;
+    if ([RCKitUtility isRTL]) {
+        image = [image imageFlippedForRightToLeftLayoutDirection];
+    }
+    self.playVoiceView.image = image;
 }
 
 - (void)disableCurrentAnimationTimer {

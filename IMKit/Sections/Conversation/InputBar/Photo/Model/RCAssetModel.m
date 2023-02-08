@@ -69,7 +69,8 @@
                                      weakSelf.avAsset = avAsset;
                                  }
                              }
-                    progressHandler:nil];
+                progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
+        }];
     } else {
         return [[RCAssetHelper shareAssetHelper]
             getOriginImageDataWithAsset:self
@@ -87,7 +88,9 @@
                                          }
                                      });
                                  }
-                        progressHandler:nil];
+                progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
+            
+        }];
     }
 }
 

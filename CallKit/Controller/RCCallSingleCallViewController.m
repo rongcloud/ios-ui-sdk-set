@@ -31,10 +31,27 @@
 }
 
 - (instancetype)initWithOutgoingCall:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
+    if (targetId.length == 0) {
+        NSAssert(NO, @"被叫端 id 不能为空");
+        return nil;
+    }
+    
     return [super initWithOutgoingCall:ConversationType_PRIVATE
                               targetId:targetId
                              mediaType:mediaType
                             userIdList:@[targetId]];
+}
+
+- (instancetype)initWithOutgoingCrossCall:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
+    if (targetId.length == 0) {
+        NSAssert(NO, @"被叫端 id 不能为空");
+        return nil;
+    }
+    
+    return [super initWithOutgoingCrossCall:ConversationType_PRIVATE
+                                   targetId:targetId
+                                  mediaType:mediaType
+                                 userIdList:@[targetId]];
 }
 
 - (instancetype)initWithActiveCall:(RCCallSession *)callSession {
@@ -242,8 +259,8 @@
         self.remoteNameLabel.textAlignment = NSTextAlignmentCenter;
         self.tipsLabel.textAlignment = NSTextAlignmentCenter;
 
-        self.statusView.frame = CGRectMake((self.view.frame.size.width - 17) / 2,
-                                           RCCallTopGGradientHeight + (RCCallHeaderLength - 4) / 2, 17, 4);
+        self.statusView.frame = CGRectMake(0, 0, 17, 4);
+        self.statusView.center = self.remotePortraitView.center;
 
         if (callStatus == RCCallDialing) {
             self.remotePortraitView.alpha = 0.5;
@@ -291,7 +308,10 @@
         } else if (callStatus == RCCallActive) {
             self.mainVideoView.hidden = NO;
             [self.callSession setVideoView:self.mainVideoView userId:self.callSession.targetId];
-        } else {
+        } else if (callStatus == RCCallIncoming || callStatus == RCCallRinging) {
+           self.mainVideoView.hidden = NO;
+           [self.callSession setVideoView:self.mainVideoView userId:currentUserId];
+       } else {
             self.mainVideoView.hidden = YES;
         }
 
@@ -366,10 +386,11 @@
         if (callStatus == RCCallDialing) {
             self.statusView.hidden = YES;
             self.blurView.hidden = YES;
-        } else if (callStatus == RCCallRinging || callStatus == RCCallDialing || callStatus == RCCallIncoming) {
+        } else if (callStatus == RCCallIncoming || callStatus == RCCallRinging) {
             self.remotePortraitView.alpha = 0.5;
-            self.statusView.hidden = NO;
-            self.blurView.hidden = NO;
+            self.remotePortraitBgView.hidden = YES;
+            self.statusView.hidden = YES;
+            self.blurView.hidden = YES;
         } else {
             self.statusView.hidden = YES;
             self.blurView.hidden = YES;

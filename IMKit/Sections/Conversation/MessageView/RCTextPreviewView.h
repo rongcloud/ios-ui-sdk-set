@@ -14,7 +14,7 @@
 
 @interface RCTextPreviewView : UIScrollView
 
-+ (void)showText:(NSString *)text delegate:(id<RCTextPreviewViewDelegate>)delegate;
++ (void)showText:(NSString *)text messageId:(long)messageId delegate:(id<RCTextPreviewViewDelegate>)delegate;
 
 @end
 

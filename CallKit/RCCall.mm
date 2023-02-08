@@ -42,9 +42,9 @@
     }
 #endif
 
-static NSString *const __RongCallKit__Version = @"5.1.9.3_opensource";
-static NSString *const __RongCallKit__Commit = @"fd2518d35";
-static NSString *const __RongCallKit__Time = @"202301181544";
+static NSString *const __RongCallKit__Version = @"5.3.5_opensource";
+static NSString *const __RongCallKit__Commit = @"76a655c2a";
+static NSString *const __RongCallKit__Time = @"202302081032";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
@@ -115,10 +115,15 @@ static NSString *const __RongCallKit__Time = @"202301181544";
     }
 }
 
+- (void)startSingleCrossCall:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
+    RCCallSingleCallViewController *singleCallViewController =
+        [[RCCallSingleCallViewController alloc] initWithOutgoingCrossCall:targetId mediaType:mediaType];
+    [self presentCallViewController:singleCallViewController];
+}
+
 - (void)startSingleCallViewController:(NSString *)targetId mediaType:(RCCallMediaType)mediaType {
     RCCallSingleCallViewController *singleCallViewController =
         [[RCCallSingleCallViewController alloc] initWithOutgoingCall:targetId mediaType:mediaType];
-
     [self presentCallViewController:singleCallViewController];
 }
 
@@ -252,14 +257,26 @@ static NSString *const __RongCallKit__Time = @"202301181544";
 }
 
 - (void)presentCallViewController:(UIViewController *)viewController {
-    [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
-    UIWindow *activityWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    activityWindow.windowLevel = [UIApplication sharedApplication].keyWindow.windowLevel + 1;
-    activityWindow.rootViewController = viewController;
-    activityWindow.tag = kActivityWindowTag;
-    [self.callWindows addObject:activityWindow];
+    NSArray *windows = [self.callWindows
+        filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"tag == %ld", kActivityWindowTag]];
+    if (!windows || windows.count == 0) {
+        [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
+        UIWindow *activityWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+        activityWindow.windowLevel = [UIApplication sharedApplication].keyWindow.windowLevel + 1;
+        activityWindow.rootViewController = viewController;
+        activityWindow.tag = kActivityWindowTag;
+        [self.callWindows addObject:activityWindow];
 
-    [self showActivityWindowIfNeedDelay];
+        [self showActivityWindowIfNeedDelay];
+    } else {
+        UIWindow *activityWindow = windows.firstObject;
+        UIViewController *activityViewController = activityWindow.rootViewController;
+        while (activityViewController.presentingViewController) {
+            activityViewController = activityViewController.presentingViewController;
+        }
+        viewController.modalPresentationStyle = UIModalPresentationFullScreen;
+        [activityViewController presentViewController:viewController animated:YES completion:nil];
+    }
 }
 
 - (void)showActivityWindowIfNeedDelay {
@@ -492,40 +509,19 @@ static NSString *const __RongCallKit__Time = @"202301181544";
     }
 }
 
-#pragma mark - alert
-- (void)loadErrorAlertWithoutConfirm:(NSString *)title {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title
-                                                    message:nil
-                                                   delegate:nil
-                                          cancelButtonTitle:nil
-                                          otherButtonTitles:nil];
-    alert.tag = AlertWithoutConfirm;
-    [NSTimer scheduledTimerWithTimeInterval:1.0f
-                                     target:self
-                                   selector:@selector(cancelAlert:)
-                                   userInfo:alert
-                                    repeats:NO];
-    [alert show];
+- (void)didMissCall:(RCCallSession *)callSession {
+    NSLog(@"[didMissCall] session:%@, reason:%zd", callSession, callSession.disconnectReason);
 }
 
-- (void)cancelAlert:(NSTimer *)scheduledTimer {
-    UIAlertView *alert = (UIAlertView *)(scheduledTimer.userInfo);
-    if (alert.tag == AlertWithoutConfirm) {
-        [alert dismissWithClickedButtonIndex:0 animated:NO];
-    }
-    [[UIApplication sharedApplication].delegate.window makeKeyAndVisible];
+#pragma mark - alert
+- (void)loadErrorAlertWithoutConfirm:(NSString *)title {
+    [RCAlertView showAlertController:title message:nil hiddenAfterDelay:1.0f inViewController:nil dismissCompletion:^{
+        [[UIApplication sharedApplication].delegate.window makeKeyAndVisible];
+    }];
 }
 
 - (void)loadErrorAlertWithConfirm:(NSString *)title message:(NSString *)message {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title
-                                                        message:message
-                                                       delegate:nil
-                                              cancelButtonTitle:RCCallKitLocalizedString(@"OK")
-                                              otherButtonTitles:nil];
-        alert.tag = AlertWithConfirm;
-        [alert show];
-    });
+    [RCAlertView showAlertController:title message:message cancelTitle:RCCallKitLocalizedString(@"OK")];
 }
 
 - (void)startReceiveCallVibrate {

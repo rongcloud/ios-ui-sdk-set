@@ -8,7 +8,6 @@
 
 #import "RCCSLeaveMessagesCell.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import <RongCustomerService/RongCustomerService.h>

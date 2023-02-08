@@ -7,11 +7,7 @@
 //
 
 #import "RCLocationMessageCell.h"
-#import "RCIM.h"
-#import "RCKitUtility.h"
-#import "RCKitCommonDefine.h"
-#import "RCMessageCellTool.h"
-#import "RCKitConfig.h"
+#import <RongLocation/RongLocation.h>
 
 @interface RCLocalConfiguration : NSObject
 + (instancetype)sharedInstance;

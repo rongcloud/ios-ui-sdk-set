@@ -9,8 +9,6 @@
 #import "RCConversationViewController.h"
 #import "RCCSPullLeaveMessageCell.h"
 #import "RCConversationCollectionViewHeader.h"
-#import "RCCustomerServiceMessageModel.h"
-#import "RCExtensionService.h"
 #import "RCFilePreviewViewController.h"
 #import "RCDestructImageBrowseController.h"
 #import "RCKitCommonDefine.h"
@@ -43,6 +41,7 @@
 #import "RCForwardManager.h"
 #import "RCCombineMessageCell.h"
 #import "RCReeditMessageManager.h"
+#import "RCResendManager.h"
 #import "RCReferencingView.h"
 #import "RCReferenceMessageCell.h"
 #import "RCConversationDataSource.h"
@@ -54,6 +53,16 @@
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongCustomerService/RongCustomerService.h>
 #import "RCButton.h"
+#import "RCTranslationClient+Internal.h"
+#import "RCMessageModel+Translation.h"
+#import "RCTextTranslationMessageCell.h"
+#import "RCVoiceTranslationMessageCell.h"
+#import "RCTextMessageTranslatingCell.h"
+#import "RCVoiceMessageTranslatingCell.h"
+#import "RCLocationViewController+imkit.h"
+#import "RCLocationMessage+imkit.h"
+#import "RCSemanticContext.h"
+
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
 
@@ -160,6 +169,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
     [self initializedSubViews];
     [self registerAllInternalClass];
+    [self registerCustomCellsAndMessages];
     [self registerNotification];
 
     [RCMessageSelectionUtility sharedManager].delegate = self;
@@ -170,19 +180,33 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 #endif
     [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
-    RCConversation *conversation =
-        [[RCIMClient sharedRCIMClient] getConversation:self.conversationType targetId:self.targetId];
     
-    [self.dataSource getInitialMessage:conversation];
+    [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.dataSource getInitialMessage:conversation];
+            NSString *draft = conversation.draft;
+            self.chatSessionInputBarControl.draft = draft;
+        });
+    }];
     [self setNavigationItem];
-    NSString *draft = conversation.draft;
-    self.chatSessionInputBarControl.draft = draft;
+    
 
     [self registerSectionHeaderView];
     if (!RCKitConfigCenter.message.enableDestructMessage) {
         [self.chatSessionInputBarControl.pluginBoardView removeItemWithTag:PLUGIN_BOARD_ITEM_DESTRUCT_TAG];
     }
     [self.chatSessionInputBarControl.pluginBoardView removeItemWithTag:PLUGIN_BOARD_ITEM_TRANSFER_TAG];
+    
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (cls && [cls respondsToSelector:@selector(sharedInstance)]) {// 添加翻译监听
+        id obj = [[cls class] sharedInstance];
+        if ([obj respondsToSelector:@selector(addTranslationDelegate:)]) {
+            [obj addTranslationDelegate:self];
+        }
+    }
+    if (self.disableSystemEmoji) {
+        [self disableSystemDefaultEmoji];
+    }
 }
 
 - (void)viewWillLayoutSubviews {
@@ -270,6 +294,13 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 }
 
+- (void)didMoveToParentViewController:(UIViewController *)parent{
+    [super didMoveToParentViewController:parent];
+    if (!parent){
+        [self quitConversationViewAndClear];
+    }
+}
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self quitConversationViewAndClear];
@@ -279,7 +310,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 
 #pragma mark - Register Message
-
+- (void)registerCustomCellsAndMessages {
+    
+}
 - (void)registerAllInternalClass {
     //常见消息
     [self registerClass:[RCTextMessageCell class] forMessageClass:[RCTextMessage class]];
@@ -289,7 +322,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self registerClass:[RCVoiceMessageCell class] forMessageClass:[RCVoiceMessage class]];
     [self registerClass:[RCHQVoiceMessageCell class] forMessageClass:[RCHQVoiceMessage class]];
     [self registerClass:[RCRichContentMessageCell class] forMessageClass:[RCRichContentMessage class]];
-    [self registerClass:[RCLocationMessageCell class] forMessageClass:[RCLocationMessage class]];
     [self registerClass:[RCFileMessageCell class] forMessageClass:[RCFileMessage class]];
     [self registerClass:[RCReferenceMessageCell class] forMessageClass:[RCReferenceMessage class]];
     if (NSClassFromString(@"RCSightCapturer")) {
@@ -319,12 +351,31 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     for (RCExtensionMessageCellInfo *cellInfo in self.extensionMessageCellInfoList) {
         [self registerClass:cellInfo.messageCellClass forMessageClass:cellInfo.messageContentClass];
     }
+    
+    [self customRegisterClass:[RCTextTranslationMessageCell class]
+                      withKey:RCTextTranslationMessageCellIdentifier];
+  
+    [self customRegisterClass:[RCTextMessageTranslatingCell class]
+                      withKey:RCTextTranslatingMessageCellIdentifier];
+    [self customRegisterClass:[RCVoiceMessageTranslatingCell class]
+                      withKey:RCVoiceTranslatingMessageCellIdentifier];
+    [self customRegisterClass:[RCVoiceTranslationMessageCell class]
+                      withKey:RCVoiceTranslationMessageCellIdentifier];
 }
 
 - (void)registerClass:(Class)cellClass forMessageClass:(Class)messageClass {
     [self.conversationMessageCollectionView registerClass:cellClass
                                forCellWithReuseIdentifier:[messageClass getObjectName]];
     [self.cellMsgDict setObject:cellClass forKey:[messageClass getObjectName]];
+}
+
+- (void)customRegisterClass:(Class)cellClass withKey:(NSString *)key {
+    if (!cellClass || !key) {
+        return;
+    }
+    [self.conversationMessageCollectionView registerClass:cellClass
+                               forCellWithReuseIdentifier:key];
+    [self.cellMsgDict setObject:cellClass forKey:key];
 }
 
 - (void)registerClass:(Class)cellClass forCellWithReuseIdentifier:(NSString *)identifier {
@@ -515,7 +566,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didReceiveRecallMessageNotification:)
-                                                 name:RCKitDispatchRecallMessageNotification
+                                                 name:RCKitDispatchRecallMessageDetailNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onReceiveMessageReadReceiptResponse:)
@@ -652,12 +703,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     __weak typeof(self) __blockSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        long recalledMsgId = [notification.object longValue];
+        RCMessage *recalledMsg = notification.object;
+        long recalledMsgId = recalledMsg.messageId;
         if ([RCVoicePlayer defaultPlayer].isPlaying &&
             [RCVoicePlayer defaultPlayer].messageId == recalledMsgId) {
             [[RCVoicePlayer defaultPlayer] stopPlayVoice];
         }
-        RCMessage *recalledMsg = [[RCIMClient sharedRCIMClient] getMessage:recalledMsgId];
         [__blockSelf.dataSource didRecallMessage:recalledMsg];
         if (self.enableUnreadMentionedIcon && recalledMsg.conversationType == self.conversationType &&
             [recalledMsg.targetId isEqual:self.targetId] &&
@@ -670,7 +721,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             [self dismissReferencingView:self.referencingView];
             [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallAlert") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
         }
+        [self updateLeftBarUnreadMessageCount:recalledMsg];
     });
+}
+
+- (void)updateLeftBarUnreadMessageCount:(RCMessage *)recalledMsg{
+    if (recalledMsg.conversationType != self.conversationType || recalledMsg.targetId != self.targetId) {
+        [self notifyUpdateUnreadMessageCount];
+    }
 }
 
 /**
@@ -874,6 +932,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     RCMessageContent *messageContent = model.content;
     RCMessageBaseCell *cell = nil;
     NSString *objName = [[messageContent class] getObjectName];
+    if ([model isTranslated]||[model translating]) {
+        objName = [model translationCellIdentifier];
+    }
+    
     if (self.cellMsgDict[objName]) {
         cell = [collectionView dequeueReusableCellWithReuseIdentifier:objName forIndexPath:indexPath];
 
@@ -937,12 +999,19 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     RCMessageModel *model = [self.conversationDataRepository objectAtIndex:indexPath.row];
     model = [self.dataSource setModelIsDisplayNickName:model];
+    // 文本消息
     if (model.cellSize.height > 0 &&
         !(model.conversationType == ConversationType_CUSTOMERSERVICE &&
           [model.content isKindOfClass:[RCTextMessage class]])) {
-        return model.cellSize;
+        if (model.isTranslated) { // 如果是翻译过的消息
+            return model.finalSize; // 返回最终大小: 文本size + 翻译size
+        } else if (model.translating) { // 如果是翻译中的消息
+            return model.translatingSize;
+        } else {
+            return model.cellSize; // 只返回文本size
+        }
     }
-
+    
     RCMessageContent *messageContent = model.content;
     NSString *objectName = [[messageContent class] getObjectName];
     Class cellClass = self.cellMsgDict[objectName];
@@ -1069,7 +1138,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _imagePreviewVC.messageModel = model;
     _imagePreviewVC.onlyPreviewCurrentMessage = onlyPreviewCurrentMessage;
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:_imagePreviewVC];
-
     if (self.navigationController) {
         //导航和原有的配色保持一直
         UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
@@ -1141,21 +1209,20 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
  *  @param locationMessageContent 位置消息
  */
 - (void)presentLocationViewController:(RCLocationMessage *)locationMessageContent {
-    //默认方法跳转
-    RCLocationViewController *locationViewController = [[RCLocationViewController alloc] init];
-    locationViewController.locationName = locationMessageContent.locationName;
-    locationViewController.location = locationMessageContent.location;
-    locationViewController.modalPresentationStyle = UIModalPresentationFullScreen;
-    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
-    if (self.navigationController) {
-        //导航和原有的配色保持一直
-        UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
-
-        [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+    Class type = NSClassFromString(@"RCLocationViewController");
+    if (type) {
+        RCLocationViewController *locationViewController = [[type alloc] initWithLocationMessage:locationMessageContent];
+        UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
+        if (self.navigationController) {
+            //导航和原有的配色保持一直
+            UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
+            [navc.navigationBar setBackgroundImage:image forBarMetrics:UIBarMetricsDefault];
+        }
+        navc.modalPresentationStyle = UIModalPresentationFullScreen;
+        [self presentViewController:navc animated:YES completion:NULL];
     }
-    navc.modalPresentationStyle = UIModalPresentationFullScreen;
-    [self presentViewController:navc animated:YES completion:NULL];
 }
+
 
 - (void)presentFilePreviewViewController:(RCMessageModel *)model {
     RCFilePreviewViewController *fileViewController = [[RCFilePreviewViewController alloc] init];
@@ -1263,7 +1330,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     //                [NSThread sleepForTimeInterval:0.2];
     //            }
     //            RCImageMessage *imageMsg = (RCImageMessage*)message.content;
-    //            imageMsg.imageUrl = @"http://www.rongcloud.cn/images/newVersion/bannerInner.png?0717";
+    //            imageMsg.remoteUrl = @"http://www.rongcloud.cn/images/newVersion/bannerInner.png?0717";
     //            uploadListener.successBlock(imageMsg);
     //        });
 }
@@ -1344,6 +1411,14 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)cancelUploadMedia:(RCMessageModel *)model {
     dispatch_async(dispatch_get_main_queue(), ^{
         [[RCIM sharedRCIM] cancelSendMediaMessage:model.messageId];
+    });
+}
+
+- (void)cancelResendMessageIfNeed:(RCMessageModel *)model {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([[RCResendManager sharedManager] needResend:model.messageId]) {
+            [[RCResendManager sharedManager] removeResendMessage:model.messageId];
+        }
     });
 }
 
@@ -1465,10 +1540,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)openSystemCamera {
     [self.chatSessionInputBarControl openSystemCamera];
 }
-//打开位置
-- (void)openLocationPicker {
-    [self.chatSessionInputBarControl openLocationPicker];
-}
+
 //开关阅后即焚功能
 - (void)switchDestructMessageMode {
     if (self.chatSessionInputBarControl.destructMessageMode) {
@@ -1478,6 +1550,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.chatSessionInputBarControl setDefaultInputType:RCChatSessionInputBarInputDestructMode];
     }
 }
+
+//打开位置
+- (void)openLocationPicker {
+    [self.chatSessionInputBarControl openLocationPicker];
+}
+
 //打开文件选择
 - (void)openFileSelector {
     [self.chatSessionInputBarControl openFileSelector];
@@ -1568,15 +1646,6 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.isTakeNewPhoto = NO;
     [self.util doSendSelectedMediaMessage:selectedImages fullImageRequired:full];
 }
-//位置选择回调
-- (void)locationDidSelect:(CLLocationCoordinate2D)location
-             locationName:(NSString *)locationName
-            mapScreenShot:(UIImage *)mapScreenShot {
-    [self becomeFirstResponder];
-    RCLocationMessage *locationMessage =
-        [RCLocationMessage messageWithLocationImage:mapScreenShot location:location locationName:locationName];
-    [self sendMessage:locationMessage pushContent:nil];
-}
 
 //选择相册图片或者拍照回调
 - (void)imageDidCapture:(UIImage *)image {
@@ -1590,6 +1659,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)sightDidFinishRecord:(NSString *)url thumbnail:(UIImage *)image duration:(NSUInteger)duration {
     RCSightMessage *sightMessage = [RCSightMessage messageWithLocalPath:url thumbnail:image duration:duration];
     [self sendMessage:sightMessage pushContent:nil];
+}
+
+- (void)sightDidRecordFailedWith:(NSError *)error status:(NSInteger)status {
+    NSLog(@"sightDidRecordFailedWith: error %ld status %ld", error.code,status);
 }
 
 //文件列表被选中
@@ -1684,6 +1757,60 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
     [self deleteMessage:model];
 }
+
+- (BOOL)isTranslationEnable {
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (!cls
+        || ![cls respondsToSelector:@selector(sharedInstance)]) {
+        return NO;
+    }
+    id instance = [[cls class] sharedInstance];
+    if ([instance respondsToSelector:@selector(isTextTranslationSupported)]) {
+        return [instance isTextTranslationSupported];
+    }
+    return NO;
+}
+/// 翻译消息
+/// @param sender sender
+- (void)onTranslateMessageCell:(id)sender {
+    RCMessageModel *model = self.currentSelectedModel;
+    Class cls = NSClassFromString(@"RCTranslationClient");
+    if (!cls
+        || ![model.content isKindOfClass:[RCTextMessage class]]
+        || ![cls respondsToSelector:@selector(sharedInstance)]) {
+        return;
+    }
+    NSString *srcLanguage = [RCKitConfig defaultConfig].message.translationConfig.srcLanguage;
+    NSString *targetLanguage = [RCKitConfig defaultConfig].message.translationConfig.targetLanguage;
+    RCTextMessage *txtMessage = (RCTextMessage *)(model.content);
+    model.translating = YES;
+    model.translationCategory = RCTranslationCategoryText;
+    [self uploadTranslationByModel:model];
+    id instance = [[cls class] sharedInstance];
+    if ([instance respondsToSelector:@selector(translate:text:srcLanguage:targetLanguage:)]) {
+        // 验证是否可以翻译
+        [instance translate:model.messageId
+                       text:txtMessage.content
+                srcLanguage:srcLanguage
+             targetLanguage:targetLanguage];
+    }
+}
+
+- (void)uploadTranslationByModel:(RCMessageModel *)model {
+    NSIndexPath *indexPath = [self.util findDataIndexFromMessageList:model];
+    if (indexPath) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[indexPath]];
+            [self scrollToShowCellAt:indexPath];
+        });
+    }
+}
+- (void)scrollToShowCellAt:(NSIndexPath *)indexPath {
+   
+    [self.conversationMessageCollectionView scrollToItemAtIndexPath:indexPath
+                                                   atScrollPosition:UICollectionViewScrollPositionCenteredVertically
+                                                           animated:YES];
+}
 //撤回消息动作
 - (void)onRecallMessage:(id)sender {
     if ([self.util canRecallMessageOfModel:self.currentSelectedModel]) {
@@ -1770,11 +1897,23 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         }
     }
     
-    long msgId = model.messageId;
     if ([model.content isKindOfClass:[RCMediaMessageContent class]]) {
+        // 多媒体消息此刻要取消上传并停止重发逻辑
         [self cancelUploadMedia:model];
+    }else {
+        // 普通消息此刻要直接停止重发逻辑
+        [self cancelResendMessageIfNeed:model];
     }
-    [[RCIMClient sharedRCIMClient] deleteMessages:@[ @(msgId) ]];
+
+    long msgId = model.messageId;
+    if (self.needDeleteRemoteMessage) {
+        // 用户设置需要删除远端消息
+        RCMessage *delMsg = [[RCIMClient sharedRCIMClient] getMessage:msgId];
+        [[RCIMClient sharedRCIMClient] deleteRemoteMessage:model.conversationType targetId:model.targetId messages:@[delMsg] success:nil error:nil];
+    }else {
+        // 用户未设置，只删除本地消息
+        [[RCIMClient sharedRCIMClient] deleteMessages:@[@(msgId)]];
+    }
     [self.conversationDataRepository removeObjectAtIndex:indexPath.item];
     //偶现 查看阅后即焚小视频或者图片， 切换到后台在进入崩溃，原因是 indexPath 越界，怀疑从后台进入后会自动重新刷新 collecttionView
     if (indexPath.row < [self.conversationMessageCollectionView numberOfItemsInSection:0]) {
@@ -1976,111 +2115,58 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 
     if ([_messageContent isMemberOfClass:[RCImageMessage class]]) {
-        RCImageMessage *imageMsg = (RCImageMessage *)_messageContent;
-        if (imageMsg.destructDuration > 0) {
-            [self presentDestructImagePreviewController:model];
-        } else {
-            [self presentImagePreviewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCSightMessage class]]) {
-        if ([RCKitUtility isCameraHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"VoIPVideoCallExistedWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"VoIPAudioCallExistedWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        RCSightMessage *sightMsg = (RCSightMessage *)_messageContent;
-        if (sightMsg.destructDuration > 0) {
-            [self presentDestructSightViewPreviewViewController:model];
-        } else {
-            [self presentSightViewPreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCGIFMessage class]]) {
-        RCGIFMessage *gifMsg = (RCGIFMessage *)_messageContent;
-        if (gifMsg.destructDuration > 0) {
-            [self pushDestructGIFPreviewViewController:model];
-        } else {
-            [self pushGIFPreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCCombineMessage class]]) {
-        RCCombineMessage *combineMsg = (RCCombineMessage *)_messageContent;
-        if (combineMsg.destructDuration > 0) {
-        } else {
-            [self pushCombinePreviewViewController:model];
-        }
-
-    } else if ([_messageContent isMemberOfClass:[RCVoiceMessage class]]) {
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
-            self.isContinuousPlaying = YES;
-        } else {
-            self.isContinuousPlaying = NO;
-        }
-        model.receivedStatus = ReceivedStatus_LISTENED;
-        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        RCVoiceMessageCell *cell =
-            (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell && [cell isKindOfClass:[RCVoiceMessageCell class]]) {
-            [cell playVoice];
-        }
-    } else if ([_messageContent isMemberOfClass:[RCHQVoiceMessage class]]) {
-        if ([RCKitUtility isAudioHolding]) {
-            NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
-            [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
-            return;
-        }
-        if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
-            self.isContinuousPlaying = YES;
-        } else {
-            self.isContinuousPlaying = NO;
-        }
-        if (((RCHQVoiceMessage *)_messageContent).localPath.length > 0) {
-            model.receivedStatus = ReceivedStatus_LISTENED;
-        }
-        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        RCHQVoiceMessageCell *cell =
-            (RCHQVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        if (cell && [cell isKindOfClass:[RCHQVoiceMessageCell class]]) {
-            [cell playVoice];
-        }
-    } else if ([_messageContent isMemberOfClass:[RCLocationMessage class]]) {
-        // Show the location view controller
-        RCLocationMessage *locationMessage = (RCLocationMessage *)(_messageContent);
-        [self presentLocationViewController:locationMessage];
-    } else if ([_messageContent isMemberOfClass:[RCTextMessage class]]) {
-        // link
-        RCTextMessage *textMsg = (RCTextMessage *)(_messageContent);
-        if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
-            NSUInteger row = [self.conversationDataRepository indexOfObject:model];
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-            if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
-                [[RCIMClient sharedRCIMClient]
-                    messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:model.messageId]];
-            }
-            model.cellSize = CGSizeZero;
-            //更新UI
-            [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-        }
-        // phoneNumber
-    } else if ([self isExtensionCell:_messageContent]) {
+        [self p_didTapMessageCellForImageMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCSightMessage class]]) {
+        [self p_didTapMessageCellForSightMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCGIFMessage class]]) {
+        [self p_didTapMessageCellForGIFMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCCombineMessage class]]) {
+        [self p_didTapMessageCellForCombineMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCVoiceMessage class]]) {
+        [self p_didTapMessageCellForVoiceMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCHQVoiceMessage class]]) {
+        [self p_didTapMessageCellForHQVoiceMessage:model];
+        return;
+    }
+    
+    if ([model.objectName isEqualToString:@"RC:LBSMsg"]) {
+        [self p_didTapMessageCellForLocationMessage:model];
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCTextMessage class]]) {
+        [self p_didTapMessageCellForTextMessage:model];
+        return;
+    }
+    
+    if ([self isExtensionCell:_messageContent]) {
         [[RongIMKitExtensionManager sharedManager] didTapMessageCell:model];
-    } else if ([_messageContent isMemberOfClass:[RCFileMessage class]]) {
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCFileMessage class]]) {
         [self presentFilePreviewViewController:model];
-    } else if ([_messageContent isMemberOfClass:[RCCSPullLeaveMessage class]]) {
+        return;
+    }
+    
+    if ([_messageContent isMemberOfClass:[RCCSPullLeaveMessage class]]) {
         [self.csUtil didTapCSPullLeaveMessage:model];
+        return;
     }
 }
 
@@ -2144,9 +2230,18 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             [items addObject:referItem];
         }        
     }
+    
+    BOOL translateEnable = [self isTranslationEnable] && !model.isTranslated && [model.content isKindOfClass:[RCTextMessage class]] && !model.translating;
+    if (translateEnable) {
+        UIMenuItem *transItem =
+        [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Translate")
+                                   action:@selector(onTranslateMessageCell:)];
+        [items addObject:transItem];
+    }
     if (self.conversationType != ConversationType_SYSTEM) {
         [items addObject:multiSelectItem];
     }
+    
     return items.copy;
 }
 
@@ -2331,7 +2426,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         // 刷新可视范围的 Cell
         [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
     }
-    // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 http://zt.rongcloud.net/index.php?m=bug&f=view&t=html&id=44945 这个问题
+    // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 禅道 44945 这个问题
     [self.conversationMessageCollectionView reloadData];
 }
 
@@ -2439,8 +2534,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             [__weakself updateLastMessageReadReceiptStatus:messageId content:content];
         }
     });
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [self didSendMessage:0 content:content];
+#pragma clang diagnostic pop
     [self didSendMessageModel:0 model:[RCMessageModel modelWithMessage:message]];
 
     if ([content isKindOfClass:[RCImageMessage class]]) {
@@ -2530,8 +2627,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             }
             [self.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_FAILED messageId:messageId progress:0];
         });
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [self didSendMessage:nErrorCode content:content];
+#pragma clang diagnostic pop
+
     [self didSendMessageModel:nErrorCode model:[RCMessageModel modelWithMessage:message]];
 
     RCInformationNotificationMessage *informationNotifiMsg = [self.util getInfoNotificationMessageByErrorCode:nErrorCode];
@@ -2737,7 +2837,51 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         }];
     [self.navigationController pushViewController:forwardSelectedVC animated:NO];
 }
+#pragma mark -- RCTranslationClientDelegate
 
+/// 翻译结束
+/// @param translation model
+/// @param code 返回码
+- (void)onTranslation:(RCTranslation *)translation
+         finishedWith:(NSInteger)code {
+    Class cls = NSClassFromString(@"RCTranslation");
+    if (cls) {
+        RCMessageModel *model = [self.util modelByMessageID:translation.messageId];
+        if (!model) {
+            return;
+        }
+            model.translating = NO;
+        if (code == 26200) {
+            model.translationString = translation.translationString;
+        } else {
+            [RCAlertView showAlertController:RCLocalizedString(@"TranslateFailed")
+                                     message:nil
+                            hiddenAfterDelay:1
+                            inViewController:self];
+        }
+        [self uploadTranslationByModel:model];
+
+    }
+}
+
+#pragma mark -- Emoji
+
+/*!
+ 禁用系统表情
+
+ @discussion 禁用后只显示自定义表情。
+ */
+- (void)disableSystemDefaultEmoji {
+    [self.chatSessionInputBarControl.emojiBoardView disableSystemDefaultEmoji];
+}
+/*!
+ 系统表情是否禁用
+
+ @discussion 禁用状态。
+ */
+- (BOOL)isSystemEmojiDisable {
+    return self.chatSessionInputBarControl.emojiBoardView.isSystemEmojiDisable;
+}
 #pragma mark - Helper
 - (void)registerSectionHeaderView {
     [self.conversationMessageCollectionView registerClass:[RCConversationCollectionViewHeader class]
@@ -2805,8 +2949,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         RCMessage *referencedMsg = [[RCMessage alloc] initWithType:self.conversationType
                                                           targetId:self.targetId
                                                          direction:MessageDirection_SEND
-                                                         messageId:messageModel.messageId
                                                            content:msgContent];
+        referencedMsg.messageId = messageModel.messageId;
         RCMessageModel *imageModel = [RCMessageModel modelWithMessage:referencedMsg];
         [self presentImagePreviewController:imageModel onlyPreviewCurrentMessage:YES];
     } else if ([msgContent isKindOfClass:[RCFileMessage class]]) {
@@ -2822,7 +2966,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
             [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
         }
-        [RCTextPreviewView showText:[RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES] delegate:self];
+        [RCTextPreviewView showText:[RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES] messageId:messageModel.messageId  delegate:self];
     }
 }
 
@@ -2901,14 +3045,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _locatedMessageSentTime = locatedMessageSentTime;
 }
 
-- (void)setDefaultHistoryMessageCountOfChatRoom:(int)defaultHistoryMessageCountOfChatRoom {
-    if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"8.0") && defaultHistoryMessageCountOfChatRoom > 30) {
-        defaultHistoryMessageCountOfChatRoom = 30;
-    }
-    _defaultHistoryMessageCountOfChatRoom = defaultHistoryMessageCountOfChatRoom;
-}
-
-- (void)setdefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
+- (void)setDefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
     if (defaultLocalHistoryMessageCount > 100) {
         defaultLocalHistoryMessageCount = 100;
     }else if (defaultLocalHistoryMessageCount < 0){
@@ -2992,7 +3129,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                 [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
                 [__cell setDataModel:rcMsg];
                 [__cell setDelegate:self];
-                if (__cell && ([__cell isKindOfClass:[RCVoiceMessageCell class]] || [__cell isKindOfClass:[RCHQVoiceMessageCell class]])) {
+                if (__cell && ([__cell isKindOfClass:[RCVoiceMessageCell class]] || [__cell isKindOfClass:[RCHQVoiceMessageCell class]])) {                
                     [__cell playVoice];
                 }
             }
@@ -3242,10 +3379,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         backString = RCLocalizedString(@"Back");
     }
     NSArray *items;
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     if (self.conversationType == ConversationType_CUSTOMERSERVICE) {
-        items = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:backString target:self action:@selector(customerServiceLeftCurrentViewController)];
+        items = [RCKitUtility getLeftNavigationItems:imgMirror title:backString target:self action:@selector(customerServiceLeftCurrentViewController)];
     } else {
-        items = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:backString target:self action:@selector(leftBarButtonItemPressed:)];
+        items = [RCKitUtility getLeftNavigationItems:imgMirror title:backString target:self action:@selector(leftBarButtonItemPressed:)];
     }
     return items;
 }
@@ -3267,5 +3406,129 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.view addSubview:_extensionView];
     }
     return _extensionView;
+}
+
+#pragma -mark private method
+- (void)p_didTapMessageCellForImageMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCImageMessage *imageMsg = (RCImageMessage *)_messageContent;
+    if (imageMsg.destructDuration > 0) {
+        [self presentDestructImagePreviewController:model];
+    } else {
+        [self presentImagePreviewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForSightMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    if ([RCKitUtility isCameraHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"VoIPVideoCallExistedWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"VoIPAudioCallExistedWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    RCSightMessage *sightMsg = (RCSightMessage *)_messageContent;
+    if (sightMsg.destructDuration > 0) {
+        [self presentDestructSightViewPreviewViewController:model];
+    } else {
+        [self presentSightViewPreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForGIFMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCGIFMessage *gifMsg = (RCGIFMessage *)_messageContent;
+    if (gifMsg.destructDuration > 0) {
+        [self pushDestructGIFPreviewViewController:model];
+    } else {
+        [self pushGIFPreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForCombineMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    RCCombineMessage *combineMsg = (RCCombineMessage *)_messageContent;
+    if (combineMsg.destructDuration > 0) {
+    } else {
+        [self pushCombinePreviewViewController:model];
+    }
+}
+
+- (void)p_didTapMessageCellForVoiceMessage:(RCMessageModel *)model {
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+        self.isContinuousPlaying = YES;
+    } else {
+        self.isContinuousPlaying = NO;
+    }
+    model.receivedStatus = ReceivedStatus_LISTENED;
+    NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    RCVoiceMessageCell *cell =
+        (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
+    if (cell && [cell isKindOfClass:[RCVoiceMessageCell class]]) {
+        [cell playVoice];
+    }
+}
+
+- (void)p_didTapMessageCellForHQVoiceMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    if ([RCKitUtility isAudioHolding]) {
+        NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
+        [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
+        return;
+    }
+    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+        self.isContinuousPlaying = YES;
+    } else {
+        self.isContinuousPlaying = NO;
+    }
+    if (((RCHQVoiceMessage *)_messageContent).localPath.length > 0) {
+        model.receivedStatus = ReceivedStatus_LISTENED;
+    }
+    NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+    RCHQVoiceMessageCell *cell =
+        (RCHQVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
+    if (cell && [cell isKindOfClass:[RCHQVoiceMessageCell class]]) {
+        [cell playVoice];
+    }
+}
+
+- (void)p_didTapMessageCellForLocationMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    // Show the location view controller
+    RCLocationMessage *locationMessage = (RCLocationMessage *)(_messageContent);
+    [self presentLocationViewController:locationMessage];
+}
+
+- (void)p_didTapMessageCellForTextMessage:(RCMessageModel *)model {
+    RCMessageContent *_messageContent = model.content;
+    // link
+    RCTextMessage *textMsg = (RCTextMessage *)(_messageContent);
+    if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
+        NSUInteger row = [self.conversationDataRepository indexOfObject:model];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
+        if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
+            [[RCIMClient sharedRCIMClient]
+                messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:model.messageId]];
+        }
+        model.cellSize = CGSizeZero;
+        //更新UI
+        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
+        // 滚动到最底部
+        [self.conversationMessageCollectionView setNeedsLayout];
+        [self.conversationMessageCollectionView layoutIfNeeded];
+        [self scrollToBottomAnimated:YES];
+    }
+    // phoneNumber
 }
 @end

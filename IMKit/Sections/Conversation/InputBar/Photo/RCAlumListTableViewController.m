@@ -15,6 +15,7 @@
 #import "RCMBProgressHUD.h"
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCKitConfig.h"
+#import "RCAlertView.h"
 
 static NSString *const cellReuseIdentifier = @"cell";
 
@@ -123,8 +124,31 @@ static NSString *const cellReuseIdentifier = @"cell";
                               if (assetGroup) {
                                   weakSelf.libraryList = assetGroup;
                               }
-
+            
                               dispatch_async(dispatch_get_main_queue(), ^{
+                                  BOOL isFirstRun = [[NSUserDefaults standardUserDefaults] boolForKey:@"rckit_first_happen"];
+                                  //处理过，不要再处理，除非重装app
+                                  if (assetGroup.count == 0 && !isFirstRun) {
+                                      if (@available(iOS 15, *)) {
+                                          // nothing to do
+                                      } else if (@available(iOS 14, *)) {
+                                          [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                                          // 相册bug https://developer.apple.com/forums/thread/658114
+                                          [RCAlertView showAlertController:RCLocalizedString(@"PhotoLibraryBugErrorAlert") message:nil actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"restartApp") preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:nil confirmBlock:^{
+                                              // 首次发生并重启后问题解决，记录一下， 下次不必再处理此case
+                                              [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"rckit_first_happen"];
+                                              [[NSUserDefaults standardUserDefaults] synchronize];
+                                              
+                                              exit(0);
+                                          } inViewController:self];
+                                          
+                                          return;
+                                      } else {
+                                          // nothing to do
+                                      }
+                                  }
+
+                                  
                                   [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
 
                                   if (weakSelf.libraryList.count) {
@@ -144,6 +168,25 @@ static NSString *const cellReuseIdentifier = @"cell";
                               });
                           }];
     }
+}
+- (NSString *)moveVideoFileAt:(NSString *)filePath {
+    /*
+     在发送之前拷贝一次, 是因为相册的文件路径, 再次访问时, 文件是不存在的, 只能使用
+     临时目录(第一次发送失败后, 重启应用, 再次发送无法访问原相册目录)
+     */
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if ([fileManager fileExistsAtPath:filePath]) {
+        long long millisecond = [[NSDate date] timeIntervalSince1970] * 1000;
+        NSString *name = [NSString stringWithFormat:@"rongcloud_tmp_video_%lld.mp4", millisecond];
+        NSString *localPath = [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+        NSError *error = nil;
+        [fileManager copyItemAtPath:filePath toPath:localPath error:&error];
+        if (error) {
+            return filePath;
+        }
+        return localPath;
+    }
+    return filePath;
 }
 
 - (void)handlePhotos:(NSMutableArray *)photos result:(NSMutableArray *)results full:(BOOL)isFull {
@@ -181,9 +224,8 @@ static NSString *const cellReuseIdentifier = @"cell";
                             // 添加判断，如果选择的是慢动作视频，这里返回的是 AVComposition 对象，这个时候没有 URL 属性
                             if ([urlAsset respondsToSelector:@selector(URL)]) {
                                 NSURL *url = urlAsset.URL;
-                                NSString *tempString = [url absoluteString];
-                                localPath =
-                                    [tempString stringByReplacingOccurrencesOfString:@"file:///" withString:@""];
+                                NSString *tempString = [url relativePath];
+                                localPath = tempString;
                             }
                         }
                         if (localPath == nil || localPath.length < 1) {
@@ -193,6 +235,8 @@ static NSString *const cellReuseIdentifier = @"cell";
                                 localPath = [localPaths lastObject];
                             }
                         }
+                        localPath = [self moveVideoFileAt:localPath];
+
                         [assetInfo setObject:localPath forKey:@"localPath"];
 
                         // NSDictionary* assetInfo = @{@"avAsset":model.avAsset,@"thumbnail":!model.thumbnailImage ?
@@ -217,19 +261,6 @@ static NSString *const cellReuseIdentifier = @"cell";
                         weakself.isShowHUD = NO;
                     }
                 }];
-            PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
-            options.networkAccessAllowed = YES;
-            options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
-            options.version = PHVideoRequestOptionsVersionOriginal;
-
-            [[PHImageManager defaultManager]
-                requestAVAssetForVideo:model.asset
-                               options:options
-                         resultHandler:^(AVAsset *_Nullable asset, AVAudioMix *_Nullable audioMix,
-                                         NSDictionary *_Nullable info){
-
-                         }];
-
         } else {
             __weak typeof(self) weakself = self;
             [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model

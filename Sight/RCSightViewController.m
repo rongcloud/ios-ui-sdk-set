@@ -291,10 +291,20 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     [self.view addSubview:self.tipsLable];
 
     self.actionButton.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
+    self.actionButton.accessibilityLabel = @"actionButton";
+    
     self.cancelBtn.center = self.actionButton.center;
+    self.cancelBtn.accessibilityLabel = @"cancelBtn";
+
     self.okBtn.center = self.actionButton.center;
+    self.okBtn.accessibilityLabel = @"okBtn";
+
     self.playBtn.center = self.actionButton.center;
+    self.playBtn.accessibilityLabel = @"playBtn";
+
     self.dismissBtn.frame = CGRectMake(Marging, YOffset, CommonBtnSize, CommonBtnSize);
+    self.dismissBtn.accessibilityLabel = @"dismissBtn";
+
     self.tipsLable.center = CGPointMake(screenSize.width / 2, self.actionButton.frame.origin.y - 16);
     if (RCSightViewControllerCameraCaptureModeSight == self.captureMode) {
         [self performSelector:@selector(setStatusBarHidden:) withObject:@(YES) afterDelay:0.5];
@@ -499,6 +509,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 #endif
         self.tipsLable.hidden = NO;
         self.beginTime = [[NSDate date] timeIntervalSince1970];
+        [self updateTimeLabel];
     }
 }
 
@@ -509,10 +520,10 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         [self.recorder finishRecording];
 #else
         [self sightRecorder:nil didWriteMovieAtURL:nil];
-#endif
         self.endTime = [[NSDate date] timeIntervalSince1970];
         [self updateTimeLabel];
         [self hideTipsLabel];
+#endif
         [self.timer invalidate];
     }
 }
@@ -520,11 +531,16 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (void)showOkCancelBtnWithAnimation:(BOOL)showPlayBtn {
     self.actionButton.hidden = YES;
     [UIView animateWithDuration:AnimateDuration
-        animations:^{
-            CGSize screenSize = [UIScreen mainScreen].bounds.size;
+                     animations:^{
+        CGSize screenSize = [UIScreen mainScreen].bounds.size;
+        if ([RCKitUtility isRTL]) {
+            self.okBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
+            self.cancelBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
+        } else {
             self.cancelBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
             self.okBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
         }
+    }
         completion:^(BOOL finished) {
             self.playBtn.hidden = !showPlayBtn;
             self.cancelBtn.hidden = NO;
@@ -566,6 +582,11 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
 - (void)updateTimeLabel {
     NSTimeInterval current = [[NSDate date] timeIntervalSince1970];
+    [self updateTimeLabelWithEndTime:current];
+}
+
+- (void)updateTimeLabelWithEndTime:(NSTimeInterval)endTime {
+    NSTimeInterval current = endTime;
     long seconds = round(current - self.beginTime);
     seconds = seconds > self.actionButton.canRecordMaxDuration ? self.actionButton.canRecordMaxDuration : seconds;
     NSString *tipsText = 0 == seconds ? @"" : [NSString stringWithFormat:@"%ld\"", (long)seconds];
@@ -694,6 +715,16 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
 #pragma mark - RCSightRecorderDelegate
 - (void)sightRecorder:(RCSightRecorder *)recorder didWriteMovieAtURL:(NSURL *)outputURL {
+    NSDictionary *dic = @{AVURLAssetPreferPreciseDurationAndTimingKey:@(YES)};
+    AVURLAsset *audioAsset = [AVURLAsset URLAssetWithURL:outputURL options:dic];
+    CMTime audioDuration = audioAsset.duration;
+    Float64 audioDurationSeconds = CMTimeGetSeconds(audioDuration);
+    
+    //录制成功，需要读取一下视频文件的总时长，保证精准
+    self.endTime = self.beginTime + audioDurationSeconds;
+    [self updateTimeLabelWithEndTime:self.endTime];
+    [self hideTipsLabel];
+
     long duration = round(self.endTime - self.beginTime);
     if (0 == duration) {
         self.playBtn.hidden = YES;
@@ -713,8 +744,13 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 #endif
 }
 
-- (void)sightRecorder:(RCSightRecorder *)recorder didFailWithError:(NSError *)error {
+- (void)sightRecorder:(RCSightRecorder *)recorder
+     didFailWithError:(NSError *)error
+               status:(NSInteger)status {
     self.endTime = [[NSDate date] timeIntervalSince1970];
+    [self updateTimeLabel];
+    [self hideTipsLabel];
+
     long duration = round(self.endTime - self.beginTime);
     if (0 == duration) {
         self.playBtn.hidden = YES;
@@ -722,6 +758,11 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     }else {
         // 录制失败 并且超过1s 给出失败提示
         [self sightFailed];
+    }
+    if ([self.delegate respondsToSelector:@selector(sightViewController:didWriteFailedWith:status:)]) {
+        [self.delegate sightViewController:self
+                        didWriteFailedWith:error
+                                    status:status];
     }
 }
 

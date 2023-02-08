@@ -487,15 +487,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     [self.delegate didOutputSampleBuffer:sampleBuffer];
 }
 
-#pragma mark - RCSightRecorderDelegate
-- (void)didWriteMovieAtURL:(NSURL *)outputURL {
-    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-    [library writeVideoAtPathToSavedPhotosAlbum:outputURL
-                                completionBlock:^(NSURL *assetURL, NSError *error){
-
-                                }];
-}
-
 #pragma mark - Notification Selector
 - (void)sessionWasInterrupted:(NSNotification *)notification {
     NSLog(@"Capture session was interrupted with reason: %@", notification);

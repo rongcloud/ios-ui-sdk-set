@@ -79,7 +79,9 @@
                 weakSelf.previewImageView.animatedImage = gifImage;
                 [weakSelf resetSubviews];
             });
-        }progressHandler:nil];
+        }progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
+            
+        }];
         return YES;
     }
     return NO;

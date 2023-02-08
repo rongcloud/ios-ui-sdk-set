@@ -7,6 +7,7 @@
 //
 
 #import "RCStickerDownloader.h"
+#import "RCStickerUtility.h"
 
 /**
  Async download queue
@@ -66,7 +67,7 @@ static NSOperationQueue *rong_st_download_queue() {
     [self.successBlocks setObject:successBlock forKey:identifier];
     [self.errorBlocks setObject:errorBlock forKey:identifier];
     NSURLSession *session =
-        [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
+        [NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]
                                       delegate:self
                                  delegateQueue:rong_st_download_queue()];
     session.sessionDescription = identifier;
@@ -74,6 +75,8 @@ static NSOperationQueue *rong_st_download_queue() {
     NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:url];
     [downloadTask resume];
 }
+
+
 
 #pragma mark - NSURLSessionDownloadDelegate
 
@@ -109,6 +112,7 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
+    [session finishTasksAndInvalidate];
 }
 
 // download failed
@@ -121,6 +125,7 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
+    [session finishTasksAndInvalidate];
 }
 
 @end

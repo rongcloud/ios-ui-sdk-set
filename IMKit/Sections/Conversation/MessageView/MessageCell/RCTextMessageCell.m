@@ -157,6 +157,12 @@
     [self setCSEvaUILayout:bubbleWidth bubbleHeight:bubbleHeight];
 
     self.messageContentView.contentSize = CGSizeMake(bubbleWidth, bubbleHeight);
+    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
+    self.destructTextImage.hidden = YES;
+    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
+        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
+        self.destructTextImage.hidden = NO;
+    }
     
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
         [self.textLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
@@ -170,12 +176,9 @@
         self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
     
-    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
-    self.destructTextImage.hidden = YES;
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
         ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
         self.textLabel.text = RCLocalizedString(@"ClickToView");
-        self.destructTextImage.hidden = NO;
     }else if(textMessage){
         self.textLabel.text = textMessage.content;
     }else{

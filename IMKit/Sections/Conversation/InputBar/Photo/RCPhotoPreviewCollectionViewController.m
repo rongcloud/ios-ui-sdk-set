@@ -17,6 +17,7 @@
 #import "RCAlertView.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
 #import "RCKitConfig.h"
+#import "RCSemanticContext.h"
 
 static NSString *const reuseIdentifier = @"Cell";
 static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
@@ -196,7 +197,11 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGPoint offSet = scrollView.contentOffset;
-    self.currentIndex = offSet.x / self.view.frame.size.width;
+    int index = (int)roundf(offSet.x / self.view.frame.size.width);
+    if (index != self.currentIndex){
+        self.currentIndex = index;
+        [self _updateTopBarStatus];
+    }
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
@@ -335,6 +340,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         };
         [self updateImageSize];
     } else {
+        _fullButton.titleLabel.text = [NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")];
         [_fullButton setTitle:[NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")]
                      forState:UIControlStateNormal];
     }
@@ -367,7 +373,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     _topView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_topView];
     UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [backButton setImage:RCResourceImage(@"navigator_white_back") forState:UIControlStateNormal];
+    UIImage *img = RCResourceImage(@"navigator_white_back");
+    img = [RCSemanticContext imageflippedForRTL:img];
+    [backButton setImage:img forState:UIControlStateNormal];
     [backButton setContentEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 6)];
     [backButton sizeToFit];
     if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
@@ -390,7 +398,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         stateButton.frame =
             CGRectMake(_topView.frame.size.width - 10 - 44, _topView.frame.size.height / 2 - 44 / 2, 44, 44);
     }
-
+    // RTL 切换
+    [RCSemanticContext swapFrameForRTL:backButton withView:stateButton];
+    
     [stateButton addTarget:self action:@selector(isSelectedButtonAction:) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:self.selectedButton = stateButton];
 }
@@ -573,9 +583,13 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                          }
                                      });
                                  }
-                        progressHandler:nil];
+         progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
+            
+        }];
     } else {
-        completeBlock(YES);
+        if (completeBlock) {
+            completeBlock(YES);
+        }
     }
 }
 
@@ -665,10 +679,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     if (self.previewPhotosArr.count <= self.currentIndex) {
         return;
     }
+    _fullButton.titleLabel.text = [NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")];
     [_fullButton setTitle:[NSString stringWithFormat:@"%@", RCLocalizedString(@"Full_Image")]
                  forState:UIControlStateNormal];
 
     RCAssetModel *model = self.previewPhotosArr[self.currentIndex];
+    if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        return;
+    }
     if (model.imageSize) {
         [self getImageSize:model.imageSize];
     } else {
@@ -702,6 +720,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         imageSize = [NSString stringWithFormat:@"%0.2fM", size / 1024 / 1024];
     }
     [self.indicatorView stopAnimating];
+    self.fullButton.titleLabel.text = [NSString stringWithFormat:@"%@ (%@)", RCLocalizedString(@"Full_Image"), imageSize];
     [self.fullButton
         setTitle:[NSString stringWithFormat:@"%@ (%@)", RCLocalizedString(@"Full_Image"), imageSize]
         forState:UIControlStateNormal];
@@ -714,7 +733,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         if ([RCKitUtility isRTL]) {
             _indicatorView.frame = CGRectMake(CGRectGetMinX(self.fullButton.frame) - 20 - 6, 18, 20, 20);
         } else {
-            _indicatorView.frame = CGRectMake(CGRectGetMinX(self.fullButton.frame) + self.fullButton.titleLabel.frame.size.width + 6, 18, 20, 20);
+            _indicatorView.frame = CGRectMake(CGRectGetMaxX(self.fullButton.titleLabel.frame) + 20, 18, 20, 20);
         }
         [self.bottomView addSubview:_indicatorView];
     }

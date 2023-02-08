@@ -16,6 +16,7 @@
 
 // AVPlayerItem's status property
 #define STATUS_KEYPATH @"status"
+#define RATE_KEYPATH @"rate"
 /// 播放进度刷新频率
 #define REFRESH_INTERVAL 0.01f
 
@@ -80,6 +81,7 @@
     if (self.isAddStatusObserver) {
         [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
     }
+    [self.player removeObserver:self forKeyPath:RATE_KEYPATH];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     if (_itemEndObserver) {
         [[NSNotificationCenter defaultCenter] removeObserver:_itemEndObserver
@@ -101,7 +103,7 @@
     }
     _asset = nil;
     _playerItem = nil;
-    _player = nil;
+    [self resetPlayer];
     _timeObserver = nil;
 }
 
@@ -181,6 +183,11 @@
     }
 }
 
+- (void)resetPlayer{
+    [_player removeObserver:self forKeyPath:RATE_KEYPATH];
+    _player = nil;
+}
+
 #pragma mark - helper
 - (void)showDowndLoadFailedControl {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -250,6 +257,10 @@
 - (AVPlayer *)player {
     if (!_player) {
         _player = [AVPlayer playerWithPlayerItem:self.playerItem];
+        [_player addObserver:self
+                  forKeyPath:RATE_KEYPATH
+                     options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                     context:nil];
     }
     return _player;
 }
@@ -285,15 +296,40 @@
                       ofObject:(id)object
                         change:(NSDictionary *)change
                        context:(void *)context {
-    if (![keyPath isEqualToString:STATUS_KEYPATH]) {
+    if ([keyPath isEqualToString:RATE_KEYPATH] && [keyPath isEqualToString:STATUS_KEYPATH]) {
         return;
     }
+    
+    long oldValue = [[change objectForKey:NSKeyValueChangeOldKey] longValue];
+    long newValue = [[change objectForKey:NSKeyValueChangeNewKey] longValue];
+    if (oldValue == newValue) {
+        return;
+    }
+    
+    if ([keyPath isEqualToString:RATE_KEYPATH]){
+        [self playerDidChangeRate];
+        return;
+    }
+    
+    if ([keyPath isEqualToString:STATUS_KEYPATH]) {
+        [self playerItemDidChangeStatus];
+        return;
+    }
+}
+
+- (void)playerDidChangeRate{
     dispatch_async(dispatch_get_main_queue(), ^{
-        long oldValue = [[change objectForKey:NSKeyValueChangeOldKey] longValue];
-        long newValue = [[change objectForKey:NSKeyValueChangeNewKey] longValue];
-        if (oldValue == newValue) {
-            return;
+        // rate = 0 ,表示视频播放被打断
+        if (self.isPlaying && self.player.rate == 0){
+            [self.player pause];
+            [self makePlayButtonAppear];
+            [self setAudioSessionUnActive];
         }
+    });
+}
+
+- (void)playerItemDidChangeStatus{
+    dispatch_async(dispatch_get_main_queue(), ^{
         if (self.isAddStatusObserver) {
             [self.playerItem removeObserver:self forKeyPath:STATUS_KEYPATH];
             self.isAddStatusObserver = NO;

@@ -64,17 +64,14 @@
 
 - (void)switchAction:(id)sender {
     BOOL enableNotification = self.switcher.on;
-
-    [[RCIMClient sharedRCIMClient]
-        setConversationNotificationStatus:(RCConversationType)self.serviceProfile.publicServiceType
-        targetId:self.serviceProfile.publicServiceId
-        isBlocked:!enableNotification
-        success:^(RCConversationNotificationStatus nStatus) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self setOn:enableNotification];
-            });
-        }
-        error:^(RCErrorCode status) {
+    
+    RCPushNotificationLevel level = enableNotification ? RCPushNotificationLevelDefault : RCPushNotificationLevelMention;
+    
+    [[RCChannelClient sharedChannelManager] setConversationNotificationLevel:(RCConversationType)self.serviceProfile.publicServiceType targetId:self.serviceProfile.publicServiceId level:level success:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setOn:enableNotification];
+        });
+        } error:^(RCErrorCode status) {
             DebugLog(@"set error");
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self setOn:enableNotification];

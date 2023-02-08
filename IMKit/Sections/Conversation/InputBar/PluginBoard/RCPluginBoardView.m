@@ -12,7 +12,6 @@
 #import "RCPluginBoardHorizontalCollectionViewLayout.h"
 #import "RCPluginBoardItem.h"
 #import "UIImage+RCDynamicImage.h"
-#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 #define RCPluginBoardCell @"RCPluginBoardCell"
 

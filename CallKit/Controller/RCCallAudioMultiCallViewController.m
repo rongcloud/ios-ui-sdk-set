@@ -239,9 +239,10 @@
     if (model) {
         NSInteger index = [self.subUserModelList indexOfObject:model];
         if (index != NSNotFound) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
             [self.subUserModelList removeObject:model];
-            [self.userCollectionView deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
+            [self updateAllSubUserLayout];
+//            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
+//            [self.userCollectionView deleteItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
         }
     }
 }
@@ -465,7 +466,6 @@
                        self.view.frame.size.width - RCCallHorizontalMargin * 2, RCCallMiniLabelHeight);
         self.userCollectionTitleLabel.hidden = NO;
         self.userCollectionTitleLabel.text = RCCallKitLocalizedString(@"VoIPAudioCall");
-        ;
         _userCollectionTitleLabel.font = [UIFont fontWithName:@"PingFangSC-Regular" size:18];
     }
 
@@ -512,10 +512,12 @@
 - (void)callDidConnect {
     [self.userCollectionView removeFromSuperview];
     _userCollectionView = nil;
-    if (![self.callSession.caller isEqualToString:currentUserId]) {
-        [self.subUserModelList removeObject:[self getModelInSubUserModelList:currentUserId]];
-        [self.subUserModelList addObject:self.mainModel];
-        self.mainModel = nil;
+    [self.subUserModelList removeAllObjects];
+    for (RCCallUserProfile *userProfile in self.callSession.userProfileList) {
+       if (![userProfile.userId isEqualToString:currentUserId]) {
+           RCCallUserCallInfoModel *userModel = [self generateUserModel:userProfile.userId];
+           [self.subUserModelList addObject:userModel];
+       }
     }
     [self userCollectionView];
     [self updateAllSubUserLayout];
@@ -594,14 +596,24 @@
     if ([userId isEqualToString:self.mainModel.userId]) {
         if (self.callSession.callStatus == RCCallIncoming || self.callSession.callStatus == RCCallRinging ||
             self.callSession.callStatus == RCCallActive) {
-            RCCallUserCallInfoModel *tempModel = self.subUserModelList[0];
-            self.mainModel = tempModel;
+         
             if (self.callSession.callStatus == RCCallIncoming || self.callSession.callStatus == RCCallRinging) {
+                RCCallUserCallInfoModel *tempModel = self.subUserModelList[0];
+                self.mainModel = tempModel;
                 self.inviterNameLabel.text = tempModel.userInfo.name;
+                [self.subUserModelList removeObject:tempModel];
             }
-
-            [self.subUserModelList removeObject:tempModel];
+            else {
+                for (RCCallUserCallInfoModel *userModel in self.subUserModelList) {
+                    if ([userId isEqualToString:userModel.userId]) {
+                        [self.subUserModelList removeObject:userModel];
+                        break;
+                    }
+                }
+            }
             [self updateAllSubUserLayout];
+
+
         }
     } else {
         for (RCCallUserCallInfoModel *userModel in self.subUserModelList) {

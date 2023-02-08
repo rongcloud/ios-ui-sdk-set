@@ -12,10 +12,13 @@
 #import <UIKit/UIKit.h>
 
 #define ShareRCAssetHelper [RCAssetHelper shareAssetHelper]
+
+NS_ASSUME_NONNULL_BEGIN
+
 @class RCAssetModel;
 @interface RCAssetHelper : NSObject <PHPhotoLibraryChangeObserver>
 
-@property (nonatomic, strong) ALAssetsLibrary *assetLibrary;
+@property (nonatomic, strong, readonly) ALAssetsLibrary *assetLibrary;
 
 /**
  *  return a instance
@@ -95,4 +98,26 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
  *
  */
 - (NSString *)getAssetIdentifier:(id)asset;
+
+
+/**
+ *  保存图片到相册png，jpg都可以
+ *
+ */
++ (void)savePhotosAlbumWithImage:(UIImage *)image authorizationStatusBlock:(nullable dispatch_block_t)authorizationStatusBlock resultBlock:(nullable void (^)(BOOL success))resultBlock;
+
+/**
+ *  保存gif到相册
+ *
+ */
++ (void)savePhotosAlbumWithPath:(NSString *)localPath authorizationStatusBlock:(nullable dispatch_block_t)authorizationStatusBlock resultBlock:(nullable void (^)(BOOL success))resultBlock;
+
+/**
+ *  保存视频到相册
+ *
+ */
++ (void)savePhotosAlbumWithVideoPath:(NSString *)videoPath authorizationStatusBlock:(nullable dispatch_block_t)authorizationStatusBlock resultBlock:(nullable void (^)(BOOL success))resultBlock;
+
 @end
+
+NS_ASSUME_NONNULL_END

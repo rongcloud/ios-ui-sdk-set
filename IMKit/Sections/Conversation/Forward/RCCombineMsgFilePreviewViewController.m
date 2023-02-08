@@ -13,6 +13,8 @@
 #import <WebKit/WebKit.h>
 #import "RCKitConfig.h"
 #import "RCActionSheetView.h"
+#import "RCSemanticContext.h"
+
 @interface RCCombineMsgFilePreviewViewController ()
 
 @property (nonatomic, copy) NSString *remoteURL;
@@ -74,7 +76,9 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:rightBtn];
 
     //设置左键
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 
     if ([self isFileDownloaded] && [self isFileSupported]) {
         [self layoutAndPreviewFile];
@@ -132,6 +136,10 @@
         fileLocalPath = self.localPath;
     } else {
         fileLocalPath = [RCFileUtility getFileLocalPath:self.remoteURL];
+    }
+    /// fileLocalPath 为绝对路径，重新运行路径改变，需要矫正
+    if (fileLocalPath) {
+        fileLocalPath = [RCUtilities getCorrectedFilePath:fileLocalPath];
     }
     if ([RCFileUtility isFileExist:fileLocalPath]) {
         self.localPath = fileLocalPath;
@@ -274,8 +282,7 @@
     if (!_typeIconView) {
         _typeIconView = [[UIImageView alloc]
             initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 30 + self.extentLayoutForY, 75, 75)];
-        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:self.fileType];
-        _typeIconView.image = RCResourceImage(fileTypeIcon);
+        _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileType];
 
         [self.view addSubview:_typeIconView];
     }

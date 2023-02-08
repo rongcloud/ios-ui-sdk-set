@@ -472,7 +472,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
 #pragma mark - CCSightTransport
 
 - (void)setControlBarHidden:(BOOL)hidden {
-    if ([self.delegate prefersControlBardHidden]) {
+    if ([self.delegate respondsToSelector:@selector(prefersControlBardHidden)] && [self.delegate prefersControlBardHidden]) {
         return;
     }
     if (hidden) {
@@ -490,7 +490,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
 }
 
 - (void)toggleControls {
-    if ([self.delegate prefersControlBardHidden]) {
+    if ([self.delegate respondsToSelector:@selector(prefersControlBardHidden)] && [self.delegate prefersControlBardHidden]) {
         return;
     }
     if (self.bottomView.hidden) {

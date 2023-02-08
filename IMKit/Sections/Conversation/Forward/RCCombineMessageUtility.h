@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RCCombineMessage.h"
+#import <RongIMLibCore/RongIMLibCore.h>
 
 @class RCMessageModel;
 

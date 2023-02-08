@@ -294,30 +294,18 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
    NSArray *preloadPackagesConfig = [[RCStickerPackageConfig
        modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerPreloadKey]] mutableCopy];
     [self savePreloadPackagesConfig:preloadPackagesConfig];
-//    self.preloadPackagesConfig = [[RCStickerPackageConfig
-//        modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerPreloadKey]] mutableCopy];
     
     NSArray *manualLoadPackagesConfig = [[RCStickerPackageConfig
         modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
     [self saveManualLoadPackagesConfig:manualLoadPackagesConfig];
-//    self.manualLoadPackagesConfig = [[RCStickerPackageConfig
-//        modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
 
     NSMutableDictionary *totalPackageDict = [NSMutableDictionary dictionaryWithContentsOfFile:[self packagesPath]];
-//    self.preloadPackages =
-//        [[RCStickerPackage modelArrayWithDictArray:[totalPackageDict objectForKey:RCStickerPreloadKey]] mutableCopy];
     NSArray *preloadPackages =  [[RCStickerPackage modelArrayWithDictArray:[totalPackageDict objectForKey:RCStickerPreloadKey]] mutableCopy];
     [self savePreloadPackages:preloadPackages];
     
     NSArray *manualLoadPackages =
     [[RCStickerPackage modelArrayWithDictArray:[totalPackageDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
     [self saveManualLoadPackages:manualLoadPackages];
-//    self.manualLoadPackages =
-//        [[RCStickerPackage modelArrayWithDictArray:[totalPackageDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
-
-//    if (self.manualLoadPackages == nil) {
-//        self.manualLoadPackages = [[NSMutableArray alloc] init];
-//    }
 }
 
 - (void)syncPackagesConfig {
@@ -327,8 +315,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
         // Server 数据下来先将packagesConfig内存数组更新
         if (result.success) {
             NSDictionary *totalPackageConfigDict = result.data;
-//            weakSelf.preloadPackagesConfig = [[RCStickerPackageConfig
-//                modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerPreloadKey]] mutableCopy];
            NSArray *preloadPackagesConfig = [[RCStickerPackageConfig
                 modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerPreloadKey]] mutableCopy];
             [weakSelf savePreloadPackagesConfig:preloadPackagesConfig];
@@ -337,16 +323,13 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                                                   modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
             [self saveManualLoadPackagesConfig:manualLoadPackagesConfig];
             
-//            weakSelf.manualLoadPackagesConfig = [[RCStickerPackageConfig
-//                modelArrayWithDictArray:[totalPackageConfigDict objectForKey:RCStickerManualLoadKey]] mutableCopy];
-
             [weakSelf refreshStickersModule];
 
             //下载icon和cover
-            [self handleIconAndCover];
+            [weakSelf handleIconAndCover];
 
             //处理预加载数据
-            [self handlePreloadPackages];
+            [weakSelf handlePreloadPackages];
         }
     }];
 }
@@ -422,7 +405,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
 
     __weak typeof(self) weakSelf = self;
     [self saveDownladingPackage:@(0) forKey:packageId];
-//    [self.downloadingPackages setObject:@(0) forKey:packageId];
     [RCStickerHTTPUtility
         getPackageZipWith:packageId
          completionHandle:^(RCStickerHTTPRequestResult *result) {
@@ -433,7 +415,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                      identifier:packageId
                      progress:^(int progress) {
                      [weakSelf saveDownladingPackage:@(progress) forKey:packageId];
-//                         [weakSelf.downloadingPackages setObject:@(progress) forKey:packageId];
                          [[NSNotificationCenter defaultCenter] postNotificationName:RCStickersDownloadingNotification
                                                                              object:nil
                                                                            userInfo:@{
@@ -457,7 +438,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                          BOOL zipSuccess =
                              unzipFile((char *)[zipPath UTF8String], (char *)[[self packagesDirPath] UTF8String]);
                          if (!zipSuccess) {
-//                             [weakSelf.downloadingPackages removeObjectForKey:packageId];
                              [weakSelf removeDownloadingPackageForKey:packageId];
                              [[NSNotificationCenter defaultCenter]
                                  postNotificationName:RCStickersDownloadFiledNotification
@@ -488,7 +468,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                              stickers = [RCStickerSingle
                                  modelArrayWithDictArray:[stickersDict objectForKey:RCStickerStickersKey]];
                          } else {
-//                             [weakSelf.downloadingPackages removeObjectForKey:packageId];
                              [weakSelf removeDownloadingPackageForKey:packageId];
                              [[NSNotificationCenter defaultCenter]
                                  postNotificationName:RCStickersDownloadFiledNotification
@@ -524,7 +503,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                          [FileManager removeItemAtPath:zipDirPath error:nil];
 
                          // 4: 将本地isDownload属性置成YES,内存中的下载进度变成 100
-//                         [weakSelf.downloadingPackages removeObjectForKey:packageId];
                      [weakSelf removeDownloadingPackageForKey:packageId];
 
                          RCStickerPackageType packageType = [self getPackageType:packageId];
@@ -538,7 +516,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                              package.isDownloaded = YES;
                              package.isDeleted = NO;
                              [self insertManualLoadPackages:package];
-//                             [self.manualLoadPackages insertObject:package atIndex:0];
                          }
 
                          // 5: 将json文件转换成 NSArray<RCStickerSingle *> 格式返回给block
@@ -577,7 +554,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
                      }];
 
              } else {
-//                 [weakSelf.downloadingPackages removeObjectForKey:packageId];
                  [weakSelf removeDownloadingPackageForKey:packageId];
 
                  [[NSNotificationCenter defaultCenter] postNotificationName:RCStickersDownloadFiledNotification
@@ -774,7 +750,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
 }
 
 - (NSNumber *)getDownloadProgress:(NSString *)packageId {
-//    NSNumber *progress = [self.downloadingPackages objectForKey:packageId];
     NSNumber *progress = [self downladingPackageForKey:packageId];
     if (progress) {
         return progress;
@@ -944,7 +919,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
 
 - (void)deletePackage:(NSString *)packageId {
     RCStickerPackage *package = [self packageById:packageId];
-//    [self.downloadingPackages removeObjectForKey:packageId];
     [self removeDownloadingPackageForKey:packageId];
     if (package) {
         NSString *stickersPath =
@@ -959,7 +933,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
         case RCStickerPackageTypeManual:
         case RCStickerPackageTypeUnknow:
                 [self removeManualLoadPackages:package];
-//            [self.manualLoadPackages removeObject:package];
             break;
         }
         [self refreshStickersModule];

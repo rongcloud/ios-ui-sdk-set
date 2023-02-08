@@ -8,12 +8,13 @@
 
 #import "RCCSLeaveMessageController.h"
 #import "RCCSLeaveMessagesCell.h"
-#import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import <RongCustomerService/RongCustomerService.h>
+#import "RCSemanticContext.h"
+
 @interface RCCSLeaveMessageController ()
 @property (nonatomic, strong) NSMutableDictionary *leaveMessageInfoDic;
 @end
@@ -75,7 +76,9 @@
 #pragma mark – Private Methods
 
 - (void)setBackAction {
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(cancelAction)];
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(cancelAction)];
 }
 
 - (void)cancelAction {

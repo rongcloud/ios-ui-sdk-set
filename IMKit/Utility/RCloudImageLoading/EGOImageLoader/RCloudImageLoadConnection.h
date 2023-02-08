@@ -28,12 +28,13 @@
 
 @protocol RCloudImageLoadConnectionDelegate;
 
-@interface RCloudImageLoadConnection : NSObject {
+@interface RCloudImageLoadConnection : NSObject<NSURLSessionDelegate> {
   @private
     NSURL *_imageURL;
     NSURLResponse *_response;
     NSMutableData *_responseData;
-    NSURLConnection *_connection;
+    NSURLSession *_session;
+    NSURLSessionDataTask *_dataTask;
     NSTimeInterval _timeoutInterval;
 
     __weak id<RCloudImageLoadConnectionDelegate> _delegate;

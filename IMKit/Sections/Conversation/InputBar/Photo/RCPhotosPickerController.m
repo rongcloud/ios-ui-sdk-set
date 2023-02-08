@@ -11,10 +11,8 @@
 #import "RCKitCommonDefine.h"
 #import "RCPhotoPickerCollectCell.h"
 #import "RCPhotoPreviewCollectionViewController.h"
-#import "RCExtensionService.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
-#import "RCKitConfig.h"
 #import "RCMBProgressHUD.h"
 
 
@@ -198,7 +196,9 @@ static NSString *const reuseIdentifier = @"Cell";
                         [collectionView reloadItemsAtIndexPaths:@[ indexPath ]];
                     }
                 });
-            } progressHandler:nil];
+            } progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
+                
+            }];
         } else {
             RCPhotoPickerCollectCell *pickerCell = (RCPhotoPickerCollectCell *)cell;
             [pickerCell configPickerCellWithItem:model delegate:self];

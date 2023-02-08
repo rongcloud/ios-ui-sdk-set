@@ -336,6 +336,12 @@
         }
         self.networkIndicatorView.hidden = NO;
         [self.networkIndicatorView setText:RCLocalizedString(@"KickedOfflineByOtherClient")];
+    } else if (status == ConnectionStatus_PROXY_UNAVAILABLE) {
+        if (self.networkIndicatorView.hidden) {
+            needReloadTableView = YES;
+        }
+        self.networkIndicatorView.hidden = NO;
+        [self.networkIndicatorView setText:RCLocalizedString(@"ConnectionstatusProxyUnavailable")];
     } else if (status != ConnectionStatus_Connecting) {
         if (!self.networkIndicatorView.hidden) {
             needReloadTableView = YES;
@@ -472,10 +478,18 @@
             }else {
                 for (int i = 0; i < ws.conversationListDataSource.count; i++) {
                     RCConversationModel *conversationModel = ws.conversationListDataSource[i];
-                    if ([conversationModel.targetId isEqualToString:statusInfo.targetId] &&
-                        conversationModel.conversationType == statusInfo.conversationType) {
+                    BOOL isSameConversation = [conversationModel.targetId isEqualToString:statusInfo.targetId] &&
+                    (conversationModel.conversationType == statusInfo.conversationType);
+                    BOOL isSameChannel = [conversationModel.channelId isEqualToString:statusInfo.channelId];
+                    BOOL isUtralGroup = (statusInfo.conversationType == ConversationType_ULTRAGROUP);
+                    BOOL ret = isUtralGroup ? (isSameConversation && isSameChannel) : isSameConversation;
+                    if (ret) {
                         NSInteger refreshIndex = [self.conversationListDataSource indexOfObject:conversationModel];
-                        conversationModel.blockStatus = statusInfo.conversationStatusvalue;
+                        if (statusInfo.conversationStatusType == RCConversationStatusType_Mute) {
+                            conversationModel.blockStatus = statusInfo.conversationStatusvalue;
+                        } else if (statusInfo.conversationStatusType == RCConversationStatusType_Top) {
+                            conversationModel.isTop = (statusInfo.conversationStatusvalue == 1);
+                        }
                         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:refreshIndex inSection:0];
                         [ws.conversationListTableView reloadRowsAtIndexPaths:@[ indexPath ]
                                                             withRowAnimation:UITableViewRowAnimationNone];

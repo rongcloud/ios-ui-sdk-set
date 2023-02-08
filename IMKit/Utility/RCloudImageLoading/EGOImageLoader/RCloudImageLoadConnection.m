@@ -69,58 +69,77 @@
         [request setValue:token forHTTPHeaderField:@"authorization"];
     }
     request.timeoutInterval = 10;
-    _connection = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:YES];
+    
+    NSURLSessionConfiguration *configuration = [self rcSessionConfiguration];
+    _session = [NSURLSession sessionWithConfiguration:configuration
+                                             delegate:self
+                                        delegateQueue:[NSOperationQueue mainQueue]];
+    _dataTask = [_session dataTaskWithRequest:request];
+    [_dataTask resume];
+}
+
+- (NSURLSessionConfiguration *)rcSessionConfiguration {
+    NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    RCIMProxy *currentProxy = [[RCCoreClient sharedCoreClient] getCurrentProxy];
+    
+    if (currentProxy && [currentProxy isValid]) {
+        NSString *proxyHost = currentProxy.host;
+        NSNumber *proxyPort = @(currentProxy.port);
+        NSString *proxyUserName = currentProxy.userName;
+        NSString *proxyPassword = currentProxy.password;
+
+        NSDictionary *proxyDict = @{
+            (NSString *)kCFStreamPropertySOCKSProxyHost: proxyHost,
+            (NSString *)kCFStreamPropertySOCKSProxyPort: proxyPort,
+            (NSString *)kCFStreamPropertySOCKSUser : proxyUserName,
+            (NSString *)kCFStreamPropertySOCKSPassword: proxyPassword
+        };
+
+        sessionConfiguration.connectionProxyDictionary = proxyDict;
+    }
+    return sessionConfiguration;
 }
 
 - (void)cancel {
-    [_connection cancel];
+    [_dataTask cancel];
 }
 
 - (NSData *)responseData {
     return _responseData;
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-    if (connection != _connection)
-        return;
+//MARK:-- NSURLSessionDelegate
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
+    completionHandler(NSURLSessionResponseAllow);
+}
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     [_responseData appendData:data];
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-    if (connection != _connection)
-        return;
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error {
+    NSURLResponse *response = task.response;
     self.response = response;
-}
-
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    if (connection != _connection)
-        return;
-
-    if ([self.delegate respondsToSelector:@selector(imageLoadConnectionDidFinishLoading:)]) {
-        [self.delegate imageLoadConnectionDidFinishLoading:self];
+    
+    if (nil == error) {
+        if ([self.delegate respondsToSelector:@selector(imageLoadConnectionDidFinishLoading:)]) {
+            [self.delegate imageLoadConnectionDidFinishLoading:self];
+        }
+    }else {
+        if ([self.delegate respondsToSelector:@selector(imageLoadConnection:didFailWithError:)]) {
+            [self.delegate imageLoadConnection:self didFailWithError:error];
+        }
     }
+
+    [session finishTasksAndInvalidate];
 }
 
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    if (connection != _connection)
-        return;
-
-    if ([self.delegate respondsToSelector:@selector(imageLoadConnection:didFailWithError:)]) {
-        [self.delegate imageLoadConnection:self didFailWithError:error];
-    }
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+             didSendBodyData:(int64_t)bytesSent
+              totalBytesSent:(int64_t)totalBytesSent
+    totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend {
 }
 
-- (BOOL)connection:(NSURLConnection *)connection
-    canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
-
-    return [protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust];
-}
-
-- (void)connection:(NSURLConnection *)connection
-    didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
-    [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]
-         forAuthenticationChallenge:challenge];
-}
 
 - (void)dealloc {
     self.response = nil;
@@ -129,20 +148,10 @@
 #if __EGOIL_USE_BLOCKS
     [handlers release], handlers = nil;
 #endif
-
-#if !__has_feature(objc_arc)
-    [_connection release];
-    [_imageURL release];
-    [_responseData release];
-    _connection = nil;
+    _dataTask = nil;
+    _session = nil;
     _imageURL = nil;
     _responseData = nil;
-    [super dealloc];
-#else
-    _connection = nil;
-    _imageURL = nil;
-    _responseData = nil;
-#endif
 }
 
 @end

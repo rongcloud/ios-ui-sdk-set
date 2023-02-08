@@ -16,11 +16,14 @@
 #import "RCKitConfig.h"
 #import <RongPublicService/RongPublicService.h>
 #import <RongDiscussion/RongDiscussion.h>
-
+#import "RCSemanticContext.h"
 @interface RCConversationCell ()
 
 @property (nonatomic, strong) RCConversationHeaderView *headerView;
-
+//当前 cell 正在展示的用户信息，消息携带用户信息且频发发送，会导致 cell 频发刷新
+//cell 复用的时候，检测如果是即将刷新的是同一个用户信息，那么就跳过刷新
+//IMSDK-2705
+@property (nonatomic, strong) RCUserInfo *currentDisplayedUserInfo;
 @end
 
 @implementation RCConversationCell
@@ -82,8 +85,8 @@
 - (void)addSubViewConstraints {
     [self.conversationTitle setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
                                                             forAxis:UILayoutConstraintAxisHorizontal];
-    [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired
-                                              forAxis:UILayoutConstraintAxisHorizontal];
+    [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    // fix: rce "部门"标签视图与时间视图重叠
     NSDictionary *cellSubViews =
         NSDictionaryOfVariableBindings(_headerView, _conversationTitle, _messageCreatedTimeLabel, _detailContentView,
                                        _statusView, _conversationTagView);
@@ -106,12 +109,14 @@
                                                        @(RCKitConfigCenter.ui.globalConversationPortraitSize.height)
                                                }
                                                  views:cellSubViews]];
+    
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]-4-[_detailContentView]"
+                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
+
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"V:[_conversationTagView(21)]"
@@ -151,6 +156,14 @@
                                                                 multiplier:1
                                                                   constant:0]];
 
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTitle
+                                                                 attribute:NSLayoutAttributeTop
+                                                                 relatedBy:NSLayoutRelationEqual
+                                                                    toItem:self.messageCreatedTimeLabel
+                                                                 attribute:NSLayoutAttributeTop
+                                                                multiplier:1
+                                                                  constant:0]];
+
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:_headerView
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
@@ -166,126 +179,165 @@
 - (void)setDataModel:(RCConversationModel *)model {
     [self resetDefaultLayout:model];
     [super setDataModel:model];
-
-    if (self.model.isTop) {
-        self.backgroundColor = self.topCellBackgroundColor;
-    } else {
-        self.backgroundColor = self.cellBackgroundColor;
-    }
+    self.backgroundColor = self.model.isTop ? self.topCellBackgroundColor : self.cellBackgroundColor;
 
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
-        if (model.conversationType == ConversationType_PRIVATE ||
-            model.conversationType == ConversationType_CUSTOMERSERVICE ||
-            model.conversationType == ConversationType_SYSTEM || model.conversationType == ConversationType_Encrypted) {
-            NSString *targetId = model.targetId;
-            if (model.conversationType == ConversationType_Encrypted) {
-                targetId = [[model.targetId componentsSeparatedByString:@";;;"] lastObject];
-            }
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:targetId];
-            if (userInfo) {
-                if (model.conversationType != ConversationType_Encrypted) {
-                    self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
-                }
-                [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
-            }
-            [self.detailContentView updateContent:model prefixName:nil];
-        } else if (model.conversationType == ConversationType_GROUP) {
-            RCGroup *groupInfo = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
-            if (groupInfo) {
-                self.headerView.headerImageView.imageURL = [NSURL URLWithString:groupInfo.portraitUri];
-                [self updateConversationTitle:groupInfo.groupName];
-            }
-
-            if (self.hideSenderName) {
-                [self.detailContentView updateContent:model prefixName:nil];
-            } else {
-                RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-                RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
-                NSString *displayName = userInfo.name;
-                if (userInfo.alias.length > 0) {
-                    displayName = userInfo.alias;
-                } else if (memberInfo.name.length > 0) {
-                    displayName = memberInfo.name;
-                }
-                [self.detailContentView updateContent:model prefixName:displayName];
-            }
-        } else if (model.conversationType == ConversationType_DISCUSSION) {
-            [self updateConversationTitle:RCLocalizedString(@"DISCUSSION")];
-            __weak __typeof(self) ws = self;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [[RCDiscussionClient sharedDiscussionClient] getDiscussion:model.targetId
-                                                 success:^(RCDiscussion *discussion) {
-                                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                                         if ([model isEqual:ws.model] && discussion) {
-                                                             [ws updateConversationTitle:discussion.discussionName];
-                                                         }
-                                                     });
-                                                 }
-                                                   error:nil];
-            
-#pragma clang diagnostic pop
-            if (self.hideSenderName) {
-                [self.detailContentView updateContent:model prefixName:nil];
-            } else {
-                RCUserInfo *userInfo =
-                    [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-                [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
-            }
-        }
+        [self p_displayNormal:model];
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        [self updateConversationTitle:[RCKitUtility defaultTitleForCollectionConversation:model.conversationType]];
-
-        if (model.conversationType == ConversationType_PRIVATE ||
-            model.conversationType == ConversationType_CUSTOMERSERVICE ||
-            model.conversationType == ConversationType_SYSTEM) {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.targetId];
-            [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
-        } else if (model.conversationType == ConversationType_GROUP) {
-            RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
-            [self.detailContentView updateContent:model prefixName:group.groupName];
-        } else if (model.conversationType == ConversationType_DISCUSSION) {
-            [self.detailContentView updateContent:model prefixName:nil];
-            __weak __typeof(self) ws = self;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [[RCDiscussionClient sharedDiscussionClient]
-                getDiscussion:model.targetId
-                      success:^(RCDiscussion *discussion) {
-                          dispatch_async(dispatch_get_main_queue(), ^{
-                              if ([model isEqual:ws.model] && discussion) {
-                                  [ws.detailContentView updateContent:model prefixName:discussion.discussionName];
-                              }
-                          });
-                      }
-                        error:nil];
-#pragma clang diagnostic pop
-        }
+        [self p_displayCollection:model];
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE) {
-        RCPublicServiceProfile *serviceProfile = nil;
-        //// 如果设置了代理，使用新的公众号业务
-        if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
-            serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
-        } else {
-            serviceProfile =
-                [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
-                                                       publicServiceId:model.targetId];
-        }
-
-        if (serviceProfile) {
-            self.headerView.headerImageView.imageURL = [NSURL URLWithString:serviceProfile.portraitUrl];
-            [self updateConversationTitle:serviceProfile.name];
-        }
-        [self.detailContentView updateContent:model prefixName:@""];
+        [self p_displayPublicService:model];
     }
 
     [self.headerView updateBubbleUnreadNumber:(int)model.unreadMessageCount];
-
     self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
-
     [self.statusView updateNotificationStatus:model];
     [self.statusView updateReadStatus:model];
 }
+
+- (void)p_displaySimaple:(RCConversationModel *)model {
+    BOOL isEncrypted = model.conversationType == ConversationType_Encrypted;
+    NSString *targetId = isEncrypted ? [[model.targetId componentsSeparatedByString:@";;;"] lastObject] : model.targetId;
+    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:targetId];
+    if (userInfo) {
+        if (!isEncrypted) {
+            self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
+        }
+        [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
+    }
+    [self.detailContentView updateContent:model prefixName:nil];
+}
+
+- (void)p_displayGroup:(RCConversationModel *)model {
+    RCGroup *groupInfo = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
+    if (groupInfo) {
+        self.headerView.headerImageView.imageURL = [NSURL URLWithString:groupInfo.portraitUri];
+        [self updateConversationTitle:groupInfo.groupName];
+    }
+
+    if (self.hideSenderName) {
+        [self.detailContentView updateContent:model prefixName:nil];
+        return;
+    }
+    
+    RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
+    RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+    NSString *displayName = userInfo.name;
+    if (userInfo.alias.length > 0) {
+        displayName = userInfo.alias;
+    } else if (memberInfo.name.length > 0) {
+        displayName = memberInfo.name;
+    }
+    [self.detailContentView updateContent:model prefixName:displayName];
+}
+
+- (void)p_displayDiscussion:(RCConversationModel *)model {
+    [self updateConversationTitle:RCLocalizedString(@"DISCUSSION")];
+    __weak __typeof(self) ws = self;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [[RCDiscussionClient sharedDiscussionClient] getDiscussion:model.targetId
+                                                       success:^(RCDiscussion *discussion) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            BOOL isSuitable = [model isEqual:ws.model] && discussion;
+            if (isSuitable) {
+                [ws updateConversationTitle:discussion.discussionName];
+            }
+        });
+    }
+                                                         error:nil];
+    
+#pragma clang diagnostic pop
+    if (self.hideSenderName) {
+        [self.detailContentView updateContent:model prefixName:nil];
+        return;
+    }
+    RCUserInfo *userInfo =
+    [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
+    [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
+}
+
+- (void)p_displayNormal:(RCConversationModel *)model {
+    BOOL isSimpleConversation = model.conversationType == ConversationType_PRIVATE ||
+    model.conversationType == ConversationType_CUSTOMERSERVICE ||
+    model.conversationType == ConversationType_SYSTEM || model.conversationType == ConversationType_Encrypted;
+    if (isSimpleConversation) {
+        [self p_displaySimaple:model];
+        return;
+    } else if (model.conversationType == ConversationType_GROUP) {
+        [self p_displayGroup:model];
+        return;
+    } else if (model.conversationType == ConversationType_DISCUSSION) {
+        [self p_displayDiscussion:model];
+        return;
+    }
+    [self.detailContentView updateContent:model prefixName:nil];
+    [self updateConversationTitle:[NSString stringWithFormat:@"name<%@>", model.targetId]];
+}
+
+- (void)p_displayCollection:(RCConversationModel *)model {
+    // 聚合类型优先使用全局配置，再次使用默认标题
+    NSString *conversationCollectionTitle = @"";
+    NSDictionary<NSNumber *, NSString *> *glConversationCollectionTitleDic = RCKitConfigCenter.ui.globalConversationCollectionTitleDic;
+    NSString *collectionTitle = glConversationCollectionTitleDic[@(model.conversationType)];
+    BOOL showTitle = collectionTitle && [collectionTitle isKindOfClass:[NSString class]];
+    conversationCollectionTitle = showTitle ? collectionTitle : [RCKitUtility defaultTitleForCollectionConversation:model.conversationType];;
+    [self updateConversationTitle:conversationCollectionTitle];
+
+    //聚合会话优先查看是否有全局配置，再使用默认头像
+    NSDictionary<NSNumber *, NSString *> *glCollectionAvatarDic = RCKitConfigCenter.ui.globalConversationCollectionAvatarDic;
+    NSString *dicAvatarUrl = glCollectionAvatarDic[@(model.conversationType)];
+    BOOL isAvatarValid = dicAvatarUrl && [dicAvatarUrl isKindOfClass:[NSString class]];
+    if (isAvatarValid) {
+        self.headerView.headerImageView.imageURL = [NSURL URLWithString:dicAvatarUrl];
+    }
+    BOOL ret = model.conversationType == ConversationType_PRIVATE ||
+    model.conversationType == ConversationType_CUSTOMERSERVICE ||
+    model.conversationType == ConversationType_SYSTEM;
+    if (ret) {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.targetId];
+        [self.detailContentView updateContent:model prefixName:[RCKitUtility getDisplayName:userInfo]];
+    } else if (model.conversationType == ConversationType_GROUP) {
+        RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
+        [self.detailContentView updateContent:model prefixName:group.groupName];
+    } else if (model.conversationType == ConversationType_DISCUSSION) {
+        [self.detailContentView updateContent:model prefixName:nil];
+        __weak __typeof(self) ws = self;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [[RCDiscussionClient sharedDiscussionClient]
+            getDiscussion:model.targetId
+                  success:^(RCDiscussion *discussion) {
+                      dispatch_async(dispatch_get_main_queue(), ^{
+                          BOOL isSuitable = [model isEqual:ws.model] && discussion;
+                          if (isSuitable) {
+                              [ws.detailContentView updateContent:model prefixName:discussion.discussionName];
+                          }
+                      });
+                  }
+                    error:nil];
+#pragma clang diagnostic pop
+    }
+}
+
+- (void)p_displayPublicService:(RCConversationModel *)model {
+    RCPublicServiceProfile *serviceProfile = nil;
+    //// 如果设置了代理，使用新的公众号业务
+    if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
+        serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
+    } else {
+        serviceProfile =
+            [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
+                                                   publicServiceId:model.targetId];
+    }
+
+    if (serviceProfile) {
+        self.headerView.headerImageView.imageURL = [NSURL URLWithString:serviceProfile.portraitUrl];
+        [self updateConversationTitle:serviceProfile.name];
+    }
+    [self.detailContentView updateContent:model prefixName:@""];
+}
+
 
 - (void)resetDefaultLayout:(RCConversationModel *)reuseModel {
     _hideSenderName = [self hideSenderNameForDefault:reuseModel];
@@ -342,6 +394,11 @@
 - (void)onUserInfoUpdate:(NSNotification *)notification {
     NSDictionary *userInfoDic = notification.object;
     RCUserInfo *updateUserInfo = userInfoDic[@"userInfo"];
+    if ([self isSameUserInfo:self.currentDisplayedUserInfo other:updateUserInfo]) {
+        return;
+    }
+    self.currentDisplayedUserInfo = updateUserInfo;
+    
     NSString *updateUserId = userInfoDic[@"userId"];
     NSString *displayName = [RCKitUtility getDisplayName:updateUserInfo];
 
@@ -502,6 +559,7 @@
     if(!_conversationTagView) {
         _conversationTagView = [[UIView alloc] init];
         _conversationTagView.translatesAutoresizingMaskIntoConstraints = NO;
+        _conversationTagView.clipsToBounds = YES;
     }
     return _conversationTagView;
 }
@@ -513,7 +571,9 @@
         _messageCreatedTimeLabel.backgroundColor = [UIColor clearColor];
         _messageCreatedTimeLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
         _messageCreatedTimeLabel.textColor = RCDYCOLOR(0xC7CbCe, 0x3c3c3c);
-        _messageCreatedTimeLabel.textAlignment = NSTextAlignmentRight;
+        BOOL isRTL = [RCSemanticContext isRTL];
+        _messageCreatedTimeLabel.textAlignment = isRTL ? NSTextAlignmentLeft : NSTextAlignmentRight;
+        _messageCreatedTimeLabel.accessibilityLabel = @"messageCreatedTimeLabel";
     }
     return _messageCreatedTimeLabel;
 }
@@ -530,6 +590,25 @@
         _statusView = [[RCConversationStatusView alloc] init];
     }
     return _statusView;
+}
+#pragma mark - private method
+- (BOOL)isSameUserInfo:(RCUserInfo *)currentUserInfo other:(RCUserInfo *)other {
+    if (!currentUserInfo || !other) {
+        return NO;
+    }
+    if (currentUserInfo.userId && ![currentUserInfo.userId isEqualToString:other.userId]) {
+        return NO;
+    }
+    if (currentUserInfo.name && ![currentUserInfo.name isEqualToString:other.name]) {
+        return NO;
+    }
+    if (currentUserInfo.portraitUri && ![currentUserInfo.portraitUri isEqualToString:other.portraitUri]) {
+        return NO;
+    }
+    if (currentUserInfo.alias && ![currentUserInfo.alias isEqualToString:other.alias]) {
+        return NO;
+    }
+    return YES;
 }
 #pragma mark - 向后兼容
 - (void)setHeaderImageViewBackgroundView:(UIView *)headerImageViewBackgroundView {

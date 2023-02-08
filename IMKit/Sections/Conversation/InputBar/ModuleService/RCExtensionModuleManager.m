@@ -9,7 +9,7 @@
 #import "RCExtensionModuleManager.h"
 
 NSString *const rcExtensionModelNames =
-    @"RCCallKitExtensionModule,RCStickerModule,"
+    @"RCLocationKitExtensionModule,RCCallKitExtensionModule,RCStickerModule,"
     @"RCiFlyKitExtensionModule,RCCCExtensionModule,RCSightExtensionModule";
 
 #define RCDisplayEmoticonConversationType                                                                              \

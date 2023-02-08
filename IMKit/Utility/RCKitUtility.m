@@ -12,7 +12,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCUserInfoCacheManager.h"
 #import <SafariServices/SafariServices.h>
-#import "RCForwardManager.h"
 #import "RCloudImageLoader.h"
 #import "RCKitConfig.h"
 #import "UIImage+RCDynamicImage.h"
@@ -22,6 +21,7 @@
 #import "RCExtensionService.h"
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
+#import <UIKit/UIKit.h>
 @interface RCKitWeakRefObject : NSObject
 @property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
@@ -194,7 +194,6 @@
     if (messageContent.destructDuration > 0) {
         return NSLocalizedStringFromTable(@"BurnAfterRead", @"RongCloudKit", nil);
     }
-
     if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
         return [RCKitUtility __formatDiscussionNotificationMessageContent:notification];
@@ -331,6 +330,18 @@
             @"id" : messageUId ?: @""
         }
     };
+}
+
++ (UIImage *)imageWithFileSuffix:(NSString *)type {
+    NSString *filePath = RCKitConfigCenter.ui.fileSuffixDictionary[type];
+    if (filePath) {
+        UIImage *image = [UIImage imageWithContentsOfFile:filePath];
+        if (image) {
+            return image;
+        }
+    }
+    NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:type];
+    return RCResourceImage(fileTypeIcon);
 }
 
 + (NSString *)getFileTypeIcon:(NSString *)fileType {
@@ -726,7 +737,13 @@
 }
 
 + (BOOL)isRTL {
-    return (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_9_0 && [UIView appearance].semanticContentAttribute == UISemanticContentAttributeForceRightToLeft);
+    if (@available(iOS 9.0, *)) {
+        UIWindow *window = [self getKeyWindow];
+        UISemanticContentAttribute attr = window.semanticContentAttribute;
+        UIUserInterfaceLayoutDirection _layoutDirection = [UIView userInterfaceLayoutDirectionForSemanticContentAttribute:attr];
+        return _layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    }
+    return NO;
 }
 
 + (BOOL)isAudioHolding {
@@ -910,75 +927,109 @@
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveCreated" : @"GroupCreated"),
                                        nickName];
-    } else if ([groupNotification.operation isEqualToString:@"Add"]) {
-        if (targetUserNickName.count == 0) {
-            message =
-                [NSString stringWithFormat:RCLocalizedString(@"GroupJoin"), nickName];
-        } else {
-            NSMutableString *names = [[NSMutableString alloc] init];
-            NSMutableString *userIdStr = [[NSMutableString alloc] init];
-            for (NSUInteger index = 0; index < targetUserNickName.count; index++) {
-                if ([targetUserNickName[index] isKindOfClass:[NSString class]]) {
-                    [names appendString:targetUserNickName[index]];
-                    if (index != targetUserNickName.count - 1) {
-                        [names appendString:RCLocalizedString(@"punctuation")];
-                    }
-                }
-            }
-            for (NSUInteger index = 0; index < targetUserIds.count; index++) {
-                if ([targetUserIds[index] isKindOfClass:[NSString class]]) {
-                    [userIdStr appendString:targetUserIds[index]];
-                    if (index != targetUserNickName.count - 1) {
-                        [userIdStr appendString:RCLocalizedString(@"punctuation")];
-                    }
-                }
-            }
-            if ([operatorUserId isEqualToString:userIdStr]) {
-                message = [NSString
-                    stringWithFormat:RCLocalizedString(@"GroupJoin"), nickName];
-            } else {
-                if (targetUserIds.count > targetUserNickName.count) {
-                    names = [NSMutableString
-                        stringWithFormat:@"%@%@", names, RCLocalizedString(@"GroupEtc")];
-                }
-                message = [NSString
-                    stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveInvited" : @"GroupInvited"),
-                                     nickName, names];
-            }
-        }
-    } else if ([groupNotification.operation isEqualToString:@"Quit"]) {
+        return message;
+    }
+    if ([groupNotification.operation isEqualToString:@"Add"]) {
+        
+        message = [self __formatGroupNotificationOperationAdd:targetUserIds targetUserNickName:targetUserNickName operatorUserId:operatorUserId nickName:nickName isMeOperate:isMeOperate];
+        return message;
+    }
+    
+    if ([groupNotification.operation isEqualToString:@"Quit"]) {
         message = [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveQuit" : @"GroupQuit"),
                                              nickName];
-    } else if ([groupNotification.operation isEqualToString:@"Kicked"]) {
-        NSMutableString *names = [[NSMutableString alloc] init];
-        for (NSUInteger index = 0; index < targetUserNickName.count; index++) {
-            if ([targetUserNickName[index] isKindOfClass:[NSString class]]) {
-                [names appendString:targetUserNickName[index]];
-                if (index != targetUserNickName.count - 1) {
-                    [names appendString:RCLocalizedString(@"punctuation")];
-                }
-            }
-        }
-        if (targetUserIds.count > targetUserNickName.count) {
-            names = [NSMutableString
-                stringWithFormat:@"%@%@", names, NSLocalizedStringFromTable(@"GroupEtc", @"RongCloudKit", nil)];
-        }
-        message =
-            [NSString stringWithFormat:NSLocalizedStringFromTable(isMeOperate ? @"GroupHaveRemoved" : @"GroupRemoved",
-                                                                  @"RongCloudKit", nil),
-                                       nickName, names];
-    } else if ([groupNotification.operation isEqualToString:@"Rename"]) {
+        return message;
+    }
+    
+    if ([groupNotification.operation isEqualToString:@"Kicked"]) {
+        
+        message = [self __formatGroupNotificationOperationKicked:targetUserIds targetUserNickName:targetUserNickName operatorUserId:operatorUserId nickName:nickName isMeOperate:isMeOperate];
+        return message;
+    }
+    
+    if ([groupNotification.operation isEqualToString:@"Rename"]) {
         NSString *groupName =
             [dictionary[@"targetGroupName"] isKindOfClass:[NSString class]] ? dictionary[@"targetGroupName"] : nil;
         message = [NSString
             stringWithFormat:RCLocalizedString(@"GroupChanged"), nickName, groupName];
-    } else if ([groupNotification.operation isEqualToString:@"Dismiss"]) {
+        return message;
+    }
+    
+    if ([groupNotification.operation isEqualToString:@"Dismiss"]) {
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveDismiss" : @"GroupDismiss"),
                                        nickName];
-    } else {
-        message = groupNotification.message;
+        return message;
     }
+    
+    message = groupNotification.message;
+    return message;
+}
+
++ (NSString *)__formatGroupNotificationOperationAdd:(NSArray *)targetUserIds targetUserNickName:(NSArray *)targetUserNickName operatorUserId:(NSString *)operatorUserId nickName:(NSString *)nickName isMeOperate:(BOOL)isMeOperate {
+    NSString *message = nil;
+    if (targetUserNickName.count == 0) {
+        message =
+            [NSString stringWithFormat:RCLocalizedString(@"GroupJoin"), nickName];
+        return message;
+    }
+    
+    NSMutableString *names = [[NSMutableString alloc] init];
+    NSMutableString *userIdStr = [[NSMutableString alloc] init];
+    for (NSUInteger index = 0; index < targetUserNickName.count; index++) {
+        if (![targetUserNickName[index] isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        [names appendString:targetUserNickName[index]];
+        if (index != targetUserNickName.count - 1) {
+            [names appendString:RCLocalizedString(@"punctuation")];
+        }
+    }
+    for (NSUInteger index = 0; index < targetUserIds.count; index++) {
+        if (![targetUserIds[index] isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        [userIdStr appendString:targetUserIds[index]];
+        if (index != targetUserNickName.count - 1) {
+            [userIdStr appendString:RCLocalizedString(@"punctuation")];
+        }
+    }
+    
+    if ([operatorUserId isEqualToString:userIdStr]) {
+        message = [NSString
+            stringWithFormat:RCLocalizedString(@"GroupJoin"), nickName];
+        return message;
+    }
+    
+    if (targetUserIds.count > targetUserNickName.count) {
+        names = [NSMutableString
+            stringWithFormat:@"%@%@", names, RCLocalizedString(@"GroupEtc")];
+    }
+    message = [NSString
+        stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveInvited" : @"GroupInvited"),
+                         nickName, names];
+    return message;
+}
+
++ (NSString *)__formatGroupNotificationOperationKicked:(NSArray *)targetUserIds targetUserNickName:(NSArray *)targetUserNickName operatorUserId:(NSString *)operatorUserId nickName:(NSString *)nickName isMeOperate:(BOOL)isMeOperate {
+    NSString *message = nil;
+    NSMutableString *names = [[NSMutableString alloc] init];
+    for (NSUInteger index = 0; index < targetUserNickName.count; index++) {
+        if (![targetUserNickName[index] isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        [names appendString:targetUserNickName[index]];
+        if (index != targetUserNickName.count - 1) {
+            [names appendString:RCLocalizedString(@"punctuation")];
+        }
+    }
+    
+    if (targetUserIds.count > targetUserNickName.count) {
+        names = [NSMutableString
+            stringWithFormat:@"%@%@", names, NSLocalizedStringFromTable(@"GroupEtc", @"RongCloudKit", nil)];
+    }
+    message =
+        [NSString stringWithFormat:NSLocalizedStringFromTable(isMeOperate ? @"GroupHaveRemoved" : @"GroupRemoved", @"RongCloudKit", nil), nickName, names];
     return message;
 }
 

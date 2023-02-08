@@ -8,11 +8,12 @@
 
 #import "RCFileSelectorViewController.h"
 #import "RCKitCommonDefine.h"
-#import "RCExtensionService.h"
 #import "RCSelectDirectoryTableViewCell.h"
 #import "RCSelectFilesTableViewCell.h"
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
+#import "RCSemanticContext.h"
+
 @interface RCFileSelectorViewController ()
 
 @property (nonatomic, strong) NSString *rootPath;
@@ -57,9 +58,10 @@ static NSString *const RCListValue = @"List";
     }
 
     self.navigationItem.title = RCLocalizedString(@"SendFile");
-
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     if (self.isSubDirectory) {
-        self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:RCResourceImage(@"navigator_btn_back") title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+        self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     } else {
         UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithTitle:RCLocalizedString(@"Cancel")
                                                                      style:UIBarButtonItemStylePlain
@@ -118,8 +120,7 @@ static NSString *const RCListValue = @"List";
         }
         NSString *fileName = list[indexPath.row];
         cell.fileNameLabel.text = fileName;
-        NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:[fileName pathExtension]];
-        cell.fileIconImageView.image = RCResourceImage(fileTypeIcon);
+        cell.fileIconImageView.image = [RCKitUtility imageWithFileSuffix:[fileName pathExtension]];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         retCell = cell;
     } else {
@@ -184,8 +185,7 @@ static NSString *const RCListValue = @"List";
                                                         row:(NSInteger)row {
     NSString *fileName = [source objectAtIndex:row];
     cell.fileNameLabel.text = fileName;
-    NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:[fileName pathExtension]];
-    cell.fileIconImageView.image = RCResourceImage(fileTypeIcon);
+    cell.fileIconImageView.image = [RCKitUtility imageWithFileSuffix:[fileName pathExtension]];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
 }

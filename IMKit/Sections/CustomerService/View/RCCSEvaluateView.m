@@ -10,7 +10,6 @@
 #import "RCCSSolveView.h"
 #import "RCCSStarView.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCKitConfig.h"
 @interface RCCSEvaluateView () <UITextViewDelegate>
 @property (nonatomic, strong) UIView *backgroundView;

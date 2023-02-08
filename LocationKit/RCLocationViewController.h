@@ -6,7 +6,16 @@
 //  Copyright (c) 2014年 RongCloud. All rights reserved.
 //
 
-#import "RCBaseViewController.h"
+#if __has_include(<RongIMKit/RongIMKit.h>)
+
+#import <RongIMKit/RongIMKit.h>
+
+#else
+
+#import "RongIMKit.h"
+
+#endif
+
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 
@@ -15,15 +24,7 @@
  */
 @interface RCLocationViewController : RCBaseViewController <MKMapViewDelegate>
 
-/*!
- 位置信息中的地理位置的二维坐标
- */
-@property (nonatomic, assign) CLLocationCoordinate2D location;
-
-/*!
- 位置消息中的地理位置的名称
- */
-@property (nonatomic, copy) NSString *locationName;
+- (instancetype)initWithLocationMessage:(RCLocationMessage *)locationMessage;
 
 /*!
  返回按钮的点击事件
