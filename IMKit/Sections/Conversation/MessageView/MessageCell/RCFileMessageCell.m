@@ -310,9 +310,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _sizeLabel;
 }
 
-- (UIImageView *)typeIconView{
+- (RCBaseImageView *)typeIconView{
     if (!_typeIconView) {
-        _typeIconView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 48, 48)];
+        _typeIconView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 48, 48)];
         _typeIconView.clipsToBounds = YES;
     }
     return _typeIconView;
@@ -326,9 +326,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _progressView;
 }
 
-- (UIButton *)cancelSendButton{
+- (RCBaseButton *)cancelSendButton{
     if (!_cancelSendButton) {
-        _cancelSendButton = [[UIButton alloc] initWithFrame:CGRectZero];
+        _cancelSendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         [_cancelSendButton setImage:RCResourceImage(@"cancelButton") forState:UIControlStateNormal];
         [_cancelSendButton addTarget:self action:@selector(cancelSend) forControlEvents:UIControlEventTouchUpInside];
         _cancelSendButton.hidden = YES;

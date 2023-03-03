@@ -8,13 +8,14 @@
 
 #import "RCSightCollectionViewCell.h"
 #import "RongIMKit.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 #import "RCSightPlayerController+imkit.h"
 #import "RCSightModel.h"
 #import "RCSightModel+internal.h"
+#import "RCBaseImageView.h"
 @interface RCSightCollectionViewCell ()
 
-@property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
 
 @property (nonatomic, strong) UIButton *playBtn;
 

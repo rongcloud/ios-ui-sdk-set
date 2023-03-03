@@ -12,6 +12,7 @@
 #import "RCCustomIOSAlertView.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
+#import "RCBaseButton.h"
 const static CGFloat kRCCustomIOSAlertViewDefaultButtonHeight = 50;
 const static CGFloat kRCCustomIOSAlertViewDefaultButtonSpacerHeight = 1;
 const static CGFloat kRCCustomIOSAlertViewCornerRadius = 7;
@@ -268,7 +269,7 @@ CGFloat rcButtonSpacerHeight = 0;
 
     for (int i = 0; i < [buttonTitles count]; i++) {
 
-        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        RCBaseButton *closeButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
 
         [closeButton setFrame:CGRectMake(i * buttonWidth, container.bounds.size.height - rcButtonHeight, buttonWidth,
                                          rcButtonHeight)];

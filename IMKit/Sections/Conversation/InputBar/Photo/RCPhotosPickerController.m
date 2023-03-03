@@ -14,7 +14,7 @@
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCMBProgressHUD.h"
-
+#import "RCBaseButton.h"
 
 #define WIDTH ((SCREEN_WIDTH - 20) / 4)
 #define SIZE CGSizeMake(WIDTH, WIDTH)
@@ -25,8 +25,8 @@ static NSString *const reuseIdentifier = @"Cell";
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *selectedAssets;
 
 @property (nonatomic, strong) UIView *toolBar;
-@property (nonatomic, strong) UIButton *previewBtn;
-@property (nonatomic, strong) UIButton *btnSend;
+@property (nonatomic, strong) RCBaseButton *previewBtn;
+@property (nonatomic, strong) RCBaseButton *btnSend;
 @property (nonatomic, assign) BOOL isFull;
 @property (nonatomic, assign) BOOL disableFirstAppear;
 @property (nonatomic, assign) BOOL isLoad;
@@ -46,9 +46,7 @@ static NSString *const reuseIdentifier = @"Cell";
         self.assetArray = [NSMutableArray new];
         self.selectedAssets = [NSMutableArray new];
         self.collectionView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
-        if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-            [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-        }
+        [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
 }
@@ -138,9 +136,7 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)dealloc {
-    if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-        [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
-    }
+    [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -434,13 +430,13 @@ static NSString *const reuseIdentifier = @"Cell";
     [self.view addSubview:_toolBar];
 
     // add button for bottom bar
-    _btnSend = [[UIButton alloc] init];
+    _btnSend = [[RCBaseButton alloc] init];
     [_btnSend setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_btnSend addTarget:self action:@selector(btnSendCliced:) forControlEvents:UIControlEventTouchUpInside];
     _btnSend.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_toolBar addSubview:_btnSend];
 
-    _previewBtn = [[UIButton alloc] init];
+    _previewBtn = [[RCBaseButton alloc] init];
     [_previewBtn setTitle:RCLocalizedString(@"Preview") forState:UIControlStateNormal];
     _previewBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
     [_previewBtn addTarget:self action:@selector(previewBtnCliced:) forControlEvents:UIControlEventTouchUpInside];

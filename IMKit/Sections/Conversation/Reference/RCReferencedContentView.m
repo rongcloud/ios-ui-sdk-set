@@ -262,9 +262,9 @@
     return _textLabel;
 }
 
-- (UIImageView *)msgImageView {
+- (RCBaseImageView *)msgImageView {
     if (!_msgImageView) {
-        _msgImageView = [[UIImageView alloc] init];
+        _msgImageView = [[RCBaseImageView alloc] init];
         _msgImageView.layer.masksToBounds = YES;
         _msgImageView.layer.cornerRadius = 3;
     }

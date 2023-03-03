@@ -15,11 +15,13 @@
 #import "RCloudImageLoader.h"
 #import "RCloudImageView.h"
 #import "RCDestructCountDownButton.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
+#import "RCBaseScrollView.h"
+
 @interface RCDestructImageBrowseController () <UIScrollViewDelegate, RCloudImageViewDelegate>
 
 // scrollView
-@property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) RCBaseScrollView *scrollView;
 //背景黑色
 @property (nonatomic, strong) UIView *backView;
 // timeButton
@@ -65,7 +67,7 @@
     [self.view addSubview:self.scrollView];
 
     [self.view addSubview:self.rightTopButton];
-    NSNumber *duration = [[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
+    NSNumber *duration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
     if (duration != nil && [duration integerValue] < 30) {
         [self.rightTopButton setDestructCountDownButtonHighlighted];
     }
@@ -137,8 +139,8 @@
 - (void)beginDestructing {
     RCImageMessage *imageMessage = (RCImageMessage *)self.messageModel.content;
     if (self.messageModel.messageDirection == MessageDirection_RECEIVE && imageMessage.destructDuration > 0) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId]];
     }
 }
 
@@ -267,8 +269,8 @@
 
     for (int i = 0; i < imageViewList.count; i++) {
         // scrollView
-        UIScrollView *imagesrcoll =
-            [[UIScrollView alloc] initWithFrame:CGRectMake(i * self.view.frame.size.width, 0,
+        RCBaseScrollView *imagesrcoll =
+            [[RCBaseScrollView alloc] initWithFrame:CGRectMake(i * self.view.frame.size.width, 0,
                                                            self.view.frame.size.width, self.view.frame.size.height)];
         [imagesrcoll setContentSize:CGSizeMake(self.view.bounds.size.width, 0)];
         imagesrcoll.delegate = self;
@@ -393,7 +395,7 @@
     if ([imageUrl hasPrefix:@"http"]) {
         UIImage *image = RCResourceImage(@"broken");
         imageView.image = nil;
-        UIImageView *imageViewTip = [[UIImageView alloc] initWithImage:image];
+        RCBaseImageView *imageViewTip = [[RCBaseImageView alloc] initWithImage:image];
         [imageViewTip setFrame:CGRectMake(0, 0, 81, 60)];
         [imageViewTip setCenter:CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2)];
         [imageView addSubview:imageViewTip];
@@ -406,7 +408,7 @@
     } else {
         UIImage *image = RCResourceImage(@"exclamation");
         imageView.image = nil;
-        UIImageView *imageViewTip = [[UIImageView alloc] initWithImage:image];
+        RCBaseImageView *imageViewTip = [[RCBaseImageView alloc] initWithImage:image];
         [imageViewTip setFrame:CGRectMake(0, 0, 71, 71)];
         [imageViewTip setCenter:CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2)];
         [imageView addSubview:imageViewTip];
@@ -434,9 +436,9 @@
 
 #pragma mark - Getters and Setters
 
-- (UIScrollView *)scrollView {
+- (RCBaseScrollView *)scrollView {
     if (_scrollView == nil) {
-        _scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
+        _scrollView = [[RCBaseScrollView alloc] initWithFrame:self.view.bounds];
         [_scrollView setBackgroundColor:[UIColor blackColor]];
         [_scrollView setDelegate:self];
         [_scrollView setPagingEnabled:YES];

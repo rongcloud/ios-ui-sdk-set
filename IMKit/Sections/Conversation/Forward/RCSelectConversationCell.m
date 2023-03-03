@@ -12,14 +12,14 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCloudImageView.h"
 #import "RCConversationModel.h"
-
+#import "RCBaseImageView.h"
 @interface RCSelectConversationCell ()
 /*!
  Cell的数据模型
  */
 @property (nonatomic, strong) RCConversation *model;
 
-@property (nonatomic, strong) UIImageView *selectedImageView;
+@property (nonatomic, strong) RCBaseImageView *selectedImageView;
 
 @property (nonatomic, strong) RCloudImageView *headerImageView;
 
@@ -147,9 +147,9 @@
 
 #pragma mark - Getters and Setters
 
-- (UIImageView *)selectedImageView {
+- (RCBaseImageView *)selectedImageView {
     if (!_headerImageView) {
-        _selectedImageView = [[UIImageView alloc] init];
+        _selectedImageView = [[RCBaseImageView alloc] init];
         if ([RCKitUtility isRTL]) {
             // 神奇的地方：这里的 self.bounds = (origin = (x = 0, y = 0), size = (width = 320, height = 44))
             _selectedImageView.frame = CGRectMake(self.bounds.size.width + 20 + 5, 25, 20, 20);

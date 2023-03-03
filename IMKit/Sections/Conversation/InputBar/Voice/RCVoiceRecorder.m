@@ -32,7 +32,7 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
             NSInteger sample = 8000.00f;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            switch ([RCIMClient sharedRCIMClient].sampleRate) {
+            switch ([RCCoreClient sharedCoreClient].sampleRate) {
 #pragma clang diagnostic pop
             case RCSample_Rate_8000:
                 sample = 8000.00f;

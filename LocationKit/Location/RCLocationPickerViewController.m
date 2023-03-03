@@ -13,7 +13,7 @@
 @interface RCLocationPickerViewController () <RCLocationPickerViewControllerDataSource>
 
 @property (nonatomic, strong) UIView *mapView;
-@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) RCBaseTableView *tableView;
 
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) CALayer *annotationLayer;
@@ -113,7 +113,7 @@
     self.annotationLayer = annotationLayer;
 
     frame.origin.y = frame.size.height;
-    self.tableView = [[UITableView alloc] initWithFrame:frame style:UITableViewStyleGrouped];
+    self.tableView = [[RCBaseTableView alloc] initWithFrame:frame style:UITableViewStyleGrouped];
     self.tableView.estimatedRowHeight = 0;
     self.tableView.estimatedSectionHeaderHeight = 0;
     self.tableView.estimatedSectionFooterHeight = 0;
@@ -143,7 +143,7 @@
     self.busyIndicator.center =
         CGPointMake(CGRectGetMidX(self.tableViewFooterView.bounds), CGRectGetMidY(self.tableViewFooterView.bounds));
     [self.tableViewFooterView addSubview:self.busyIndicator];
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    RCBaseButton *button = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     button.frame = self.tableViewFooterView.bounds;
     [button addTarget:self action:@selector(loadMorePoi:) forControlEvents:UIControlEventTouchUpInside];
     button.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -212,9 +212,9 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *identifier = @"LocationCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+    RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
     if (!cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
+        cell = [[RCBaseTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
     }
     id placeMark = [self.pois objectAtIndex:indexPath.row];
     cell.textLabel.text = [self.dataSource titleOfPlaceMark:placeMark];

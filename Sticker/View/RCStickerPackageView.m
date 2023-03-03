@@ -17,7 +17,7 @@
 
 @property (nonatomic, strong) RCStickerPackageConfig *packageConfig;
 
-@property (nonatomic, strong) UIImageView *coverView;
+@property (nonatomic, strong) RCBaseImageView *coverView;
 
 @property (nonatomic, strong) UILabel *nameLabel;
 
@@ -135,9 +135,9 @@
         }];
 }
 
-- (UIImageView *)coverView {
+- (RCBaseImageView *)coverView {
     if (_coverView == nil) {
-        _coverView = [[UIImageView alloc] init];
+        _coverView = [[RCBaseImageView alloc] init];
         _coverView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _coverView;

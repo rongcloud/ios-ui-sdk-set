@@ -170,8 +170,8 @@
     if (self.model.messageDirection == MessageDirection_RECEIVE && cardMessage.destructDuration > 0 &&
         [UIApplication sharedApplication].applicationState != UIApplicationStateBackground &&
         self.isConversationAppear) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessageByUId:self.model.messageUId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessageByUId:self.model.messageUId]];
     }
 }
 

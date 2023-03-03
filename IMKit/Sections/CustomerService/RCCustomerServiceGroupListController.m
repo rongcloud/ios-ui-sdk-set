@@ -9,14 +9,15 @@
 #import "RCCustomerServiceGroupListController.h"
 #import "RCCustomerServiceGroupCell.h"
 #import "RCKitCommonDefine.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCKitConfig.h"
 #import <RongCustomerService/RongCustomerService.h>
+#import "RCBaseButton.h"
 #define CellIdentifier @"customerGroupCell"
 
 @interface RCCustomerServiceGroupListController () <UITableViewDelegate, UITableViewDataSource>
 @property (nonatomic, assign) NSInteger currentIndex;
-@property (nonatomic, strong) UIButton *isSureButton;
+@property (nonatomic, strong) RCBaseButton *isSureButton;
 @end
 
 @implementation RCCustomerServiceGroupListController
@@ -103,7 +104,7 @@
 }
 
 - (void)setLeftBarButtonItems{
-    UIButton *leftbtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    RCBaseButton *leftbtn = [RCBaseButton buttonWithType:UIButtonTypeRoundedRect];
     leftbtn.frame = CGRectMake(3, 0, 60, 44);
     leftbtn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     leftbtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
@@ -117,7 +118,7 @@
 }
 
 - (void)setRightBarButtonItems{
-    _isSureButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    _isSureButton = [RCBaseButton buttonWithType:UIButtonTypeRoundedRect];
     _isSureButton.frame = CGRectMake(0, 0, 40, 44);
     _isSureButton.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     _isSureButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;

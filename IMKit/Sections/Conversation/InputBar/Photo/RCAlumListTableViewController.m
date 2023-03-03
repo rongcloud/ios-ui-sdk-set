@@ -119,8 +119,7 @@ static NSString *const cellReuseIdentifier = @"cell";
     } else {
         [RCKitUtility showProgressViewFor:self.tableView text:nil animated:YES];
         [sharedAssetHelper
-            getGroupsWithALAssetsGroupType:ALAssetsGroupAll
-                          resultCompletion:^(NSArray *assetGroup) {
+            getAlbumsFromSystem:^(NSArray *assetGroup) {
                               if (assetGroup) {
                                   weakSelf.libraryList = assetGroup;
                               }

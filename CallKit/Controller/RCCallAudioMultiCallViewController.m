@@ -607,6 +607,7 @@
                 for (RCCallUserCallInfoModel *userModel in self.subUserModelList) {
                     if ([userId isEqualToString:userModel.userId]) {
                         [self.subUserModelList removeObject:userModel];
+                        self.mainModel = [self generateUserModel:currentUserId];
                         break;
                     }
                 }

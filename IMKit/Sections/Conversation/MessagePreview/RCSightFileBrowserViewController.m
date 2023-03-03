@@ -12,6 +12,8 @@
 #import "RCSightSlideViewController.h"
 #import "RCKitCommonDefine.h"
 #import "RCSemanticContext.h"
+#import "RCBaseTableViewCell.h"
+#import "RCBaseNavigationController.h"
 @interface RCSightFileBrowserViewController ()
 
 @property (nonatomic, strong) RCMessage *messageModel;
@@ -76,9 +78,9 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString *const identifier = @"RCSightFileCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+    RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
     if (!cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier];
+        cell = [[RCBaseTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier];
     }
     cell.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
     cell.detailTextLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor lightGrayColor] darkColor:HEXCOLOR(0xa0a5ab)];
@@ -125,7 +127,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     RCSightSlideViewController *ssv = [[RCSightSlideViewController alloc] init];
     ssv.messageModel = [RCMessageModel modelWithMessage:model];
     ssv.topRightBtnHidden = YES;
-    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:ssv];
+    RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:ssv];
     
     if ([RCSemanticContext isRTL]) {
         navc.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
@@ -179,7 +181,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                                                    count:(NSInteger)count
                                                    times:(int)times {
     NSArray<RCMessage *> *imageArrayBackward =
-        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
+        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -196,7 +198,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                                                    count:(NSInteger)count
                                                    times:(int)times {
     NSArray<RCMessage *> *imageArrayForward =
-        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
+        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
                                             baseMessageId:model.messageId

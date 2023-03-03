@@ -9,7 +9,6 @@
 #import "RCStickerMessageCell.h"
 #import "RCStickerMessage.h"
 #import "RCStickerUtility.h"
-#import "RCIMClient+sticker.h"
 #define MAXHEIGHT 120.0f
 #define FAIELDIMAGEEHEIGHT 43.0f
 #define FAIELDLABLEWIDTHT 80.0f
@@ -17,9 +16,9 @@
 #define LABLESET 12.0f
 
 @interface RCStickerMessageCell ()
-@property (nonatomic, strong) UIImageView *loadingImageView;
-@property (nonatomic, strong) UIImageView *loadfailedBackImageview;
-@property (nonatomic, strong) UIImageView *loadfailedImageView;
+@property (nonatomic, strong) RCBaseImageView *loadingImageView;
+@property (nonatomic, strong) RCBaseImageView *loadfailedBackImageview;
+@property (nonatomic, strong) RCBaseImageView *loadfailedImageView;
 @property (nonatomic, strong) UILabel *loadFailedLable;
 @property (nonatomic, strong) UIView *destructView;
 
@@ -62,17 +61,17 @@
     return self;
 }
 - (void)initialize {
-    self.loadingImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
+    self.loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
     self.loadingImageView.contentMode = UIViewContentModeCenter;
     [self.messageContentView addSubview:self.loadingImageView];
 
-    self.loadfailedBackImageview = [[UIImageView alloc]
+    self.loadfailedBackImageview = [[RCBaseImageView alloc]
         initWithFrame:CGRectMake(0, 0, FAIELDLABLEWIDTHT, FAIELDIMAGEEHEIGHT + FAIELDLABLEHEIGHT + LABLESET)];
     self.loadfailedBackImageview.contentMode = UIViewContentModeCenter;
     [self.messageContentView addSubview:self.loadfailedBackImageview];
 
     self.loadfailedImageView =
-        [[UIImageView alloc] initWithFrame:CGRectMake((FAIELDLABLEWIDTHT - FAIELDIMAGEEHEIGHT) / 2, 0,
+        [[RCBaseImageView alloc] initWithFrame:CGRectMake((FAIELDLABLEWIDTHT - FAIELDIMAGEEHEIGHT) / 2, 0,
                                                       FAIELDIMAGEEHEIGHT, FAIELDIMAGEEHEIGHT)];
     self.loadfailedImageView.contentMode = UIViewContentModeCenter;
     self.loadfailedImageView.image = RongStickerImage(@"loading_failed_image");

@@ -8,11 +8,12 @@
 
 #import "RCCSSolveView.h"
 #import "RCKitCommonDefine.h"
+#import "RCBaseButton.h"
 @interface RCCSSolveView ()
 @property (nonatomic, strong) UILabel *title;
-@property (nonatomic, strong) UIButton *solved;
-@property (nonatomic, strong) UIButton *solving;
-@property (nonatomic, strong) UIButton *noSolve;
+@property (nonatomic, strong) RCBaseButton *solved;
+@property (nonatomic, strong) RCBaseButton *solving;
+@property (nonatomic, strong) RCBaseButton *noSolve;
 @end
 @implementation RCCSSolveView
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -29,7 +30,7 @@
     self.title.text = @"是否解决了您的问题";
     self.title.textColor = HEXCOLOR(0x353535);
 
-    self.solved = [[UIButton alloc] init];
+    self.solved = [[RCBaseButton alloc] init];
     [self.solved setBackgroundImage:RCResourceImage(@"Resolved") forState:UIControlStateNormal];
     [self.solved setBackgroundImage:RCResourceImage(@"Resolved-hover") forState:UIControlStateSelected];
     self.solved.layer.cornerRadius = 5;
@@ -37,14 +38,14 @@
     self.solved.selected = YES;
     self.solved.tag = RCCSResolved;
 
-    self.solving = [[UIButton alloc] init];
+    self.solving = [[RCBaseButton alloc] init];
     [self.solving setBackgroundImage:RCResourceImage(@"follow") forState:UIControlStateNormal];
     [self.solving setBackgroundImage:RCResourceImage(@"follow-hover") forState:UIControlStateSelected];
     self.noSolve.layer.cornerRadius = 5;
     [self.solving addTarget:self action:@selector(isSolveQuestion:) forControlEvents:UIControlEventTouchUpInside];
     self.solving.tag = RCCSResolving;
 
-    self.noSolve = [[UIButton alloc] init];
+    self.noSolve = [[RCBaseButton alloc] init];
     [self.noSolve setBackgroundImage:RCResourceImage(@"noSolve") forState:UIControlStateNormal];
     [self.noSolve setBackgroundImage:RCResourceImage(@"noSolve-hover") forState:UIControlStateSelected];
     self.noSolve.layer.cornerRadius = 5;

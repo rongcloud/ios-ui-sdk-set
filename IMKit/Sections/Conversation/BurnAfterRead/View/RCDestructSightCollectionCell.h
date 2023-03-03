@@ -6,7 +6,7 @@
 //  Copyright © 2017年 RongCloud. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "RCBaseCollectionViewCell.h"
 
 @class RCMessageModel;
 
@@ -20,7 +20,7 @@
 
 @end
 
-@interface RCDestructSightCollectionCell : UICollectionViewCell
+@interface RCDestructSightCollectionCell : RCBaseCollectionViewCell
 
 @property (nonatomic, strong) UILabel *label;
 

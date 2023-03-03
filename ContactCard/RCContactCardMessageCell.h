@@ -6,11 +6,7 @@
 //  Copyright © 2016年 RongCloud. All rights reserved.
 //
 
-#if __has_include(<RongIMKit/RongIMKit.h>)
-#import <RongIMKit/RongIMKit.h>
-#else
-#import "RongIMKit.h"
-#endif
+#import "RongContactCardAdaptiveHeader.h"
 
 /**
  *  名片消息cell

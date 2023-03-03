@@ -17,11 +17,11 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @interface RCSightMessageCell ()
 @property (nonatomic, strong) UIView *playButtonView;
 @property (nonatomic, strong) UILabel *durationLabel;
-@property (nonatomic, strong) UIImageView *playImage;
-@property (nonatomic, strong) UIImageView *destructPicture;
+@property (nonatomic, strong) RCBaseImageView *playImage;
+@property (nonatomic, strong) RCBaseImageView *destructPicture;
 @property (nonatomic, strong) UILabel *destructLabel;
 @property (nonatomic, strong) UILabel *destructDurationLabel;
-@property (nonatomic, strong) UIImageView *destructBackgroundView;
+@property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
 @end
 
 @implementation RCSightMessageCell
@@ -295,9 +295,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _durationLabel;
 }
 
-- (UIImageView *)playImage {
+- (RCBaseImageView *)playImage {
     if (!_playImage) {
-        _playImage = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 41, 41)];
+        _playImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 41, 41)];
         UIImage *image = RCResourceImage(@"sight_message_icon");
         _playImage.image = image;
     }
@@ -309,8 +309,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _playButtonView = [[UIView alloc] initWithFrame:self.thumbnailView.bounds];
         [_playButtonView addSubview:self.playImage];
         [self.thumbnailView addSubview:_playButtonView];
-        UIImageView *backgroudView =
-            [[UIImageView alloc] initWithFrame:CGRectMake(0, self.thumbnailView.bounds.size.height - 21,
+        RCBaseImageView *backgroudView =
+            [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, self.thumbnailView.bounds.size.height - 21,
                                                           self.thumbnailView.bounds.size.width, 21)];
         backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [_playButtonView addSubview:backgroudView];
@@ -319,25 +319,25 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _playButtonView;
 }
 
-- (UIImageView *)thumbnailView{
+- (RCBaseImageView *)thumbnailView{
     if (!_thumbnailView) {
-        _thumbnailView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _thumbnailView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _thumbnailView.layer.masksToBounds = YES;
         _thumbnailView.layer.cornerRadius = 6;
     }
     return _thumbnailView;
 }
 
-- (UIImageView *)destructBackgroundView{
+- (RCBaseImageView *)destructBackgroundView{
     if (!_destructBackgroundView) {
-        _destructBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _destructBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
     }
     return _destructBackgroundView;
 }
 
-- (UIImageView *)destructPicture{
+- (RCBaseImageView *)destructPicture{
     if (!_destructPicture) {
-        _destructPicture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
+        _destructPicture = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
     }
     return _destructPicture;
 }

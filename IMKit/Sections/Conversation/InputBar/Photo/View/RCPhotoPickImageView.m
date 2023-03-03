@@ -10,6 +10,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 #import <MobileCoreServices/UTCoreTypes.h>
+#import "RCBaseImageView.h"
 //#import <QuartzCore/QuartzCore.h>
 typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
     RCPotoPickStatusNormal = 0,
@@ -23,7 +24,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 @property (nonatomic, strong) UILabel *gifLabel;
 
 @property (nonatomic, strong) UILabel *durationLabel;
-@property (nonatomic, strong) UIImageView *videoIcon;
+@property (nonatomic, strong) RCBaseImageView *videoIcon;
 @end
 
 @implementation RCPhotoPickImageView
@@ -130,7 +131,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
     return _durationLabel;
 }
 
-- (UIImageView *)videoIcon {
+- (RCBaseImageView *)videoIcon {
     if (!_videoIcon) {
         CGRect frame = (CGRect){6, self.typeBackgroundView.frame.size.height-21, 19, 19};
         UIImage *image = RCResourceImage(@"fileicon_video_wall");
@@ -138,7 +139,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame =(CGRect){self.typeBackgroundView.frame.size.width - 6-19, self.typeBackgroundView.frame.size.height-21, 19, 19};
             image = [image imageFlippedForRightToLeftLayoutDirection];
         }
-        _videoIcon = [[UIImageView alloc] initWithFrame:frame];
+        _videoIcon = [[RCBaseImageView alloc] initWithFrame:frame];
         _videoIcon.image = image;
         [self.typeBackgroundView addSubview:_videoIcon];
     }

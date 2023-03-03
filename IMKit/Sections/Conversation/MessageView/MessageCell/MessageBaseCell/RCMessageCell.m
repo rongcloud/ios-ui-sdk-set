@@ -15,7 +15,7 @@
 #import "RCKitConfig.h"
 #import "RCMessageCellTool.h"
 #import "RCResendManager.h"
-#import <RCIMClient+Destructing.h>
+#import <RCCoreClient+Destructing.h>
 #import <RongPublicService/RongPublicService.h>
 // 头像
 #define PortraitImageViewTop 0
@@ -619,7 +619,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)messageDestructing {
     NSNumber *whisperMsgDuration =
-        [[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId];
+        [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId];
     if (whisperMsgDuration == nil) {
         [self.destructBtn setTitle:@"" forState:UIControlStateNormal];
         [self.destructBtn setImage:RCResourceImage(@"fire_identify") forState:UIControlStateNormal];
@@ -710,13 +710,13 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)sendMessageReadReceiptRequest:(NSString *)messageUId {
-    RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:self.model.messageId];
+    RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
     if (message) {
         if (!messageUId || [messageUId isEqualToString:@""]) {
             return;
         }
         __weak typeof(self) weakSelf = self;
-        [[RCIMClient sharedRCIMClient] sendReadReceiptRequest:message success:^{
+        [[RCCoreClient sharedCoreClient] sendReadReceiptRequest:message success:^{
             weakSelf.model.isCanSendReadReceipt = NO;
             dispatch_async(dispatch_get_main_queue(), ^{
                 weakSelf.receiptView.hidden = YES;
@@ -828,7 +828,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)enableShowReceiptView:(UIButton *)sender {
     if (!self.model.messageUId) {
-        RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:self.model.messageId];
+        RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
         if (message) {
             [self sendMessageReadReceiptRequest:message.messageUId];
         }
@@ -879,9 +879,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 #pragma mark - Getter && Setter
-- (UIButton *)receiptView {
+- (RCBaseButton *)receiptView {
     if (!_receiptView) {
-        _receiptView = [[UIButton alloc] init];
+        _receiptView = [[RCBaseButton alloc] init];
         [_receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
         [_receiptView addTarget:self
                          action:@selector(enableShowReceiptView:)
@@ -915,9 +915,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _destructView;
 }
 
-- (UIButton *)destructBtn {
+- (RCBaseButton *)destructBtn {
     if (_destructBtn == nil) {
-        _destructBtn = [[UIButton alloc] initWithFrame:CGRectZero];
+        _destructBtn = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         [_destructBtn setTitleColor:RCDYCOLOR(0xffffff, 0x11111) forState:UIControlStateNormal];
         _destructBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         _destructBtn.layer.cornerRadius = 10.f;
@@ -1009,9 +1009,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _messageContentView;
 }
 
-- (UIImageView *)bubbleBackgroundView{
+- (RCBaseImageView *)bubbleBackgroundView{
     if (!_bubbleBackgroundView) {
-        _bubbleBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _bubbleBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         [self.messageContentView addSubview:self.bubbleBackgroundView];
     }
     return _bubbleBackgroundView;

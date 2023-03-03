@@ -11,10 +11,11 @@
 #import "RCKitCommonDefine.h"
 #import "RCAssetHelper.h"
 #import "RCVideoPlayer.h"
-
+#import "RCBaseButton.h"
+#import "RCBaseImageView.h"
 @interface RCVideoPreviewCell () <RCVideoPlayerDelegate>
-@property (nonatomic, strong) UIImageView *thumbnailView;
-@property (nonatomic, strong) UIButton *playBtn;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseButton *playBtn;
 @property (nonatomic, strong) RCVideoPlayer *player;
 @end
 
@@ -115,17 +116,17 @@
 }
 
 #pragma mark - Getters and Setters
-- (UIImageView *)thumbnailView {
+- (RCBaseImageView *)thumbnailView {
     if (!_thumbnailView) {
-        _thumbnailView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _thumbnailView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _thumbnailView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _thumbnailView;
 }
 
-- (UIButton *)playBtn {
+- (RCBaseButton *)playBtn {
     if (!_playBtn) {
-        _playBtn = [[UIButton alloc] initWithFrame:(CGRect){0, 0, 80, 80}];
+        _playBtn = [[RCBaseButton alloc] initWithFrame:(CGRect){0, 0, 80, 80}];
         [_playBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
         [_playBtn addTarget:self action:@selector(playAction) forControlEvents:UIControlEventTouchUpInside];
     }

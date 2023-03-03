@@ -156,7 +156,7 @@
             cell.serviceProfile = self.serviceProfile;
             if (1) {
                 __weak RCPublicServiceProfileViewController *weakSelf = self;
-                [[RCIMClient sharedRCIMClient]
+                [[RCCoreClient sharedCoreClient]
                     getConversationNotificationStatus:(RCConversationType)self.serviceProfile.publicServiceType
                     targetId:self.serviceProfile.publicServiceId
                     success:^(RCConversationNotificationStatus nStatus) {

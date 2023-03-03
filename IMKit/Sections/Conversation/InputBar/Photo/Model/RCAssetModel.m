@@ -37,14 +37,6 @@
     return _imageSize;
 }
 
-- (ALAssetOrientation)imageOrientation {
-    if (_imageOrientation) {
-        return _imageOrientation;
-    }
-    _imageOrientation = [[self.asset valueForProperty:@"ALAssetPropertyOrientation"] integerValue];
-    return _imageOrientation;
-}
-
 - (void)setValue:(id)value forKey:(NSString *)key {
 }
 

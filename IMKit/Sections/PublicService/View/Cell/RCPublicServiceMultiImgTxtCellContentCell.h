@@ -7,16 +7,16 @@
 //
 
 #import "RCMessageCellDelegate.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import <UIKit/UIKit.h>
-
+#import "RCBaseTableViewCell.h"
 @protocol RCPublicServiceMultiImgTxtCellContentCellDelegate <NSObject>
 
 - (void)longPressAction:(UITableViewCell *)cell;
 
 @end
 
-@interface RCPublicServiceMultiImgTxtCellContentCell : UITableViewCell
+@interface RCPublicServiceMultiImgTxtCellContentCell : RCBaseTableViewCell
 @property (nonatomic, strong) RCMessageModel *model;
 @property (strong, nonatomic) RCRichContentMessage *richContent;
 @property (nonatomic, weak) id<RCPublicServiceMessageCellDelegate> publicServiceDelegate;

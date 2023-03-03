@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "RCloudImageView.h"
-
-@interface RCCCContactTableViewCell : UITableViewCell
+#import "RongContactCardAdaptiveHeader.h"
+@interface RCCCContactTableViewCell : RCBaseTableViewCell
 
 @property (nonatomic, strong) RCloudImageView *portraitView;
 

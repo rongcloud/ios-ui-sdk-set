@@ -13,15 +13,15 @@
 #define RCCloseButtonAlignTop [RCKitUtility getWindowSafeAreaInsets].top+30
 @interface RCSightPlayerOverlayView ()
 
-@property (nonatomic, strong) UIButton *playBtn;
-@property (nonatomic, strong) UIButton *closeBtn;
+@property (nonatomic, strong) RCBaseButton *playBtn;
+@property (nonatomic, strong) RCBaseButton *closeBtn;
 @property (nonatomic, strong) UILabel *currentTimeLab;
 @property (nonatomic, strong) UILabel *durationTimeLabel;
 @property (nonatomic, strong) UISlider *slider;
-@property (nonatomic, strong) UIButton *centerPlayBtn;
+@property (nonatomic, strong) RCBaseButton *centerPlayBtn;
 @property (nonatomic, strong) UIView *bottomView;
 @property (nonatomic, strong) UIView *topView;
-@property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
 
 @property (nonatomic, strong) NSLayoutConstraint *bottomConstraint;
 @property (nonatomic, strong) NSLayoutConstraint *topYConstraint;
@@ -33,16 +33,16 @@
 @property (nonatomic, assign) BOOL hideCenterBtn;
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
-@property (nonatomic, strong) UIButton *extraButton;
+@property (nonatomic, strong) RCBaseButton *extraButton;
 @end
 
 @implementation RCSightPlayerOverlayView
 
 #pragma mark - properties
 
-- (UIButton *)playBtn {
+- (RCBaseButton *)playBtn {
     if (!_playBtn) {
-        _playBtn = [[UIButton alloc] init];
+        _playBtn = [[RCBaseButton alloc] init];
         [_playBtn setImage:RCResourceImage(@"player_start_button") forState:UIControlStateNormal];
         [_playBtn setImage:RCResourceImage(@"player_suspend_button") forState:UIControlStateSelected];
         [_playBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
@@ -50,18 +50,18 @@
     return _playBtn;
 }
 
-- (UIButton *)centerPlayBtn {
+- (RCBaseButton *)centerPlayBtn {
     if (!_centerPlayBtn) {
-        _centerPlayBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 63, 63)];
+        _centerPlayBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 63, 63)];
         [_centerPlayBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
         [_centerPlayBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _centerPlayBtn;
 }
 
-- (UIButton *)closeBtn {
+- (RCBaseButton *)closeBtn {
     if (!_closeBtn) {
-        _closeBtn = [[UIButton alloc] init];
+        _closeBtn = [[RCBaseButton alloc] init];
         [_closeBtn setImage:RCResourceImage(@"sight_top_toolbar_close") forState:UIControlStateNormal];
         [_closeBtn addTarget:self action:@selector(closeAction:) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -91,9 +91,9 @@
     return _currentTimeLab;
 }
 
-- (UIButton *)extraButton {
+- (RCBaseButton *)extraButton {
     if (!_extraButton) {
-        _extraButton = [[UIButton alloc] init];
+        _extraButton = [[RCBaseButton alloc] init];
     }
     return _extraButton;
 }
@@ -110,7 +110,7 @@
 - (UIView *)topView {
     if (!_topView) {
         _topView = [[UIView alloc] init];
-        UIImageView *backgroudView = [[UIImageView alloc] init];
+        RCBaseImageView *backgroudView = [[RCBaseImageView alloc] init];
         backgroudView.image = RCResourceImage(@"player_shadow_top");
         [_topView addSubview:backgroudView];
         self.topHeightConstraint = [self constrainView:_topView toSize:RCTopViewAlignHeight direction:CCSightLayoutDirectionVertical];
@@ -143,7 +143,7 @@
         [self constraintAlignSuperView:contentView alignSpace:0 AlignMent:CCSightLayoutAlignTop];
         [self constraintAlignSuperView:contentView alignSpace:ISX ? 24 : 0 AlignMent:CCSightLayoutAlignBottom];
 
-        UIImageView *backgroudView = [[UIImageView alloc] init];
+        RCBaseImageView *backgroudView = [[RCBaseImageView alloc] init];
         backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [contentView addSubview:backgroudView];
         [self strechToSuperview:backgroudView];
@@ -192,7 +192,7 @@
 
 - (void)setUp {
     self.backgroundColor = [UIColor clearColor];
-    self.thumbnailView = [[UIImageView alloc] init];
+    self.thumbnailView = [[RCBaseImageView alloc] init];
     self.thumbnailView.backgroundColor = [UIColor blackColor];
     self.thumbnailView.userInteractionEnabled = YES;
     self.thumbnailView.contentMode = UIViewContentModeScaleAspectFit;

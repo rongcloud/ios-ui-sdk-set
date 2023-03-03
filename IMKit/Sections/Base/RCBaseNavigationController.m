@@ -1,18 +1,18 @@
 //
-//  RCExtNavigationController.m
+//  RCBaseNavigationController.m
 //  RongExtensionKit
 //
 //  Created by 杨雨东 on 2018/5/22.
 //  Copyright © 2018 RongCloud. All rights reserved.
 //
 
-#import "RCExtNavigationController.h"
+#import "RCBaseNavigationController.h"
 #import "RCSemanticContext.h"
-@interface RCExtNavigationController ()
+@interface RCBaseNavigationController ()
 
 @end
 
-@implementation RCExtNavigationController
+@implementation RCBaseNavigationController
 
 - (instancetype)initWithRootViewController:(UIViewController *)rootViewController {
     self = [super initWithRootViewController:rootViewController];

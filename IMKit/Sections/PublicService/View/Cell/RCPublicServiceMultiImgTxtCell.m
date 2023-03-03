@@ -11,10 +11,11 @@
 #import "RCPublicServiceMultiImgTxtCellHeaderCell.h"
 #import "RCPublicServiceViewConstants.h"
 #import <RongPublicService/RongPublicService.h>
+#import "RCBaseTableView.h"
 @interface RCPublicServiceMultiImgTxtCell () <UITableViewDataSource, UITableViewDelegate,
                                               RCPublicServiceMultiImgTxtCellContentCellDelegate,
                                               RCPublicServiceMultiImgTxtCellHeaderCellDelegate>
-@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) RCBaseTableView *tableView;
 @end
 
 @implementation RCPublicServiceMultiImgTxtCell
@@ -144,9 +145,9 @@
 }
 #pragma mark – Getters and Setters
 
-- (UITableView *)tableView {
+- (RCBaseTableView *)tableView {
     if (!_tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
+        _tableView = [[RCBaseTableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
         _tableView.layer.cornerRadius = 4;
         _tableView.layer.masksToBounds = YES;
         _tableView.estimatedRowHeight = 0;

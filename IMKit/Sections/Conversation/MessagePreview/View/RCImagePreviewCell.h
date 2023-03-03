@@ -6,7 +6,7 @@
 //  Copyright © 2021年 RongCloud. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "RCBaseCollectionViewCell.h"
 
 @class RCMessageModel, RCImagePreviewCell;
 @protocol RCImagePreviewCellDelegate <NSObject>
@@ -17,7 +17,7 @@
 
 @end
 
-@interface RCImagePreviewCell : UICollectionViewCell
+@interface RCImagePreviewCell : RCBaseCollectionViewCell
 
 @property (nonatomic, weak)  id<RCImagePreviewCellDelegate> delegate;
 

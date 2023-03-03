@@ -8,12 +8,12 @@
 
 #import "RCDestructSightCollectionCell.h"
 #import "RongIMKit.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 #import "RCSightPlayerController+imkit.h"
 
 @interface RCDestructSightCollectionCell ()
 
-@property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
 
 @property (nonatomic, strong) UIButton *playBtn;
 

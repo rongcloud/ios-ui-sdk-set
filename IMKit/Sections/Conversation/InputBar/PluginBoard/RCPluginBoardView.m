@@ -31,7 +31,7 @@
     if (self) {
         _currentIndex = 0;
         CGRect contentViewFrame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-        self.contentView = [[UICollectionView alloc] initWithFrame:contentViewFrame collectionViewLayout:self.layout];
+        self.contentView = [[RCBaseCollectionView alloc] initWithFrame:contentViewFrame collectionViewLayout:self.layout];
         self.contentView.dataSource = self;
         self.contentView.delegate = self;
         self.contentView.pagingEnabled = YES;

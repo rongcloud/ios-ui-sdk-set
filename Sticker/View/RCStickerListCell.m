@@ -16,11 +16,11 @@
 
 @property (nonatomic, strong) RCStickerPackage *package;
 
-@property (nonatomic, strong) UIImageView *headImage;
+@property (nonatomic, strong) RCBaseImageView *headImage;
 
 @property (nonatomic, strong) UILabel *nameLabel;
 
-@property (nonatomic, strong) UIButton *deleteBtn;
+@property (nonatomic, strong) RCBaseButton *deleteBtn;
 
 @end
 
@@ -66,9 +66,9 @@
     }
 }
 
-- (UIImageView *)headImage {
+- (RCBaseImageView *)headImage {
     if (_headImage == nil) {
-        _headImage = [[UIImageView alloc] init];
+        _headImage = [[RCBaseImageView alloc] init];
         _headImage.contentMode = UIViewContentModeScaleAspectFill;
     }
     return _headImage;
@@ -84,9 +84,9 @@
     return _nameLabel;
 }
 
-- (UIButton *)deleteBtn {
+- (RCBaseButton *)deleteBtn {
     if (_deleteBtn == nil) {
-        _deleteBtn = [[UIButton alloc] init];
+        _deleteBtn = [[RCBaseButton alloc] init];
         _deleteBtn.layer.borderWidth = 0.5f;
         _deleteBtn.layer.borderColor =
             [RCKitUtility generateDynamicColor:HEXCOLOR(0xCECECE)

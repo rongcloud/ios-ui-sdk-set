@@ -8,7 +8,7 @@
 
 #import "RCLocalNotification.h"
 #import <UIKit/UIKit.h>
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCIM.h"
@@ -76,7 +76,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
 
     _localNotification.alertAction = RCLocalizedString(@"LocalNotificationShow");
     formatMessage = [formatMessage stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
-    if ([RCIMClient sharedRCIMClient].pushProfile.isShowPushContent) {
+    if ([RCCoreClient sharedCoreClient].pushProfile.isShowPushContent) {
         _localNotification.alertBody = formatMessage;
     } else {
         _localNotification.alertBody = RCLocalizedString(@"receive_new_message");
@@ -100,7 +100,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     RCMessagePushConfig *pushConfig = message.messagePushConfig;
     NSString *title = @"";
     NSString *soundName = @"RongCloud.bundle/sms-received.caf";
-    if ([RCIMClient sharedRCIMClient].pushProfile.isShowPushContent || (pushConfig && pushConfig.forceShowDetailContent)) {
+    if ([RCCoreClient sharedCoreClient].pushProfile.isShowPushContent || (pushConfig && pushConfig.forceShowDetailContent)) {
         if (pushConfig && [self pushTitleEffectived:pushConfig.pushTitle]) {
             title = pushConfig.pushTitle;
         } else {
@@ -266,7 +266,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         return nil;
     }
     
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *operator= recallMessage.operatorId;
     if (recallMessage.isAdmin) {
         return

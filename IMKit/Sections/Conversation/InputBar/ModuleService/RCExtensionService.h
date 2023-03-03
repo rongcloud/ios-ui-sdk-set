@@ -10,7 +10,7 @@
 #import "RCEmoticonTabSource.h"
 #import "RCExtensionPluginItemInfo.h"
 #import <Foundation/Foundation.h>
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import <UIKit/UIKit.h>
 
 @interface RCExtensionService : NSObject

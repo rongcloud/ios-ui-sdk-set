@@ -7,7 +7,6 @@
 //
 
 #import "RCSightCapturer.h"
-#import <AssetsLibrary/AssetsLibrary.h>
 #import <UIKit/UIKit.h>
 
 @interface RCSightCapturer () <AVCaptureVideoDataOutputSampleBufferDelegate,

@@ -10,11 +10,11 @@
 #import "RCKitCommonDefine.h"
 #import "RCVoiceRecorder.h"
 #import "RCKitConfig.h"
-
+#import "RCBaseImageView.h"
 @interface RCVoiceCaptureControl () <RCVoiceRecorderDelegate>
 
 @property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) UIImageView *recordStatusView;
+@property (nonatomic, strong) RCBaseImageView *recordStatusView;
 @property (nonatomic, strong) UILabel *escapeTimeLabel;
 @property (nonatomic, strong) UILabel *textLabel;
 @property (nonatomic, strong) RCVoiceRecorder *myRecorder;
@@ -116,9 +116,9 @@
 
 
     if (self.conversationType == ConversationType_CUSTOMERSERVICE ||
-        [RCIMClient sharedRCIMClient].voiceMsgType == RCVoiceMessageTypeOrdinary) {
+        [RCCoreClient sharedCoreClient].voiceMsgType == RCVoiceMessageTypeOrdinary) {
         _myRecorder = [RCVoiceRecorder defaultVoiceRecorder];
-    } else if ([RCIMClient sharedRCIMClient].voiceMsgType == RCVoiceMessageTypeHighQuality) {
+    } else if ([RCCoreClient sharedCoreClient].voiceMsgType == RCVoiceMessageTypeHighQuality) {
         _myRecorder = [RCVoiceRecorder hqVoiceRecorder];
     }
 #pragma clang diagnostic push
@@ -240,9 +240,9 @@
     return _escapeTimeLabel;
 }
 
-- (UIImageView *)recordStatusView{
+- (RCBaseImageView *)recordStatusView{
     if (!_recordStatusView) {
-        _recordStatusView = [[UIImageView alloc] initWithFrame:CGRectMake(29.0f, 20.0f, 102, 102)];
+        _recordStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(29.0f, 20.0f, 102, 102)];
         [_recordStatusView setImage:RCResourceImage(@"voice_volume0")];
     }
     return _recordStatusView;

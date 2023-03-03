@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 
 #define RCOldMessageNotificationMessageTypeIdentifier @"RC:OldMsgNtf"
 

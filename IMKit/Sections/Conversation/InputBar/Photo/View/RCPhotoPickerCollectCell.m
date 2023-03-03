@@ -10,11 +10,11 @@
 #import "RCAssetModel.h"
 #import "RCKitCommonDefine.h"
 #import "RCAssetHelper.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCPhotoPickImageView.h"
 #import "RCAlertView.h"
-
+#import "RCBaseButton.h"
 #define WIDTH (([UIScreen mainScreen].bounds.size.width - 20) / 4)
 #define SIZE CGSizeMake(WIDTH, WIDTH)
 
@@ -27,7 +27,7 @@
 /**
  *  cell被选中小图
  */
-@property (nonatomic, strong) UIButton *selectbutton;
+@property (nonatomic, strong) RCBaseButton *selectbutton;
 
 @property (nonatomic, weak) id<RCPhotoPickerCollectCellDelegate> delegate;
 
@@ -128,7 +128,7 @@
                                      if ([[weakSelf.assetModel.asset valueForKey:@"uniformTypeIdentifier"]
                                              isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
                                          if (imageData.length >
-                                             [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
+                                             [[RCCoreClient sharedCoreClient] getGIFLimitSize] * 1024) {
                                              UIViewController *rootVC = [UIApplication sharedApplication]
                                                                             .delegate.window.rootViewController;
                                              UIAlertController *alertController = [UIAlertController
@@ -243,9 +243,9 @@
     return _photoImageView;;
 }
 
-- (UIButton *)selectbutton{
+- (RCBaseButton *)selectbutton{
     if (!_selectbutton) {
-        _selectbutton = [[UIButton alloc] initWithFrame:CGRectZero];
+        _selectbutton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         [_selectbutton addTarget:self
                           action:@selector(onSelectButtonClick:)
                 forControlEvents:UIControlEventTouchUpInside];

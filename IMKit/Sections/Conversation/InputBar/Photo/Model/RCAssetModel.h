@@ -6,7 +6,6 @@
 //  Copyright © 2016年 张改红. All rights reserved.
 //
 
-#import <AssetsLibrary/AssetsLibrary.h>
 #import <Foundation/Foundation.h>
 #import <Photos/Photos.h>
 #import <UIKit/UIKit.h>
@@ -23,11 +22,6 @@
  *   原图大小
  */
 @property (nonatomic, assign) CGFloat imageSize;
-
-/**
- *   Orientation
- */
-@property (nonatomic, assign) ALAssetOrientation imageOrientation;
 
 @property (nonatomic, assign) BOOL isSelect;
 

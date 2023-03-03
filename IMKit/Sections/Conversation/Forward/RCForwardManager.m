@@ -11,7 +11,7 @@
 #import "RCCombineMessageUtility.h"
 #import "RCMessageModel.h"
 #import "RCKitUtility.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 #import "RCKitCommonDefine.h"
 #import "RCLocationMessage+imkit.h"
 #import "RCForwardKeyItem.h"

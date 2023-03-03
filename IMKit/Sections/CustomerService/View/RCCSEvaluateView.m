@@ -11,15 +11,16 @@
 #import "RCCSStarView.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
+#import "RCBaseButton.h"
 @interface RCCSEvaluateView () <UITextViewDelegate>
 @property (nonatomic, strong) UIView *backgroundView;
 @property (nonatomic, strong) UIView *starView;
-@property (nonatomic, strong) UIButton *cancelButton;
+@property (nonatomic, strong) RCBaseButton *cancelButton;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *satisfyLabel;
 @property (nonatomic, strong) RCCSSolveView *solveView;
 @property (nonatomic, strong) UITextView *suggestText;
-@property (nonatomic, strong) UIButton *submitButton;
+@property (nonatomic, strong) RCBaseButton *submitButton;
 
 @property (nonatomic, strong) UITextView *placeHolderText;
 
@@ -180,7 +181,7 @@
 }
 
 - (void)setupSubviews:(BOOL)isShowEva {
-    self.cancelButton = [[UIButton alloc] init];
+    self.cancelButton = [[RCBaseButton alloc] init];
     [self.cancelButton setBackgroundImage:RCResourceImage(@"close") forState:UIControlStateNormal];
     [self.cancelButton addTarget:self action:@selector(cancellEva) forControlEvents:UIControlEventTouchUpInside];
 
@@ -219,7 +220,7 @@
     self.placeHolderText.layer.cornerRadius = 5;
     self.placeHolderText.text = @"欢迎给我们的服务提建议~";
 
-    self.submitButton = [[UIButton alloc] init];
+    self.submitButton = [[RCBaseButton alloc] init];
     self.submitButton.layer.cornerRadius = 5;
     [self.submitButton setBackgroundImage:RCResourceImage(@"blue") forState:UIControlStateNormal];
     [self.submitButton setBackgroundImage:RCResourceImage(@"blue－hover") forState:UIControlStateHighlighted];

@@ -465,17 +465,39 @@
 
 + (int)getConversationUnreadCount:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCIMClient sharedRCIMClient] getUnreadCount:@[ @(model.conversationType) ]];
+        return [[RCCoreClient sharedCoreClient] getUnreadCount:@[ @(model.conversationType) ]];
     } else {
-        return [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType targetId:model.targetId];
+        return [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
     }
+}
+
+
++ (void)getConversationUnreadMentionedCount:(RCConversationModel *)model result:(void(^)(int num))result {
+    if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
+        [[RCCoreClient sharedCoreClient] getUnreadMentionedCount:@[@(model.conversationType)] completion:^(int count) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (result){
+                    result(count);
+                }
+            });
+        }];
+        return;
+    }
+    
+    [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId completion:^(RCConversation * _Nullable conversation) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (result){
+                result(conversation.mentionedCount);
+            }
+        });
+    }];
 }
 
 + (BOOL)getConversationUnreadMentionedStatus:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCIMClient sharedRCIMClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
+        return [[RCCoreClient sharedCoreClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
     } else {
-        return [[RCIMClient sharedRCIMClient] getConversation:model.conversationType targetId:model.targetId]
+        return [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId]
             .hasUnreadMentioned;
     }
 }
@@ -485,7 +507,7 @@
         return;
     }
     if (conversation.conversationType == ConversationType_PRIVATE && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversation.conversationType)]) {
-        [[RCIMClient sharedRCIMClient] sendReadReceiptMessage:conversation.conversationType
+        [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:conversation.conversationType
                                                      targetId:conversation.targetId
                                                          time:conversation.sentTime
                                                       success:nil
@@ -497,7 +519,7 @@
                conversation.conversationType == ConversationType_APPSERVICE ||
                conversation.conversationType == ConversationType_PUBLICSERVICE ||
                conversation.conversationType == ConversationType_Encrypted) {
-        [[RCIMClient sharedRCIMClient] syncConversationReadStatus:conversation.conversationType
+        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
                                                          targetId:conversation.targetId
                                                              time:conversation.sentTime
                                                           success:nil
@@ -1068,7 +1090,7 @@
     // NSString *format = nil;
     NSString *message = nil;
     NSString *target = nil;
-    NSString *userId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *userId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     if (operatedIds) {
         if (operatedIds.count == 1) {
             if ([operatedIds[0] isEqualToString:userId]) {
@@ -1154,7 +1176,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return
@@ -1190,7 +1212,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return

@@ -105,7 +105,7 @@
     didTouchSettingButton:(UIButton *)settingButton
                inInputBar:(RCChatSessionInputBarControl *)inputBarControl {
     RCStickerListViewController *stickerList = [[RCStickerListViewController alloc] init];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:stickerList];
+    RCBaseNavigationController *nav = [[RCBaseNavigationController alloc] initWithRootViewController:stickerList];
     UIViewController *rootVC = [RCKitUtility getKeyWindow].rootViewController;
     nav.modalPresentationStyle = UIModalPresentationFullScreen;
     [rootVC presentViewController:nav animated:YES completion:nil];

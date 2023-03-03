@@ -69,7 +69,7 @@ static long s_messageId = 0;
         self.voiceUnreadTagView = nil;
     }
     //    if (self.model.receivedStatus != ReceivedStatus_LISTENED) {
-    [[RCIMClient sharedRCIMClient] setMessageReceivedStatus:self.model.messageId
+    [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
                                              receivedStatus:ReceivedStatus_LISTENED];
     //    }
     self.model.receivedStatus = ReceivedStatus_LISTENED;
@@ -170,7 +170,7 @@ static long s_messageId = 0;
     if (MessageDirection_RECEIVE == self.model.messageDirection) {
         CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
         if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
-            self.voiceUnreadTagView = [[UIImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (Voice_Height-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
+            self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (Voice_Height-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             [self.voiceUnreadTagView setHidden:NO];
             [self.baseContentView addSubview:self.voiceUnreadTagView];
             self.voiceUnreadTagView.image = RCResourceImage(@"voice_unread");
@@ -204,16 +204,16 @@ static long s_messageId = 0;
 - (void)startDestruct {
     RCVoiceMessage *voiceMessage = (RCVoiceMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && voiceMessage.destructDuration > 0) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
     }
 }
 
 - (void)stopDestruct {
     RCVoiceMessage *voiceMessage = (RCVoiceMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && voiceMessage.destructDuration > 0) {
-        [[RCIMClient sharedRCIMClient]
-            messageStopDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageStopDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
         if ([self respondsToSelector:@selector(messageDestructing)]) {
             [self performSelector:@selector(messageDestructing) withObject:nil afterDelay:NO];
         }
@@ -383,9 +383,9 @@ static long s_messageId = 0;
     return _voicePlayer;
 }
 
-- (UIImageView *)playVoiceView{
+- (RCBaseImageView *)playVoiceView{
     if (!_playVoiceView) {
-        _playVoiceView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _playVoiceView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _playVoiceView.image = RCResourceImage(@"play_voice");
 
     }

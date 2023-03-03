@@ -25,7 +25,7 @@
 //
 
 #import "RCloudImageView.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCloudMediaManager.h"
 #import "RCloudImageLoader.h"
 #import "RCloudCache.h"

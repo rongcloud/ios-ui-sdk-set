@@ -19,7 +19,7 @@
 
 @property (nonatomic, strong) NSArray *dataSource;
 
-@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) RCBaseTableView *tableView;
 
 @property (nonatomic, strong) UIView *headerView;
 
@@ -152,9 +152,9 @@
 
 #pragma mark - Lazy load
 
-- (UITableView *)tableView {
+- (RCBaseTableView *)tableView {
     if (_tableView == nil) {
-        _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
+        _tableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
         _tableView.delegate = self;
         _tableView.dataSource = self;
         _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
@@ -179,7 +179,7 @@
 - (UIView *)emptyView {
     if (_emptyView == nil) {
         _emptyView = [[UIView alloc] initWithFrame:self.view.bounds];
-        UIImageView *emptyImage = [[UIImageView alloc] init];
+        RCBaseImageView *emptyImage = [[RCBaseImageView alloc] init];
         CGFloat emptyViewWidth = 128.f;
         emptyImage.contentMode = UIViewContentModeScaleAspectFit;
         emptyImage.frame = CGRectMake((ScreenWidth - emptyViewWidth) / 2, 97, emptyViewWidth, emptyViewWidth);
