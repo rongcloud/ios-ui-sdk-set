@@ -1226,7 +1226,7 @@ static NSString *const RCIMKitVersion = @"5.4.0_opensource";
                          cancel:(void (^)(long messageId))cancelBlock {
     RCConversationType conversationType = message.conversationType;
     NSString *targetId = [message.targetId copy];
-    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMediaMessage:conversationType targetId:targetId content:message.content pushContent:pushContent pushData:pushData uploadPrepare:uploadPrepareBlock progress:^(int progress, long messageId) {
+    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMediaMessage:message pushContent:pushContent pushData:pushData uploadPrepare:uploadPrepareBlock progress:^(int progress, long messageId) {
         NSDictionary *statusDic = @{
             @"targetId" : targetId,
             @"conversationType" : @(conversationType),
