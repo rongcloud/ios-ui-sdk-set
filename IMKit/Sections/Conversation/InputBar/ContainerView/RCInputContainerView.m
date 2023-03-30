@@ -109,17 +109,13 @@
 }
 
 - (void)textViewDidChange:(UITextView *)textView {
-    [self changeInputTextViewRange];
-    [[RCExtensionService sharedService] inputTextViewDidChange:textView inInputBar:(RCChatSessionInputBarControl *)self.superview];
-    if ([self.delegate respondsToSelector:@selector(inputTextViewDidChange:)]) {
-        [self.delegate inputTextViewDidChange:textView];
-    }
+    [self inputTextViewDidChange:textView];
 }
 
 #pragma mark - RCTextViewDelegate
 - (void)rctextView:(RCTextView *)textView textDidChange:(NSString *)text {
     [self.inputTextView layoutIfNeeded];
-    [self changeInputTextViewRange];
+    [self inputTextViewDidChange:textView];
 }
 
 #pragma mark - Target Action
@@ -188,6 +184,14 @@
 }
 
 #pragma mark - Private Methods
+- (void)inputTextViewDidChange:(UITextView *)textView{
+    [self changeInputTextViewRange];
+    [[RCExtensionService sharedService] inputTextViewDidChange:textView inInputBar:(RCChatSessionInputBarControl *)self.superview];
+    if ([self.delegate respondsToSelector:@selector(inputTextViewDidChange:)]) {
+        [self.delegate inputTextViewDidChange:textView];
+    }
+}
+
 - (void)beginDestructMsgMode {
     self.destructMessageMode = YES;
     [self.switchButton setImage:RCResourceImage(self.recordButton.hidden ? @"voice_burn" : @"keyboard_burn")

@@ -175,6 +175,9 @@
         //组装名字
         if (forwardConversationType == ConversationType_GROUP) {
             userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:messageModel.senderUserId inGroupId:messageModel.targetId];
+            if (!userInfo) {
+                userInfo = [[RCUserInfo alloc] initWithUserId:messageModel.senderUserId name:nil portrait:nil];
+            }
             senderUserName = userInfo.name;
             RCGroup *groupInfo =
                 [[RCUserInfoCacheManager sharedManager] getGroupInfoFromCacheOnly:messageModel.targetId];
@@ -183,6 +186,9 @@
             }
         } else {
             userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:messageModel.senderUserId];
+            if (!userInfo) {
+                userInfo = [[RCUserInfo alloc] initWithUserId:messageModel.senderUserId name:nil portrait:nil];
+            }
             senderUserName = userInfo.name;
             if (![nameList containsObject:senderUserName]) {
                 [nameList addObject:senderUserName];

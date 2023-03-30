@@ -8,7 +8,7 @@
 
 #import "RCUserInfoCacheDBHelper.h"
 
-int const RCKitStorageVersion = 4;
+int const RCKitStorageVersion = 5;
 
 @interface RCUserInfoCacheDBHelper ()
 
@@ -37,7 +37,7 @@ int const RCKitStorageVersion = 4;
                                       @"KEY(conversation_type, target_id, user_id))"];
         [self.workingDB
             executeUpdate:@"CREATE TABLE IF NOT EXISTS CONVERSATION_INFO(conversation_type INTEGER, target_id TEXT, "
-                          @"name TEXT, portrait_uri TEXT, PRIMARY KEY(conversation_type, target_id))"];
+                          @"name TEXT, portrait_uri TEXT, extra TEXT, PRIMARY KEY(conversation_type, target_id))"];
     } else {
         self.workingDB = nil;
     }
@@ -68,6 +68,9 @@ int const RCKitStorageVersion = 4;
                 [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN extra TEXT"];
                 [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN alias TEXT"];
             }
+            if (oldVersion < 5){
+                [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_INFO ADD COLUMN extra TEXT"];
+            }
         }
     }
 }
@@ -97,6 +100,7 @@ int const RCKitStorageVersion = 4;
             dbConversationInfo.targetId = [resultSet stringForColumn:@"target_id"];
             dbConversationInfo.name = [resultSet stringForColumn:@"name"];
             dbConversationInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
+            dbConversationInfo.extra = [resultSet stringForColumn:@"extra"];
             [resultSet close];
             return dbConversationInfo;
         } else {
@@ -118,6 +122,7 @@ int const RCKitStorageVersion = 4;
             dbConversationInfo.targetId = [resultSet stringForColumn:@"target_id"];
             dbConversationInfo.name = [resultSet stringForColumn:@"name"];
             dbConversationInfo.portraitUri = [resultSet stringForColumn:@"portrait_uri"];
+            dbConversationInfo.extra = [resultSet stringForColumn:@"extra"];
             [dbConversationInfoList addObject:dbConversationInfo];
         }
         [resultSet close];
@@ -132,9 +137,9 @@ int const RCKitStorageVersion = 4;
                              targetId:(NSString *)targetId {
     if ([self.workingDB open]) {
         [self.workingDB executeUpdate:@"INSERT OR REPLACE INTO CONVERSATION_INFO (conversation_type, target_id, name, "
-                                      @"portrait_uri) VALUES(?, ?, ?, ?)",
+                                      @"portrait_uri, extra) VALUES(?, ?, ?, ?, ?)",
                                       @(conversationType), targetId, conversationInfo.name,
-                                      conversationInfo.portraitUri];
+                                      conversationInfo.portraitUri, conversationInfo.extra];
     }
 }
 

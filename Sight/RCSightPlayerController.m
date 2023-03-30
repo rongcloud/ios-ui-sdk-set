@@ -162,11 +162,11 @@
     [self.transport setThumbnailImage:image];
 }
 
-- (void)reset {
-    [self reset:YES];
+- (void)resetSightPlayer {
+    [self resetSightPlayer:YES];
 }
 
-- (void)reset:(BOOL)inactivateAudioSession {
+- (void)resetSightPlayer:(BOOL)inactivateAudioSession {
     self.canceling = YES;
     [self.transport.centerPlayBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
     [self.errorTipsLabel removeFromSuperview];

@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.4.0_opensource";
+static NSString *const RCIMKitVersion = @"5.4.1_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -98,13 +98,17 @@ static NSString *const RCIMKitVersion = @"5.4.0_opensource";
 }
 
 - (void)initWithAppKey:(NSString *)appKey {
+    [self initWithAppKey:appKey option:nil];
+}
+
+- (void)initWithAppKey:(NSString *)appKey option:(RCInitOption *)option {
     if ([self.appKey isEqual:appKey]) {
         NSLog(@"Warning:请不要重复调用Init！！！");
         return;
     }
 
     self.appKey = appKey;
-    [[RCCoreClient sharedCoreClient] initWithAppKey:appKey];
+    [[RCCoreClient sharedCoreClient] initWithAppKey:appKey option:option];
 
     [self registerMessageType:[RCOldMessageNotificationMessage class]];
     // listen receive message

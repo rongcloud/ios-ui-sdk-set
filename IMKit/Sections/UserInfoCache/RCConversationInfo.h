@@ -15,11 +15,13 @@
 @property (nonatomic, assign) RCConversationType conversationType;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *portraitUri;
+@property (nonatomic, copy) NSString *extra;
 
 - (instancetype)initWithConversationId:(NSString *)targetId
                       conversationType:(RCConversationType)conversationType
                                   name:(NSString *)name
-                           portraitUri:(NSString *)portraitUri;
+                           portraitUri:(NSString *)portraitUri
+                                 extra:(NSString *)extra;
 
 - (instancetype)initWithGroupInfo:(RCGroup *)groupInfo;
 

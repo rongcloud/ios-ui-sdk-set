@@ -257,6 +257,9 @@ static int rc_currentSelectIndexPage;
         self.emojiBackgroundView = nil;
     }
     self.emojiBackgroundView = [[RCBaseScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
+    if ([RCKitUtility isRTL]) {
+        [self.emojiBackgroundView setTransform:CGAffineTransformMakeScale(-1, 1)];
+    }
     self.emojiBackgroundView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
     self.emojiBackgroundView.pagingEnabled = YES;
     self.emojiBackgroundView.contentSize = CGSizeMake(self.emojiTotalPage * self.frame.size.width, 186);
@@ -426,6 +429,9 @@ static int rc_currentSelectIndexPage;
         emojiBtn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:26];
         [emojiBtn setTitle:self.faceEmojiArray[i] forState:UIControlStateNormal];
         [emojiBtn addTarget:self action:@selector(emojiBtnHandle:) forControlEvents:UIControlEventTouchUpInside];
+        if ([RCKitUtility isRTL]) {
+            [emojiBtn setTransform:CGAffineTransformMakeScale(-1, 1)];
+        }
         [self.emojiBackgroundView addSubview:emojiBtn];
         if (((i + 1) >= self.emojiMaxCountPerPage && (i + 1) % self.emojiMaxCountPerPage == 0) ||
             i == self.emojiTotal - 1) {

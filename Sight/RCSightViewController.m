@@ -656,7 +656,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
             self.stillImageView.hidden = YES;
             self.playBtn.selected = NO;
 #if !(TARGET_OS_SIMULATOR)
-            [self.playerController reset];
+            [self.playerController resetSightPlayer];
             [self.capturer resetAudioSession];
             [self.capturer resetSessionInput];
 #endif
@@ -675,7 +675,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         }
     } else {
         [self.capturer stopRunning];
-        [self.playerController reset];
+        [self.playerController resetSightPlayer];
         [self.playerController.view removeFromSuperview];
         if ([self.delegate respondsToSelector:@selector(sightViewController:didWriteSightAtURL:thumbnail:duration:)]) {
 

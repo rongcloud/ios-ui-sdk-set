@@ -23,6 +23,12 @@
         self.hidesForSinglePage = YES;
         self.enabled = NO;
         self.currentPage = 0;
+        if([RCKitUtility isRTL]) {
+            self.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        } else {
+            self.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
+        }
+        
     }
     return self;
 }

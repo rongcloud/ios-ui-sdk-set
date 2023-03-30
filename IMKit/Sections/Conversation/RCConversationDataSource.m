@@ -893,7 +893,9 @@ static BOOL msgRoamingServiceAvailable = YES;
         });
     } else {
         if (leftDic && [leftDic[@"left"] isEqual:@(0)]) {
-            [self.chatVC notifyUpdateUnreadMessageCount];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.chatVC notifyUpdateUnreadMessageCount];
+            });
         }
     }
 }

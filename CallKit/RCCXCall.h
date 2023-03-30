@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 /// 默认不开启 系统 Callkit 功能
-#define PUBLIC 1
+#define PUBLIC 0
 
 /*!
  融云适配苹果 CallKit 核心类

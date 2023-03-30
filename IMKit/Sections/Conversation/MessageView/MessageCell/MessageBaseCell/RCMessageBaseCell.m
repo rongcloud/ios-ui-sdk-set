@@ -150,7 +150,8 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
         if (MessageDirection_RECEIVE == self.model.messageDirection) {
             selectButtonFrame.origin.x = frame.origin.x + frame.size.width - SelectButtonSpaceLeft;
         } else {
-            selectButtonFrame.origin.x = frame.origin.x + frame.size.width - SelectButtonSpaceLeft - SelectButtonSpaceLeft - 20;
+            
+            selectButtonFrame.origin.x = CGRectGetMaxX(frame) - SelectButtonSpaceLeft - 20;
         }
     }
     self.selectButton.frame = selectButtonFrame;

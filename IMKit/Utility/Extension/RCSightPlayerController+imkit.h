@@ -15,7 +15,7 @@
 @property (nonatomic, assign, getter=isAutoPlay) BOOL autoPlay;
 - (void)setFirstFrameThumbnail:(nullable UIImage *)image;
 - (void)play;
-- (void)reset:(BOOL)inactivateAudioSession;
+- (void)resetSightPlayer:(BOOL)inactivateAudioSession;
 @end
 
 #endif /* RCSightPlayerController_imkit_h */

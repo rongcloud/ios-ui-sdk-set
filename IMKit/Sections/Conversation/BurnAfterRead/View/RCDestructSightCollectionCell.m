@@ -75,13 +75,13 @@
 
 - (void)stopPlay {
     if (self.playerController) {
-        [self.playerController reset:YES];
+        [self.playerController resetSightPlayer:YES];
     }
 }
 
 - (void)resetPlay {
     if (self.playerController) {
-        [self.playerController reset:NO];
+        [self.playerController resetSightPlayer:NO];
     }
 }
 

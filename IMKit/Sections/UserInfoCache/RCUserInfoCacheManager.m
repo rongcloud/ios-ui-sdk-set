@@ -474,15 +474,15 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                     getGroupInfoWithGroupId:groupId
                                  completion:^(RCGroup *groupInfo) {
                                      RCLogI(@"getUserInfo:;;;getGroupInfoDataSource:groupId=%@,groupName=%@,"
-                                            @"groupPortraitUri=%@",
-                                            groupInfo.groupId, groupInfo.groupName, groupInfo.portraitUri);
+                                            @"groupPortraitUri=%@,extra=%@",
+                                            groupInfo.groupId, groupInfo.groupName, groupInfo.portraitUri, groupInfo.extra);
                                      [weakSelf updateGroupInfo:groupInfo forGroupId:groupId];
                                  }];
             });
         }
         RCGroup *groupInfo = [cacheConversationInfo translateToGroupInfo];
-        RCLogI(@"getGroupInfo:;;;cacheGroupInfo:groupId=%@,groupName=%@,groupPortraitUri=%@", groupInfo.groupId,
-               groupInfo.groupName, groupInfo.portraitUri);
+        RCLogI(@"getGroupInfo:;;;cacheGroupInfo:groupId=%@,groupName=%@,groupPortraitUri=%@,extra=%@", groupInfo.groupId,
+               groupInfo.groupName, groupInfo.portraitUri,groupInfo.extra);
         return groupInfo;
     } else {
         RCLogI(@"getGroupInfo:;;;groupId = nil");

@@ -416,8 +416,12 @@ static long hq_messageId = 0;
 }
 
 - (void)startPlayingVoiceData {
+    RCMessageContent *voiceContent = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId].content;
+    if (![voiceContent isKindOfClass:[RCHQVoiceMessage class]]) {
+        return;
+    }
     RCHQVoiceMessage *_voiceMessage =
-        (RCHQVoiceMessage *)[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId].content;
+        (RCHQVoiceMessage *)voiceContent;
     NSString *localPath = [self getCorrectedPath:_voiceMessage.localPath];
     if (localPath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
 

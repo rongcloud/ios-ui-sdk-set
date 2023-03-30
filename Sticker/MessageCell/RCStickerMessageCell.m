@@ -119,9 +119,14 @@
         if (model.messageDirection == MessageDirection_RECEIVE) {
 
         } else {
-            messageContentViewRect.origin.x =
+            if ([RCKitUtility isRTL]) {
+                messageContentViewRect.origin.x =
+                self.baseContentView.bounds.origin.x + HeadAndContentSpacing + RCKitConfigCenter.ui.globalMessagePortraitSize.width + 10;
+            } else {
+                messageContentViewRect.origin.x =
                 self.baseContentView.bounds.size.width -
                 (imageSize.width + HeadAndContentSpacing + RCKitConfigCenter.ui.globalMessagePortraitSize.width + 10);
+            }
         }
         messageContentViewRect.size = CGSizeMake(imageSize.width, imageSize.height);
         self.messageContentView.frame = messageContentViewRect;

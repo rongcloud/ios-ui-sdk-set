@@ -97,20 +97,22 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pause;
 
 /**
- 销毁资源，重置状态，终止播放。等同于下面个接口的  reset:YES
+ 销毁资源，重置状态，终止播放。等同于下面个接口的  resetSightPlayer:YES
 
   @discussion 该方法不会终止下载操作，下载完成后会缓存视频文件，但是不会播放。
+  @discussion 因为苹果上架错误警告，将原方法 reset 更名为 resetSightPlayer
  */
-- (void)reset;
+- (void)resetSightPlayer;
 
 /**
  销毁资源，重置状态，终止播放。
 
  @param inactivateAudioSession 设置 AVAudioSession 为失效
 
-  @discussion 该方法不会终止下载操作，下载完成后会缓存视频文件，但是不会播放。
+ @discussion 该方法不会终止下载操作，下载完成后会缓存视频文件，但是不会播放。
+ @discussion 因为苹果上架错误警告，将原方法 reset: 更名为 resetSightPlayer:
  */
-- (void)reset:(BOOL)inactivateAudioSession;
+- (void)resetSightPlayer:(BOOL)inactivateAudioSession;
 
 - (void)setLoadingCenter:(CGPoint)center;
 

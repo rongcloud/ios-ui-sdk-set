@@ -378,26 +378,50 @@
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
-        RCSightCollectionViewCell *sightCell = (RCSightCollectionViewCell *)[self.collectionView
-            cellForItemAtIndexPath:[NSIndexPath indexPathForRow:self.currentIndex inSection:0]];
-        [sightCell stopPlay];
         RCSightModel *currentModel = self.messageModelArray[self.currentIndex];
-        //产品需求：当前正在查看的小视频被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == currentModel.message.messageId) {
-            UIAlertController *alertController = [UIAlertController
-                alertControllerWithTitle:nil
-                                 message:RCLocalizedString(@"MessageRecallAlert")
-                          preferredStyle:UIAlertControllerStyleAlert];
-            [alertController
-                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *_Nonnull action) {
-                                                     [self.navigationController dismissViewControllerAnimated:YES
-                                                                                                   completion:nil];
-                                                 }]];
-            [self.navigationController presentViewController:alertController animated:YES completion:nil];
+            [self didSightMessageRemoveWithCurrentIndex];
+            return;
+        }
+        for (NSInteger index = 0; index < self.messageModelArray.count; index++) {
+            RCSightModel *model = self.messageModelArray[index];
+            if (recalledMsgId == model.message.messageId) {
+                [self didSightMessageRemove:index];
+                break;
+            }
         }
     });
+}
+
+//产品需求：当前正在查看的小视频被撤回，dismiss 预览页面
+- (void)didSightMessageRemoveWithCurrentIndex {
+    // 暂停播放
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:self.currentIndex inSection:0];
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    [(RCSightCollectionViewCell *)cell stopPlay];
+    
+    // 提示并消息
+    UIAlertController *controller = [UIAlertController alertControllerWithTitle:nil
+                                                                        message:RCLocalizedString(@"MessageRecallAlert")
+                                                                 preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                                     style:UIAlertActionStyleDefault
+                                                   handler:^(UIAlertAction *_Nonnull action) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }];
+    [controller addAction:action];
+    [self presentViewController:controller animated:YES completion:nil];
+}
+
+- (void)didSightMessageRemove:(NSInteger)index {
+    if (index >= self.messageModelArray.count) return;
+    [self.messageModelArray removeObjectAtIndex:index];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView deleteItemsAtIndexPaths:@[indexPath]];
+    } completion:^(BOOL finished) {
+        // update completion
+    }];
 }
 
 #pragma mark - helper
@@ -421,7 +445,7 @@
 - (void)resetPlay{
     for (RCSightModel *model in self.messageModelArray) {
         if (model.message.messageId == self.previousMessageId) {
-            [model.playerController reset:NO];
+            [model.playerController resetSightPlayer:NO];
             return;
         }
     }
