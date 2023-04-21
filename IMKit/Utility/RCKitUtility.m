@@ -924,27 +924,30 @@
 }
 
 + (NSString *)__formatGroupNotificationMessageContent:(RCGroupNotificationMessage *)groupNotification {
-    NSString *message = nil;
-
     NSData *jsonData = [groupNotification.data dataUsingEncoding:NSUTF8StringEncoding];
     if (jsonData == nil) {
         return nil;
     }
     NSDictionary *dictionary =
-        [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
-    NSString *operatorUserId = groupNotification.operatorUserId;
+    [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
     NSString *nickName =
-        [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
-    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
-                                      ? dictionary[@"targetUserDisplayNames"]
-                                      : nil;
-    NSArray *targetUserIds =
-        [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
+    [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
     BOOL isMeOperate = NO;
     if ([groupNotification.operatorUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
         isMeOperate = YES;
         nickName = RCLocalizedString(@"You");
     }
+    return [self __formatGroupNotificationWithOperation:groupNotification dictionaryData:dictionary nickName:nickName isMeOperate:isMeOperate];
+}
+
++ (NSString *)__formatGroupNotificationWithOperation:(RCGroupNotificationMessage *)groupNotification dictionaryData:(NSDictionary *)dictionary nickName:(NSString *)nickName isMeOperate:(BOOL)isMeOperate{
+    NSString *message = nil;
+    NSString *operatorUserId = groupNotification.operatorUserId;
+    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
+    ? dictionary[@"targetUserDisplayNames"]
+    : nil;
+    NSArray *targetUserIds =
+    [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
     if ([groupNotification.operation isEqualToString:@"Create"]) {
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveCreated" : @"GroupCreated"),

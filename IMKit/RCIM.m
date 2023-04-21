@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.4.1_opensource";
+static NSString *const RCIMKitVersion = @"5.4.2_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -395,7 +395,7 @@ static NSString *const RCIMKitVersion = @"5.4.1_opensource";
                                                         object:message
                                                       userInfo:dic_left];
     
-    if ([self p_disbaleCustomMessageAlert:message left:nLeft]){
+    if ([self p_disableCustomMessageAlert:message left:nLeft]){
         return;
     }
     
@@ -442,7 +442,7 @@ static NSString *const RCIMKitVersion = @"5.4.1_opensource";
     return NO;
 }
 
-- (BOOL)p_disbaleCustomMessageAlert:(RCMessage *)message left:(int)nLeft{
+- (BOOL)p_disableCustomMessageAlert:(RCMessage *)message left:(int)nLeft{
     //发出去的消息，不需要本地铃声和通知
     if (message.messageDirection == MessageDirection_SEND) {
         return YES;
@@ -470,54 +470,9 @@ static NSString *const RCIMKitVersion = @"5.4.1_opensource";
 }
 
 - (void)playSoundByMessageIfNeed:(RCMessage *)message {
-    //在 IMKit 明确不支持超级群的情况下，超级群消息不做提醒
-    //聊天室消息不响铃
-    if (ConversationType_ULTRAGROUP == message.conversationType ||
-        ConversationType_CHATROOM == message.conversationType) {
+    if ([self p_disableSound:message]){
         return;
     }
-    
-    //APP在后台，不响铃
-    if (RCSDKRunningMode_Foreground != [RCCoreClient sharedCoreClient].sdkRunningMode) {
-        return;
-    }
-    //全局设置禁止响铃，不响铃
-    if (RCKitConfigCenter.message.disableMessageAlertSound) {
-        return;
-    }
-    //用户设置了免打扰，不响铃
-    if ([self checkNoficationQuietStatus]) {
-        return;
-    }
-    
-    //获取接受到会话
-    if ([[RongIMKitExtensionManager sharedManager] handleAlertForMessageReceived:message]) {
-        return;
-    }
-    
-    //业务设置onRCIMCustomAlertSound 返回YES，不响铃
-    BOOL appConsumed = NO;
-    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
-        if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
-            if ([delegate onRCIMCustomAlertSound:message]) {
-                appConsumed = YES;
-                break;
-            }
-        }
-    }
-    if (appConsumed) {
-        return;
-    }
-    
-    //讨论组通知消息 不响铃
-    if ([message.content isKindOfClass:[RCDiscussionNotificationMessage class]]) {
-        return;
-    }
-    //消息设置为静默 不响铃
-    if (message.messageConfig.disableNotification) {
-        return;
-    }
-    
     
     if (message.content.mentionedInfo.isMentionedMe) {
         
@@ -543,6 +498,60 @@ static NSString *const RCIMKitVersion = @"5.4.1_opensource";
             
         } error:nil];
     }
+}
+
+- (BOOL)p_disableSound:(RCMessage *)message {
+    //在 IMKit 明确不支持超级群的情况下，超级群消息不做提醒
+    //聊天室消息不响铃
+    if (ConversationType_ULTRAGROUP == message.conversationType ||
+        ConversationType_CHATROOM == message.conversationType) {
+        return YES;
+    }
+    
+    //APP在后台，不响铃
+    if (RCSDKRunningMode_Foreground != [RCCoreClient sharedCoreClient].sdkRunningMode) {
+        return YES;
+    }
+
+    //全局设置禁止响铃，不响铃
+    if (RCKitConfigCenter.message.disableMessageAlertSound) {
+        return YES;
+    }
+    
+    //消息设置为静默 不响铃
+    if (message.messageConfig.disableNotification) {
+        return YES;
+    }
+    
+    //用户设置了免打扰，不响铃
+    if ([self checkNoficationQuietStatus]) {
+        return YES;
+    }
+    
+    //获取接受到会话
+    if ([[RongIMKitExtensionManager sharedManager] handleAlertForMessageReceived:message]) {
+        return YES;
+    }
+    
+    //讨论组通知消息 不响铃
+    if ([message.content isKindOfClass:[RCDiscussionNotificationMessage class]]) {
+        return YES;
+    }
+    
+    //业务设置onRCIMCustomAlertSound 返回YES，不响铃
+    BOOL appConsumed = NO;
+    for (id<RCIMReceiveMessageDelegate> delegate in [[RCKitListenerManager sharedManager] allReceiveMessageDelegates]) {
+        if ([delegate respondsToSelector:@selector(onRCIMCustomAlertSound:)]) {
+            if ([delegate onRCIMCustomAlertSound:message]) {
+                appConsumed = YES;
+                break;
+            }
+        }
+    }
+    if (appConsumed) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)onReceived:(RCMessage *)message left:(int)nLeft object:(id)object offline:(BOOL)offline hasPackage:(BOOL)hasPackage {

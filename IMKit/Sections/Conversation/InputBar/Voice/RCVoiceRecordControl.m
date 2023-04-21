@@ -10,6 +10,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CoreTelephony/CTCallCenter.h>
 
 #import "RCVoiceCaptureControl.h"
 #import "RCAlertView.h"
@@ -35,6 +36,12 @@
 
 //语音消息开始录音
 - (void)onBeginRecordEvent {
+    CTCallCenter *center = [[CTCallCenter alloc] init];
+    if (center.currentCalls.count > 0) {
+        NSString *alertMessage = RCLocalizedString(@"AudioHoldingWarning");
+        [RCAlertView showAlertController:alertMessage message:nil hiddenAfterDelay:1];
+        return;
+    }
     if (self.voiceCaptureControl) {
         return;
     }

@@ -70,8 +70,7 @@
 #pragma mark - RCMessageCoding delegate methods
 
 - (NSData *)encode {
-
-    NSMutableDictionary *dataDict = [NSMutableDictionary dictionary];
+    NSMutableDictionary *dataDict = [self encodeBaseData];
     if (self.packageId) {
         [dataDict setObject:self.packageId forKey:KEY_STICKERMSG_PACKAGEID];
     }
@@ -87,37 +86,27 @@
     if (self.height) {
         [dataDict setObject:@(self.height) forKey:KEY_STICKERMSG_HEIGHT];
     }
-    if (self.destructDuration > 0) {
-        [dataDict setObject:@(self.destructDuration) forKey:KEY_STICKERMSG_DESTRUCTDURATION];
-    }
-    if (self.extra) {
-        [dataDict setObject:self.extra forKey:KEY_STICKERMSG_EXTRA];
-    }
-    if (self.senderUserInfo) {
-        [dataDict setObject:[self encodeUserInfo:self.senderUserInfo] forKey:@"user"];
-    }
+    
     NSData *data = [NSJSONSerialization dataWithJSONObject:dataDict options:kNilOptions error:nil];
     return data;
 }
 
 - (void)decodeWithData:(NSData *)data {
-    __autoreleasing NSError *__error = nil;
-    if (!data) {
+    NSDictionary *jsonDic = [[self class] dictionaryFromJsonData:data];
+    if (!jsonDic) {
+        // 解析失败保存原数据
+        self.rawJSONData = data;
         return;
     }
-    NSDictionary *dictionary = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&__error];
-    NSDictionary *json = [[NSDictionary alloc] initWithDictionary:dictionary];
-    if (json) {
-        self.packageId = [json objectForKey:KEY_STICKERMSG_PACKAGEID];
-        self.stickerId = [json objectForKey:KEY_STICKERMSG_STICKERID];
-        self.digest = [json objectForKey:KEY_STICKERMSG_DIGEST];
-        self.width = [[json objectForKey:KEY_STICKERMSG_WIDTH] floatValue];
-        self.height = [[json objectForKey:KEY_STICKERMSG_HEIGHT] floatValue];
-        self.destructDuration = [[json objectForKey:KEY_STICKERMSG_DESTRUCTDURATION] integerValue];
-        self.extra = [json objectForKey:KEY_STICKERMSG_EXTRA];
-        NSDictionary *userinfoDic = [json objectForKey:@"user"];
-        [self decodeUserInfo:userinfoDic];
-    }
+    // 基类负责解析基类属性
+    [self decodeBaseData:jsonDic];
+    
+    //子类只解析子类属性
+    self.packageId = [jsonDic objectForKey:KEY_STICKERMSG_PACKAGEID];
+    self.stickerId = [jsonDic objectForKey:KEY_STICKERMSG_STICKERID];
+    self.digest = [jsonDic objectForKey:KEY_STICKERMSG_DIGEST];
+    self.width = [[jsonDic objectForKey:KEY_STICKERMSG_WIDTH] longValue];
+    self.height = [[jsonDic objectForKey:KEY_STICKERMSG_HEIGHT] longValue];
 }
 
 - (NSString *)conversationDigest {

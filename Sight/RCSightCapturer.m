@@ -8,6 +8,7 @@
 
 #import "RCSightCapturer.h"
 #import <UIKit/UIKit.h>
+#import <CoreTelephony/CTCallCenter.h>
 
 @interface RCSightCapturer () <AVCaptureVideoDataOutputSampleBufferDelegate,
                                AVCaptureAudioDataOutputSampleBufferDelegate>
@@ -115,22 +116,26 @@
                       selector:@selector(sessionWasInterrupted:)
                           name:AVCaptureSessionWasInterruptedNotification
                         object:nil];
-
+    
     /*audio*/
-    AVCaptureDeviceInput *audioDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:self.audioDevice error:nil];
-    if ([self.captureSession canAddInput:audioDeviceInput]) {
-        [self.captureSession addInput:audioDeviceInput];
-        self.activeAudioInput = audioDeviceInput;
-    }
+    CTCallCenter *center = [[CTCallCenter alloc] init];
+    if (center.currentCalls.count == 0) {   // 打电话时，麦克风被占用，不能录音，否则 15+ 系统报错
+        AVCaptureDeviceInput *audioDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:self.audioDevice error:nil];
+        BOOL isEnable = audioDeviceInput.ports.firstObject.enabled;
+        if ([self.captureSession canAddInput:audioDeviceInput]) {
+            [self.captureSession addInput:audioDeviceInput];
+            self.activeAudioInput = audioDeviceInput;
+        }
 
-    AVCaptureAudioDataOutput *audioDeviceOutput = [[AVCaptureAudioDataOutput alloc] init];
-    [audioDeviceOutput setSampleBufferDelegate:self queue:self.sessionQueue];
+        AVCaptureAudioDataOutput *audioDeviceOutput = [[AVCaptureAudioDataOutput alloc] init];
+        [audioDeviceOutput setSampleBufferDelegate:self queue:self.sessionQueue];
 
-    if ([self.captureSession canAddOutput:audioDeviceOutput]) {
-        [self.captureSession addOutput:audioDeviceOutput];
-        self.activeAudioDeviceOutput = audioDeviceOutput;
+        if ([self.captureSession canAddOutput:audioDeviceOutput]) {
+            [self.captureSession addOutput:audioDeviceOutput];
+            self.activeAudioDeviceOutput = audioDeviceOutput;
+        }
+        self.audioConnection = [audioDeviceOutput connectionWithMediaType:AVMediaTypeAudio];
     }
-    self.audioConnection = [audioDeviceOutput connectionWithMediaType:AVMediaTypeAudio];
 
     /*video*/
     AVCaptureDeviceInput *videoDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:self.videoDevice error:nil];
@@ -177,7 +182,7 @@
          AVSampleRateKey : @44100,
          AVEncoderBitRateKey : @96000,
      };
-
+    
     self.audioCompressionSettings = audioSettingDic;
     self.videoCompressionSettings =
         [[videoDeviceOutput recommendedVideoSettingsForAssetWriterWithOutputFileType:AVFileTypeMPEG4] copy];
@@ -346,6 +351,8 @@
 }
 
 - (void)resetAudioSession {
+    CTCallCenter *center = [[CTCallCenter alloc] init];
+    if (center.currentCalls.count == 0) return; // 打电话期间不需要设置 audio session
     AVCaptureDevice *newAudioDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         /*audio*/

@@ -8,6 +8,9 @@
 
 #import "RCContactCardMessage.h"
 #import "RongContactCardAdaptiveHeader.h"
+#import "NSMutableDictionary+safeoperation.h"
+#import "NSDictionary+safeaccessor.h"
+
 @implementation RCContactCardMessage
 + (instancetype)messageWithUserInfo:(RCUserInfo *)userInfo {
     RCContactCardMessage *cardMessage = [[RCContactCardMessage alloc] init];
@@ -47,48 +50,36 @@
 #pragma mark RCMessageCoding
 
 - (NSData *)encode {
-    NSMutableDictionary *dataDict = [NSMutableDictionary dictionary];
-    [dataDict setValue:self.userId forKey:KEY_CARDMSG_USERID];
-    [dataDict setValue:self.name forKey:KEY_CARDMSG_NAME];
+    NSMutableDictionary *dataDict = [self encodeBaseData];
+    [dataDict rclib_setObject:self.userId forKey:KEY_CARDMSG_USERID];
+    [dataDict rclib_setObject:self.name forKey:KEY_CARDMSG_NAME];
     if (![RCUtilities isLocalPath:self.portraitUri]) {
-        [dataDict setValue:self.portraitUri forKey:KEY_CARDMSG_PORTRAITURI];
+        [dataDict rclib_setObject:self.portraitUri forKey:KEY_CARDMSG_PORTRAITURI];
     }
 
-    if (self.destructDuration > 0) {
-        [dataDict setObject:@(self.destructDuration) forKey:KEY_CARDMSG_DESTRUCTDURATION];
-    }
-
-    if (self.senderUserInfo) {
-        [dataDict setObject:[self encodeUserInfo:self.senderUserInfo] forKey:@"user"];
-    }
-
-    if (self.extra) {
-        [dataDict setObject:self.extra forKey:@"extra"];
-    }
-    [dataDict setObject:self.sendUserId forKey:@"sendUserId"];
-    [dataDict setObject:self.sendUserName forKey:@"sendUserName"];
+    [dataDict rclib_setObject:self.sendUserId forKey:@"sendUserId"];
+    [dataDict rclib_setObject:self.sendUserName forKey:@"sendUserName"];
 
     NSData *data = [NSJSONSerialization dataWithJSONObject:dataDict options:kNilOptions error:nil];
     return data;
 }
 
 - (void)decodeWithData:(NSData *)data {
-    __autoreleasing NSError *__error = nil;
-    if (!data) {
+    NSDictionary *jsonDic = [[self class] dictionaryFromJsonData:data];
+    if (!jsonDic) {
+        // 解析失败保存原数据
+        self.rawJSONData = data;
         return;
     }
-    NSDictionary *dictionary = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&__error];
-    if (dictionary) {
-        self.userId = dictionary[KEY_CARDMSG_USERID];
-        self.name = dictionary[KEY_CARDMSG_NAME];
-        self.portraitUri = dictionary[KEY_CARDMSG_PORTRAITURI];
-        self.destructDuration = [dictionary[KEY_CARDMSG_DESTRUCTDURATION] integerValue];
-        self.extra = dictionary[@"extra"];
-        self.sendUserId = dictionary[@"sendUserId"];
-        self.sendUserName = dictionary[@"sendUserName"];
-        NSDictionary *userinfoDic = dictionary[@"user"];
-        [self decodeUserInfo:userinfoDic];
-    }
+    // 基类负责解析基类属性
+    [self decodeBaseData:jsonDic];
+    
+    //子类只解析子类属性
+    self.userId = [jsonDic rclib_stringForKey:KEY_CARDMSG_USERID];
+    self.name = [jsonDic rclib_stringForKey:KEY_CARDMSG_NAME];
+    self.portraitUri = [jsonDic rclib_stringForKey:KEY_CARDMSG_PORTRAITURI];
+    self.sendUserId = [jsonDic rclib_stringForKey:@"sendUserId"];
+    self.sendUserName = [jsonDic rclib_stringForKey:@"sendUserName"];
 }
 
 + (NSString *)getObjectName {

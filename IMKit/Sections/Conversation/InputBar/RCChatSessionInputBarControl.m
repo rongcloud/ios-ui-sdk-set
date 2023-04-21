@@ -365,6 +365,12 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     [self.voiceRecordControl onEndRecordEvent];
 }
 
+- (void)endVoiceTransfer {
+    if ([self.delegate respondsToSelector:@selector(inputTextViewDidChangeOnEndVoiceTransfer:)]) {
+        [self.delegate inputTextViewDidChangeOnEndVoiceTransfer:self.inputTextView];
+    }
+}
+
 #pragma mark - RCVoiceRecordControlDelegate
 - (BOOL)recordWillBegin{
     if ([self.delegate respondsToSelector:@selector(recordWillBegin)]) {

@@ -197,7 +197,7 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
 }
 
 - (void)saveManualLoadPackagesConfig:(NSArray *)array {
-    [self.preloadPackagesLock performWriteLockBlock:^{
+    [self.packagesConfigLock performWriteLockBlock:^{
         [self.manualLoadPackagesConfig removeAllObjects];
         if (array) {
             [self.manualLoadPackagesConfig addObjectsFromArray:array];

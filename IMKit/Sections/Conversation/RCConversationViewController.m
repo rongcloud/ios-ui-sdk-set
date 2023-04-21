@@ -960,6 +960,11 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    // 数据越界保护，开发者可以拿到 conversationDataRepository 并做任何处理
+    if (indexPath.row >= self.conversationDataRepository.count) {
+        return [[RCMessageBaseCell alloc] init];
+    }
+
     RCMessageModel *model = [self.conversationDataRepository objectAtIndex:indexPath.row];
 
     model = [self.dataSource setModelIsDisplayNickName:model];
@@ -1031,6 +1036,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (CGSize)collectionView:(UICollectionView *)collectionView
                   layout:(UICollectionViewLayout *)collectionViewLayout
   sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    // 数据越界保护，开发者可以拿到 conversationDataRepository 并做任何处理
+    if (indexPath.row >= self.conversationDataRepository.count) {
+        return CGSizeZero;
+    }
 
     RCMessageModel *model = [self.conversationDataRepository objectAtIndex:indexPath.row];
     model = [self.dataSource setModelIsDisplayNickName:model];
@@ -1495,11 +1504,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)inputTextView:(UITextView *)inputTextView
     shouldChangeTextInRange:(NSRange)range
             replacementText:(NSString *)text {
-    if (RCKitConfigCenter.message.enableTypingStatus && ![text isEqualToString:@"\n"]) {
-        [[RCCoreClient sharedCoreClient] sendTypingStatus:self.conversationType
-                                               targetId:self.targetId
-                                            contentType:[RCTextMessage getObjectName]];
-    }
+    [self p_sendTypingStatusIfNeedWithText:text];
+    
     //接收 10 条以上消息,进入到聊天页面点击键盘使弹起,再次点击右上角 x 条未读消息,键盘输入文本，页面没有滚动到底部
     if (self.dataSource.isLoadingHistoryMessage || [self isRemainMessageExisted]) {
         [self loadRemainMessageAndScrollToBottom:YES];
@@ -1514,6 +1520,20 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         self.placeholderLabel.hidden = YES;
     } else {
         self.placeholderLabel.hidden = NO;
+    }
+}
+
+- (void)inputTextViewDidChangeOnEndVoiceTransfer:(UITextView *)inputTextView {
+    // 讯飞语音输入的文字结束时，也要发送“正在输入”消息
+    [self p_sendTypingStatusIfNeedWithText:inputTextView.text];
+}
+
+
+- (void)p_sendTypingStatusIfNeedWithText:(NSString *)text {
+    if (RCKitConfigCenter.message.enableTypingStatus && ![text isEqualToString:@"\n"]) {
+        [[RCCoreClient sharedCoreClient] sendTypingStatus:self.conversationType
+                                               targetId:self.targetId
+                                            contentType:[RCTextMessage getObjectName]];
     }
 }
 
@@ -2134,20 +2154,28 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 
 #pragma mark - 点击事件
+- (BOOL)p_disableTapCell:(RCMessageModel *)model{
+    if (nil == model) {
+        return YES;
+    }
+
+    if (model.messageDirection == MessageDirection_RECEIVE && model.content.destructDuration > 0) {
+        if ([self.util alertDestructMessageRemind]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 //点击cell
 - (void)didTapMessageCell:(RCMessageModel *)model {
     DebugLog(@"%s", __FUNCTION__);
-    if (nil == model) {
+    
+    if([self p_disableTapCell:model]){
         return;
     }
 
     RCMessageContent *_messageContent = model.content;
-
-    if (model.messageDirection == MessageDirection_RECEIVE && _messageContent.destructDuration > 0) {
-        if ([self.util alertDestructMessageRemind]) {
-            return;
-        }
-    }
 
     if ([_messageContent isMemberOfClass:[RCImageMessage class]]) {
         [self p_didTapMessageCellForImageMessage:model];
@@ -2484,6 +2512,16 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self deleteMessage:tempArray[i]];
     }
     self.allowsMessageCellSelection = NO;
+    
+    // 批量删除后，缺少重置collectionViewNewContentSize 导致 IMSDK-8250
+   RCConversationViewLayout *currentLayout = (RCConversationViewLayout *)self.conversationMessageCollectionView.collectionViewLayout;
+    currentLayout.collectionViewNewContentSize = CGSizeZero;
+    
+    // 删除后，没有消息了会空屏，要自动触发拉取下一页
+    if (self.conversationDataRepository.count == 0) {
+        [self.collectionViewHeader startAnimating];
+        [self.dataSource scrollToLoadMoreHistoryMessage];
+    }
 }
 
 /// RCMessagesMultiSelectedProtocol method

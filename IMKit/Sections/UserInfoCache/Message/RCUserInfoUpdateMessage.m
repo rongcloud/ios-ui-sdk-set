@@ -7,6 +7,8 @@
 //
 
 #import "RCUserInfoUpdateMessage.h"
+#import "NSMutableDictionary+safeoperation.h"
+#import "NSDictionary+safeaccessor.h"
 
 @implementation RCUserInfoUpdateMessage
 
@@ -23,38 +25,38 @@
 }
 
 - (void)decodeWithData:(NSData *)data {
-    __autoreleasing NSError *__error = nil;
-    if (!data) {
+    NSDictionary *jsonDic = [[self class] dictionaryFromJsonData:data];
+    if (!jsonDic) {
+        // 解析失败保存原数据
+        self.rawJSONData = data;
         return;
     }
-    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&__error];
-    if (!__error && dict && [dict isKindOfClass:[NSDictionary class]]) {
-        NSMutableArray *updatedUserInfoList = [dict objectForKey:@"updatedUserInfoList"];
-        if ([updatedUserInfoList isKindOfClass:[NSArray class]] && [updatedUserInfoList count] > 0) {
-            NSMutableArray *userInfoList = [[NSMutableArray alloc] init];
-
-            for (NSDictionary *userInfoDic in updatedUserInfoList) {
-                if ([userInfoDic isKindOfClass:[NSDictionary class]]) {
-                    RCUserInfo *userInfo = [[RCUserInfo alloc] init];
-                    userInfo.userId = userInfoDic[@"userId"];
-                    userInfo.name = userInfoDic[@"name"];
-                    userInfo.portraitUri = userInfoDic[@"portraitUri"];
-                    [userInfoList addObject:userInfo];
-                }
-            }
-
-            self.userInfoList = [userInfoList copy];
-        }
-        self.extra = [dict objectForKey:@"extra"];
-        NSDictionary *userinfoDic = [dict objectForKey:@"user"];
-        [self decodeUserInfo:userinfoDic];
-    } else {
-        self.rawJSONData = data;
+    // 基类负责解析基类属性
+    [self decodeBaseData:jsonDic];
+    
+    //子类只解析子类属性
+    NSArray *updatedUserInfoList = [jsonDic rclib_arrayForKey:@"updatedUserInfoList"];
+    if ([updatedUserInfoList count] == 0) {
+        return;
     }
+    
+    NSMutableArray<RCUserInfo *> *userInfoList = [[NSMutableArray alloc] init];
+    
+    for (NSDictionary *userInfoDic in updatedUserInfoList) {
+        if ([userInfoDic isKindOfClass:[NSDictionary class]]) {
+            RCUserInfo *userInfo = [[RCUserInfo alloc] init];
+            userInfo.userId = [userInfoDic rclib_stringForKey:@"userId"];
+            userInfo.name = [userInfoDic rclib_stringForKey:@"name"];
+            userInfo.portraitUri = [userInfoDic rclib_stringForKey:@"portraitUri"];
+            [userInfoList addObject:userInfo];
+        }
+    }
+    
+    self.userInfoList = [userInfoList copy];
 }
 
 - (NSData *)encode {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSMutableDictionary *dict = [self encodeBaseData];
 
     if ([self.userInfoList count] > 0) {
         NSMutableArray *updatedUserInfoList = [[NSMutableArray alloc] init];
@@ -62,27 +64,20 @@
         for (RCUserInfo *userInfo in self.userInfoList) {
             NSMutableDictionary *userInfoDic = [[NSMutableDictionary alloc] init];
             if ([userInfo.userId length] > 0) {
-                [userInfoDic setObject:userInfo.userId forKey:@"userId"];
+                [userInfoDic rclib_setObject:userInfo.userId forKey:@"userId"];
             } else {
                 continue;
             }
             if ([userInfo.name length] > 0) {
-                [userInfoDic setObject:userInfo.name forKey:@"name"];
+                [userInfoDic rclib_setObject:userInfo.name forKey:@"name"];
             }
             if ([userInfo.portraitUri length] > 0) {
-                [userInfoDic setObject:userInfo.portraitUri forKey:@"portraitUri"];
+                [userInfoDic rclib_setObject:userInfo.portraitUri forKey:@"portraitUri"];
             }
             [updatedUserInfoList addObject:userInfoDic];
         }
 
-        [dict setObject:updatedUserInfoList forKey:@"updatedUserInfoList"];
-    }
-
-    if (self.senderUserInfo) {
-        [dict setObject:[self encodeUserInfo:self.senderUserInfo] forKey:@"user"];
-    }
-    if (self.extra) {
-        [dict setObject:self.extra forKey:@"extra"];
+        [dict rclib_setObject:updatedUserInfoList forKey:@"updatedUserInfoList"];
     }
 
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:kNilOptions error:nil];

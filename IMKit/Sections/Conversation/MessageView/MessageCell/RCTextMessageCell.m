@@ -119,9 +119,9 @@
     [super setDestructViewLayout];
     if (self.model.content.destructDuration > 0) {
         if ([RCKitUtility isRTL]) {
-            self.destructTextImage.frame = CGRectMake(DESTRUCT_TEXT_ICON_WIDTH , CGRectGetMidY(self.messageContentView.frame) - DESTRUCT_TEXT_ICON_HEIGHT / 2, DESTRUCT_TEXT_ICON_WIDTH, DESTRUCT_TEXT_ICON_HEIGHT);
+            self.destructTextImage.frame = CGRectMake(DESTRUCT_TEXT_ICON_WIDTH , (CGRectGetHeight(self.messageContentView.frame) - DESTRUCT_TEXT_ICON_HEIGHT) / 2, DESTRUCT_TEXT_ICON_WIDTH, DESTRUCT_TEXT_ICON_HEIGHT);
         } else {
-            self.destructTextImage.frame = CGRectMake(self.messageContentView.frame.size.width-DESTRUCT_TEXT_ICON_WIDTH-TEXT_SPACE_RIGHT,CGRectGetMidY(self.messageContentView.frame) - DESTRUCT_TEXT_ICON_HEIGHT / 2, DESTRUCT_TEXT_ICON_WIDTH, DESTRUCT_TEXT_ICON_HEIGHT);
+            self.destructTextImage.frame = CGRectMake(self.messageContentView.frame.size.width-DESTRUCT_TEXT_ICON_WIDTH-TEXT_SPACE_RIGHT,(CGRectGetHeight(self.messageContentView.frame) - DESTRUCT_TEXT_ICON_HEIGHT)/ 2, DESTRUCT_TEXT_ICON_WIDTH, DESTRUCT_TEXT_ICON_HEIGHT);
         }
     }
 }

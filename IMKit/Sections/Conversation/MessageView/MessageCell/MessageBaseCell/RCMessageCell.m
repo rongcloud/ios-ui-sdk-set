@@ -82,119 +82,10 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
-    if (self.showBubbleBackgroundView) {
-        self.bubbleBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
-    }
-    self.receiptView.hidden = YES;
-    self.receiptStatusLabel.hidden = YES;
+    [self p_showBubbleBackgroundView];
     self.messageFailedStatusView.hidden = YES;
-    if (model.readReceiptInfo.isReceiptRequestMessage && model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(model.conversationType)]) {
-        self.receiptStatusLabel.hidden = NO;
-        self.receiptStatusLabel.userInteractionEnabled = YES;
-        self.receiptStatusLabel.text = [NSString
-            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
-    } else {
-        self.receiptStatusLabel.hidden = YES;
-        self.receiptStatusLabel.userInteractionEnabled = NO;
-        self.receiptStatusLabel.text = nil;
-    }
-
-    if (model.messageDirection == MessageDirection_SEND && model.sentStatus == SentStatus_SENT) {
-        if (model.isCanSendReadReceipt) {
-            self.receiptView.hidden = NO;
-            self.receiptView.userInteractionEnabled = YES;
-            self.receiptStatusLabel.hidden = YES;
-        } else {
-            self.receiptView.hidden = YES;
-            self.receiptStatusLabel.hidden = NO;
-        }
-    }
-
-    // DebugLog(@"%s", __FUNCTION__);
-    //如果是客服，更换默认头像
-    if (ConversationType_CUSTOMERSERVICE == model.conversationType) {
-        if (model.messageDirection == MessageDirection_RECEIVE) {
-            [self.portraitImageView setPlaceholderImage:RCResourceImage(@"portrait_kefu")];
-
-            model.userInfo = model.content.senderUserInfo;
-            if (model.content.senderUserInfo != nil) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
-                [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
-            } else {
-                [self.portraitImageView setImage:RCResourceImage(@"portrait_kefu")];
-                [self.nicknameLabel setText:nil];
-            }
-        } else {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
-            model.userInfo = userInfo;
-            [self.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
-            if (userInfo) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-            } else {
-                [self.portraitImageView setImageURL:nil];
-                [self.nicknameLabel setText:nil];
-            }
-        }
-    } else if (ConversationType_APPSERVICE == model.conversationType ||
-               ConversationType_PUBLICSERVICE == model.conversationType) {
-        if (model.messageDirection == MessageDirection_RECEIVE) {
-            RCPublicServiceProfile *serviceProfile = nil;
-            if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
-                serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
-            } else {
-                serviceProfile =
-                    [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
-                                                           publicServiceId:model.targetId];
-            }
-            model.userInfo = model.content.senderUserInfo;
-            if (serviceProfile) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:serviceProfile.portraitUrl]];
-                [self.nicknameLabel setText:serviceProfile.name];
-            }
-        } else {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
-            model.userInfo = userInfo;
-            if (userInfo) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-            } else {
-                [self.portraitImageView setImageURL:nil];
-                [self.nicknameLabel setText:nil];
-            }
-        }
-    } else if (ConversationType_GROUP == model.conversationType) {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
-        RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
-        userInfo.alias = tempUserInfo.alias;
-        model.userInfo = userInfo;
-        if (userInfo) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-        } else {
-            [self.portraitImageView setImageURL:nil];
-            [self.nicknameLabel setText:nil];
-        }
-    } else {
-        //优先使用 RCMessage.senderUserId 确定用户，控制头像的显示
-        //否则使用 RCMessage.content.senderUserInfo.userId 确定用户，控制头像的显示
-        NSString *userId = model.senderUserId;
-        if (userId.length <= 0) {
-            userId = model.content.senderUserInfo.userId;
-        }
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
-        model.userInfo = userInfo;
-        if (userInfo) {
-            if (model.conversationType != ConversationType_Encrypted) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            }
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-        } else {
-            [self.portraitImageView setImageURL:nil];
-            [self.nicknameLabel setText:nil];
-        }
-    }
-
+    [self p_setReadStatus];
+    [self p_setUserInfo];
     [self setCellAutoLayout];
     [self messageDestructing];
 }
@@ -361,11 +252,12 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                                                  name:KNotificationMessageBaseCellUpdateCanReceiptStatus
                                                object:nil];
     
-    [self registerUpdateLayoutIfNeed];
+    [self registerFrameUpdateLayoutIfNeed];
+    [self registerSizeUpdateLayoutIfNeed];
     
 }
 
-- (void)registerUpdateLayoutIfNeed{
+- (void)registerFrameUpdateLayoutIfNeed{
     __weak typeof(self) weakSelf = self;
     [self.messageContentView registerFrameChangedEvent:^(CGRect frame) {
         if (weakSelf.model) {
@@ -414,7 +306,10 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             }
         }
     }];
-    
+}
+
+- (void)registerSizeUpdateLayoutIfNeed{
+    __weak typeof(self) weakSelf = self;
     [self.messageContentView registerSizeChangedEvent:^(CGSize size) {
         if (weakSelf.model){
             CGRect rect = CGRectMake(0, 0, size.width, size.height);
@@ -491,23 +386,22 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     if ([RCKitUtility isRTL]) {
         // receiver
         if (MessageDirection_RECEIVE == self.model.messageDirection) {
-          
-            if (self.showPortrait) {
-                contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
-            } else {
-                contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
-            }
-        } else { // owner
             CGFloat nameOffset_X = 0;
             if (self.showPortrait) {
+                contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
+                nameOffset_X = self.portraitImageView.frame.origin.x - DefaultMessageContentViewWidth - HeadAndContentSpacing;
+            } else {
+                nameOffset_X = self.baseContentView.bounds.size.width - (DefaultMessageContentViewWidth + PortraitViewEdgeSpace);
+                contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
+            }
+            nicknameFrame.origin.x = nameOffset_X;
+        } else { // owner
+            if (self.showPortrait) {
                 contentFrame.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
-                nameOffset_X = self.portraitImageView.frame.origin.x + self.portraitImageView.bounds.size.width + HeadAndContentSpacing;
             } else {
                 contentFrame.origin.x = PortraitViewEdgeSpace;
-                nameOffset_X = self.portraitImageView.frame.origin.x;
             }
             
-            nicknameFrame.origin.x = nameOffset_X;
         }
 
     } else {
@@ -544,19 +438,18 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     if ([RCKitUtility isRTL]) {
         // receiver
         if (MessageDirection_RECEIVE == self.model.messageDirection) {
-            self.nicknameLabel.hidden = YES;
+            self.nicknameLabel.hidden = !self.model.isDisplayNickname;
             CGFloat portraitImageX = self.baseContentView.bounds.size.width - (protraitWidth + PortraitViewEdgeSpace);
             self.portraitImageView.frame = CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth, protraitHeight);
+            if (self.showPortrait) {
+                self.nicknameLabel.frame = CGRectMake(portraitImageX - DefaultMessageContentViewWidth - HeadAndContentSpacing, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+            } else {
+                self.nicknameLabel.frame = CGRectMake(self.baseContentView.bounds.size.width - (DefaultMessageContentViewWidth + PortraitViewEdgeSpace), PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+            }
         } else { // owner
-            self.nicknameLabel.hidden = !self.model.isDisplayNickname;
+            self.nicknameLabel.hidden = YES;
             CGFloat portraitImageX = PortraitViewEdgeSpace;
             self.portraitImageView.frame = CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth, protraitHeight);
-            if (self.showPortrait) {
-                self.nicknameLabel.frame = CGRectMake(portraitImageX + self.portraitImageView.bounds.size.width + HeadAndContentSpacing, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
-            } else {
-                self.nicknameLabel.frame = CGRectMake(portraitImageX, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
-            }
-          
         }
         self.messageContentView.contentSize = CGSizeMake(DefaultMessageContentViewWidth,self.baseContentView.bounds.size.height - ContentViewBottom);
     } else {
@@ -585,7 +478,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     }
     [self updateStatusContentView:self.model];
 }
-
 - (void)setDestructViewLayout {
     self.destructBtn.frame = CGRectMake(0, 0, DestructBtnWidth, DestructBtnWidth);
     if (self.model.content.destructDuration > 0) {
@@ -741,6 +633,138 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                 }
             });
         }];
+    }
+}
+
+- (void)p_showBubbleBackgroundView{
+    if (self.showBubbleBackgroundView) {
+        self.bubbleBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+    }
+}
+
+- (void)p_setReadStatus{
+    if (self.model.readReceiptInfo.isReceiptRequestMessage && self.model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)]) {
+        self.receiptStatusLabel.hidden = NO;
+        self.receiptStatusLabel.userInteractionEnabled = YES;
+        self.receiptStatusLabel.text = [NSString
+            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
+    } else {
+        self.receiptStatusLabel.hidden = YES;
+        self.receiptStatusLabel.userInteractionEnabled = NO;
+        self.receiptStatusLabel.text = nil;
+    }
+
+    if (self.model.messageDirection == MessageDirection_SEND && self.model.sentStatus == SentStatus_SENT) {
+        if (self.model.isCanSendReadReceipt) {
+            self.receiptView.hidden = NO;
+            self.receiptView.userInteractionEnabled = YES;
+            self.receiptStatusLabel.hidden = YES;
+        } else {
+            self.receiptView.hidden = YES;
+            self.receiptStatusLabel.hidden = NO;
+        }
+    }else{
+        self.receiptView.hidden = YES;
+    }
+}
+
+- (void)p_setUserInfo{
+    RCMessageModel *model = self.model;
+    // DebugLog(@"%s", __FUNCTION__);
+    //如果是客服，更换默认头像
+    if (ConversationType_CUSTOMERSERVICE == model.conversationType) {
+        [self p_setCustomerServiceInfo:model];
+    } else if (ConversationType_APPSERVICE == model.conversationType ||
+               ConversationType_PUBLICSERVICE == model.conversationType) {
+        [self p_setPublicServiceInfo:model];
+    } else if (ConversationType_GROUP == model.conversationType) {
+        [self p_setGroupInfo:model];
+    } else {
+        //优先使用 RCMessage.senderUserId 确定用户，控制头像的显示
+        //否则使用 RCMessage.content.senderUserInfo.userId 确定用户，控制头像的显示
+        NSString *userId = model.senderUserId;
+        if (userId.length <= 0) {
+            userId = model.content.senderUserInfo.userId;
+        }
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+        model.userInfo = userInfo;
+        if (userInfo) {
+            if (model.conversationType != ConversationType_Encrypted) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            }
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        } else {
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
+        }
+    }
+}
+
+- (void)p_setCustomerServiceInfo:(RCMessageModel *)model{
+    if (model.messageDirection == MessageDirection_RECEIVE) {
+        [self.portraitImageView setPlaceholderImage:RCResourceImage(@"portrait_kefu")];
+
+        model.userInfo = model.content.senderUserInfo;
+        if (model.content.senderUserInfo != nil) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
+        } else {
+            [self.portraitImageView setImage:RCResourceImage(@"portrait_kefu")];
+            [self.nicknameLabel setText:nil];
+        }
+    } else {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+        model.userInfo = userInfo;
+        [self.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+        if (userInfo) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        } else {
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
+        }
+    }
+}
+
+- (void)p_setPublicServiceInfo:(RCMessageModel *)model{
+    if (model.messageDirection == MessageDirection_RECEIVE) {
+        RCPublicServiceProfile *serviceProfile = nil;
+        if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
+            serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
+        } else {
+            serviceProfile =
+                [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
+                                                       publicServiceId:model.targetId];
+        }
+        model.userInfo = model.content.senderUserInfo;
+        if (serviceProfile) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:serviceProfile.portraitUrl]];
+            [self.nicknameLabel setText:serviceProfile.name];
+        }
+    } else {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+        model.userInfo = userInfo;
+        if (userInfo) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        } else {
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
+        }
+    }
+}
+
+- (void)p_setGroupInfo:(RCMessageModel *)model{
+    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
+    RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+    userInfo.alias = tempUserInfo.alias;
+    model.userInfo = userInfo;
+    if (userInfo) {
+        [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+    } else {
+        [self.portraitImageView setImageURL:nil];
+        [self.nicknameLabel setText:nil];
     }
 }
 

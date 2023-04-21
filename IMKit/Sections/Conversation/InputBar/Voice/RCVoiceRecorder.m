@@ -81,7 +81,7 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
     self.voiceRecorderDelegate = observer;
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-    [audioSession setCategory:AVAudioSessionCategoryRecord error:nil];
+    [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
     [audioSession setActive:YES error:nil];
 
     NSError *error = nil;

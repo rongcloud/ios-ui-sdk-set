@@ -176,6 +176,8 @@
 - (void)voiceTransferToText:(NSString *)text {
     NSString *txt = self.chatBarControl.inputTextView.text;
     self.chatBarControl.inputTextView.text = [NSString stringWithFormat:@"%@%@", txt, text];
+    
+    [self.chatBarControl endVoiceTransfer];
 }
 
 //发生错误的回调

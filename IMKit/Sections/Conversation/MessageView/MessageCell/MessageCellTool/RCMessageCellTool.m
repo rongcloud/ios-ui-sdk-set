@@ -72,19 +72,7 @@
     CGFloat imageWidth = 0;
     CGFloat imageHeight = 0;
     if (imageSize.width < imageMinLength || imageSize.height < imageMinLength) {
-        if (imageSize.width < imageSize.height) {
-            imageWidth = imageMinLength;
-            imageHeight = imageMinLength * imageSize.height / imageSize.width;
-            if (imageHeight > imageMaxLength) {
-                imageHeight = imageMaxLength;
-            }
-        } else {
-            imageHeight = imageMinLength;
-            imageWidth = imageMinLength * imageSize.width / imageSize.height;
-            if (imageWidth > imageMaxLength) {
-                imageWidth = imageMaxLength;
-            }
-        }
+        return [self p_getSizeForBelowStandard:imageSize imageMinLength:imageMinLength imageMaxLength:imageMaxLength];
     } else if (imageSize.width < imageMaxLength && imageSize.height < imageMaxLength &&
                imageSize.width >= imageMinLength && imageSize.height >= imageMinLength) {
         if (imageSize.width > imageSize.height) {
@@ -95,27 +83,53 @@
             imageWidth = imageMaxLength * imageSize.width / imageSize.height;
         }
     } else if (imageSize.width >= imageMaxLength || imageSize.height >= imageMaxLength) {
-        if (imageSize.width > imageSize.height) {
-            if (imageSize.width / imageSize.height < imageMaxLength / imageMinLength) {
-                imageWidth = imageMaxLength;
-                imageHeight = imageMaxLength * imageSize.height / imageSize.width;
-            } else {
-                imageHeight = imageMinLength;
-                imageWidth = imageMinLength * imageSize.width / imageSize.height;
-                if (imageWidth > imageMaxLength) {
-                    imageWidth = imageMaxLength;
-                }
-            }
+        return [self p_getSizeForAboveStandard:imageSize imageMinLength:imageMinLength imageMaxLength:imageMaxLength];
+    }
+    return CGSizeMake(imageWidth, imageHeight);
+}
+
++ (CGSize)p_getSizeForBelowStandard:(CGSize)imageSize imageMinLength:(CGFloat)imageMinLength imageMaxLength:(CGFloat)imageMaxLength{
+    CGFloat imageWidth = 0;
+    CGFloat imageHeight = 0;
+    if (imageSize.width < imageSize.height) {
+        imageWidth = imageMinLength;
+        imageHeight = imageMinLength * imageSize.height / imageSize.width;
+        if (imageHeight > imageMaxLength) {
+            imageHeight = imageMaxLength;
+        }
+    } else {
+        imageHeight = imageMinLength;
+        imageWidth = imageMinLength * imageSize.width / imageSize.height;
+        if (imageWidth > imageMaxLength) {
+            imageWidth = imageMaxLength;
+        }
+    }
+    return CGSizeMake(imageWidth, imageHeight);
+}
+
++ (CGSize)p_getSizeForAboveStandard:(CGSize)imageSize imageMinLength:(CGFloat)imageMinLength imageMaxLength:(CGFloat)imageMaxLength{
+    CGFloat imageWidth = 0;
+    CGFloat imageHeight = 0;
+    if (imageSize.width > imageSize.height) {
+        if (imageSize.width / imageSize.height < imageMaxLength / imageMinLength) {
+            imageWidth = imageMaxLength;
+            imageHeight = imageMaxLength * imageSize.height / imageSize.width;
         } else {
-            if (imageSize.height / imageSize.width < imageMaxLength / imageMinLength) {
+            imageHeight = imageMinLength;
+            imageWidth = imageMinLength * imageSize.width / imageSize.height;
+            if (imageWidth > imageMaxLength) {
+                imageWidth = imageMaxLength;
+            }
+        }
+    } else {
+        if (imageSize.height / imageSize.width < imageMaxLength / imageMinLength) {
+            imageHeight = imageMaxLength;
+            imageWidth = imageMaxLength * imageSize.width / imageSize.height;
+        } else {
+            imageWidth = imageMinLength;
+            imageHeight = imageMinLength * imageSize.height / imageSize.width;
+            if (imageHeight > imageMaxLength) {
                 imageHeight = imageMaxLength;
-                imageWidth = imageMaxLength * imageSize.width / imageSize.height;
-            } else {
-                imageWidth = imageMinLength;
-                imageHeight = imageMinLength * imageSize.height / imageSize.width;
-                if (imageHeight > imageMaxLength) {
-                    imageHeight = imageMaxLength;
-                }
             }
         }
     }
