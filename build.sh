@@ -20,9 +20,9 @@ function update_sdk(){
         if [ ${build_host} = "rce" ];
         then
                 cp /var/lib/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
-        elif [ ${build_host} = "iZ2ze6k7dz5mjtq31wb5p4Z" ];
+        elif [ ${build_host} = "UCBJ2-RC-Tools-CM-Jenkins-CICD-10-205" ];
         then
-                cp /data/jenkins/jobs/iOS-SDK-Release/builds/${Release_Node}/archive/output/${src_name}_SourceCode_*.zip ./
+                cp /Users/jenkins/archives/iOS-SDK-Release/${Release_Node}/${src_name}_SourceCode_*.zip ./
         else
                 exit 1
         fi
