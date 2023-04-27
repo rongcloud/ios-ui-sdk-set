@@ -73,6 +73,7 @@ rsync -a Sticker/Resource/* $res_path/ && rm -rf Sticker/Resource/
 rsync -a iFlyKit/Resource/* $res_path/ && rm -rf iFlyKit/Resource/
 rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
 
+sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
 
 ## 5. 提交代码
 git status
