@@ -465,9 +465,9 @@
 
 + (int)getConversationUnreadCount:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCCoreClient sharedCoreClient] getUnreadCount:@[ @(model.conversationType) ]];
+        return [[RCIMClient sharedRCIMClient] getUnreadCount:@[ @(model.conversationType) ]];
     } else {
-        return [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
+        return [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType targetId:model.targetId];
     }
 }
 
@@ -495,9 +495,9 @@
 
 + (BOOL)getConversationUnreadMentionedStatus:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCCoreClient sharedCoreClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
+        return [[RCIMClient sharedRCIMClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
     } else {
-        return [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId]
+        return [[RCIMClient sharedRCIMClient] getConversation:model.conversationType targetId:model.targetId]
             .hasUnreadMentioned;
     }
 }
@@ -507,7 +507,7 @@
         return;
     }
     if (conversation.conversationType == ConversationType_PRIVATE && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversation.conversationType)]) {
-        [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:conversation.conversationType
+        [[RCIMClient sharedRCIMClient] sendReadReceiptMessage:conversation.conversationType
                                                      targetId:conversation.targetId
                                                          time:conversation.sentTime
                                                       success:nil
@@ -519,7 +519,7 @@
                conversation.conversationType == ConversationType_APPSERVICE ||
                conversation.conversationType == ConversationType_PUBLICSERVICE ||
                conversation.conversationType == ConversationType_Encrypted) {
-        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
+        [[RCIMClient sharedRCIMClient] syncConversationReadStatus:conversation.conversationType
                                                          targetId:conversation.targetId
                                                              time:conversation.sentTime
                                                           success:nil
@@ -924,30 +924,27 @@
 }
 
 + (NSString *)__formatGroupNotificationMessageContent:(RCGroupNotificationMessage *)groupNotification {
+    NSString *message = nil;
+
     NSData *jsonData = [groupNotification.data dataUsingEncoding:NSUTF8StringEncoding];
     if (jsonData == nil) {
         return nil;
     }
     NSDictionary *dictionary =
-    [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
+        [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
+    NSString *operatorUserId = groupNotification.operatorUserId;
     NSString *nickName =
-    [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
+        [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
+    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
+                                      ? dictionary[@"targetUserDisplayNames"]
+                                      : nil;
+    NSArray *targetUserIds =
+        [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
     BOOL isMeOperate = NO;
     if ([groupNotification.operatorUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
         isMeOperate = YES;
         nickName = RCLocalizedString(@"You");
     }
-    return [self __formatGroupNotificationWithOperation:groupNotification dictionaryData:dictionary nickName:nickName isMeOperate:isMeOperate];
-}
-
-+ (NSString *)__formatGroupNotificationWithOperation:(RCGroupNotificationMessage *)groupNotification dictionaryData:(NSDictionary *)dictionary nickName:(NSString *)nickName isMeOperate:(BOOL)isMeOperate{
-    NSString *message = nil;
-    NSString *operatorUserId = groupNotification.operatorUserId;
-    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
-    ? dictionary[@"targetUserDisplayNames"]
-    : nil;
-    NSArray *targetUserIds =
-    [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
     if ([groupNotification.operation isEqualToString:@"Create"]) {
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveCreated" : @"GroupCreated"),
@@ -1093,7 +1090,7 @@
     // NSString *format = nil;
     NSString *message = nil;
     NSString *target = nil;
-    NSString *userId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
+    NSString *userId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     if (operatedIds) {
         if (operatedIds.count == 1) {
             if ([operatedIds[0] isEqualToString:userId]) {
@@ -1179,7 +1176,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return
@@ -1215,7 +1212,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return

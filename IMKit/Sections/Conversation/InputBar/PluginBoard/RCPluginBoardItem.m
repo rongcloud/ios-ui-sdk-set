@@ -10,7 +10,6 @@
 #import "RCKitCommonDefine.h"
 #import "UIImage+RCDynamicImage.h"
 #import "RCKitConfig.h"
-#import "RCBaseButton.h"
 @implementation RCPluginBoardItem
 
 - (instancetype)initWithTitle:(NSString *)title normalImage:(UIImage *)normalImage highlightedImage:(UIImage *)highlightedImage tag:(NSInteger)tag{
@@ -26,7 +25,7 @@
 
 - (void)loadView {
     UIView *myView = [UIView new];
-    RCBaseButton *imageButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+    UIButton *imageButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [imageButton setImage:self.normalImage forState:UIControlStateNormal];
     if (self.highlightedImage) {
         [imageButton setImage:self.highlightedImage forState:UIControlStateHighlighted];

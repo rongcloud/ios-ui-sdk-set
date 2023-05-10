@@ -12,7 +12,6 @@
 #import "RCMessageSelectionUtility.h"
 #import "RCAlertView.h"
 #import "RCKitConfig.h"
-#import "RCBaseButton.h"
 NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificationMessageBaseCellUpdateSendingStatus";
 #define SelectButtonSize CGSizeMake(20, 20)
 #define SelectButtonSpaceLeft 8 //选择按钮据屏幕左侧 5
@@ -20,7 +19,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 @interface RCMessageBaseCell ()
 
 @property (nonatomic, strong) UITapGestureRecognizer *multiSelectTap;
-@property (nonatomic, strong) RCBaseButton *selectButton;
+@property (nonatomic, strong) UIButton *selectButton;
 
 @end
 
@@ -188,9 +187,9 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 
 #pragma mark - Getters and Setters
 
-- (RCBaseButton *)selectButton {
+- (UIButton *)selectButton {
     if (!_selectButton) {
-        _selectButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+        _selectButton = [[UIButton alloc] initWithFrame:CGRectZero];
         [_selectButton setImage:RCResourceImage(@"message_cell_unselect") forState:UIControlStateNormal];
         [_selectButton addTarget:self
                           action:@selector(onSelectMessageEvent)

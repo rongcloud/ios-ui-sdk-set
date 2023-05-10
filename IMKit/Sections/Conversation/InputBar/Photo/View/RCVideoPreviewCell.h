@@ -6,7 +6,7 @@
 //  Copyright © 2018年 RongCloud. All rights reserved.
 //
 
-#import "RCBaseCollectionViewCell.h"
+#import <UIKit/UIKit.h>
 
 @protocol RCVideoPreviewCellDelegate <NSObject>
 
@@ -16,7 +16,7 @@
 
 @class RCAssetModel;
 @class PHAsset;
-@interface RCVideoPreviewCell : RCBaseCollectionViewCell
+@interface RCVideoPreviewCell : UICollectionViewCell
 
 @property (nonatomic, weak) id<RCVideoPreviewCellDelegate> delegate;
 

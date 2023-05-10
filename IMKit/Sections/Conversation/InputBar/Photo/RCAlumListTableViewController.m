@@ -119,7 +119,8 @@ static NSString *const cellReuseIdentifier = @"cell";
     } else {
         [RCKitUtility showProgressViewFor:self.tableView text:nil animated:YES];
         [sharedAssetHelper
-            getAlbumsFromSystem:^(NSArray *assetGroup) {
+            getGroupsWithALAssetsGroupType:ALAssetsGroupAll
+                          resultCompletion:^(NSArray *assetGroup) {
                               if (assetGroup) {
                                   weakSelf.libraryList = assetGroup;
                               }
@@ -202,111 +203,103 @@ static NSString *const cellReuseIdentifier = @"cell";
     } else {
         RCAssetModel *model = [photos objectAtIndex:0];
         [photos removeObjectAtIndex:0];
+        __weak typeof(self) weakself = self;
         if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
-            [self p_getOriginVideo:model photos:photos result:results full:isFull];
+            [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset
+                result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
+                    if (![[[RCAssetHelper shareAssetHelper] getAssetIdentifier:model.asset] isEqualToString:imageIdentifier]) {
+                        return;
+                    }
+                    if (avAsset) {
+                        NSMutableDictionary *assetInfo = [[NSMutableDictionary alloc] initWithCapacity:5];
+                        if (avAsset) {
+                            [assetInfo setObject:avAsset forKey:@"avAsset"];
+                        }
+                        if (model.thumbnailImage) {
+                            [assetInfo setObject:model.thumbnailImage forKey:@"thumbnail"];
+                        }
+                        NSString *localPath = @"";
+                        if (@available(iOS 13.0, *)) {
+                            AVURLAsset *urlAsset = (AVURLAsset *)avAsset;
+                            // 添加判断，如果选择的是慢动作视频，这里返回的是 AVComposition 对象，这个时候没有 URL 属性
+                            if ([urlAsset respondsToSelector:@selector(URL)]) {
+                                NSURL *url = urlAsset.URL;
+                                NSString *tempString = [url relativePath];
+                                localPath = tempString;
+                            }
+                        }
+                        if (localPath == nil || localPath.length < 1) {
+                            NSArray *localPaths =
+                                [info[@"PHImageFileSandboxExtensionTokenKey"] componentsSeparatedByString:@";"];
+                            if (localPaths.count > 0) {
+                                localPath = [localPaths lastObject];
+                            }
+                        }
+                        localPath = [self moveVideoFileAt:localPath];
+
+                        [assetInfo setObject:localPath forKey:@"localPath"];
+
+                        // NSDictionary* assetInfo = @{@"avAsset":model.avAsset,@"thumbnail":!model.thumbnailImage ?
+                        // [NSNull null] : model.thumbnailImage};
+                        [results addObject:[assetInfo copy]];
+                    }
+                    [self handlePhotos:photos result:results full:isFull];
+                }
+                progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+                    if (progress < 1 && !error && !weakself.isShowHUD) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            weakself.isShowHUD = YES;
+                            weakself.progressHUD =
+                                [RCMBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
+                            weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloading");
+                        });
+                    }
+                    if (error) {
+                        // from iCloud download error
+                        weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloadFail");
+                        [weakself.progressHUD hideAnimated:YES afterDelay:1];
+                        weakself.isShowHUD = NO;
+                    }
+                }];
         } else {
-            [self p_getOriginImageData:model photos:photos result:results full:isFull];
+            __weak typeof(self) weakself = self;
+            [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model
+                result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
+                    BOOL downloadFinined = (![[info objectForKey:PHImageCancelledKey] boolValue] &&
+                                            ![info objectForKey:PHImageErrorKey] &&
+                                            ![[info objectForKey:PHImageResultIsDegradedKey] boolValue]);
+                    if (downloadFinined && imageData) {
+                        if ([[model.asset valueForKey:@"uniformTypeIdentifier"]
+                                isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+                            NSMutableDictionary *gifInfo = [[NSMutableDictionary alloc] init];
+                            [gifInfo setObject:@"GIF" forKey:@"GIF"];
+                            [gifInfo setObject:imageData forKey:@"imageData"];
+                            [results addObject:gifInfo];
+                        } else {
+                            [results addObject:imageData];
+                        }
+                        [weakself handlePhotos:photos result:results full:isFull];
+                    }
+                }
+                progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+                    if (progress < 1 && !error && !weakself.isShowHUD) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            weakself.isShowHUD = YES;
+                            weakself.progressHUD =
+                                [RCMBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow
+                                                     animated:YES];
+                            weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloading");
+                        });
+                    }
+                    if (error) {
+                        // from iCloud download error
+                        weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloadFail");
+                        [weakself.progressHUD hideAnimated:YES afterDelay:1];
+                        weakself.isShowHUD = NO;
+                    }
+                }];
         }
     }
-}
-
-- (void)p_getOriginVideo:(RCAssetModel *)model photos:(NSMutableArray *)photos result:(NSMutableArray *)results full:(BOOL)isFull{
-    __weak typeof(self) weakself = self;
-    [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset
-        result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
-            if (![[[RCAssetHelper shareAssetHelper] getAssetIdentifier:model.asset] isEqualToString:imageIdentifier]) {
-                return;
-            }
-            if (avAsset) {
-                NSMutableDictionary *assetInfo = [[NSMutableDictionary alloc] initWithCapacity:5];
-                if (avAsset) {
-                    [assetInfo setObject:avAsset forKey:@"avAsset"];
-                }
-                if (model.thumbnailImage) {
-                    [assetInfo setObject:model.thumbnailImage forKey:@"thumbnail"];
-                }
-                NSString *localPath = @"";
-                if (@available(iOS 13.0, *)) {
-                    AVURLAsset *urlAsset = (AVURLAsset *)avAsset;
-                    // 添加判断，如果选择的是慢动作视频，这里返回的是 AVComposition 对象，这个时候没有 URL 属性
-                    if ([urlAsset respondsToSelector:@selector(URL)]) {
-                        NSURL *url = urlAsset.URL;
-                        NSString *tempString = [url relativePath];
-                        localPath = tempString;
-                    }
-                }
-                if (localPath == nil || localPath.length < 1) {
-                    NSArray *localPaths =
-                        [info[@"PHImageFileSandboxExtensionTokenKey"] componentsSeparatedByString:@";"];
-                    if (localPaths.count > 0) {
-                        localPath = [localPaths lastObject];
-                    }
-                }
-                localPath = [self moveVideoFileAt:localPath];
-
-                [assetInfo setObject:localPath forKey:@"localPath"];
-
-                // NSDictionary* assetInfo = @{@"avAsset":model.avAsset,@"thumbnail":!model.thumbnailImage ?
-                // [NSNull null] : model.thumbnailImage};
-                [results addObject:[assetInfo copy]];
-            }
-            [self handlePhotos:photos result:results full:isFull];
-        }
-        progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
-            if (progress < 1 && !error && !weakself.isShowHUD) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    weakself.isShowHUD = YES;
-                    weakself.progressHUD =
-                        [RCMBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
-                    weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloading");
-                });
-            }
-            if (error) {
-                // from iCloud download error
-                weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloadFail");
-                [weakself.progressHUD hideAnimated:YES afterDelay:1];
-                weakself.isShowHUD = NO;
-            }
-    }];
-}
-
-- (void)p_getOriginImageData:(RCAssetModel *)model photos:(NSMutableArray *)photos result:(NSMutableArray *)results full:(BOOL)isFull{
-    __weak typeof(self) weakself = self;
-    [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model
-        result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
-            BOOL downloadFinined = (![[info objectForKey:PHImageCancelledKey] boolValue] &&
-                                    ![info objectForKey:PHImageErrorKey] &&
-                                    ![[info objectForKey:PHImageResultIsDegradedKey] boolValue]);
-            if (downloadFinined && imageData) {
-                if ([[model.asset valueForKey:@"uniformTypeIdentifier"]
-                        isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-                    NSMutableDictionary *gifInfo = [[NSMutableDictionary alloc] init];
-                    [gifInfo setObject:@"GIF" forKey:@"GIF"];
-                    [gifInfo setObject:imageData forKey:@"imageData"];
-                    [results addObject:gifInfo];
-                } else {
-                    [results addObject:imageData];
-                }
-                [weakself handlePhotos:photos result:results full:isFull];
-            }
-        }
-        progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
-            if (progress < 1 && !error && !weakself.isShowHUD) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    weakself.isShowHUD = YES;
-                    weakself.progressHUD =
-                        [RCMBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow
-                                             animated:YES];
-                    weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloading");
-                });
-            }
-            if (error) {
-                // from iCloud download error
-                weakself.progressHUD.label.text = RCLocalizedString(@"iCloudDownloadFail");
-                [weakself.progressHUD hideAnimated:YES afterDelay:1];
-                weakself.isShowHUD = NO;
-            }
-        }];
 }
 
 - (void)pushImagePickerController:(RCAlbumModel *)assetsGroup animated:(BOOL)animated {

@@ -20,7 +20,7 @@
 @property (nonatomic, strong) UILabel *readallLabel;
 @property (nonatomic, strong) UIView *container;
 @property (nonatomic, strong) UIView *line;
-@property (nonatomic, strong) RCBaseImageView *arrow;
+@property (nonatomic, strong) UIImageView *arrow;
 @end
 
 @implementation RCPublicServiceImgTxtMsgCell
@@ -271,9 +271,9 @@
     return _line;
 }
 
-- (RCBaseImageView *)arrow {
+- (UIImageView *)arrow {
     if (!_arrow) {
-        _arrow = [RCBaseImageView new];
+        _arrow = [UIImageView new];
         [_arrow setImage:RCResourceImage(@"right_arrow")];
         [self.container addSubview:_arrow];
     }

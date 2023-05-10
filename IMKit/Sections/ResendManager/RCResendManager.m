@@ -86,7 +86,7 @@
         if (RCKitConfigCenter.message.enableMessageResend && [self isResendErrorCode:code]) {
             NSString *key = [NSString stringWithFormat:@"%ld", messageId];
             if (![self.messageCacheDict objectForKey:key]) {
-                RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
+                RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
                 if(message != nil) {
                     [self.messageCacheDict setObject:message forKey:key];
                     [self.messageIds addObject:key];

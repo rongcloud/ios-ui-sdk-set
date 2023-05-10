@@ -10,10 +10,9 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"
-#import "RCBaseImageView.h"
 @interface RCCustomerServiceGroupCell ()
 
-@property (nonatomic, strong) RCBaseImageView *selectImageView;
+@property (nonatomic, strong) UIImageView *selectImageView;
 
 @end
 @implementation RCCustomerServiceGroupCell
@@ -47,7 +46,7 @@
     self.groupName.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     [self.contentView addSubview:self.groupName];
 
-    self.selectImageView = [[RCBaseImageView alloc]
+    self.selectImageView = [[UIImageView alloc]
         initWithFrame:CGRectMake((45 - 13) / 2, (self.contentView.frame.size.height - 10) / 2, 13, 10)];
     self.selectImageView.image = RCResourceImage(@"check");
     [self.contentView addSubview:self.selectImageView];

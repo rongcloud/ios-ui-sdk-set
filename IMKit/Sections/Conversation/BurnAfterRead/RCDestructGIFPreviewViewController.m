@@ -10,8 +10,9 @@
 #import "RCGIFImage.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
+#import <AssetsLibrary/AssetsLibrary.h>
 #import "RCDestructCountDownButton.h"
-#import "RCCoreClient+Destructing.h"
+#import "RCIMClient+Destructing.h"
 #import "RCImageMessageProgressView.h"
 #import "RCSemanticContext.h"
 
@@ -55,7 +56,7 @@
 - (void)addSubViews {
     [self.view addSubview:self.gifView];
     [self.view addSubview:self.rightTopButton];
-    NSNumber *duration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
+    NSNumber *duration = [[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
     if (duration != nil && [duration integerValue] < 30) {
         [self.rightTopButton setDestructCountDownButtonHighlighted];
     }
@@ -66,10 +67,10 @@
     if (!self.messageModel) {
         return;
     }
-    RCMessage *msg = [[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId];
+    RCMessage *msg = [[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId];
     RCGIFMessage *gifMessage = (RCGIFMessage *)msg.content;
     if (gifMessage && gifMessage.localPath.length > 0) {
-        [[RCCoreClient sharedCoreClient] messageBeginDestruct:msg];
+        [[RCIMClient sharedRCIMClient] messageBeginDestruct:msg];
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             weakSelf.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
@@ -107,7 +108,7 @@
 }
 
 - (void)showFailedView{
-    RCBaseImageView *failedImageView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"broken")];
+    UIImageView *failedImageView = [[UIImageView alloc] initWithImage:RCResourceImage(@"broken")];
     failedImageView.image = RCResourceImage(@"broken");
     failedImageView.frame = CGRectMake(0, 0, 81, 60);
     failedImageView.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2-60);

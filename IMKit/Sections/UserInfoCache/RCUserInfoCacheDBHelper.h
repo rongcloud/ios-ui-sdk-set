@@ -9,7 +9,7 @@
 #import "RCConversationInfo.h"
 #import "RCloudFMDatabase.h"
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @interface RCUserInfoCacheDBHelper : NSObject
 

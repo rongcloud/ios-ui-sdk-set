@@ -11,7 +11,7 @@
 #import "RCUserListTableViewCell.h"
 #import "RCKitConfig.h"
 #import "RCloudImageView.h"
-#import "RCBaseTableView.h"
+
 @interface RCUserListViewController () <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate,
                                         UISearchControllerDelegate, UISearchResultsUpdating> {
     NSMutableArray *_tempOtherArr;
@@ -19,7 +19,7 @@
     NSArray *allKeys;
 }
 
-@property (nonatomic, strong) RCBaseTableView *tableView;
+@property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) NSMutableArray *dataArr;
 @property (nonatomic, strong) UISearchController *searchController; //搜索VC
 @property (nonatomic, strong) dispatch_queue_t sortDataQueue;
@@ -202,7 +202,7 @@
     dispatch_async(self.sortDataQueue, ^{
         [self.dataArr removeAllObjects];
         for (NSString *userId in userIdList) {
-            if (![userId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
+            if (![userId isEqualToString:[RCIMClient sharedRCIMClient].currentUserInfo.userId]) {
                 RCUserInfo *userInfo = [self.dataSource getSelectingUserInfo:userId];
                 if (userInfo) {
                     [self.dataArr addObject:userInfo];
@@ -382,9 +382,9 @@
     return _searchController;
 }
 
-- (RCBaseTableView *)tableView {
+- (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[RCBaseTableView alloc] initWithFrame:CGRectMake(0.0, 0.0, kScreenWidth, kScreenHeight)
+        _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0.0, 0.0, kScreenWidth, kScreenHeight)
                                                   style:UITableViewStyleGrouped];
         _tableView.estimatedRowHeight = 0;
         _tableView.estimatedSectionHeaderHeight = 0;

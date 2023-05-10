@@ -12,7 +12,6 @@
 #import "RCStickerMessage.h"
 #import "RCStickerUtility.h"
 #import "RCStickerPreviewView.h"
-#import "RongStickerAdaptiveHeader.h"
 #define ScreenWidth [UIScreen mainScreen].bounds.size.width
 #define CellIdentifier @"CellIdentifier"
 
@@ -20,13 +19,13 @@ static CGFloat const RCStickerPreviewViewWidth = 150.0;
 static CGFloat const RCStickerPreviewViewHeight = 168.0;
 static CGFloat const RCStickerPreviewBottomInset = 4.0;
 @interface RCStickerCollectionViewCell ()
-@property (nonatomic, strong) RCBaseImageView *thumbImageView;
+@property (nonatomic, strong) UIImageView *thumbImageView;
 @end
 
 @interface RCStickerCollectionView () <UICollectionViewDataSource, UICollectionViewDelegate,
                                        UICollectionViewDelegateFlowLayout>
 
-@property (nonatomic, strong) RCBaseCollectionView *collectionView;
+@property (nonatomic, strong) UICollectionView *collectionView;
 
 @property (nonatomic, strong) NSArray<RCStickerSingle *> *stickers;
 @property (nonatomic, weak) RCStickerCollectionViewCell *lastPreviewCell;
@@ -234,14 +233,14 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
 }
 
 #pragma mark - Lazy load
-- (RCBaseCollectionView *)collectionView {
+- (UICollectionView *)collectionView {
     if (_collectionView == nil) {
         UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
         flowLayout.itemSize = (CGSize){60, 60 + 22};
         flowLayout.sectionInset = UIEdgeInsetsMake(6, 27, 6, 27);
         flowLayout.minimumLineSpacing = 0;
         flowLayout.minimumInteritemSpacing = (self.frame.size.width - 4 * 60 - 27 * 2) / 3;
-        _collectionView = [[RCBaseCollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
+        _collectionView = [[UICollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
         _collectionView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
         _collectionView.dataSource = self;
         _collectionView.delegate = self;

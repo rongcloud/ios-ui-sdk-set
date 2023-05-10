@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RongContactCardAdaptiveHeader.h"
+
 @interface RCCCUIBarButtonItem : UIBarButtonItem
 
-@property (nonatomic, strong) RCBaseButton *button;
+@property (nonatomic, strong) UIButton *button;
 
 //初始化包含图片的UIBarButtonItem
 - (RCCCUIBarButtonItem *)initContainImage:(UIImage *)buttonImage

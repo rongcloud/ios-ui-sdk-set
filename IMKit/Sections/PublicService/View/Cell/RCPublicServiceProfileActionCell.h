@@ -7,14 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
+
 typedef void (^clickDone)(void);
 
 @protocol RCPublicServiceProfileActionDelegate
 - (void)onAction;
 @end
 
-@interface RCPublicServiceProfileActionCell : RCBaseTableViewCell
+@interface RCPublicServiceProfileActionCell : UITableViewCell
 - (void)setTitleText:(NSString *)title andBackgroundColor:(UIColor *)color;
 
 @property (nonatomic, copy) clickDone onClickEvent;

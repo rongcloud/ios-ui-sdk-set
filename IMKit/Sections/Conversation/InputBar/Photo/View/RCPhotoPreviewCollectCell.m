@@ -12,9 +12,8 @@
 #import "RCGIFImageView.h"
 #import "RCGIFImage.h"
 #import <MobileCoreServices/UTCoreTypes.h>
-#import "RCBaseScrollView.h"
 @interface RCPhotoPreviewCollectCell () <UIScrollViewDelegate>
-@property (nonatomic, strong) RCBaseScrollView *scrollView;
+@property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) RCGIFImageView *previewImageView;
 @property (nonatomic, assign) int32_t imageRequestID;
 @property (nonatomic, strong) RCAssetModel *model;
@@ -100,7 +99,7 @@
 
 #pragma mark - Private Methods
 - (void)creatPreviewCollectionCell {
-    _scrollView = [[RCBaseScrollView alloc] initWithFrame:self.bounds];
+    _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
     _scrollView.maximumZoomScale = ImageMaximumZoomScale;
     _scrollView.minimumZoomScale = 1.0;
     _scrollView.multipleTouchEnabled = YES;

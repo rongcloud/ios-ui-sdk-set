@@ -7,9 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
 @class RCCSLeaveMessageItem;
-@interface RCCSLeaveMessagesCell : RCBaseTableViewCell
+@interface RCCSLeaveMessagesCell : UITableViewCell
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UITextField *infoTextField;
 @property (nonatomic, strong) UITextView *infoTextView;

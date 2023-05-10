@@ -9,10 +9,10 @@
 #import <UIKit/UIKit.h>
 #import "RCAttributedLabel.h"
 #import "RCMessageModel.h"
-#import "RCBaseScrollView.h"
+
 @protocol RCTextPreviewViewDelegate;
 
-@interface RCTextPreviewView : RCBaseScrollView
+@interface RCTextPreviewView : UIScrollView
 
 + (void)showText:(NSString *)text messageId:(long)messageId delegate:(id<RCTextPreviewViewDelegate>)delegate;
 

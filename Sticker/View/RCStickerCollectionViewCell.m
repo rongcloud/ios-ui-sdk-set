@@ -17,7 +17,7 @@
 
 @property (nonatomic, strong) NSString *packageId;
 
-@property (nonatomic, strong) RCBaseImageView *thumbImageView;
+@property (nonatomic, strong) UIImageView *thumbImageView;
 
 @property (nonatomic, strong) UILabel *digestLabel;
 
@@ -62,9 +62,9 @@
     weakSelf.digestLabel.text = model.digest;
 }
 
-- (RCBaseImageView *)thumbImageView {
+- (UIImageView *)thumbImageView {
     if (_thumbImageView == nil) {
-        _thumbImageView = [[RCBaseImageView alloc] init];
+        _thumbImageView = [[UIImageView alloc] init];
         _thumbImageView.backgroundColor = [UIColor clearColor];
         _thumbImageView.contentMode = UIViewContentModeScaleAspectFit;
         if ([RCKitUtility isRTL]) {

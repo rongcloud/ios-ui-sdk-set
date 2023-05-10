@@ -8,8 +8,8 @@
 
 #import "RCPublicServiceProfileViewController.h"
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
-@interface RCPublicServiceProfileOwnerCell : RCBaseTableViewCell
+
+@interface RCPublicServiceProfileOwnerCell : UITableViewCell
 - (void)setTitle:(NSString *)title
          Content:(NSString *)content
              url:(NSString *)urlString

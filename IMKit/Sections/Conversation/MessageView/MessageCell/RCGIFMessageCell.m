@@ -28,21 +28,21 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 @property (nonatomic, strong) RCGIFMessageProgressView *gifDownLoadPropressView;
 
-@property (nonatomic, strong) RCBaseButton *loadBackButton;
+@property (nonatomic, strong) UIButton *loadBackButton;
 
-@property (nonatomic, strong) RCBaseImageView *needLoadImageView;
+@property (nonatomic, strong) UIImageView *needLoadImageView;
 
-@property (nonatomic, strong) RCBaseImageView *loadingImageView;
+@property (nonatomic, strong) UIImageView *loadingImageView;
 
-@property (nonatomic, strong) RCBaseImageView *loadfailedImageView;
+@property (nonatomic, strong) UIImageView *loadfailedImageView;
 
 @property (nonatomic, strong) UILabel *sizeLabel;
 
-@property (nonatomic, strong) RCBaseImageView *destructPicture;
+@property (nonatomic, strong) UIImageView *destructPicture;
 
 @property (nonatomic, strong) UILabel *destructLabel;
 
-@property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
+@property (nonatomic, strong) UIImageView *destructBackgroundView;
 
 @end
 
@@ -418,9 +418,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _progressView;
 }
 
-- (RCBaseButton *)loadBackButton {
+- (UIButton *)loadBackButton {
     if (!_loadBackButton) {
-        _loadBackButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+        _loadBackButton = [[UIButton alloc] initWithFrame:CGRectZero];
         _loadBackButton.backgroundColor = RGBCOLOR(216, 216, 216);
         [_loadBackButton addTarget:self
                             action:@selector(didClickLoadBackButton:)
@@ -430,9 +430,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _loadBackButton;
 }
 
-- (RCBaseImageView *)needLoadImageView {
+- (UIImageView *)needLoadImageView {
     if (!_needLoadImageView) {
-        _needLoadImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+        _needLoadImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _needLoadImageView.image = RCResourceImage(@"gif_needload");
         _needLoadImageView.hidden = YES;
         _needLoadImageView.tag = 1;
@@ -441,9 +441,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _needLoadImageView;
 }
 
-- (RCBaseImageView *)loadingImageView {
+- (UIImageView *)loadingImageView {
     if (!_loadingImageView) {
-        _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+        _loadingImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _loadingImageView.image = RCResourceImage(@"gif_loading");
         _loadingImageView.hidden = YES;
         _loadingImageView.tag = 2;
@@ -463,10 +463,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _gifDownLoadPropressView;
 }
 
-- (RCBaseImageView *)loadfailedImageView {
+- (UIImageView *)loadfailedImageView {
     if (!_loadfailedImageView) {
         _loadfailedImageView =
-            [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+            [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _loadfailedImageView.image = RCResourceImage(@"gif_loadfailed");
         _loadfailedImageView.hidden = YES;
         _loadfailedImageView.tag = 4;
@@ -489,9 +489,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _sizeLabel;
 }
 
-- (RCBaseImageView *)destructBackgroundView{
+- (UIImageView *)destructBackgroundView{
     if (!_destructBackgroundView) {
-        _destructBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
+        _destructBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
     }
     return _destructBackgroundView;
 }
@@ -506,9 +506,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _destructLabel;
 }
 
-- (RCBaseImageView *)destructPicture{
+- (UIImageView *)destructPicture{
     if (!_destructPicture) {
-        _destructPicture = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
+        _destructPicture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
     }
     return _destructPicture;
 }

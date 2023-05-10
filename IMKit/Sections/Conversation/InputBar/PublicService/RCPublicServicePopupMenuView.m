@@ -10,12 +10,10 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 #import <RongPublicService/RongPublicService.h>
-#import "RCBaseButton.h"
-#import "RCBaseImageView.h"
 @interface RCPublicServicePopupMenuView () <UIGestureRecognizerDelegate>
 @property (nonatomic, strong) NSArray *menuItems;        // RCPublicServiceMenuItem
 @property (nonatomic, strong) NSMutableArray *itemViews; // UILabel
-@property (nonatomic, strong) RCBaseImageView *backgroundImageView;
+@property (nonatomic, strong) UIImageView *backgroundImageView;
 @end
 
 #define RC_PUBLIC_SERVICE_MENU_ITEM_HEIGHT 44
@@ -69,7 +67,7 @@
 - (void)setup {
     self.layer.cornerRadius = 5;
     self.layer.masksToBounds = YES;
-    self.backgroundImageView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
+    self.backgroundImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
     [self addSubview:self.backgroundImageView];
     self.backgroundImageView.userInteractionEnabled = YES;
     UITapGestureRecognizer *tapGesture =
@@ -133,7 +131,7 @@
             [self.backgroundImageView addSubview:line];
         }
         RCPublicServiceMenuItem *menuItem = self.menuItems[i];
-        RCBaseButton *btn = [[RCBaseButton alloc] initWithFrame:CGRectMake(RC_PUBLIC_SERVICE_MENU_ITEM_PENDING_LEFT,
+        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(RC_PUBLIC_SERVICE_MENU_ITEM_PENDING_LEFT,
                                                                    (i * RC_PUBLIC_SERVICE_MENU_ITEM_HEIGHT) +
                                                                        RC_PUBLIC_SERVICE_MENU_SEPARATOR_HEIGHT * i +
                                                                        RC_PUBLIC_SERVICE_MENU_MARGIN_TOP,

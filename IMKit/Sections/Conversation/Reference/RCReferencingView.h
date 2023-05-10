@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "RCMessageModel.h"
-#import "RCBaseButton.h"
 @class RCReferencingView;
 
 @protocol RCReferencingViewDelegate <NSObject>
@@ -24,7 +23,7 @@
 /*!
  关闭引用 button
 */
-@property (nonatomic, strong) RCBaseButton *dismissButton;
+@property (nonatomic, strong) UIButton *dismissButton;
 
 /*!
  被引用消息发送者名称

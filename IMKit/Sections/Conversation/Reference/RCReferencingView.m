@@ -157,9 +157,9 @@
 }
 
 #pragma mark - Getters and Setters
-- (RCBaseButton *)dismissButton {
+- (UIButton *)dismissButton {
     if (!_dismissButton) {
-        _dismissButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+        _dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_dismissButton setImage:RCResourceImage(@"referencing_view_dismiss_icon") forState:UIControlStateNormal];
         [_dismissButton addTarget:self
                            action:@selector(didClickDismissButton:)

@@ -24,7 +24,7 @@
 - (void)setupSelectDirectoryCellView {
     //加载两个UI控件
 
-    _directoryImageView = [RCBaseImageView new];
+    _directoryImageView = [UIImageView new];
     _directoryImageView.translatesAutoresizingMaskIntoConstraints = NO;
     _directoryImageView.image = RCResourceImage(@"folder");
     [self.contentView addSubview:_directoryImageView];

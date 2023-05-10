@@ -26,8 +26,8 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 @property (nonatomic, strong) UITextField *messageTextField;
 @property (nonatomic, strong) UIView *separationView2;
 @property (nonatomic, strong) UIView *separationView3;
-@property (nonatomic, strong) RCBaseButton *cancleButton;
-@property (nonatomic, strong) RCBaseButton *sendButton;
+@property (nonatomic, strong) UIButton *cancleButton;
+@property (nonatomic, strong) UIButton *sendButton;
 @property (nonatomic, strong) NSDictionary *subViewsDic;
 @property (nonatomic) RCConversationType conversationType;
 @property (nonatomic, strong) NSString *targetId;
@@ -35,7 +35,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 @property (nonatomic, strong) RCCCGroupInfo *groupInfo;
 
 @property (nonatomic, assign) NSInteger destructDuration;
-@property (nonatomic, strong) RCBaseImageView *arrow;
+@property (nonatomic, strong) UIImageView *arrow;
 @end
 
 @implementation RCSendCardMessageView
@@ -157,7 +157,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_separationView3];
 
     //取消按钮
-    _cancleButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+    _cancleButton = [[UIButton alloc] initWithFrame:CGRectZero];
     _cancleButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
     [_cancleButton setTitleColor:[RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]
                                                           darkColor:[UIColor colorWithHexString:@"aaaaaa" alpha:1]]
@@ -168,7 +168,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_cancleButton];
 
     //发送按钮
-    _sendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+    _sendButton = [[UIButton alloc] initWithFrame:CGRectZero];
     _sendButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
     [_sendButton setTitleColor:[UIColor colorWithHexString:@"0099ff" alpha:1.f] forState:UIControlStateNormal];
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
@@ -176,7 +176,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     _sendButton.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_sendButton];
     
-    _arrow = [RCBaseImageView new];
+    _arrow = [UIImageView new];
     [_arrow setImage:RCResourceImage(@"right_arrow")];
     _arrow.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_arrow];

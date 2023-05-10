@@ -12,13 +12,13 @@
 #import "RCKitCommonDefine.h"
 #import "RCPhotoPreviewCollectCell.h"
 #import "RCVideoPreviewCell.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCAlertView.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
 #import "RCKitConfig.h"
 #import "RCSemanticContext.h"
-#import "RCBaseButton.h"
+
 static NSString *const reuseIdentifier = @"Cell";
 static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
@@ -26,11 +26,11 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 
 @property (nonatomic, strong) UIView *topView;
-@property (nonatomic, strong) RCBaseButton *selectedButton;
+@property (nonatomic, strong) UIButton *selectedButton;
 @property (nonatomic, strong) UIView *bottomView;
-@property (nonatomic, strong) RCBaseButton *fullButton;
-@property (nonatomic, strong) RCBaseButton *editButton;
-@property (nonatomic, strong) RCBaseButton *sendButton;
+@property (nonatomic, strong) UIButton *fullButton;
+@property (nonatomic, strong) UIButton *editButton;
+@property (nonatomic, strong) UIButton *sendButton;
 
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *previewPhotosArr;
 @property (nonatomic, strong) NSArray<RCAssetModel *> *allPhotosArr;
@@ -372,7 +372,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     self.topView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, originY + 44)];
     _topView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_topView];
-    RCBaseButton *backButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
     UIImage *img = RCResourceImage(@"navigator_white_back");
     img = [RCSemanticContext imageflippedForRTL:img];
     [backButton setImage:img forState:UIControlStateNormal];
@@ -387,7 +387,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [backButton addTarget:self action:@selector(backButtonAction) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:backButton];
 
-    RCBaseButton *stateButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+    UIButton *stateButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [stateButton setImage:RCResourceImage(@"photo_preview_unselected") forState:UIControlStateNormal];
     [stateButton setImage:RCResourceImage(@"photo_preview_selected") forState:UIControlStateSelected];
     [stateButton sizeToFit];
@@ -413,7 +413,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     _bottomView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_bottomView];
     // add button for bottom bar
-    _sendButton = [[RCBaseButton alloc] init];
+    _sendButton = [[UIButton alloc] init];
     _sendButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_sendButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
@@ -421,7 +421,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [_sendButton addTarget:self action:@selector(sendImageMessageButton:) forControlEvents:UIControlEventTouchUpInside];
     [_bottomView addSubview:_sendButton];
     [self _updateBottomSendImageCountButton];
-    _fullButton = [[RCBaseButton alloc] init];
+    _fullButton = [[UIButton alloc] init];
     [_fullButton setTitle:[NSString stringWithFormat: @"%@", RCLocalizedString(@"Full_Image")]
                  forState:UIControlStateNormal];
     _fullButton.contentMode = UIViewContentModeLeft;
@@ -429,7 +429,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [_fullButton addTarget:self action:@selector(fullBtnCliced:) forControlEvents:UIControlEventTouchUpInside];
     [_bottomView addSubview:_fullButton];
 
-    _editButton = [RCBaseButton buttonWithType:(UIButtonTypeCustom)];
+    _editButton = [UIButton buttonWithType:(UIButtonTypeCustom)];
     [_editButton setTitle:RCLocalizedString(@"Edit") forState:(UIControlStateNormal)];
     [_editButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
                       forState:UIControlStateNormal];
@@ -566,7 +566,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                     }
                                      dispatch_async(dispatch_get_main_queue(), ^{
                                          if (imageData.length >
-                                             [[RCCoreClient sharedCoreClient] getGIFLimitSize] * 1024) {
+                                             [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
                                              completeBlock(NO);
                                              UIAlertController *alertController = [UIAlertController
                                                  alertControllerWithTitle:RCLocalizedString(@"GIFAboveMaxSize")

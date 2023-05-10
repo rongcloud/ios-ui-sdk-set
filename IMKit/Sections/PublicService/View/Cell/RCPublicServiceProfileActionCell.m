@@ -9,9 +9,9 @@
 #import "RCPublicServiceProfileActionCell.h"
 #import "RCPublicServiceViewConstants.h"
 #import "RCKitConfig.h"
-#import "RCBaseButton.h"
+
 @interface RCPublicServiceProfileActionCell ()
-@property (nonatomic, strong) RCBaseButton *button;
+@property (nonatomic, strong) UIButton *button;
 @end
 
 @implementation RCPublicServiceProfileActionCell
@@ -32,7 +32,7 @@
 
     self.frame = bounds;
 
-    self.button = [RCBaseButton buttonWithType:UIButtonTypeRoundedRect];
+    self.button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [self.button.layer setCornerRadius:5.0];
     CGRect frame = self.button.frame;
     self.backgroundColor = [UIColor clearColor];

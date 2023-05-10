@@ -9,18 +9,14 @@
 #import "RCEmojiTabView.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
-#import "RCBaseCollectionView.h"
-#import "RCBaseCollectionViewCell.h"
-#import "RCBaseButton.h"
-#import "RCBaseImageView.h"
 #define RCEmotionCollectCellIdentifier @"RCEmotionCollectCell"
 @interface RCEmojiTabView()<UICollectionViewDelegate,UICollectionViewDataSource>
 @property (nonatomic, assign) BOOL showAddButton;
 @property (nonatomic, assign) BOOL showSettingButton;
-@property (nonatomic, strong) RCBaseButton *addBtn;
-@property (nonatomic, strong) RCBaseButton *settingBtn;
-@property (nonatomic, strong) RCBaseButton *sendBtn;
-@property (nonatomic, strong) RCBaseCollectionView *emotionsListView;
+@property (nonatomic, strong) UIButton *addBtn;
+@property (nonatomic, strong) UIButton *settingBtn;
+@property (nonatomic, strong) UIButton *sendBtn;
+@property (nonatomic, strong) UICollectionView *emotionsListView;
 @property (nonatomic, strong) NSArray *emotionsListData;
 @property (nonatomic, assign) int currentIndex;
 @end
@@ -78,12 +74,12 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    RCBaseCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:RCEmotionCollectCellIdentifier
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:RCEmotionCollectCellIdentifier
                                                                            forIndexPath:indexPath];
     for (UIView *view in cell.contentView.subviews) {
         [view removeFromSuperview];
     }
-    RCBaseImageView *imageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(12, 8, cell.contentView.frame.size.width-24, cell.contentView.frame.size.height-16)];
+    UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(12, 8, cell.contentView.frame.size.width-24, cell.contentView.frame.size.height-16)];
     imageView.image = self.emotionsListData[indexPath.row];
     [cell.contentView addSubview:imageView];
     
@@ -166,9 +162,9 @@
 }
 
 #pragma mark - Getter
-- (RCBaseButton *)sendBtn{
+- (UIButton *)sendBtn{
     if (!_sendBtn) {
-        _sendBtn = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+        _sendBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         _sendBtn.tag = 333;
         _sendBtn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         [_sendBtn setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
@@ -177,18 +173,18 @@
     return _sendBtn;
 }
 
-- (RCBaseButton *)addBtn{
+- (UIButton *)addBtn{
     if (!_addBtn) {
-        _addBtn = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+        _addBtn = [[UIButton alloc] initWithFrame:CGRectZero];
         [_addBtn setImage:RCResourceImage(@"add") forState:UIControlStateNormal];
         [_addBtn addTarget:self action:@selector(addBtnHandle:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _addBtn;
 }
 
-- (RCBaseButton *)settingBtn{
+- (UIButton *)settingBtn{
     if (!_settingBtn) {
-        _settingBtn = [[RCBaseButton alloc] init];
+        _settingBtn = [[UIButton alloc] init];
         [_settingBtn setImage:RCResourceImage(@"rc_setting") forState:UIControlStateNormal];
         [_settingBtn addTarget:self
                             action:@selector(settingBtnHandle:)
@@ -198,14 +194,14 @@
     return _settingBtn;
 }
 
-- (RCBaseCollectionView *)emotionsListView{
+- (UICollectionView *)emotionsListView{
     if (!_emotionsListView) {
         UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
         flowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
         flowLayout.itemSize = CGSizeMake(46, self.frame.size.height);
         flowLayout.minimumLineSpacing = 0;
         _emotionsListView =
-            [[RCBaseCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:flowLayout];
+            [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:flowLayout];
         _emotionsListView.delegate = self;
         _emotionsListView.dataSource = self;
         _emotionsListView.scrollEnabled = YES;

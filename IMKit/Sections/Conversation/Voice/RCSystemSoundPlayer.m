@@ -78,7 +78,7 @@ static void playSoundEnd(SystemSoundID mySSID, void *myself) {
 }
 
 - (void)needPlaySoundByMessage:(RCMessage *)rcMessage {
-    if (RCSDKRunningMode_Background == [RCCoreClient sharedCoreClient].sdkRunningMode) {
+    if (RCSDKRunningMode_Background == [RCIMClient sharedRCIMClient].sdkRunningMode) {
         return;
     }
     //如果来信消息时正在播放或录制语音消息

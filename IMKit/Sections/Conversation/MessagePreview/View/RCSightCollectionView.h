@@ -6,8 +6,8 @@
 //  Copyright © 2017年 RongCloud. All rights reserved.
 //
 
-#import "RCBaseCollectionView.h"
+#import <UIKit/UIKit.h>
 
-@interface RCSightCollectionView : RCBaseCollectionView
+@interface RCSightCollectionView : UICollectionView
 
 @end

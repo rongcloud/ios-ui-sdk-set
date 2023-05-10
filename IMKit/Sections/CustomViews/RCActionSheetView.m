@@ -10,13 +10,12 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"
-#import "RCBaseTableView.h"
-#import "RCBaseTableViewCell.h"
+
 #define Space_Line 6
 @interface RCActionSheetView()
 @property (nonatomic, strong) UIView *maskView; //背景
 
-@property (nonatomic, strong) RCBaseTableView *tableView; //展示表格
+@property (nonatomic, strong) UITableView *tableView; //展示表格
 
 @property (nonatomic, strong) NSArray *cellArray; //表格数组
 
@@ -117,9 +116,9 @@
     return _maskView;
 }
 
-- (RCBaseTableView *)tableView {
+- (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[RCBaseTableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
+        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
         _tableView.estimatedRowHeight = 0;
         _tableView.estimatedSectionHeaderHeight = 0;
         _tableView.estimatedSectionFooterHeight = 0;
@@ -145,7 +144,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OneCell"];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OneCell"];
     if (indexPath.section == 0) {
         cell.textLabel.text = _cellArray[indexPath.row];
     } else {

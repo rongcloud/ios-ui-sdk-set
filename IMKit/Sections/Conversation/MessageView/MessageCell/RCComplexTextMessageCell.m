@@ -14,9 +14,9 @@
 #import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
-#import "RCCoreClient+Destructing.h"
+#import "RCIMClient+Destructing.h"
 #import "RCMessageModel+Txt.h"
-#import "RCBaseButton.h"
+
 #define TEXT_SPACE_LEFT 12
 #define TEXT_SPACE_RIGHT 12
 #define TEXT_SPACE_TOP 9.5
@@ -28,10 +28,10 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 
 @interface RCComplexTextMessageCell()<RCAsyncLabelDelegate>
 @property (nonatomic, strong) RCAsyncLabel *contentAyncLab;
-@property (nonatomic, strong) RCBaseButton *acceptBtn;
-@property (nonatomic, strong) RCBaseButton *rejectBtn;
+@property (nonatomic, strong) UIButton *acceptBtn;
+@property (nonatomic, strong) UIButton *rejectBtn;
 @property (nonatomic, strong) UIView *separateLine;
-@property (nonatomic, strong) RCBaseImageView *destructTextImage;
+@property (nonatomic, strong) UIImageView *destructTextImage;
 @property (nonatomic, strong) UILabel *tipLablel;
 @end
 
@@ -76,8 +76,8 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0 &&
         textMessage.destructDuration > 0) {
-        [[RCCoreClient sharedCoreClient]
-            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
+        [[RCIMClient sharedRCIMClient]
+            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
     }
 }
 
@@ -136,7 +136,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
     self.destructTextImage.hidden = YES;
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
-        ![[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId]) {
+        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId]) {
         self.contentAyncLab.text = RCLocalizedString(@"ClickToView");
         self.destructTextImage.hidden = NO;
     }else if(textMessage){
@@ -177,7 +177,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
             self.tipLablel.textColor = [UIColor lightGrayColor];
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
             self.acceptBtn =
-                [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 95 - 7 - 3, bubbleHeight - 18, 15, 15)];
+                [[UIButton alloc] initWithFrame:CGRectMake(bubbleWidth - 95 - 7 - 3, bubbleHeight - 18, 15, 15)];
             [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete") forState:UIControlStateNormal];
             [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete_hover") forState:UIControlStateHighlighted];
 
@@ -190,9 +190,9 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
 
             self.acceptBtn =
-                [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 30 - 7 - 6, bubbleHeight - 18, 15, 15)];
+                [[UIButton alloc] initWithFrame:CGRectMake(bubbleWidth - 30 - 7 - 6, bubbleHeight - 18, 15, 15)];
             self.rejectBtn =
-                [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 15 - 7, bubbleHeight - 18, 15, 15)];
+                [[UIButton alloc] initWithFrame:CGRectMake(bubbleWidth - 15 - 7, bubbleHeight - 18, 15, 15)];
             [self.acceptBtn setImage:RCResourceImage(@"cs_yes") forState:UIControlStateNormal];
             [self.acceptBtn setImage:RCResourceImage(@"cs_yes_hover") forState:UIControlStateHighlighted];
 
@@ -246,7 +246,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     RCTextMessage *textMessage = (RCTextMessage *)model.content;
     CGSize textMessageSize;
     if (textMessage.destructDuration > 0 && model.messageDirection == MessageDirection_RECEIVE &&
-        ![[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:model.messageUId]) {
+        ![[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:model.messageUId]) {
         textMessageSize =
             [RCKitUtility getTextDrawingSize:RCLocalizedString(@"ClickToView")
                                         font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]
@@ -267,9 +267,9 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 
 #pragma mark - Getter & Setter
 
-- (RCBaseImageView *)destructTextImage{
+- (UIImageView *)destructTextImage{
     if (!_destructTextImage) {
-        _destructTextImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 13, 28)];
+        _destructTextImage = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 13, 28)];
         [_destructTextImage setImage:RCResourceImage(@"text_burn_img")];
         _destructTextImage.contentMode = UIViewContentModeScaleAspectFit;
         _destructTextImage.hidden = YES;

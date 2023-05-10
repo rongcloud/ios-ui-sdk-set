@@ -111,10 +111,10 @@
 }
 
 #pragma mark - Getters and Setters
-- (RCBaseScrollView *)emotionContainerView {
+- (UIScrollView *)emotionContainerView {
     if (!_emotionContainerView) {
         _emotionContainerView =
-            [[RCBaseScrollView alloc] initWithFrame:CGRectMake(0, 0, self.emojBoardView.frame.size.width, 186)];
+            [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, self.emojBoardView.frame.size.width, 186)];
         _loadedEmoticonPage = [NSMutableDictionary new];
         _emotionContainerView.pagingEnabled = YES;
         _emotionContainerView.showsHorizontalScrollIndicator = NO;

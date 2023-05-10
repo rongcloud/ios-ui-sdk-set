@@ -14,6 +14,7 @@
 #import "RCFileSelectorViewController.h"
 #import "RCMentionedStringRangeInfo.h"
 #import "RCUserListViewController.h"
+#import "RCExtNavigationController.h"
 #import <CoreText/CoreText.h>
 #import "RCCommonPhrasesListView.h"
 #import "RCVoiceRecordControl.h"
@@ -24,7 +25,6 @@
 #import "RCSightViewController+imkit.h"
 #import "RCLocationPickerViewController+imkit.h"
 #import "RCSemanticContext.h"
-#import "RCBaseButton.h"
 //单个cell的高度是70（RCPlaginBoardCellSize）*2 + 上下padding的高度14*2 ＋
 //上下两个图标之间的padding
 #define Height_EmojBoardView 223.5f
@@ -72,11 +72,13 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 @property (nonatomic, strong) UIView *commonPhrasesView;
 
-@property (nonatomic, strong) RCBaseButton *commonPhrasesButton;
+@property (nonatomic, strong) UIButton *commonPhrasesButton;
 
 @property (nonatomic, strong) RCCommonPhrasesListView *commonPhrasesListView;
 
 @property (nonatomic, strong) UIView *safeAreaView;
+
+@property (nonatomic, strong) CALayer *topLineLayer;
 
 @end
 
@@ -102,6 +104,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     self.keyboardFrame = CGRectZero;
     self.isNew = 0;
     [self addBottomAreaView];
+    [self.layer addSublayer:self.topLineLayer];
 }
 
 #pragma mark - Super Methods
@@ -113,15 +116,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if ([self.delegate respondsToSelector:@selector(chatInputBar:shouldChangeFrame:)]) {
         [self.delegate chatInputBar:self shouldChangeFrame:frame];
     }
-}
-
-- (void)drawRect:(CGRect)rect {
-    [super drawRect:rect];
-    //上边线
-    CALayer *layer = [CALayer layer];
-    layer.frame = CGRectMake(0, 0, self.frame.size.width, 0.5);
-    layer.backgroundColor = RCDYCOLOR(0xe3e5e6, 0x2f2f2f).CGColor;
-    [self.layer addSublayer:layer];
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -179,7 +173,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 - (void)openSystemAlbum {
     RCAlumListTableViewController *albumListVC = [[RCAlumListTableViewController alloc] init];
     albumListVC.delegate = self;
-    RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:albumListVC];
+    RCExtNavigationController *rootVC = [[RCExtNavigationController alloc] initWithRootViewController:albumListVC];
     [self.delegate presentViewController:rootVC functionTag:PLUGIN_BOARD_ITEM_ALBUM_TAG];
 }
 
@@ -247,7 +241,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         RCLocationPickerViewController *picker = [[locationPickType alloc] init];
         picker.conversationType = self.conversationType;
         picker.targetId = self.targetId;
-        RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:picker];
+        UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
         if ([RCSemanticContext isRTL]) {
             rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
         }
@@ -258,9 +252,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 //进入选择文件页面
 - (void)openFileSelector {
     RCFileSelectorViewController *picker =
-        [[RCFileSelectorViewController alloc] initWithRootPath:[RCCoreClient sharedCoreClient].fileStoragePath];
+        [[RCFileSelectorViewController alloc] initWithRootPath:[RCIMClient sharedRCIMClient].fileStoragePath];
     picker.delegate = self;
-    RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:picker];
+    UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:picker];
     if ([RCSemanticContext isRTL]) {
         rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
     }
@@ -815,9 +809,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     return _commonPhrasesView;
 }
 
-- (RCBaseButton *)commonPhrasesButton {
+- (UIButton *)commonPhrasesButton {
     if (!_commonPhrasesButton) {
-        _commonPhrasesButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(16, 10, 66, 25)];
+        _commonPhrasesButton = [[UIButton alloc] initWithFrame:CGRectMake(16, 10, 66, 25)];
         _commonPhrasesButton.backgroundColor = RCDYCOLOR(0xffffff, 0x1a1a1a);
         [_commonPhrasesButton.titleLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
         [_commonPhrasesButton setTitle:RCLocalizedString(@"common_phrases")
@@ -887,7 +881,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     userListVC.dataSource = self;
     userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
     userListVC.maxSelectedUserNumber = 1;
-    RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:userListVC];
+    UINavigationController *rootVC = [[UINavigationController alloc] initWithRootViewController:userListVC];
     if ([RCSemanticContext isRTL]) {
         rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
     }
@@ -1544,6 +1538,16 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         _menuContainerView.hidden = YES;
     }
     return _menuContainerView;
+}
+
+- (CALayer *)topLineLayer {
+    if (!_topLineLayer) {
+        CALayer *layer = [CALayer layer];
+        layer.frame = CGRectMake(0, 0, self.frame.size.width, 0.5);
+        layer.backgroundColor = RCDYCOLOR(0xe3e5e6, 0x2f2f2f).CGColor;
+        _topLineLayer = layer;
+    }
+    return _topLineLayer;
 }
 
 - (void)addBottomAreaView {

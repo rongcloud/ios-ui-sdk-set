@@ -6,7 +6,7 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import <UIKit/UIKit.h>
 @class RCPublicServiceMenuItem;
 @protocol RCPublicServicePopupMenuItemSelectedDelegate <NSObject>

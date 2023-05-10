@@ -7,7 +7,7 @@
 //
 
 #import "RCConversationCSUtil.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCCSAlertView.h"
 #import "RCCSEvaluateView.h"
 #import "RCAdminEvaluationView.h"
@@ -19,7 +19,6 @@
 #import "RCKitUtility.h"
 #import <RongCustomerService/RongCustomerService.h>
 #import "RCSemanticContext.h"
-#import "RCBaseNavigationController.h"
 @interface RCConversationCSUtil ()<RCCSAlertViewDelegate, RCAdminEvaluationViewDelegate, RCRobotEvaluationViewDelegate>
 @property (nonatomic, weak) RCConversationViewController *chatVC;
 @property (nonatomic, strong) RCCustomerServiceConfig *csConfig;
@@ -98,9 +97,9 @@
 
     if (!self.csInfo) {
         self.csInfo = [RCCustomerServiceInfo new];
-        self.csInfo.userId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
-        self.csInfo.nickName = [RCCoreClient sharedCoreClient].currentUserInfo.name;
-        self.csInfo.portraitUrl = [RCCoreClient sharedCoreClient].currentUserInfo.portraitUri;
+        self.csInfo.userId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+        self.csInfo.nickName = [RCIMClient sharedRCIMClient].currentUserInfo.name;
+        self.csInfo.portraitUrl = [RCIMClient sharedRCIMClient].currentUserInfo.portraitUri;
     }
     
     __weak typeof(self) weakSelf = self;
@@ -201,7 +200,7 @@
         [leaveMsgVC setLeaveMessageSuccess:^{
             RCInformationNotificationMessage *warningMsg =
                 [RCInformationNotificationMessage notificationWithMessage:@"您已提交留言。" extra:nil];
-            RCMessage *savedMsg = [[RCCoreClient sharedCoreClient] insertOutgoingMessage:weakSelf.chatVC.conversationType
+            RCMessage *savedMsg = [[RCIMClient sharedRCIMClient] insertOutgoingMessage:weakSelf.chatVC.conversationType
                                                                               targetId:weakSelf.chatVC.targetId
                                                                             sentStatus:SentStatus_SENT
                                                                                content:warningMsg];
@@ -374,8 +373,8 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             RCCustomerServiceGroupListController *customerGroupListController =
                 [[RCCustomerServiceGroupListController alloc] init];
-            RCBaseNavigationController *rootVC =
-                [[RCBaseNavigationController alloc] initWithRootViewController:customerGroupListController];
+            UINavigationController *rootVC =
+                [[UINavigationController alloc] initWithRootViewController:customerGroupListController];
             if ([RCSemanticContext isRTL]) {
                 rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
             }
@@ -464,7 +463,7 @@
             notificationWithMessage:self.customerServiceReciveMessageOverTimeRemindContent
                               extra:nil];
 
-        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
+        __block RCMessage *tempMessage = [[RCIMClient sharedRCIMClient] insertIncomingMessage:self.chatVC.conversationType
                                                                                      targetId:self.chatVC.targetId
                                                                                  senderUserId:self.chatVC.targetId
                                                                                receivedStatus:(ReceivedStatus_READ)
@@ -490,7 +489,7 @@
         RCInformationNotificationMessage *informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:self.customerServiceSendMessageOverTimeRemindContent
                               extra:nil];
-        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
+        __block RCMessage *tempMessage = [[RCIMClient sharedRCIMClient] insertIncomingMessage:self.chatVC.conversationType
                                                                                      targetId:self.chatVC.targetId
                                                                                  senderUserId:self.chatVC.targetId
                                                                                receivedStatus:(ReceivedStatus_READ)

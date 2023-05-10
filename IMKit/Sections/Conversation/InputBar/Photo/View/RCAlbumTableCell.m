@@ -63,6 +63,11 @@
                                                                  weakSelf.textLabel.attributedText = nameString;
                                                              });
                                                          }];
+    } else {
+        CGImageRef posterImage_CGImageRef_ = [model.asset posterImage];
+        UIImage *posterImage_ = [UIImage imageWithCGImage:posterImage_CGImageRef_];
+
+        self.imageView.image = posterImage_;
     }
 }
 

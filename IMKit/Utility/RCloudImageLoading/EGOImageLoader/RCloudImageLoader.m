@@ -27,7 +27,7 @@
 #import "RCloudImageLoader.h"
 #import "RCloudCache.h"
 #import "RCloudImageLoadConnection.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 static RCloudImageLoader *__imageLoader;
 

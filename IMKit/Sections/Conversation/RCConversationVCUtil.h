@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "RCMessageCellNotificationModel.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @class RCConversationViewController,RCMessageModel;
 

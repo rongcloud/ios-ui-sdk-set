@@ -32,11 +32,11 @@
 
 - (void)setupSelectFilesCellView {
     //加载三个UI控件
-    _selectedImageView = [RCBaseImageView new];
+    _selectedImageView = [UIImageView new];
     _selectedImageView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.contentView addSubview:_selectedImageView];
 
-    _fileIconImageView = [RCBaseImageView new];
+    _fileIconImageView = [UIImageView new];
     _fileIconImageView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.contentView addSubview:_fileIconImageView];
 

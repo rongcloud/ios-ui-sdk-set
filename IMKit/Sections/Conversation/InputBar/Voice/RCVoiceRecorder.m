@@ -32,7 +32,7 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
             NSInteger sample = 8000.00f;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            switch ([RCCoreClient sharedCoreClient].sampleRate) {
+            switch ([RCIMClient sharedRCIMClient].sampleRate) {
 #pragma clang diagnostic pop
             case RCSample_Rate_8000:
                 sample = 8000.00f;
@@ -81,7 +81,7 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
     self.voiceRecorderDelegate = observer;
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-    [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+    [audioSession setCategory:AVAudioSessionCategoryRecord error:nil];
     [audioSession setActive:YES error:nil];
 
     NSError *error = nil;

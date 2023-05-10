@@ -8,12 +8,11 @@
 
 #import "RCRobotEvaluationView.h"
 #import "RCKitCommonDefine.h"
-#import "RCBaseButton.h"
 @interface RCRobotEvaluationView () <RCCustomIOSAlertViewDelegate>
 @property (nonatomic, weak) id<RCRobotEvaluationViewDelegate> robotEvaluationViewDelegate;
 @property (nonatomic) BOOL isResolved;
-@property (nonatomic, strong) RCBaseButton *yesButton;
-@property (nonatomic, strong) RCBaseButton *noButton;
+@property (nonatomic, strong) UIButton *yesButton;
+@property (nonatomic, strong) UIButton *noButton;
 @property (nonatomic, strong) UILabel *titleLabel;
 @end
 #define CLIENT_VIEW_HEIGHT 120
@@ -82,10 +81,10 @@
 
 #pragma mark - Getters and Setters
 
-- (RCBaseButton *)yesButton {
+- (UIButton *)yesButton {
     if (!_yesButton) {
         _yesButton =
-            [[RCBaseButton alloc] initWithFrame:CGRectMake(BUTTON_PADDING_LEFT_RIGHT,
+            [[UIButton alloc] initWithFrame:CGRectMake(BUTTON_PADDING_LEFT_RIGHT,
                                                        BUTTON_PADDING_TOP_BUTTOM + TITLE_PADDING_TOP + TITLE_HEIGHT,
                                                        BUTTON_WIDTH, BUTTON_HEIGHT)];
 
@@ -102,10 +101,10 @@
     return _yesButton;
 }
 
-- (RCBaseButton *)noButton {
+- (UIButton *)noButton {
     if (!_noButton) {
         _noButton =
-            [[RCBaseButton alloc] initWithFrame:CGRectMake(BUTTON_PADDING_LEFT_RIGHT + BUTTON_WIDTH + BUTTONS_PADDING,
+            [[UIButton alloc] initWithFrame:CGRectMake(BUTTON_PADDING_LEFT_RIGHT + BUTTON_WIDTH + BUTTONS_PADDING,
                                                        BUTTON_PADDING_TOP_BUTTOM + TITLE_PADDING_TOP + TITLE_HEIGHT,
                                                        BUTTON_WIDTH, BUTTON_HEIGHT)];
         [_noButton addTarget:self action:@selector(onNoButton:) forControlEvents:UIControlEventTouchDown];

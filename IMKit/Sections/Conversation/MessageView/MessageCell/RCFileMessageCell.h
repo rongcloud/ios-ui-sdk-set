@@ -27,7 +27,7 @@
 /*!
  文件类型的ImageView
  */
-@property (strong, nonatomic) RCBaseImageView *typeIconView;
+@property (strong, nonatomic) UIImageView *typeIconView;
 
 /*!
  上传或下载的进度条View
@@ -37,7 +37,7 @@
 /*!
  取消发送的Button
  */
-@property (nonatomic, strong) RCBaseButton *cancelSendButton;
+@property (nonatomic, strong) UIButton *cancelSendButton;
 
 /*!
  显示“已取消”的Label

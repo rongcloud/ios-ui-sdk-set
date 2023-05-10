@@ -20,7 +20,7 @@
 
 @property (nonatomic, assign) RCStickerDownloadViewStstus currentStatus;
 
-@property (nonatomic, strong) RCBaseButton *downloadBtn;
+@property (nonatomic, strong) UIButton *downloadBtn;
 
 @property (nonatomic, strong) UIView *progressView;
 
@@ -81,9 +81,9 @@
     }
 }
 
-- (RCBaseButton *)downloadBtn {
+- (UIButton *)downloadBtn {
     if (_downloadBtn == nil) {
-        _downloadBtn = [[RCBaseButton alloc] init];
+        _downloadBtn = [[UIButton alloc] init];
         _downloadBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         [_downloadBtn setTitle:RongStickerString(@"begin_download") forState:UIControlStateNormal];
         _downloadBtn.backgroundColor = HEXCOLOR(0x0099FF);

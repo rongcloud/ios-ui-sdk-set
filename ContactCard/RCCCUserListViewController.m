@@ -18,7 +18,7 @@
 @interface RCCCUserListViewController () <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate,
                                           UISearchDisplayDelegate>
 
-@property (nonatomic, strong) RCBaseTableView *tableView;
+@property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) NSArray *userListArr; //数据源
 @property (nonatomic, strong) NSMutableArray *dataArr;
 @property (nonatomic, strong) UISearchBar *searchBar; //搜索框
@@ -167,9 +167,9 @@
     }
     return _searchBar;
 }
-- (RCBaseTableView *)tableView {
+- (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[RCBaseTableView alloc]
+        _tableView = [[UITableView alloc]
             initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, self.view.bounds.size.height)
                     style:UITableViewStyleGrouped];
         [_tableView setDelegate:self];

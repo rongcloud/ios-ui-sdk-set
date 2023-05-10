@@ -9,7 +9,7 @@
 #import "RCEmojiBoardView.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "RCBaseScrollView.h"
+
 @interface RCEmoticonPackage : NSObject
 
 /**
@@ -26,7 +26,7 @@
 /**
  *  表情包容器
  */
-@property (nonatomic, strong) RCBaseScrollView *emotionContainerView;
+@property (nonatomic, strong) UIScrollView *emotionContainerView;
 
 /**
  *  表情数据源

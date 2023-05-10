@@ -48,13 +48,13 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
                                      RCSightPlayerControllerDelegate, RCSightPreviewViewDelegate>
 @property (nonatomic, strong) RCSightPreviewView *sightView;
 @property (nonatomic, strong) RCSightCapturer *capturer;
-@property (nonatomic, strong) RCBaseButton *switchCameraBtn;
-@property (nonatomic, strong) RCBaseButton *dismissBtn;
-@property (nonatomic, strong) RCBaseImageView *stillImageView;
-@property (nonatomic, strong) RCBaseButton *playBtn;
+@property (nonatomic, strong) UIButton *switchCameraBtn;
+@property (nonatomic, strong) UIButton *dismissBtn;
+@property (nonatomic, strong) UIImageView *stillImageView;
+@property (nonatomic, strong) UIButton *playBtn;
 @property (nonatomic, strong) RCSightActionButton *actionButton;
-@property (nonatomic, strong) RCBaseButton *cancelBtn;
-@property (nonatomic, strong) RCBaseButton *okBtn;
+@property (nonatomic, strong) UIButton *cancelBtn;
+@property (nonatomic, strong) UIButton *okBtn;
 @property (nonatomic, assign) BOOL isRecording;
 @property (nonatomic, strong) RCSightRecorder *recorder;
 @property (nonatomic, strong) RCSightPlayerController *playerController;
@@ -97,9 +97,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _capturer;
 }
 
-- (RCBaseImageView *)stillImageView {
+- (UIImageView *)stillImageView {
     if (!_stillImageView) {
-        _stillImageView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
+        _stillImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
         // TODO_yangyudong
         if ([[UIDevice currentDevice].model containsString:@"iPad"]) {
             _stillImageView.contentMode = UIViewContentModeScaleAspectFill;
@@ -111,9 +111,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _stillImageView;
 }
 
-- (RCBaseButton *)switchCameraBtn {
+- (UIButton *)switchCameraBtn {
     if (!_switchCameraBtn) {
-        _switchCameraBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, CommonBtnSize, CommonBtnSize)];
+        _switchCameraBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, CommonBtnSize, CommonBtnSize)];
         [_switchCameraBtn setImage:RCResourceImage(@"sight_camera_switch") forState:UIControlStateNormal];
         [_switchCameraBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         _switchCameraBtn.backgroundColor = [UIColor clearColor];
@@ -124,9 +124,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _switchCameraBtn;
 }
 
-- (RCBaseButton *)playBtn {
+- (UIButton *)playBtn {
     if (!_playBtn) {
-        _playBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
+        _playBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
         [_playBtn setImage:RCResourceImage(@"sight_play_btn") forState:UIControlStateNormal];
         [_playBtn setImage:RCResourceImage(@"sight_pause_btn") forState:UIControlStateSelected];
         [_playBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
@@ -143,9 +143,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _actionButton;
 }
 
-- (RCBaseButton *)dismissBtn {
+- (UIButton *)dismissBtn {
     if (!_dismissBtn) {
-        _dismissBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
+        _dismissBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
         [_dismissBtn setImage:RCResourceImage(@"sight_top_toolbar_close") forState:UIControlStateNormal];
         _dismissBtn.backgroundColor = [UIColor clearColor];
         [_dismissBtn addTarget:self action:@selector(dismissAction:) forControlEvents:UIControlEventTouchUpInside];
@@ -153,9 +153,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _dismissBtn;
 }
 
-- (RCBaseButton *)cancelBtn {
+- (UIButton *)cancelBtn {
     if (!_cancelBtn) {
-        _cancelBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
+        _cancelBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
         [_cancelBtn setImage:RCResourceImage(@"sight_preview_cancel") forState:UIControlStateNormal];
         [_cancelBtn addTarget:self action:@selector(cancelAction:) forControlEvents:UIControlEventTouchUpInside];
         _cancelBtn.enabled = NO;
@@ -163,9 +163,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     return _cancelBtn;
 }
 
-- (RCBaseButton *)okBtn {
+- (UIButton *)okBtn {
     if (!_okBtn) {
-        _okBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
+        _okBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
         [_okBtn setImage:RCResourceImage(@"sight_preview_done") forState:UIControlStateNormal];
         [_okBtn addTarget:self action:@selector(okAction:) forControlEvents:UIControlEventTouchUpInside];
         _okBtn.enabled = NO;

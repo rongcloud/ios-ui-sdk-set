@@ -10,6 +10,7 @@
 #import "RCIM.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
+#import <RongIMLib/RongIMLib.h>
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
@@ -52,7 +53,7 @@
                 sentTime = lastModel.sentTime;
             }
             NSArray *conversationList =
-                [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
+                [[RCIMClient sharedRCIMClient] getConversationList:ws.displayConversationTypeArray
                                                              count:PagingCount
                                                          startTime:sentTime];
             [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
@@ -97,19 +98,20 @@
         NSMutableArray<RCConversationModel *> *modelList = [[NSMutableArray alloc] init];
 
         if ([[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
-            int c = self.currentCount < PagingCount ? PagingCount : (int)self.currentCount;
-            NSArray *conversationList =
-                [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray
-                                                             count:c
-                                                         startTime:0];
-            [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
-            for (RCConversation *conversation in conversationList) {
-                RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
-                model.topCellBackgroundColor = self.topCellBackgroundColor;
-                model.cellBackgroundColor = self.cellBackgroundColor;
-                RCLogI(@"conversation targetid:%@,type:%@,unreadMessageCount:%@", conversation.targetId, @(conversation.conversationType), @(model.unreadMessageCount));
-                [modelList addObject:model];
-            }
+            int count = (int)MAX(self.currentCount, PagingCount);
+            dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+            [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray count:count startTime:0 completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
+                [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
+                for (RCConversation *conversation in conversationList) {
+                    RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
+                    model.topCellBackgroundColor = self.topCellBackgroundColor;
+                    model.cellBackgroundColor = self.cellBackgroundColor;
+                    RCLogI(@"conversation targetid:%@,type:%@,unreadMessageCount:%@", conversation.targetId, @(conversation.conversationType), @(model.unreadMessageCount));
+                    [modelList addObject:model];
+                }
+                dispatch_semaphore_signal(semaphore);
+            }];
+            dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)));
         }
         self.currentCount = modelList.count;
         self.collectedModelDict = [NSMutableDictionary new];
@@ -196,7 +198,7 @@
             }
         } else {
             RCConversation *conversation =
-                [[RCCoreClient sharedCoreClient] getConversation:conversationType
+                [[RCIMClient sharedRCIMClient] getConversation:conversationType
                                                       targetId:targetId];
             RCConversationModel *newModel =
                 [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
@@ -249,7 +251,7 @@
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
 
                         RCConversation *conversation =
-                            [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
+                            [[RCIMClient sharedRCIMClient] getConversation:model.conversationType
                                                                   targetId:model.targetId];
                         model.lastestMessage = conversation.lastestMessage;
                         model.sentStatus = conversation.sentStatus;
@@ -295,7 +297,7 @@
                 return;
             }
             RCConversation *conversation =
-                [[RCCoreClient sharedCoreClient] getConversation:message.conversationType targetId:message.targetId];
+                [[RCIMClient sharedRCIMClient] getConversation:message.conversationType targetId:message.targetId];
             RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
             model.topCellBackgroundColor = self.topCellBackgroundColor;
             model.cellBackgroundColor = self.cellBackgroundColor;
@@ -319,7 +321,7 @@
                 for (RCConversationModel *model in self.dataList) {
                     if ([model isMatching:conversationType targetId:targetId]) {
 
-                        if ([senderUserId isEqualToString:[RCCoreClient sharedCoreClient]
+                        if ([senderUserId isEqualToString:[RCIMClient sharedRCIMClient]
                                                               .currentUserInfo
                                                               .userId]) { //由于多端阅读消息数同步而触发通知执行该方法时
                             if (model.unreadMessageCount != 0) {
@@ -387,18 +389,18 @@
         long messageId = [notification.object longValue];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
+            RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
             NSString *targetId = message.targetId;
             for (RCConversationModel *model in self.dataList) {
                 if ([targetId isEqualToString:model.targetId] || model.lastestMessageId == messageId) {
 
                     RCConversation *conversation =
-                        [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId];
+                        [[RCIMClient sharedRCIMClient] getConversation:model.conversationType targetId:model.targetId];
                     model.lastestMessage = conversation.lastestMessage;
                     model.lastestMessageId = conversation.lastestMessageId;
                     model.mentionedCount = conversation.mentionedCount;
                     NSInteger unreadMessageCount =
-                        [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
+                        [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType targetId:model.targetId];
                     if (unreadMessageCount != model.unreadMessageCount) {
                         RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         model.unreadMessageCount = unreadMessageCount;
@@ -419,7 +421,7 @@
                 } else if (!message) {
                     if (model.unreadMessageCount > 0) {
                         RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                        model.unreadMessageCount = [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType
+                        model.unreadMessageCount = [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType
                                                                                         targetId:model.targetId];
                         unreadUpdateInfo.model = model;
                         unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;

@@ -7,10 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <RongIMLibCore/RongIMLibCore.h>
-#import "RCBaseTableViewCell.h"
+#import <RongIMLib/RongIMLib.h>
 
-@interface RCSelectConversationCell : RCBaseTableViewCell
+@interface RCSelectConversationCell : UITableViewCell
 
 - (void)setConversation:(RCConversation *)conversation ifSelected:(BOOL)ifSelected;
 

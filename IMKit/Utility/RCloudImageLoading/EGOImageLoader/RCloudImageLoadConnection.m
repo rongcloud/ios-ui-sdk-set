@@ -26,7 +26,7 @@
 
 #import "RCloudImageLoadConnection.h"
 #import "RCDownloadHelper.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @implementation RCloudImageLoadConnection
 @synthesize imageURL = _imageURL, response = _response, delegate = _delegate, timeoutInterval = _timeoutInterval;

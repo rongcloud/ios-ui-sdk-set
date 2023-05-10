@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCBaseViewController.h"
 
 @interface RCCombineMsgFilePreviewViewController : RCBaseViewController

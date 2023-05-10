@@ -11,7 +11,7 @@
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #import "RCAssetHelper.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCIM.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
@@ -43,7 +43,7 @@
         return;
     }
     RCGIFMessage *gifMessage =
-        (RCGIFMessage *)[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId].content;
+        (RCGIFMessage *)[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId].content;
     if (gifMessage && gifMessage.localPath.length > 0) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -60,7 +60,7 @@
 
 - (void)saveGIF {
     RCGIFMessage *gifMessage =
-        (RCGIFMessage *)[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId].content;
+        (RCGIFMessage *)[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId].content;
     if (gifMessage.localPath.length > 0) {
         [RCAssetHelper savePhotosAlbumWithPath:gifMessage.localPath authorizationStatusBlock:^{
             [self showAlertController:RCLocalizedString(@"AccessRightTitle")

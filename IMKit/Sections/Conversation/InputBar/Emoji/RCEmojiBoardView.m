@@ -13,8 +13,6 @@
 #import "RCExtensionService.h"
 #import "RCKitConfig.h"
 #import "RCEmojiTabView.h"
-#import "RCBaseButton.h"
-#import "RCBaseScrollView.h"
 #define RC_EMOJI_WIDTH 30
 #define RC_EMOTIONTAB_SIZE_HEIGHT 42
 #define RC_EMOTIONTAB_SIZE_WIDTH 42
@@ -79,7 +77,7 @@ static int rc_currentSelectIndexPage;
 
         [self generateDefaultLayoutParameters];
         lastFrameWith = self.frame.size.width;
-        self.emojiBackgroundView = [[RCBaseScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
+        self.emojiBackgroundView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
         self.emojiBackgroundView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
         self.emojiBackgroundView.pagingEnabled = YES;
         self.emojiBackgroundView.contentSize = CGSizeMake(self.emojiTotalPage * self.frame.size.width, 186);
@@ -256,7 +254,7 @@ static int rc_currentSelectIndexPage;
         [self.emojiBackgroundView removeFromSuperview];
         self.emojiBackgroundView = nil;
     }
-    self.emojiBackgroundView = [[RCBaseScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
+    self.emojiBackgroundView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
     if ([RCKitUtility isRTL]) {
         [self.emojiBackgroundView setTransform:CGAffineTransformMakeScale(-1, 1)];
     }
@@ -424,8 +422,8 @@ static int rc_currentSelectIndexPage;
         float emojiPosX =
             startPos_X + 42 * (i % self.emojiMaxCountPerPage % self.emojiColumn) + pageIndex * self.frame.size.width;
         float emojiPosY = startPos_Y + 47 * (i % self.emojiMaxCountPerPage / self.emojiColumn);
-        RCBaseButton *emojiBtn =
-            [[RCBaseButton alloc] initWithFrame:CGRectMake(emojiPosX, emojiPosY, RC_EMOJI_WIDTH, RC_EMOJI_WIDTH)];
+        UIButton *emojiBtn =
+            [[UIButton alloc] initWithFrame:CGRectMake(emojiPosX, emojiPosY, RC_EMOJI_WIDTH, RC_EMOJI_WIDTH)];
         emojiBtn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:26];
         [emojiBtn setTitle:self.faceEmojiArray[i] forState:UIControlStateNormal];
         [emojiBtn addTarget:self action:@selector(emojiBtnHandle:) forControlEvents:UIControlEventTouchUpInside];
@@ -436,7 +434,7 @@ static int rc_currentSelectIndexPage;
         if (((i + 1) >= self.emojiMaxCountPerPage && (i + 1) % self.emojiMaxCountPerPage == 0) ||
             i == self.emojiTotal - 1) {
             CGRect frame = emojiBtn.frame;
-            RCBaseButton *deleteButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+            UIButton *deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
             [deleteButton addTarget:self
                              action:@selector(emojiBtnHandle:)
                    forControlEvents:UIControlEventTouchUpInside];

@@ -19,8 +19,7 @@
 #import "RCKitConfig.h"
 #import "RCLocationViewController+imkit.h"
 #import "RCSemanticContext.h"
-#import "RCBaseImageView.h"
-#import "RCBaseNavigationController.h"
+
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
 
@@ -42,13 +41,13 @@
 
 @property (nonatomic, strong) UIView *loadingTipView;
 
-@property (nonatomic, strong) RCBaseImageView *loadingImageView;
+@property (nonatomic, strong) UIImageView *loadingImageView;
 
 @property (nonatomic, strong) UILabel *loadingLabel;
 
 @property (nonatomic, strong) UIView *loadFailedTipView;
 
-@property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
+@property (nonatomic, strong) UIImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
 
@@ -301,7 +300,7 @@
     if ([RCUtilities isRemoteUrl:self.remoteURL]) {
         __weak typeof(self) weakSelf = self;
         [self showLoadingTipView];
-        [[RCCoreClient sharedCoreClient] downloadMediaFile:self.conversationType
+        [[RCIMClient sharedRCIMClient] downloadMediaFile:self.conversationType
             targetId:self.targetId
             mediaType:MediaType_HTML
             mediaUrl:self.remoteURL
@@ -373,7 +372,7 @@
     RCImageSlideController *imagePreviewVC = [[RCImageSlideController alloc] init];
     imagePreviewVC.messageModel = model;
     imagePreviewVC.onlyPreviewCurrentMessage = YES;
-    RCBaseNavigationController *nav = [[RCBaseNavigationController alloc] initWithRootViewController:imagePreviewVC];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imagePreviewVC];
     nav.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:nav animated:YES completion:nil];
 }
@@ -396,7 +395,7 @@
     svc.messageModel = model;
     svc.topRightBtnHidden = YES;
     svc.onlyPreviewCurrentMessage = YES;
-    RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:svc];
+    UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:svc];
     navc.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:navc animated:YES completion:nil];
 }
@@ -406,7 +405,7 @@
     if (type) {
         RCLocationViewController *locationViewController = [[type alloc] init];
         [locationViewController setLatitude:[latitude doubleValue] longitude:[longitude doubleValue] locationName:locationName];
-        RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:locationViewController];
+        UINavigationController *navc = [[UINavigationController alloc] initWithRootViewController:locationViewController];
         if (self.navigationController) {
             //导航和原有的配色保持一直
             UIImage *image = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsDefault];
@@ -489,9 +488,9 @@
     return _loadingTipView;
 }
 
-- (RCBaseImageView *)loadingImageView {
+- (UIImageView *)loadingImageView {
     if (!_loadingImageView) {
-        _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 27) / 2, 0, 27, 27)];
+        _loadingImageView = [[UIImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 27) / 2, 0, 27, 27)];
         _loadingImageView.image = RCResourceImage(@"combine_loading");
     }
     return _loadingImageView;
@@ -518,9 +517,9 @@
     return _loadFailedTipView;
 }
 
-- (RCBaseImageView *)loadFailedImageView {
+- (UIImageView *)loadFailedImageView {
     if (!_loadFailedImageView) {
-        _loadFailedImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 45) / 2, 0, 45, 54)];
+        _loadFailedImageView = [[UIImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 45) / 2, 0, 45, 54)];
         _loadFailedImageView.image = RCResourceImage(@"combine_failed");
         _loadFailedImageView.userInteractionEnabled = NO;
     }

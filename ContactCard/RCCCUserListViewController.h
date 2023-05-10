@@ -7,9 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
-@interface RCCCUserListViewController : RCBaseViewController
+@interface RCCCUserListViewController : UIViewController
 
 @property (nonatomic) RCConversationType conversationType;
 
