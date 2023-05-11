@@ -234,9 +234,9 @@
     return _hightlineLabel;
 }
 
-- (UIImageView *)sentStatusView {
+- (RCBaseImageView *)sentStatusView {
     if(!_sentStatusView) {
-        _sentStatusView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 16, 16)];
+        _sentStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 16, 16)];
         _sentStatusView.image = RCResourceImage(@"message_fail");
     }
     return _sentStatusView;

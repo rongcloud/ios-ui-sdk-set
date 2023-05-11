@@ -37,14 +37,6 @@
     return _imageSize;
 }
 
-- (ALAssetOrientation)imageOrientation {
-    if (_imageOrientation) {
-        return _imageOrientation;
-    }
-    _imageOrientation = [[self.asset valueForProperty:@"ALAssetPropertyOrientation"] integerValue];
-    return _imageOrientation;
-}
-
 - (void)setValue:(id)value forKey:(NSString *)key {
 }
 
@@ -54,7 +46,6 @@
         [[PHImageManager defaultManager] cancelImageRequest:self.imageRequestID];
         self.imageRequestID = 0;
     }
-    __weak typeof(self) weakSelf = self;
     if (self.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
         return [[RCAssetHelper shareAssetHelper]
             getOriginVideoWithAsset:self.asset
@@ -66,7 +57,7 @@
                                                          ![info objectForKey:PHImageErrorKey] &&
                                                          ![[info objectForKey:PHImageResultIsDegradedKey] boolValue]);
                                  if (downloadFinined) {
-                                     weakSelf.avAsset = avAsset;
+                                     self.avAsset = avAsset;
                                  }
                              }
                 progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
@@ -84,7 +75,7 @@
                                               ![info objectForKey:PHImageErrorKey] &&
                                               ![[info objectForKey:PHImageResultIsDegradedKey] boolValue]);
                                          if (downloadFinined) {
-                                             weakSelf.asset = assetModel.asset;
+                                             self.asset = assetModel.asset;
                                          }
                                      });
                                  }

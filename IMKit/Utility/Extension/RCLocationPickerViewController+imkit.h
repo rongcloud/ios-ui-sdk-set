@@ -9,7 +9,7 @@
 #ifndef RCLocationPickerViewController_imkit_h
 #define RCLocationPickerViewController_imkit_h
 
-@interface RCLocationPickerViewController : UIViewController
+@interface RCLocationPickerViewController : RCBaseViewController
 @property (nonatomic) RCConversationType conversationType;
 @property (nonatomic, copy) NSString *targetId;
 @end

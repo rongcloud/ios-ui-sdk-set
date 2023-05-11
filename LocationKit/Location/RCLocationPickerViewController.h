@@ -9,15 +9,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
 #import <UIKit/UIKit.h>
-#if __has_include(<RongIMKit/RongIMKit.h>)
-
-#import <RongIMKit/RongIMKit.h>
-
-#else
-
-#import "RongIMKit.h"
-
-#endif
+#import "RongLocationKitAdaptiveHeader.h"
 
 
 /*!

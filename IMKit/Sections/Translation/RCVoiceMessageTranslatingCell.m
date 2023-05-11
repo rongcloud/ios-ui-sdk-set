@@ -11,7 +11,7 @@
 #import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCMessageCellTool.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 
 @interface RCVoiceMessageCell()
 - (void)initialize;
@@ -19,7 +19,7 @@
 
 
 @interface RCVoiceMessageTranslatingCell()
-@property (nonatomic, strong) UIImageView *translationBackgroundView;
+@property (nonatomic, strong) RCBaseImageView *translationBackgroundView;
 @property (nonatomic, strong) UIView *translationContainer;
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 @end
@@ -85,9 +85,9 @@
 }
 
 #pragma mark -- Property
-- (UIImageView *)translationBackgroundView{
+- (RCBaseImageView *)translationBackgroundView{
     if (!_translationBackgroundView) {
-        _translationBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _translationBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _translationBackgroundView.image = self.bubbleBackgroundView.image;
         _translationBackgroundView.accessibilityLabel = @"translationBackgroundView";
     }

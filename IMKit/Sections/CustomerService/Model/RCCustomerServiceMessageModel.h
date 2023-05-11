@@ -7,7 +7,7 @@
 //
 
 #import "RCMessageModel.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 
 @interface RCCustomerServiceMessageModel : RCMessageModel
 @property (nonatomic, readonly, getter=isNeedEvaluateArea) BOOL needEvaluateArea;

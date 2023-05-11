@@ -9,7 +9,7 @@
 #import "RCSightPlayerController.h"
 #import "RCSightPlayerView.h"
 #import "RCSightProgressView.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCDownloadHelper.h"
 #import "RongSightAdaptiveHeader.h"
 #import "RCSightExtensionModule.h"
@@ -596,7 +596,7 @@
     didFinishDownloadingToURL:(NSURL *)location {
     session = nil;
     NSString *cachepath = [RCUtilities rongImageCacheDirectory];
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *localPath = [cachepath stringByAppendingFormat:@"/%@/RCSightCache/Sight_%@.mp4", currentUserId,
                            [RCFileUtility getFileKey:[self.rcSightURL description]]];
     self.localPath = localPath;
@@ -626,7 +626,7 @@
                 [self.transport setControlBarHidden:YES];
                 return;
             }
-            if([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Background) {
+            if([RCCoreClient sharedCoreClient].sdkRunningMode == RCSDKRunningMode_Background) {
                 [self makePlayButtonAppear];
                 return;
             }

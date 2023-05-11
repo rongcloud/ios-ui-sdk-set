@@ -7,8 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <RongIMLib/RongIMLib.h>
-
+#import <RongIMLibCore/RongIMLibCore.h>
 @class RCDiscussion,RCPublicServiceProfile;
 /*!
  @const 收到消息的Notification
@@ -469,7 +468,21 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  @warning 如果您使用IMKit，请使用此方法初始化SDK；
  如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
  */
-- (void)initWithAppKey:(NSString *)appKey;
+- (void)initWithAppKey:(NSString *)appKey __deprecated_msg("Use [RCIM initWithAppKey:option:] instead");
+
+/*!
+ 初始化融云SDK
+
+ @param appKey  从融云开发者平台创建应用后获取到的App Key
+ @param option  设置配置信息，详细配置项信息请查看 RCInitOption.h 文件
+
+ @discussion 您在使用融云SDK所有功能（包括显示SDK中或者继承于SDK的View）之前，您必须先调用此方法初始化SDK。
+ 在App整个生命周期中，您只需要执行一次初始化。
+
+ @warning 如果您使用IMKit，请使用此方法初始化SDK；
+ 如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
+ */
+- (void)initWithAppKey:(NSString *)appKey option:(nullable RCInitOption *)option;
 
 #pragma mark - 连接与断开服务器
 
@@ -778,7 +791,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  自定义类型的消息，需要您自己设置pushContent和pushData来定义推送内容，否则将不会进行远程推送。
  
  @warning 如果您使用IMKit，使用此方法发送媒体文件消息SDK会自动更新UI；
- 如果您使用IMLib，请使用RCIMClient中的同名方法发送媒体文件消息，不会自动更新UI。
+ 如果您使用IMLib，请使用 RCCoreClient 中的同名方法发送媒体文件消息，不会自动更新UI。
  
  @since 5.3.5
  */

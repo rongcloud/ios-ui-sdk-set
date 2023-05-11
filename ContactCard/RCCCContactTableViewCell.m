@@ -57,13 +57,14 @@
     [_portraitView setPlaceholderImage:[RCCCUtilities imageNamed:@"default_portrait_msg" ofBundle:@"RongCloud.bundle"]];
     [self.contentView addSubview:_portraitView];
 
-    _nicknameLabel = [[UILabel alloc] init];
+    _nicknameLabel = [[RCBaseLabel alloc] init];
+    _nicknameLabel.textAlignment = [RCKitUtility isRTL] ? NSTextAlignmentRight : NSTextAlignmentLeft;
     _nicknameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [_nicknameLabel setFont:[UIFont fontWithName:@"Heiti SC" size:17.0]];
     _nicknameLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.9]];
     [self.contentView addSubview:_nicknameLabel];
 
-    _userIdLabel = [[UILabel alloc] init];
+    _userIdLabel = [[RCBaseLabel alloc] init];
     _userIdLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [_userIdLabel setFont:[UIFont fontWithName:@"Heiti SC" size:15.0]];
     _userIdLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]

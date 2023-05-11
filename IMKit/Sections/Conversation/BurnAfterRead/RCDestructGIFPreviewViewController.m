@@ -10,9 +10,8 @@
 #import "RCGIFImage.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
-#import <AssetsLibrary/AssetsLibrary.h>
 #import "RCDestructCountDownButton.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 #import "RCImageMessageProgressView.h"
 #import "RCSemanticContext.h"
 
@@ -56,7 +55,7 @@
 - (void)addSubViews {
     [self.view addSubview:self.gifView];
     [self.view addSubview:self.rightTopButton];
-    NSNumber *duration = [[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
+    NSNumber *duration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.messageModel.messageUId];
     if (duration != nil && [duration integerValue] < 30) {
         [self.rightTopButton setDestructCountDownButtonHighlighted];
     }
@@ -67,16 +66,15 @@
     if (!self.messageModel) {
         return;
     }
-    RCMessage *msg = [[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId];
+    RCMessage *msg = [[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId];
     RCGIFMessage *gifMessage = (RCGIFMessage *)msg.content;
     if (gifMessage && gifMessage.localPath.length > 0) {
-        [[RCIMClient sharedRCIMClient] messageBeginDestruct:msg];
-        __weak typeof(self) weakSelf = self;
+        [[RCCoreClient sharedCoreClient] messageBeginDestruct:msg];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            weakSelf.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
+            self.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (weakSelf.gifData) {
-                    weakSelf.gifView.animatedImage = [RCGIFImage animatedImageWithGIFData:weakSelf.gifData];
+                if (self.gifData) {
+                    self.gifView.animatedImage = [RCGIFImage animatedImageWithGIFData:self.gifData];
                 }
             });
         });
@@ -87,20 +85,19 @@
 
 - (void)downLoadGif {
     [self showProgressView];
-    __weak typeof(self) weakSelf = self;
-    [[RCIM sharedRCIM] downloadMediaMessage:weakSelf.messageModel.messageId  progress:^(int progress) {
+    [[RCIM sharedRCIM] downloadMediaMessage:self.messageModel.messageId  progress:^(int progress) {
         dispatch_main_async_safe(^{
-            [weakSelf.progressView updateProgress:progress];
+            [self.progressView updateProgress:progress];
         });
     } success:^(NSString *mediaPath) {
         dispatch_main_async_safe(^{
-            [weakSelf hiddenProgressView];
-            [weakSelf configModel];
+            [self hiddenProgressView];
+            [self configModel];
         });
     } error:^(RCErrorCode errorCode) {
         dispatch_main_async_safe(^{
-            [weakSelf hiddenProgressView];
-            [weakSelf showFailedView];
+            [self hiddenProgressView];
+            [self showFailedView];
         });
     } cancel:^{
         
@@ -108,7 +105,7 @@
 }
 
 - (void)showFailedView{
-    UIImageView *failedImageView = [[UIImageView alloc] initWithImage:RCResourceImage(@"broken")];
+    RCBaseImageView *failedImageView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"broken")];
     failedImageView.image = RCResourceImage(@"broken");
     failedImageView.frame = CGRectMake(0, 0, 81, 60);
     failedImageView.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2-60);

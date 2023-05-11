@@ -222,14 +222,14 @@
     return _leftLimitLine;
 }
 
-- (UILabel *)nameLabel {
+- (RCBaseLabel *)nameLabel {
     if (!_nameLabel) {
         CGFloat nameX = CGRectGetMaxX(self.leftLimitLine.frame) + name_and_leftLine_space;
         if ([RCKitUtility isRTL]) {
             nameX = 0;
-            _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(nameX, 0, self.contentSize.width - nameX - name_and_leftLine_space, name_height)];
+            _nameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectMake(nameX, 0, self.contentSize.width - nameX - name_and_leftLine_space, name_height)];
         } else {
-            _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(nameX, 0, self.contentSize.width - nameX, name_height)];
+            _nameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectMake(nameX, 0, self.contentSize.width - nameX, name_height)];
         }
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
     }
@@ -257,9 +257,9 @@
     return _contentView;
 }
 
-- (UILabel *)textLabel {
+- (RCBaseLabel *)textLabel {
     if (!_textLabel) {
-        _textLabel = [[UILabel alloc] initWithFrame:self.contentView.bounds];
+        _textLabel = [[RCBaseLabel alloc] initWithFrame:self.contentView.bounds];
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
@@ -267,9 +267,9 @@
     return _textLabel;
 }
 
-- (UIImageView *)msgImageView {
+- (RCBaseImageView *)msgImageView {
     if (!_msgImageView) {
-        _msgImageView = [[UIImageView alloc] init];
+        _msgImageView = [[RCBaseImageView alloc] init];
         _msgImageView.layer.masksToBounds = YES;
         _msgImageView.layer.cornerRadius = 3;
     }

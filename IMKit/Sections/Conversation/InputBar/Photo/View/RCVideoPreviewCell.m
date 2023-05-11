@@ -11,10 +11,11 @@
 #import "RCKitCommonDefine.h"
 #import "RCAssetHelper.h"
 #import "RCVideoPlayer.h"
-
+#import "RCBaseButton.h"
+#import "RCBaseImageView.h"
 @interface RCVideoPreviewCell () <RCVideoPlayerDelegate>
-@property (nonatomic, strong) UIImageView *thumbnailView;
-@property (nonatomic, strong) UIButton *playBtn;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseButton *playBtn;
 @property (nonatomic, strong) RCVideoPlayer *player;
 @end
 
@@ -40,17 +41,15 @@
 
 #pragma mark - Public Methods
 - (void)configPreviewCellWithItem:(RCAssetModel *)model {
-    __weak typeof(self) weakSelf = self;
     [[RCAssetHelper shareAssetHelper] getPreviewWithAsset:model.asset
                                                    result:^(UIImage *photo, NSDictionary *info) {
                                                        dispatch_async(dispatch_get_main_queue(), ^{
-                                                           weakSelf.thumbnailView.image = photo;
+                                                           self.thumbnailView.image = photo;
                                                        });
                                                    }];
 }
 
 - (void)play:(PHAsset *)asset {
-    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
         options.networkAccessAllowed = YES;
@@ -66,9 +65,9 @@
                               options:options
                         resultHandler:^(AVPlayerItem *_Nullable playerItem, NSDictionary *_Nullable info) {
                             dispatch_async(dispatch_get_main_queue(), ^{
-                                weakSelf.player.playerItem = playerItem;
-                                weakSelf.player.delegate = weakSelf;
-                                [weakSelf.player play];
+                                self.player.playerItem = playerItem;
+                                self.player.delegate = self;
+                                [self.player play];
                             });
                         }];
     });
@@ -115,17 +114,17 @@
 }
 
 #pragma mark - Getters and Setters
-- (UIImageView *)thumbnailView {
+- (RCBaseImageView *)thumbnailView {
     if (!_thumbnailView) {
-        _thumbnailView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _thumbnailView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _thumbnailView.contentMode = UIViewContentModeScaleAspectFit;
     }
     return _thumbnailView;
 }
 
-- (UIButton *)playBtn {
+- (RCBaseButton *)playBtn {
     if (!_playBtn) {
-        _playBtn = [[UIButton alloc] initWithFrame:(CGRect){0, 0, 80, 80}];
+        _playBtn = [[RCBaseButton alloc] initWithFrame:(CGRect){0, 0, 80, 80}];
         [_playBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
         [_playBtn addTarget:self action:@selector(playAction) forControlEvents:UIControlEventTouchUpInside];
     }

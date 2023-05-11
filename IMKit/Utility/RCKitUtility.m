@@ -22,6 +22,7 @@
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongPublicService/RongPublicService.h>
 #import <UIKit/UIKit.h>
+#import "RCSemanticContext.h"
 @interface RCKitWeakRefObject : NSObject
 @property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
@@ -291,7 +292,7 @@
                                          objectName:(NSString *)objectName
                                           messageId:(long)messageId
                                          messageUId:(NSString *)messageUId {
-    NSString *type = @"PR";
+    NSString *type;
     switch (conversationType) {
     case ConversationType_PRIVATE:
         type = @"PR";
@@ -465,9 +466,9 @@
 
 + (int)getConversationUnreadCount:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCIMClient sharedRCIMClient] getUnreadCount:@[ @(model.conversationType) ]];
+        return [[RCCoreClient sharedCoreClient] getUnreadCount:@[ @(model.conversationType) ]];
     } else {
-        return [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType targetId:model.targetId];
+        return [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
     }
 }
 
@@ -495,9 +496,9 @@
 
 + (BOOL)getConversationUnreadMentionedStatus:(RCConversationModel *)model {
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        return [[RCIMClient sharedRCIMClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
+        return [[RCCoreClient sharedCoreClient] getUnreadMentionedCount:@[ @(model.conversationType) ]] != 0;
     } else {
-        return [[RCIMClient sharedRCIMClient] getConversation:model.conversationType targetId:model.targetId]
+        return [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId]
             .hasUnreadMentioned;
     }
 }
@@ -507,7 +508,7 @@
         return;
     }
     if (conversation.conversationType == ConversationType_PRIVATE && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversation.conversationType)]) {
-        [[RCIMClient sharedRCIMClient] sendReadReceiptMessage:conversation.conversationType
+        [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:conversation.conversationType
                                                      targetId:conversation.targetId
                                                          time:conversation.sentTime
                                                       success:nil
@@ -519,7 +520,7 @@
                conversation.conversationType == ConversationType_APPSERVICE ||
                conversation.conversationType == ConversationType_PUBLICSERVICE ||
                conversation.conversationType == ConversationType_Encrypted) {
-        [[RCIMClient sharedRCIMClient] syncConversationReadStatus:conversation.conversationType
+        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
                                                          targetId:conversation.targetId
                                                              time:conversation.sentTime
                                                           success:nil
@@ -749,21 +750,27 @@
     CGFloat width = image.size.width;
     RCButton *backBtn = [RCButton buttonWithType:UIButtonTypeCustom];
     backBtn.frame = CGRectMake(0, 0, width, image.size.height);
-    [backBtn setImage:image forState:UIControlStateNormal];
+    [backBtn setImage:[RCSemanticContext imageflippedForRTL:image] forState:UIControlStateNormal];
     [backBtn setTitle:title forState:UIControlStateNormal];
     [backBtn setTitleColor:RCKitConfigCenter.ui.globalNavigationBarTintColor forState:UIControlStateNormal];
     [backBtn addTarget:target action:action forControlEvents:UIControlEventTouchUpInside];
-    
+    if([RCKitUtility isRTL]){
+        backBtn.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+    }else{
+        backBtn.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
+    }
     UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
     return @[leftButton];
 }
 
 + (BOOL)isRTL {
-    if (@available(iOS 9.0, *)) {
+    if (RCKitConfigCenter.ui.layoutDirection == RCKitInterfaceLayoutDirectionUnspecified){
         UIWindow *window = [self getKeyWindow];
         UISemanticContentAttribute attr = window.semanticContentAttribute;
         UIUserInterfaceLayoutDirection _layoutDirection = [UIView userInterfaceLayoutDirectionForSemanticContentAttribute:attr];
         return _layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    } else if (RCKitConfigCenter.ui.layoutDirection == RCKitInterfaceLayoutDirectionRightToLeft){
+        return YES;
     }
     return NO;
 }
@@ -924,27 +931,30 @@
 }
 
 + (NSString *)__formatGroupNotificationMessageContent:(RCGroupNotificationMessage *)groupNotification {
-    NSString *message = nil;
-
     NSData *jsonData = [groupNotification.data dataUsingEncoding:NSUTF8StringEncoding];
     if (jsonData == nil) {
         return nil;
     }
     NSDictionary *dictionary =
-        [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
-    NSString *operatorUserId = groupNotification.operatorUserId;
+    [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:nil];
     NSString *nickName =
-        [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
-    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
-                                      ? dictionary[@"targetUserDisplayNames"]
-                                      : nil;
-    NSArray *targetUserIds =
-        [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
+    [dictionary[@"operatorNickname"] isKindOfClass:[NSString class]] ? dictionary[@"operatorNickname"] : nil;
     BOOL isMeOperate = NO;
     if ([groupNotification.operatorUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
         isMeOperate = YES;
         nickName = RCLocalizedString(@"You");
     }
+    return [self __formatGroupNotificationWithOperation:groupNotification dictionaryData:dictionary nickName:nickName isMeOperate:isMeOperate];
+}
+
++ (NSString *)__formatGroupNotificationWithOperation:(RCGroupNotificationMessage *)groupNotification dictionaryData:(NSDictionary *)dictionary nickName:(NSString *)nickName isMeOperate:(BOOL)isMeOperate{
+    NSString *message = nil;
+    NSString *operatorUserId = groupNotification.operatorUserId;
+    NSArray *targetUserNickName = [dictionary[@"targetUserDisplayNames"] isKindOfClass:[NSArray class]]
+    ? dictionary[@"targetUserDisplayNames"]
+    : nil;
+    NSArray *targetUserIds =
+    [dictionary[@"targetUserIds"] isKindOfClass:[NSArray class]] ? dictionary[@"targetUserIds"] : nil;
     if ([groupNotification.operation isEqualToString:@"Create"]) {
         message =
             [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveCreated" : @"GroupCreated"),
@@ -1090,7 +1100,7 @@
     // NSString *format = nil;
     NSString *message = nil;
     NSString *target = nil;
-    NSString *userId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *userId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     if (operatedIds) {
         if (operatedIds.count == 1) {
             if ([operatedIds[0] isEqualToString:userId]) {
@@ -1176,7 +1186,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return
@@ -1212,7 +1222,7 @@
         return nil;
     }
 
-    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return

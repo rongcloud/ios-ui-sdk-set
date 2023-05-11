@@ -72,15 +72,16 @@ static dispatch_queue_t RCYYAsyncLayerGetReleaseQueue() {
 }
 
 - (instancetype)init {
-    self = [super init];
     static CGFloat scale; //global
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         scale = [UIScreen mainScreen].scale;
     });
-    self.contentsScale = scale;
-    _sentinel = [RCYYSentinel new];
-    _displaysAsynchronously = YES;
+    if (self = [super init]) {
+        self.contentsScale = scale;
+        _sentinel = [RCYYSentinel new];
+        _displaysAsynchronously = YES;
+    }
     return self;
 }
 
@@ -156,7 +157,7 @@ static dispatch_queue_t RCYYAsyncLayerGetReleaseQueue() {
                 } CGContextRestoreGState(context);
                 CGColorRelease(backgroundColor);
             }
-            task.display(context, size, isCancelled);
+            if (context) task.display(context, size, isCancelled);
             if (isCancelled()) {
                 UIGraphicsEndImageContext();
                 dispatch_async(dispatch_get_main_queue(), ^{

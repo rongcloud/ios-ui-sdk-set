@@ -199,15 +199,13 @@
     }
     self.attributedStrings = [NSMutableArray array];
 
-    __weak typeof(self) weakSelf = self;
     //文本少于 500 同步计算高亮结果，大于 500 异步计算
     if(self.originalString.length < 500) {
         [dataDetector enumerateMatchesInString:self.originalString
            options:kNilOptions
              range:NSMakeRange(0, self.originalString.length)
         usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            [strongSelf updateTextCheckingResult:result];
+            [self updateTextCheckingResult:result];
         }];
     }else {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -216,8 +214,7 @@
                  range:NSMakeRange(0, self.originalString.length)
             usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    __strong typeof(weakSelf) strongSelf = weakSelf;
-                    [strongSelf updateTextCheckingResult:result];
+                    [self updateTextCheckingResult:result];
                 });
             }];
         });

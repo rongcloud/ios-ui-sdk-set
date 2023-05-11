@@ -7,9 +7,9 @@
 //
 
 #import "RCAssetHelper.h"
-#import <UIKit/UIKit.h>
+#import "RCBaseCollectionViewController.h"
 @class RCAssetModel;
-@interface RCPhotosPickerController : UICollectionViewController
+@interface RCPhotosPickerController : RCBaseCollectionViewController
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *assetArray;
 @property (nonatomic, assign) long count;
 @property (nonatomic, strong) id currentAsset;

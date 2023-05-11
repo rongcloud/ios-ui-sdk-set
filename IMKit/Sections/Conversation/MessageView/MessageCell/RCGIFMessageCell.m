@@ -28,21 +28,21 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 @property (nonatomic, strong) RCGIFMessageProgressView *gifDownLoadPropressView;
 
-@property (nonatomic, strong) UIButton *loadBackButton;
+@property (nonatomic, strong) RCBaseButton *loadBackButton;
 
-@property (nonatomic, strong) UIImageView *needLoadImageView;
+@property (nonatomic, strong) RCBaseImageView *needLoadImageView;
 
-@property (nonatomic, strong) UIImageView *loadingImageView;
+@property (nonatomic, strong) RCBaseImageView *loadingImageView;
 
-@property (nonatomic, strong) UIImageView *loadfailedImageView;
+@property (nonatomic, strong) RCBaseImageView *loadfailedImageView;
 
 @property (nonatomic, strong) UILabel *sizeLabel;
 
-@property (nonatomic, strong) UIImageView *destructPicture;
+@property (nonatomic, strong) RCBaseImageView *destructPicture;
 
 @property (nonatomic, strong) UILabel *destructLabel;
 
-@property (nonatomic, strong) UIImageView *destructBackgroundView;
+@property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
 
 @end
 
@@ -203,21 +203,20 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 - (void)showGifImageView:(NSString *)localPath {
-    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSData *data = [NSData dataWithContentsOfFile:[RCUtilities getCorrectedFilePath:localPath]];
         RCGIFImage *gifImage = [RCGIFImage animatedImageWithGIFData:data];
         dispatch_main_async_safe(^{
             if (gifImage) {
                 if (self.model.content.destructDuration > 0) {
-                    weakSelf.gifImageView.hidden = YES;
-                    weakSelf.destructBackgroundView.hidden = NO;
+                    self.gifImageView.hidden = YES;
+                    self.destructBackgroundView.hidden = NO;
                 } else {
-                    weakSelf.destructBackgroundView.hidden = YES;
-                    weakSelf.gifImageView.hidden = NO;
-                    weakSelf.loadBackButton.hidden = YES;
-                    weakSelf.loadingImageView.hidden = YES;
-                    weakSelf.gifImageView.animatedImage = gifImage;
+                    self.destructBackgroundView.hidden = YES;
+                    self.gifImageView.hidden = NO;
+                    self.loadBackButton.hidden = YES;
+                    self.loadingImageView.hidden = YES;
+                    self.gifImageView.animatedImage = gifImage;
                 }
             } else {
                 DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCGIFMessage object");
@@ -418,9 +417,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _progressView;
 }
 
-- (UIButton *)loadBackButton {
+- (RCBaseButton *)loadBackButton {
     if (!_loadBackButton) {
-        _loadBackButton = [[UIButton alloc] initWithFrame:CGRectZero];
+        _loadBackButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         _loadBackButton.backgroundColor = RGBCOLOR(216, 216, 216);
         [_loadBackButton addTarget:self
                             action:@selector(didClickLoadBackButton:)
@@ -430,9 +429,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _loadBackButton;
 }
 
-- (UIImageView *)needLoadImageView {
+- (RCBaseImageView *)needLoadImageView {
     if (!_needLoadImageView) {
-        _needLoadImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+        _needLoadImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _needLoadImageView.image = RCResourceImage(@"gif_needload");
         _needLoadImageView.hidden = YES;
         _needLoadImageView.tag = 1;
@@ -441,9 +440,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _needLoadImageView;
 }
 
-- (UIImageView *)loadingImageView {
+- (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
-        _loadingImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+        _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _loadingImageView.image = RCResourceImage(@"gif_loading");
         _loadingImageView.hidden = YES;
         _loadingImageView.tag = 2;
@@ -463,10 +462,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _gifDownLoadPropressView;
 }
 
-- (UIImageView *)loadfailedImageView {
+- (RCBaseImageView *)loadfailedImageView {
     if (!_loadfailedImageView) {
         _loadfailedImageView =
-            [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
+            [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
         _loadfailedImageView.image = RCResourceImage(@"gif_loadfailed");
         _loadfailedImageView.hidden = YES;
         _loadfailedImageView.tag = 4;
@@ -489,9 +488,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _sizeLabel;
 }
 
-- (UIImageView *)destructBackgroundView{
+- (RCBaseImageView *)destructBackgroundView{
     if (!_destructBackgroundView) {
-        _destructBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _destructBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
     }
     return _destructBackgroundView;
 }
@@ -506,9 +505,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _destructLabel;
 }
 
-- (UIImageView *)destructPicture{
+- (RCBaseImageView *)destructPicture{
     if (!_destructPicture) {
-        _destructPicture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
+        _destructPicture = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
     }
     return _destructPicture;
 }

@@ -302,9 +302,8 @@
     CGFloat changedBeforeHeight = self.frame.size.height;
     [self layoutInputBoxUIIfNeed];
     if (changedBeforeHeight != self.frame.size.height && self.inputTextView.text > 0) {
-        __weak typeof(self) weakSelf = self;
         [UIView animateWithDuration:0.5 animations:^{
-            [weakSelf.inputTextView scrollRangeToVisible:[weakSelf.inputTextView selectedRange]];
+            [self.inputTextView scrollRangeToVisible:[self.inputTextView selectedRange]];
         }];
     }
 }
@@ -491,9 +490,6 @@
         _inputTextView.layer.cornerRadius = 8;
         _inputTextView.layer.masksToBounds = YES;
         [_inputTextView setAccessibilityLabel:@"chat_input_textView"];
-        if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
-            _inputTextView.layoutManager.allowsNonContiguousLayout = NO;
-        }
     }
     return _inputTextView;
 }

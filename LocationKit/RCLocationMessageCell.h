@@ -6,15 +6,7 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
-#if __has_include(<RongIMKit/RongIMKit.h>)
-
-#import <RongIMKit/RongIMKit.h>
-
-#else
-
-#import "RongIMKit.h"
-
-#endif
+#import "RongLocationKitAdaptiveHeader.h"
 
 
 /*!
@@ -25,7 +17,7 @@
 /*!
  当前位置在地图中的概览图
  */
-@property (nonatomic, strong) UIImageView *pictureView;
+@property (nonatomic, strong) RCBaseImageView *pictureView;
 
 /*!
  显示位置名称的Label

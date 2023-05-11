@@ -10,7 +10,8 @@
 #import "RCAssetHelper.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-@interface RCAlbumTableCell : UITableViewCell
+#import "RCBaseTableViewCell.h"
+@interface RCAlbumTableCell : RCBaseTableViewCell
 
 - (void)configCellWithItem:(RCAlbumModel *)model;
 

@@ -7,7 +7,7 @@
 //
 
 #import "RongIMKit.h"
-
+#import "RCBaseView.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCCombineMessageCell : RCMessageCell
@@ -15,22 +15,22 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  消息的背景 View
  */
-@property (nonatomic, strong) UIView *backView;
+@property (nonatomic, strong) RCBaseView *backView;
 
 /*!
  展示消息的 title
  */
-@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) RCBaseLabel *titleLabel;
 
 /*!
  展示消息的缩略内容
  */
-@property (nonatomic, strong) UILabel *contentLabel;
+@property (nonatomic, strong) RCBaseLabel *contentLabel;
 
 /*!
  展示消息的聊天记录字样
  */
-@property (nonatomic, strong) UILabel *historyLabel;
+@property (nonatomic, strong) RCBaseLabel *historyLabel;
 
 @end
 

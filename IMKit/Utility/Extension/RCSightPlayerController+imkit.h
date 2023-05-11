@@ -8,7 +8,7 @@
 
 #ifndef RCSightPlayerController_imkit_h
 #define RCSightPlayerController_imkit_h
-@interface RCSightPlayerController : UIViewController
+@interface RCSightPlayerController : RCBaseViewController
 @property (nonatomic, weak, nullable) id delegate;
 @property (strong, nonatomic) NSURL * _Nullable rcSightURL;
 @property (strong, nonatomic, nullable) UIImage *firstFrameImage;

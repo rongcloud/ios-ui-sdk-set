@@ -7,7 +7,7 @@
 //
 
 #import "RCKitMessageConf.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 
 @implementation RCKitMessageConf
 - (instancetype)init

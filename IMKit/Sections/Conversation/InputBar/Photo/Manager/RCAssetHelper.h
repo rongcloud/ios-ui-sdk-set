@@ -5,8 +5,6 @@
 //  Created by Liv on 15/3/24.
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
-
-#import <AssetsLibrary/AssetsLibrary.h>
 #import <Foundation/Foundation.h>
 #import <Photos/Photos.h>
 #import <UIKit/UIKit.h>
@@ -17,8 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class RCAssetModel;
 @interface RCAssetHelper : NSObject <PHPhotoLibraryChangeObserver>
-
-@property (nonatomic, strong, readonly) ALAssetsLibrary *assetLibrary;
 
 /**
  *  return a instance
@@ -41,12 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)getPhotosOfGroup:(id)alGroup results:(void (^)(NSArray<RCAssetModel *> *photos))results;
 
 /**
- *  根据分组类型获取分组
- *
- *  @param groupType 分组类型
+ *  获得相册/相册数组
  */
-- (void)getGroupsWithALAssetsGroupType:(ALAssetsGroupType)groupType
-                      resultCompletion:(void (^)(NSArray *assetGroup))result;
+- (void)getAlbumsFromSystem:(void (^)(NSArray *assetGroup))result;
 /**
  *  获取图片缩略图
  *

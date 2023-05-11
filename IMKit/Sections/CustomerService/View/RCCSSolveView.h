@@ -6,7 +6,7 @@
 //  Copyright © 2016年 rongcloud. All rights reserved.
 //
 
-#import <RongIMLib/RongIMLib.h>
+#import <RongCustomerService/RongCustomerService.h>
 #import <UIKit/UIKit.h>
 @interface RCCSSolveView : UIView
 @property (nonatomic, copy) void (^isSolveBlock)(RCCSResolveStatus solveStatus);

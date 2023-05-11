@@ -107,120 +107,127 @@
 - (NSArray *)cellCollections {
     if (!_cellCollections) {
         NSMutableArray *collections = [[NSMutableArray alloc] init];
-        NSMutableArray *mainSection = [[NSMutableArray alloc] init];
-
-        if (self.serviceProfile.introduction || self.serviceProfile.owner ||
-            self.serviceProfile.publicServiceTel) { // for main
-            if (self.serviceProfile.introduction) {
-                RCPublicServiceProfilePlainCell *cell = [[RCPublicServiceProfilePlainCell alloc] init];
-
-                [cell setTitle:RCLocalizedString(@"Introduced")
-                       Content:self.serviceProfile.introduction];
-                [mainSection addObject:cell];
-            }
-
-            if (self.serviceProfile.owner) {
-                RCPublicServiceProfileOwnerCell *cell = [[RCPublicServiceProfileOwnerCell alloc] init];
-                [cell setTitle:RCLocalizedString(@"AccountType")
-                       Content:self.serviceProfile.owner
-                           url:self.serviceProfile.ownerUrl
-                      delegate:self];
-                [mainSection addObject:cell];
-            }
-
-            if (self.serviceProfile.publicServiceTel) {
-                RCPublicServiceProfileTelCell *cell = [[RCPublicServiceProfileTelCell alloc] init];
-                [cell setTitle:RCLocalizedString(@"ServicePhone")
-                       Content:self.serviceProfile.publicServiceTel];
-                [mainSection addObject:cell];
-            }
-        }
-
-        if (self.serviceProfile.scope) { // for business
-            // NSMutableArray *businessSection = [[NSMutableArray alloc] init];
-
-            if (self.serviceProfile.introduction) {
-                RCPublicServiceProfilePlainCell *cell = [[RCPublicServiceProfilePlainCell alloc] init];
-
-                [cell setTitle:RCLocalizedString(@"BusinessScope")
-                       Content:self.serviceProfile.scope];
-                [mainSection addObject:cell];
-            }
-        }
-
-        if (self.serviceProfile.followed) { // for msg settings
-            RCPublicServiceProfileRcvdMsgCell *cell = [[RCPublicServiceProfileRcvdMsgCell alloc] init];
-
-            [cell setTitleText:RCLocalizedString(@"NewMessageNotification")];
-            self.rcvdMsgCell = cell;
-            cell.serviceProfile = self.serviceProfile;
-            if (1) {
-                __weak RCPublicServiceProfileViewController *weakSelf = self;
-                [[RCIMClient sharedRCIMClient]
-                    getConversationNotificationStatus:(RCConversationType)self.serviceProfile.publicServiceType
-                    targetId:self.serviceProfile.publicServiceId
-                    success:^(RCConversationNotificationStatus nStatus) {
-                        BOOL enableNotification = NO;
-                        if (nStatus == NOTIFY) {
-                            enableNotification = YES;
-                        }
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [weakSelf.rcvdMsgCell setOn:enableNotification];
-                        });
-                    }
-                    error:^(RCErrorCode status){
-
-                    }];
-            }
-
-            [mainSection addObject:cell];
-        }
-
-        if (self.serviceProfile.histroyMsgUrl) {
-            RCPublicServiceProfileUrlCell *cell = [[RCPublicServiceProfileUrlCell alloc] init];
-
-            [cell setTitle:RCLocalizedString(@"ViewHistory")
-                       url:self.serviceProfile.histroyMsgUrl
-                  delegate:self];
-            [mainSection addObject:cell];
-        }
-        [collections addObject:mainSection];
-        NSMutableArray *actionSection = [[NSMutableArray alloc] init];
-        RCPublicServiceProfileActionCell *cell = [[RCPublicServiceProfileActionCell alloc] init];
-
-        if (self.serviceProfile.followed || self.serviceProfile.isGlobal) {
-            [cell setTitleText:RCLocalizedString(@"EnterOfficialAccount")
-                andBackgroundColor:RGBCOLOR(83, 213, 105)];
-        } else {
-            [cell setTitleText:RCLocalizedString(@"Attention")
-                andBackgroundColor:RGBCOLOR(83, 213, 105)];
-        }
-        __weak typeof(self) weakSelf = self;
-        cell.onClickEvent = ^{
-            if (weakSelf.serviceProfile.followed || weakSelf.serviceProfile.isGlobal) {
-                [weakSelf enterPublicServiceConversation];
-            } else {
-                [weakSelf subscribePublicService];
-            }
-        };
-        self.actionCell = cell;
-        [actionSection addObject:cell];
-
-        RCPublicServiceProfileActionCell *unSubscribeCell = [[RCPublicServiceProfileActionCell alloc] init];
-
-        if (self.serviceProfile.followed && !self.serviceProfile.isGlobal) {
-            [unSubscribeCell setTitleText:RCLocalizedString(@"Unfollow")
-                       andBackgroundColor:RGBCOLOR(228, 54, 62)];
-            unSubscribeCell.onClickEvent = ^{
-                [weakSelf unsubscribePublicService];
-            };
-            [actionSection addObject:unSubscribeCell];
-        }
-        [collections addObject:actionSection];
-
+        [collections addObject:[self p_getMainSections]];
+        [collections addObject:[self p_getActionSections]];
         _cellCollections = collections;
     }
     return _cellCollections;
+}
+
+- (NSArray *)p_getActionSections{
+    NSMutableArray *actionSection = [[NSMutableArray alloc] init];
+    RCPublicServiceProfileActionCell *cell = [[RCPublicServiceProfileActionCell alloc] init];
+
+    if (self.serviceProfile.followed || self.serviceProfile.isGlobal) {
+        [cell setTitleText:RCLocalizedString(@"EnterOfficialAccount")
+            andBackgroundColor:RGBCOLOR(83, 213, 105)];
+    } else {
+        [cell setTitleText:RCLocalizedString(@"Attention")
+            andBackgroundColor:RGBCOLOR(83, 213, 105)];
+    }
+    __weak typeof(self) weakSelf = self;
+    cell.onClickEvent = ^{
+        if (weakSelf.serviceProfile.followed || weakSelf.serviceProfile.isGlobal) {
+            [weakSelf enterPublicServiceConversation];
+        } else {
+            [weakSelf subscribePublicService];
+        }
+    };
+    self.actionCell = cell;
+    [actionSection addObject:cell];
+
+    RCPublicServiceProfileActionCell *unSubscribeCell = [[RCPublicServiceProfileActionCell alloc] init];
+
+    if (self.serviceProfile.followed && !self.serviceProfile.isGlobal) {
+        [unSubscribeCell setTitleText:RCLocalizedString(@"Unfollow")
+                   andBackgroundColor:RGBCOLOR(228, 54, 62)];
+        unSubscribeCell.onClickEvent = ^{
+            [weakSelf unsubscribePublicService];
+        };
+        [actionSection addObject:unSubscribeCell];
+    }
+    return actionSection;
+}
+
+- (NSArray *)p_getMainSections{
+    NSMutableArray *mainSection = [[NSMutableArray alloc] init];
+
+    if (self.serviceProfile.introduction || self.serviceProfile.owner ||
+        self.serviceProfile.publicServiceTel) { // for main
+        if (self.serviceProfile.introduction) {
+            RCPublicServiceProfilePlainCell *cell = [[RCPublicServiceProfilePlainCell alloc] init];
+
+            [cell setTitle:RCLocalizedString(@"Introduced")
+                   Content:self.serviceProfile.introduction];
+            [mainSection addObject:cell];
+        }
+
+        if (self.serviceProfile.owner) {
+            RCPublicServiceProfileOwnerCell *cell = [[RCPublicServiceProfileOwnerCell alloc] init];
+            [cell setTitle:RCLocalizedString(@"AccountType")
+                   Content:self.serviceProfile.owner
+                       url:self.serviceProfile.ownerUrl
+                  delegate:self];
+            [mainSection addObject:cell];
+        }
+
+        if (self.serviceProfile.publicServiceTel) {
+            RCPublicServiceProfileTelCell *cell = [[RCPublicServiceProfileTelCell alloc] init];
+            [cell setTitle:RCLocalizedString(@"ServicePhone")
+                   Content:self.serviceProfile.publicServiceTel];
+            [mainSection addObject:cell];
+        }
+    }
+
+    if (self.serviceProfile.scope) { // for business
+        // NSMutableArray *businessSection = [[NSMutableArray alloc] init];
+
+        if (self.serviceProfile.introduction) {
+            RCPublicServiceProfilePlainCell *cell = [[RCPublicServiceProfilePlainCell alloc] init];
+
+            [cell setTitle:RCLocalizedString(@"BusinessScope")
+                   Content:self.serviceProfile.scope];
+            [mainSection addObject:cell];
+        }
+    }
+
+    if (self.serviceProfile.followed) { // for msg settings
+        RCPublicServiceProfileRcvdMsgCell *cell = [[RCPublicServiceProfileRcvdMsgCell alloc] init];
+
+        [cell setTitleText:RCLocalizedString(@"NewMessageNotification")];
+        self.rcvdMsgCell = cell;
+        cell.serviceProfile = self.serviceProfile;
+        if (1) {
+            __weak RCPublicServiceProfileViewController *weakSelf = self;
+            [[RCCoreClient sharedCoreClient]
+                getConversationNotificationStatus:(RCConversationType)self.serviceProfile.publicServiceType
+                targetId:self.serviceProfile.publicServiceId
+                success:^(RCConversationNotificationStatus nStatus) {
+                    BOOL enableNotification = NO;
+                    if (nStatus == NOTIFY) {
+                        enableNotification = YES;
+                    }
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [weakSelf.rcvdMsgCell setOn:enableNotification];
+                    });
+                }
+                error:^(RCErrorCode status){
+
+                }];
+        }
+
+        [mainSection addObject:cell];
+    }
+
+    if (self.serviceProfile.histroyMsgUrl) {
+        RCPublicServiceProfileUrlCell *cell = [[RCPublicServiceProfileUrlCell alloc] init];
+
+        [cell setTitle:RCLocalizedString(@"ViewHistory")
+                   url:self.serviceProfile.histroyMsgUrl
+              delegate:self];
+        [mainSection addObject:cell];
+    }
+    return mainSection;
 }
 
 - (UIView *)getTableViewHeader {
@@ -287,36 +294,32 @@
     return container;
 }
 - (void)subscribePublicService {
-    __weak RCPublicServiceProfileViewController *weakSelf = self;
-
     [RCKitUtility showProgressViewFor:self.tableView
                                        text:RCLocalizedString(@"Wait")
                                    animated:YES];
     [[RCPublicServiceClient sharedPublicServiceClient] subscribePublicService:self.serviceProfile.publicServiceType
         publicServiceId:self.serviceProfile.publicServiceId
         success:^{
-            if (!weakSelf.serviceProfile.followed) {
-                weakSelf.serviceProfile.followed = YES;
+            if (!self.serviceProfile.followed) {
+                self.serviceProfile.followed = YES;
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    weakSelf.serviceProfile = weakSelf.serviceProfile;
-                    weakSelf.cellCollections = nil;
-                    [weakSelf cellCollections];
-                    [weakSelf.tableView reloadData];
+                    self.serviceProfile = self.serviceProfile;
+                    self.cellCollections = nil;
+                    [self cellCollections];
+                    [self.tableView reloadData];
                 });
             }
             dispatch_async(dispatch_get_main_queue(), ^{
-                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
             });
         }
         error:^(RCErrorCode status) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
             });
         }];
 }
 - (void)unsubscribePublicService {
-    __weak RCPublicServiceProfileViewController *weakSelf = self;
-
     [RCKitUtility showProgressViewFor:self.tableView
                                        text:RCLocalizedString(@"Wait")
                                    animated:YES];
@@ -324,32 +327,32 @@
     [[RCPublicServiceClient sharedPublicServiceClient] unsubscribePublicService:self.serviceProfile.publicServiceType
         publicServiceId:self.serviceProfile.publicServiceId
         success:^{
-            if (weakSelf.serviceProfile.followed) {
-                weakSelf.serviceProfile.followed = NO;
+            if (self.serviceProfile.followed) {
+                self.serviceProfile.followed = NO;
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (!weakSelf.serviceProfile.followed) {
-                        NSUInteger count = weakSelf.navigationController.viewControllers.count;
+                    if (!self.serviceProfile.followed) {
+                        NSUInteger count = self.navigationController.viewControllers.count;
                         if (count > 1) {
-                            UIViewController *preVC = weakSelf.navigationController.viewControllers[count - 2];
+                            UIViewController *preVC = self.navigationController.viewControllers[count - 2];
                             if ([preVC isKindOfClass:[RCConversationViewController class]]) {
-                                [weakSelf.navigationController popToRootViewControllerAnimated:YES];
+                                [self.navigationController popToRootViewControllerAnimated:YES];
                                 return;
                             }
                         }
                     }
-                    weakSelf.serviceProfile = weakSelf.serviceProfile;
-                    weakSelf.cellCollections = nil;
-                    [weakSelf cellCollections];
-                    [weakSelf.tableView reloadData];
+                    self.serviceProfile = self.serviceProfile;
+                    self.cellCollections = nil;
+                    [self cellCollections];
+                    [self.tableView reloadData];
                 });
             }
             dispatch_async(dispatch_get_main_queue(), ^{
-                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
             });
         }
         error:^(RCErrorCode status) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
+                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
             });
         }];
 }

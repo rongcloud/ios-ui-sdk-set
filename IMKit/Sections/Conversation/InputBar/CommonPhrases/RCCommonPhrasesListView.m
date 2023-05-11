@@ -9,10 +9,10 @@
 #import "RCCommonPhrasesListView.h"
 #import "RCCommonPhrasesCell.h"
 #import "RCKitCommonDefine.h"
-
+#import "RCBaseTableView.h"
 @interface RCCommonPhrasesListView () <UITableViewDelegate, UITableViewDataSource>
 
-@property (nonatomic, strong) UITableView *commmonPhrasesTableView;
+@property (nonatomic, strong) RCBaseTableView *commmonPhrasesTableView;
 
 @end
 
@@ -71,11 +71,11 @@
 
 #pragma mark - Getters and Setters
 
-- (UITableView *)commmonPhrasesTableView {
+- (RCBaseTableView *)commmonPhrasesTableView {
     if (!_commmonPhrasesTableView) {
         CGSize size = self.bounds.size;
         _commmonPhrasesTableView =
-            [[UITableView alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height) style:UITableViewStyleGrouped];
+            [[RCBaseTableView alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height) style:UITableViewStyleGrouped];
         _commmonPhrasesTableView.estimatedRowHeight = 0;
         _commmonPhrasesTableView.estimatedSectionHeaderHeight = 0;
         _commmonPhrasesTableView.estimatedSectionFooterHeight = 0;

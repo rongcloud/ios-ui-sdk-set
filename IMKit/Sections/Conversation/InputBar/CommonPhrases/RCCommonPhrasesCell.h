@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-
+#import "RCBaseTableViewCell.h"
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCCommonPhrasesCell : UITableViewCell
+@interface RCCommonPhrasesCell : RCBaseTableViewCell
 
 + (CGFloat)heightForCommonPhrasesCell:(NSString *)text;
 

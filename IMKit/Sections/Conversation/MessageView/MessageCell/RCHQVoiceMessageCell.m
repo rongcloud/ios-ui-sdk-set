@@ -95,7 +95,7 @@ static long hq_messageId = 0;
         self.voiceUnreadTagView = nil;
     }
     if (voiceMessage.localPath.length > 0) {
-        [[RCIMClient sharedRCIMClient] setMessageReceivedStatus:self.model.messageId
+        [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
                                                  receivedStatus:ReceivedStatus_LISTENED];
         self.model.receivedStatus = ReceivedStatus_LISTENED;
     }
@@ -140,16 +140,16 @@ static long hq_messageId = 0;
 - (void)startDestruct {
     RCHQVoiceMessage *voiceMessage = (RCHQVoiceMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && voiceMessage.destructDuration > 0) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
     }
 }
 
 - (void)stopDestruct {
     RCHQVoiceMessage *voiceMessage = (RCHQVoiceMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && voiceMessage.destructDuration > 0) {
-        [[RCIMClient sharedRCIMClient]
-            messageStopDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageStopDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
         if ([self respondsToSelector:@selector(messageDestructing)]) {
             [self performSelector:@selector(messageDestructing) withObject:nil afterDelay:NO];
         }
@@ -317,7 +317,7 @@ static long hq_messageId = 0;
     if (voiceMessage.localPath.length <= 0) {
         RCMessage *msg = [self converetMsgModelToMsg:self.model];
         [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[ msg ] priority:YES];
-        if ([[RCIMClient sharedRCIMClient] getCurrentNetworkStatus] == RC_NotReachable) {
+        if ([[RCCoreClient sharedCoreClient] getCurrentNetworkStatus] == RC_NotReachable) {
             [self indicatorHiding];
             [self showFailedStatusView];
         } else {
@@ -348,7 +348,7 @@ static long hq_messageId = 0;
             x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
         }
         if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
-            self.voiceUnreadTagView = [[UIImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
+            self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             self.voiceUnreadTagView.accessibilityLabel = @"voiceUnreadTagView";
             if (voiceMessage.localPath.length > 0) {
                 [self.voiceUnreadTagView setHidden:NO];
@@ -420,7 +420,8 @@ static long hq_messageId = 0;
     if (![voiceContent isKindOfClass:[RCHQVoiceMessage class]]) {
         return;
     }
-    RCHQVoiceMessage *_voiceMessage = (RCHQVoiceMessage *)voiceContent;
+    RCHQVoiceMessage *_voiceMessage =
+        (RCHQVoiceMessage *)voiceContent;
     NSString *localPath = [self getCorrectedPath:_voiceMessage.localPath];
     if (localPath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
 
@@ -613,9 +614,9 @@ static long hq_messageId = 0;
     return _voicePlayer;
 }
 
-- (UIImageView *)playVoiceView{
+- (RCBaseImageView *)playVoiceView{
     if (!_playVoiceView) {
-        _playVoiceView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _playVoiceView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
     }
     return _playVoiceView;
 }

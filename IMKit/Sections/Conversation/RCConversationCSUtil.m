@@ -7,7 +7,7 @@
 //
 
 #import "RCConversationCSUtil.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCCSAlertView.h"
 #import "RCCSEvaluateView.h"
 #import "RCAdminEvaluationView.h"
@@ -19,6 +19,7 @@
 #import "RCKitUtility.h"
 #import <RongCustomerService/RongCustomerService.h>
 #import "RCSemanticContext.h"
+#import "RCBaseNavigationController.h"
 @interface RCConversationCSUtil ()<RCCSAlertViewDelegate, RCAdminEvaluationViewDelegate, RCRobotEvaluationViewDelegate>
 @property (nonatomic, weak) RCConversationViewController *chatVC;
 @property (nonatomic, strong) RCCustomerServiceConfig *csConfig;
@@ -97,27 +98,29 @@
 
     if (!self.csInfo) {
         self.csInfo = [RCCustomerServiceInfo new];
-        self.csInfo.userId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
-        self.csInfo.nickName = [RCIMClient sharedRCIMClient].currentUserInfo.name;
-        self.csInfo.portraitUrl = [RCIMClient sharedRCIMClient].currentUserInfo.portraitUri;
+        self.csInfo.userId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
+        self.csInfo.nickName = [RCCoreClient sharedCoreClient].currentUserInfo.name;
+        self.csInfo.portraitUrl = [RCCoreClient sharedCoreClient].currentUserInfo.portraitUri;
     }
     
     __weak typeof(self) weakSelf = self;
     [[RCCustomerServiceClient sharedCustomerServiceClient] startCustomerService:self.chatVC.targetId
         info:self.csInfo
         onSuccess:^(RCCustomerServiceConfig *config) {
-            weakSelf.csConfig = config;
-            weakSelf.csEnterDate = [[NSDate alloc] init];
-            [weakSelf startNotSendMessageAlertTimer];
-            [weakSelf startNotReciveMessageAlertTimer];
-            if (config.disableLocation) {
-                [weakSelf.chatVC.chatSessionInputBarControl.pluginBoardView
-                    removeItemWithTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
-            }
-            if (config.evaEntryPoint == RCCSEvaExtention) {
-                [weakSelf.chatVC.chatSessionInputBarControl.pluginBoardView insertItem:RCResourceImage(@"Comment") highlightedImage:RCResourceImage(@"Comment_highlighted") title:@"评价" tag:PLUGIN_BOARD_ITEM_EVA_TAG];
-            }
-            [weakSelf announceViewWillShow];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+
+        strongSelf.csConfig = config;
+        strongSelf.csEnterDate = [[NSDate alloc] init];
+        [strongSelf startNotSendMessageAlertTimer];
+        [strongSelf startNotReciveMessageAlertTimer];
+        if (config.disableLocation) {
+            [strongSelf.chatVC.chatSessionInputBarControl.pluginBoardView
+             removeItemWithTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
+        }
+        if (config.evaEntryPoint == RCCSEvaExtention) {
+            [strongSelf.chatVC.chatSessionInputBarControl.pluginBoardView insertItem:RCResourceImage(@"Comment") highlightedImage:RCResourceImage(@"Comment_highlighted") title:@"评价" tag:PLUGIN_BOARD_ITEM_EVA_TAG];
+        }
+        [strongSelf announceViewWillShow];
         }
         onError:^(int errorCode, NSString *errMsg) {
             [weakSelf customerServiceWarning:errMsg.length ? errMsg : @"连接客服失败!"
@@ -126,48 +129,51 @@
                                  needSuspend:NO];
         }
         onModeType:^(RCCSModeType mode) {
-            weakSelf.currentServiceStatus = RCCustomerService_NoService;
-            [weakSelf onCustomerServiceModeChanged:mode];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        strongSelf.currentServiceStatus = RCCustomerService_NoService;
+            [strongSelf onCustomerServiceModeChanged:mode];
             switch (mode) {
             case RC_CS_RobotOnly:
-                [weakSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
+                [strongSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
                                                                style:RC_CHAT_INPUT_BAR_STYLE_CONTAINER];
-                weakSelf.currentServiceStatus = RCCustomerService_RobotService;
+                    strongSelf.currentServiceStatus = RCCustomerService_RobotService;
                 break;
             case RC_CS_HumanOnly: {
-                weakSelf.currentServiceStatus = RCCustomerService_HumanService;
+                strongSelf.currentServiceStatus = RCCustomerService_HumanService;
                 RCChatSessionInputBarControlStyle style = RC_CHAT_INPUT_BAR_STYLE_SWITCH_CONTAINER_EXTENTION;
-                [weakSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
+                [strongSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
                                                                style:style];
             } break;
             case RC_CS_RobotFirst:
-                [weakSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlCSRobotType
+                [strongSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlCSRobotType
                                                                style:RC_CHAT_INPUT_BAR_STYLE_CONTAINER];
-                weakSelf.currentServiceStatus = RCCustomerService_RobotService;
+                    strongSelf.currentServiceStatus = RCCustomerService_RobotService;
                 break;
             case RC_CS_NoService: {
                 RCChatSessionInputBarControlStyle style = RC_CHAT_INPUT_BAR_STYLE_SWITCH_CONTAINER_EXTENTION;
-                [weakSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
+                [strongSelf.chatVC.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlDefaultType
                                                                style:style];
-                weakSelf.currentServiceStatus = RCCustomerService_NoService;
+                strongSelf.currentServiceStatus = RCCustomerService_NoService;
             } break;
             default:
                 break;
             }
-            [weakSelf resetBottomBarStatus];
+            [strongSelf resetBottomBarStatus];
         }
         onPullEvaluation:^(NSString *dialogId) {
             //          if ([weakSelf.csEnterDate timeIntervalSinceNow] < -60 && !weakSelf.humanEvaluated &&
             //          weakSelf.csConfig.evaEntryPoint == RCCSEvaLeave) {
             //              weakSelf.humanEvaluated = YES;
-            [weakSelf commentCustomerServiceWithStatus:weakSelf.currentServiceStatus
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+            [strongSelf commentCustomerServiceWithStatus:weakSelf.currentServiceStatus
                                              commentId:dialogId
                                       quitAfterComment:NO];
             //          }
             //        [weakSelf showEvaView];
         }
         onSelectGroup:^(NSArray<RCCustomerServiceGroupItem *> *groupList) {
-            [weakSelf onSelectCustomerServiceGroup:groupList
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+            [strongSelf onSelectCustomerServiceGroup:groupList
                                             result:^(NSString *groupId) {
                                                 [[RCCustomerServiceClient sharedCustomerServiceClient]
                                                     selectCustomerServiceGroup:weakSelf.chatVC.targetId
@@ -175,14 +181,15 @@
                                             }];
         }
         onQuit:^(NSString *quitMsg) {
-            weakSelf.customerServiceQuitMsg = quitMsg;
-            if (weakSelf.csConfig.evaEntryPoint == RCCSEvaCSEnd &&
-                weakSelf.currentServiceStatus == RCCustomerService_HumanService) {
-                [weakSelf commentCustomerServiceWithStatus:weakSelf.currentServiceStatus
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        strongSelf.customerServiceQuitMsg = quitMsg;
+            if (strongSelf.csConfig.evaEntryPoint == RCCSEvaCSEnd &&
+                strongSelf.currentServiceStatus == RCCustomerService_HumanService) {
+                [strongSelf commentCustomerServiceWithStatus:strongSelf.currentServiceStatus
                                                  commentId:nil
                                           quitAfterComment:NO];
             } else {
-                [weakSelf showCustomerServiceEndAlert];
+                [strongSelf showCustomerServiceEndAlert];
             }
         }];
 }
@@ -198,13 +205,14 @@
         leaveMsgVC.conversationType = self.chatVC.conversationType;
         __weak typeof(self) weakSelf = self;
         [leaveMsgVC setLeaveMessageSuccess:^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
             RCInformationNotificationMessage *warningMsg =
                 [RCInformationNotificationMessage notificationWithMessage:@"您已提交留言。" extra:nil];
-            RCMessage *savedMsg = [[RCIMClient sharedRCIMClient] insertOutgoingMessage:weakSelf.chatVC.conversationType
-                                                                              targetId:weakSelf.chatVC.targetId
+            RCMessage *savedMsg = [[RCCoreClient sharedCoreClient] insertOutgoingMessage:strongSelf.chatVC.conversationType
+                                                                              targetId:strongSelf.chatVC.targetId
                                                                             sentStatus:SentStatus_SENT
                                                                                content:warningMsg];
-            [weakSelf.chatVC appendAndDisplayMessage:savedMsg];
+            [strongSelf.chatVC appendAndDisplayMessage:savedMsg];
         }];
         [self.chatVC.navigationController pushViewController:leaveMsgVC animated:YES];
     } else if (self.csConfig.leaveMessageType == RCCSLMWeb) {
@@ -373,11 +381,8 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             RCCustomerServiceGroupListController *customerGroupListController =
                 [[RCCustomerServiceGroupListController alloc] init];
-            UINavigationController *rootVC =
-                [[UINavigationController alloc] initWithRootViewController:customerGroupListController];
-            if ([RCSemanticContext isRTL]) {
-                rootVC.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-            }
+            RCBaseNavigationController *rootVC =
+                [[RCBaseNavigationController alloc] initWithRootViewController:customerGroupListController];
             customerGroupListController.groupList = __groupList;
             [customerGroupListController setSelectGroupBlock:^(NSString *groupId) {
                 if (resultBlock) {
@@ -463,7 +468,7 @@
             notificationWithMessage:self.customerServiceReciveMessageOverTimeRemindContent
                               extra:nil];
 
-        __block RCMessage *tempMessage = [[RCIMClient sharedRCIMClient] insertIncomingMessage:self.chatVC.conversationType
+        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
                                                                                      targetId:self.chatVC.targetId
                                                                                  senderUserId:self.chatVC.targetId
                                                                                receivedStatus:(ReceivedStatus_READ)
@@ -489,7 +494,7 @@
         RCInformationNotificationMessage *informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:self.customerServiceSendMessageOverTimeRemindContent
                               extra:nil];
-        __block RCMessage *tempMessage = [[RCIMClient sharedRCIMClient] insertIncomingMessage:self.chatVC.conversationType
+        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
                                                                                      targetId:self.chatVC.targetId
                                                                                  senderUserId:self.chatVC.targetId
                                                                                receivedStatus:(ReceivedStatus_READ)

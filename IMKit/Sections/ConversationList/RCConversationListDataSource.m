@@ -10,7 +10,6 @@
 #import "RCIM.h"
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
-#import <RongIMLib/RongIMLib.h>
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
@@ -53,7 +52,7 @@
                 sentTime = lastModel.sentTime;
             }
             NSArray *conversationList =
-                [[RCIMClient sharedRCIMClient] getConversationList:ws.displayConversationTypeArray
+                [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
                                                              count:PagingCount
                                                          startTime:sentTime];
             [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
@@ -198,7 +197,7 @@
             }
         } else {
             RCConversation *conversation =
-                [[RCIMClient sharedRCIMClient] getConversation:conversationType
+                [[RCCoreClient sharedCoreClient] getConversation:conversationType
                                                       targetId:targetId];
             RCConversationModel *newModel =
                 [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
@@ -220,15 +219,14 @@
 #pragma mark - Notification
 
 - (void)didReceiveMessageNotification:(NSNotification *)notification {
-    __weak typeof(self) weakSelf = self;
     dispatch_async(self.updateEventQueue, ^{
-        if (weakSelf.isConverstaionListAppear) {
-            weakSelf.throttleReloadAction();
+        if (self.isConverstaionListAppear) {
+            self.throttleReloadAction();
         }else {
             int left = [notification.userInfo[@"left"] intValue];
             if (left == 0) {
-                if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
-                    [weakSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
+                if (self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
+                    [self.delegate notifyUpdateUnreadMessageCountInDataSource];
                 }
             }
         }
@@ -251,7 +249,7 @@
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
 
                         RCConversation *conversation =
-                            [[RCIMClient sharedRCIMClient] getConversation:model.conversationType
+                            [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
                                                                   targetId:model.targetId];
                         model.lastestMessage = conversation.lastestMessage;
                         model.sentStatus = conversation.sentStatus;
@@ -297,7 +295,7 @@
                 return;
             }
             RCConversation *conversation =
-                [[RCIMClient sharedRCIMClient] getConversation:message.conversationType targetId:message.targetId];
+                [[RCCoreClient sharedCoreClient] getConversation:message.conversationType targetId:message.targetId];
             RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
             model.topCellBackgroundColor = self.topCellBackgroundColor;
             model.cellBackgroundColor = self.cellBackgroundColor;
@@ -321,7 +319,7 @@
                 for (RCConversationModel *model in self.dataList) {
                     if ([model isMatching:conversationType targetId:targetId]) {
 
-                        if ([senderUserId isEqualToString:[RCIMClient sharedRCIMClient]
+                        if ([senderUserId isEqualToString:[RCCoreClient sharedCoreClient]
                                                               .currentUserInfo
                                                               .userId]) { //由于多端阅读消息数同步而触发通知执行该方法时
                             if (model.unreadMessageCount != 0) {
@@ -389,18 +387,18 @@
         long messageId = [notification.object longValue];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
+            RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
             NSString *targetId = message.targetId;
             for (RCConversationModel *model in self.dataList) {
                 if ([targetId isEqualToString:model.targetId] || model.lastestMessageId == messageId) {
 
                     RCConversation *conversation =
-                        [[RCIMClient sharedRCIMClient] getConversation:model.conversationType targetId:model.targetId];
+                        [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId];
                     model.lastestMessage = conversation.lastestMessage;
                     model.lastestMessageId = conversation.lastestMessageId;
                     model.mentionedCount = conversation.mentionedCount;
                     NSInteger unreadMessageCount =
-                        [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType targetId:model.targetId];
+                        [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
                     if (unreadMessageCount != model.unreadMessageCount) {
                         RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         model.unreadMessageCount = unreadMessageCount;
@@ -421,7 +419,7 @@
                 } else if (!message) {
                     if (model.unreadMessageCount > 0) {
                         RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                        model.unreadMessageCount = [[RCIMClient sharedRCIMClient] getUnreadCount:model.conversationType
+                        model.unreadMessageCount = [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType
                                                                                         targetId:model.targetId];
                         unreadUpdateInfo.model = model;
                         unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;
@@ -480,11 +478,12 @@
     if (!_throttleReloadAction) {
         __weak typeof(self) weakSelf = self;
         _throttleReloadAction = [self getThrottleActionWithTimeInteval:0.5 action:^{
-            if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(refreshConversationTableViewIfNeededInDataSource:)]) {
-                [weakSelf.delegate refreshConversationTableViewIfNeededInDataSource:weakSelf];
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf.delegate && [strongSelf.delegate respondsToSelector:@selector(refreshConversationTableViewIfNeededInDataSource:)]) {
+                [strongSelf.delegate refreshConversationTableViewIfNeededInDataSource:strongSelf];
             }
-            if (weakSelf.delegate && [weakSelf.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
-                [weakSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
+            if (strongSelf.delegate && [strongSelf.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]) {
+                [strongSelf.delegate notifyUpdateUnreadMessageCountInDataSource];
             }
         }];
     }

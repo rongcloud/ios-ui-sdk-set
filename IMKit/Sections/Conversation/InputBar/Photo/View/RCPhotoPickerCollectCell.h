@@ -6,7 +6,7 @@
 //  Copyright © 2016年 张改红. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "RCBaseCollectionViewCell.h"
 @class RCAssetModel;
 
 @protocol RCPhotoPickerCollectCellDelegate <NSObject>
@@ -32,7 +32,7 @@
 
 @end
 
-@interface RCPhotoPickerCollectCell : UICollectionViewCell
+@interface RCPhotoPickerCollectCell : RCBaseCollectionViewCell
 
 
 @property (nonatomic, copy) NSString *representedAssetIdentifier;

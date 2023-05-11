@@ -18,6 +18,7 @@
 #import "RCConversationListDataSource.h"
 #import "RCKitConfig.h"
 #import "RCConversationViewController.h"
+
 @interface RCConversationListViewController () <UITableViewDataSource, UITableViewDelegate, RCConversationCellDelegate,RCConversationListDataSourceDelegate>
 
 @property (nonatomic, strong) UIView *connectionStatusView;
@@ -72,7 +73,7 @@
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
     
-    self.conversationListTableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
+    self.conversationListTableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     self.conversationListTableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     self.conversationListTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(1, 1, 0, CGFLOAT_MIN)];
@@ -219,12 +220,12 @@
             if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
                 [self sendReadReceiptIfNeed:model];
             }
-            [[RCIMClient sharedRCIMClient] removeConversation:model.conversationType targetId:model.targetId];
+            [[RCCoreClient sharedCoreClient] removeConversation:model.conversationType targetId:model.targetId];
             [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
             [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
                                                   withRowAnimation:UITableViewRowAnimationFade];
         } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-            [[RCIMClient sharedRCIMClient] clearConversations:@[ @(model.conversationType) ]];
+            [[RCCoreClient sharedCoreClient] clearConversations:@[ @(model.conversationType) ]];
             [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
             [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
                                                   withRowAnimation:UITableViewRowAnimationFade];
@@ -275,10 +276,9 @@
 }
 
 - (void)refreshConversationTableViewIfNeeded {
-    __weak typeof(self) weakSelf = self;
     [self.dataSource forceLoadConversationModelList:^(NSMutableArray *modelList) {
-        [weakSelf.conversationListTableView reloadData];
-        [weakSelf updateEmptyConversationView];
+        [self.conversationListTableView reloadData];
+        [self updateEmptyConversationView];
     }];
 }
 
@@ -320,7 +320,7 @@
 
 #pragma mark - update view
 - (void)updateNetworkIndicatorView {
-    RCConnectionStatus status = [[RCIMClient sharedRCIMClient] getConnectionStatus];
+    RCConnectionStatus status = [[RCCoreClient sharedCoreClient] getConnectionStatus];
 
     BOOL needReloadTableView = NO;
     if (status == ConnectionStatus_NETWORK_UNAVAILABLE || status == ConnectionStatus_UNKNOWN ||
@@ -360,7 +360,7 @@
         return;
     }
 
-    RCConnectionStatus status = [[RCIMClient sharedRCIMClient] getConnectionStatus];
+    RCConnectionStatus status = [[RCCoreClient sharedCoreClient] getConnectionStatus];
     if (status == ConnectionStatus_Connecting || status == ConnectionStatus_Suspend) {
         [self showConnectingView];
     } else {
@@ -557,7 +557,7 @@
 @synthesize emptyConversationView = _emptyConversationView;
 - (UIView *)emptyConversationView {
     if (!_emptyConversationView) {
-        _emptyConversationView = [[UIImageView alloc] initWithImage:RCResourceImage(@"no_message_img")];
+        _emptyConversationView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"no_message_img")];
         _emptyConversationView.center = self.view.center;
         CGRect emptyRect = _emptyConversationView.frame;
         emptyRect.origin.y -= 36;
