@@ -22,10 +22,13 @@ FOUNDATION_EXPORT const unsigned char RongSightVersionString[];
 #import <RongSight/RCSightViewController.h>
 #import <RongSight/RCSightPlayerController.h>
 #import <RongSight/RCSightPlayerOverlay.h>
+#import <RongSight/RongSightAdaptiveHeader.h>
 
 #else
 
 #import "RCSightViewController.h"
 #import "RCSightPlayerController.h"
 #import "RCSightPlayerOverlay.h"
+#import "RongSightAdaptiveHeader.h"
+
 #endif

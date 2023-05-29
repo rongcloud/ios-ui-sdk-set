@@ -341,14 +341,14 @@ static BOOL msgRoamingServiceAvailable = YES;
     NSArray *__messageArray = [[RCCoreClient sharedCoreClient] getHistoryMessages:self.chatVC.conversationType
                                                                        targetId:self.chatVC.targetId
                                                                 oldestMessageId:lastMessageId
-                                                                          count:self.chatVC.defaultLocalHistoryMessageCount];
+                                                                          count:self.chatVC.defaultMessageCount];
     [self.chatVC.util sendReadReceiptResponseForMessages:__messageArray];
     if (__messageArray.count > 0) {
         [self handleMessagesAfterLoadMore:__messageArray];
         RCMessage *message = __messageArray.lastObject;
         self.recordTime = message.sentTime;
     }
-    if (__messageArray.count < self.chatVC.defaultLocalHistoryMessageCount) {
+    if (__messageArray.count < self.chatVC.defaultMessageCount) {
         self.allMessagesAreLoaded = NO;
         self.loadHistoryMessageFromRemote = YES;
         [self loadRemoteHistoryMessages];
@@ -378,7 +378,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     
     RCRemoteHistoryMsgOption *option = [RCRemoteHistoryMsgOption new];
     option.recordTime = self.recordTime;
-    option.count = self.chatVC.defaultRemoteHistoryMessageCount;
+    option.count = self.chatVC.defaultMessageCount;
     option.order = RCRemoteHistoryOrderDesc;
     __weak __typeof(self)weakSelf = self;
     [[RCCoreClient sharedCoreClient] getRemoteHistoryMessages:conversationType
@@ -424,8 +424,8 @@ static BOOL msgRoamingServiceAvailable = YES;
 /// 返回添加入conversationDataRepository中消息数量
 - (NSInteger)appendLastestMessageToDataSource {
     NSArray *messageArray =
-        [[RCCoreClient sharedCoreClient] getLatestMessages:self.chatVC.conversationType targetId:self.chatVC.targetId count:self.chatVC.defaultLocalHistoryMessageCount];
-    if (!messageArray || messageArray.count < self.chatVC.defaultLocalHistoryMessageCount) {
+        [[RCCoreClient sharedCoreClient] getLatestMessages:self.chatVC.conversationType targetId:self.chatVC.targetId count:self.chatVC.defaultMessageCount];
+    if (!messageArray || messageArray.count < self.chatVC.defaultMessageCount) {
         self.isLoadingHistoryMessage = NO;
     }
     [self.chatVC.util sendReadReceiptResponseForMessages:messageArray];
@@ -447,7 +447,7 @@ static BOOL msgRoamingServiceAvailable = YES;
 }
 - (void)handleMessagesAfterLoadMore:(NSArray *)__messageArray checkUnreadMessage:(BOOL)check {
     CGFloat increasedHeight = 0;
-    NSMutableArray *indexPathes = [[NSMutableArray alloc] initWithCapacity:self.chatVC.defaultLocalHistoryMessageCount];
+    NSMutableArray *indexPathes = [[NSMutableArray alloc] initWithCapacity:self.chatVC.defaultMessageCount];
     int indexPathCount = 0;
     for (int i = 0; i < __messageArray.count; i++) {
         RCMessage *rcMsg = [__messageArray objectAtIndex:i];
@@ -474,7 +474,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             }
         }
         if (self.firstUnreadMessage && rcMsg.messageId == self.firstUnreadMessage.messageId &&
-            self.chatVC.enableUnreadMessageIcon && !self.chatVC.unReadButton.selected && self.chatVC.unReadMessage > self.chatVC.defaultLocalHistoryMessageCount) {
+            self.chatVC.enableUnreadMessageIcon && !self.chatVC.unReadButton.selected && self.chatVC.unReadMessage > self.chatVC.defaultMessageCount) {
             //如果会话里都是未注册自定义消息，这时获取到的数据源是 0，点击右上角未读按钮会崩溃
             if (self.chatVC.conversationDataRepository.count > 0) {
                 RCMessageModel *model = [RCMessageModel modelWithMessage:[self generateOldMessage]];
@@ -558,8 +558,8 @@ static BOOL msgRoamingServiceAvailable = YES;
 #pragma mark - loadMessageV1
 - (void)loadLatestHistoryMessageV1{
     self.loadHistoryMessageFromRemote = NO;
-    int beforeCount = self.chatVC.defaultLocalHistoryMessageCount;
-    int afterCount = self.chatVC.defaultLocalHistoryMessageCount;
+    int beforeCount = self.chatVC.defaultMessageCount;
+    int afterCount = self.chatVC.defaultMessageCount;
 
     if ([RCKitUtility currentDeviceIsIPad]) {
         beforeCount = 15;
@@ -573,9 +573,9 @@ static BOOL msgRoamingServiceAvailable = YES;
     [self.chatVC.util sendReadReceiptResponseForMessages:__messageArray];
 
     // 1.如果 self.locatedMessageSentTime == 0,
-    // ==0,__messageArray.count<self.defaultLocalHistoryMessageCount,证明本地消息已经拉完，如果再次拉取，需要从远端拉消息
+    // ==0,__messageArray.count<self.defaultMessageCount,证明本地消息已经拉完，如果再次拉取，需要从远端拉消息
     if (self.chatVC.conversationType != ConversationType_CHATROOM) {
-        if (!self.chatVC.locatedMessageSentTime && __messageArray.count < self.chatVC.defaultLocalHistoryMessageCount) {
+        if (!self.chatVC.locatedMessageSentTime && __messageArray.count < self.chatVC.defaultMessageCount) {
             self.loadHistoryMessageFromRemote = YES;
             self.isLoadingHistoryMessage = NO;
             self.recordTime = ((RCMessage *)__messageArray.lastObject).sentTime;
@@ -594,14 +594,14 @@ static BOOL msgRoamingServiceAvailable = YES;
         [self pushOldMessageModel:model];
         [self showUnreadViewInMessageCell:model];
         // 2.如果 self.locatedMessageSentTime
-        //不为0,判断定位的那条消息之前的消息如果小于拉取的数量self.defaultLocalHistoryMessageCount，则再次拉取需要从远端拉消息，如果定位的那条消息之后的消息大于拉取的数量self.defaultLocalHistoryMessageCount，证明此时已经没有最新消息，isLoadingHistoryMessage
+        //不为0,判断定位的那条消息之前的消息如果小于拉取的数量self.defaultMessageCount，则再次拉取需要从远端拉消息，如果定位的那条消息之后的消息大于拉取的数量self.defaultMessageCount，证明此时已经没有最新消息，isLoadingHistoryMessage
         if (self.chatVC.locatedMessageSentTime && model.sentTime == self.chatVC.locatedMessageSentTime) {
-            if (i < self.chatVC.defaultLocalHistoryMessageCount) {
+            if (i < self.chatVC.defaultMessageCount) {
                 self.isLoadingHistoryMessage = NO;
             } else {
                 self.isLoadingHistoryMessage = YES;
             }
-            if (__messageArray.count - 1 - i < self.chatVC.defaultLocalHistoryMessageCount) {
+            if (__messageArray.count - 1 - i < self.chatVC.defaultMessageCount) {
                 self.loadHistoryMessageFromRemote = YES;
             }
         }
@@ -617,8 +617,8 @@ static BOOL msgRoamingServiceAvailable = YES;
                                                                    objectName:nil
                                                                 baseMessageId:model.messageId
                                                                     isForward:NO
-                                                                        count:self.chatVC.defaultLocalHistoryMessageCount];
-    if (!messageArray || messageArray.count < self.chatVC.defaultLocalHistoryMessageCount) {
+                                                                        count:self.chatVC.defaultMessageCount];
+    if (!messageArray || messageArray.count < self.chatVC.defaultMessageCount) {
         self.isLoadingHistoryMessage = NO;
     }
     [self.chatVC.util sendReadReceiptResponseForMessages:messageArray];
@@ -643,12 +643,12 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
         [self getHistoryMessageV2:time order:RCHistoryMessageOrderAsc loadType:type complete:^(NSArray *newMsgs, RCConversationLoadMessageType type) {
             __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (oldMsgs.count < strongSelf.chatVC.defaultRemoteHistoryMessageCount) {
+            if (oldMsgs.count < strongSelf.chatVC.defaultMessageCount) {
                 strongSelf.allMessagesAreLoaded = YES;
             }else{
                 strongSelf.allMessagesAreLoaded = NO;
             }
-            if (newMsgs.count < strongSelf.chatVC.defaultRemoteHistoryMessageCount) {
+            if (newMsgs.count < strongSelf.chatVC.defaultMessageCount) {
                 weakSelf.isLoadingHistoryMessage = NO;
             }else{
                 strongSelf.isLoadingHistoryMessage = YES;
@@ -668,7 +668,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         //断档接口不能仅通过消息个数来决定消息是否已经拉完
         //断档消息接口从远端拿完之后再从数据库拿时，如果拿到 cmd 消息，其会被排掉
         //导致消息个数不匹配
-//        if (messages.count < weakSelf.chatVC.defaultLocalHistoryMessageCount) {
+//        if (messages.count < weakSelf.chatVC.defaultMessageCount) {
 //            weakSelf.allMessagesAreLoaded = YES;
 //        }else{
         strongSelf.allMessagesAreLoaded = NO;
@@ -691,7 +691,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     __weak typeof(self) weakSelf = self;
     [self getHistoryMessageV2:time order:RCHistoryMessageOrderAsc loadType:self.chatVC.loadMessageType complete:^(NSArray *messages, RCConversationLoadMessageType type) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (messages.count < strongSelf.chatVC.defaultLocalHistoryMessageCount) {
+        if (messages.count < strongSelf.chatVC.defaultMessageCount) {
             strongSelf.isLoadingHistoryMessage = NO;
         }else{
             strongSelf.isLoadingHistoryMessage = YES;
@@ -706,7 +706,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     }
     [self.chatVC.util sendReadReceiptResponseForMessages:messages];
     if (self.chatVC.conversationType != ConversationType_CHATROOM) {
-        if (!self.chatVC.locatedMessageSentTime && messages.count < self.chatVC.defaultLocalHistoryMessageCount) {
+        if (!self.chatVC.locatedMessageSentTime && messages.count < self.chatVC.defaultMessageCount) {
             self.isLoadingHistoryMessage = NO;
             self.recordTime = ((RCMessage *)messages.lastObject).sentTime;
         }
@@ -755,7 +755,7 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)getHistoryMessageV2:(long long)time order:(RCHistoryMessageOrder)order loadType:(RCConversationLoadMessageType)loadType complete:(void (^)(NSArray *messages, RCConversationLoadMessageType type))complete{
     RCHistoryMessageOption *option = [[RCHistoryMessageOption alloc] init];
     option.recordTime = time;
-    option.count = self.chatVC.defaultRemoteHistoryMessageCount;
+    option.count = self.chatVC.defaultMessageCount;
     option.order = order;
     __weak typeof(self) weakSelf = self;
     void (^completeHandle)(NSArray *messages, RCErrorCode code) = ^(NSArray *messages, RCErrorCode code) {
@@ -813,7 +813,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         [self.chatVC.unReadButton removeFromSuperview];
         self.chatVC.unReadMessage = 0;
     }
-    if (self.chatVC.unReadMessage > self.chatVC.defaultLocalHistoryMessageCount && self.chatVC.enableUnreadMessageIcon == YES && !self.chatVC.unReadButton.selected) {
+    if (self.chatVC.unReadMessage > self.chatVC.defaultMessageCount && self.chatVC.enableUnreadMessageIcon == YES && !self.chatVC.unReadButton.selected) {
         [self.chatVC setupUnReadMessageView];
     }
     if (self.chatVC.locatedMessageSentTime > 0) {

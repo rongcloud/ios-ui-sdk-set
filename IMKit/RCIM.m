@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.4.4_opensource";
+static NSString *const RCIMKitVersion = @"5.4.5_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -787,42 +787,36 @@ static NSString *const RCIMKitVersion = @"5.4.4_opensource";
     if ([self beforeInterceptSendMessage:message]) {
         return nil;
     }
-    
-    content = message.content;
-    
-    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMessage:conversationType
-                                                             targetId:targetId
-                                                              content:content
-                                                          pushContent:pushContent
-                                                             pushData:pushData
-                                                              success:^(long messageId) {
-        [self postSendMessageSentNotification:targetId
-                             conversationType:conversationType
-                                    messageId:messageId
-                                      content:content];
-        [self sendMessageComplete:message status:0 messageId:messageId];
+
+    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMessage:message pushContent:pushContent pushData:pushData successBlock:^(RCMessage *successMessage) {
+        [self postSendMessageSentNotification:successMessage.targetId
+                             conversationType:successMessage.conversationType
+                                    messageId:successMessage.messageId
+                                      content:successMessage.content];
+        [self sendMessageComplete:successMessage status:0];
+        
         if (successBlock) {
-            successBlock(messageId);
+            successBlock(successMessage.messageId);
         }
-    } error:^(RCErrorCode nErrorCode, long messageId) {
+    } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
         if (nErrorCode == RC_MSG_REPLACED_SENSITIVE_WORD) {
-            [self postSendMessageSentNotification:targetId
-                                 conversationType:conversationType
-                                        messageId:messageId
-                                          content:content];
-            [self sendMessageComplete:message status:0 messageId:messageId];
+            [self postSendMessageSentNotification:errorMessage.targetId
+                                 conversationType:errorMessage.conversationType
+                                        messageId:errorMessage.messageId
+                                          content:errorMessage.content];
+            [self sendMessageComplete:errorMessage status:0];
             if (successBlock) {
-                successBlock(messageId);
+                successBlock(errorMessage.messageId);
             }
         } else {
-            [self postSendMessageErrorNotification:targetId
-                                  conversationType:conversationType
-                                         messageId:messageId
+            [self postSendMessageErrorNotification:errorMessage.targetId
+                                  conversationType:errorMessage.conversationType
+                                         messageId:errorMessage.messageId
                                              error:nErrorCode
-                                           content:content];
-            [self sendMessageComplete:message status:nErrorCode messageId:messageId];
+                                           content:errorMessage.content];
+            [self sendMessageComplete:errorMessage status:nErrorCode];
             if (errorBlock) {
-                errorBlock(nErrorCode, messageId);
+                errorBlock(nErrorCode, errorMessage.messageId);
             }
         }
     }];
@@ -920,42 +914,35 @@ static NSString *const RCIMKitVersion = @"5.4.4_opensource";
     if ([self beforeInterceptSendMessage:message]) {
         return nil;
     }
-    content = message.content;
-    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendDirectionalMessage:conversationType
-    targetId:targetId
-    toUserIdList:userIdList
-    content:content
-    pushContent:pushContent
-    pushData:pushData
-    success:^(long messageId) {
-        [self postSendMessageSentNotification:targetId
-                             conversationType:conversationType
-                                    messageId:messageId
-                                      content:content];
-        [self sendMessageComplete:message status:0 messageId:messageId];
+    
+    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendDirectionalMessage:message toUserIdList:userIdList pushContent:pushContent pushData:pushData successBlock:^(RCMessage * _Nonnull successMessage) {
+        [self postSendMessageSentNotification:successMessage.targetId
+                             conversationType:successMessage.conversationType
+                                    messageId:successMessage.messageId
+                                      content:successMessage.content];
+        [self sendMessageComplete:successMessage status:0];
         if (successBlock) {
-            successBlock(messageId);
+            successBlock(successMessage.messageId);
         }
-    }
-    error:^(RCErrorCode nErrorCode, long messageId) {
+    } errorBlock:^(RCErrorCode nErrorCode, RCMessage * _Nonnull errorMessage) {
         if (nErrorCode == RC_MSG_REPLACED_SENSITIVE_WORD) {
-            [self postSendMessageSentNotification:targetId
-                                 conversationType:conversationType
-                                        messageId:messageId
-                                          content:content];
-            [self sendMessageComplete:message status:0 messageId:messageId];
+            [self postSendMessageSentNotification:errorMessage.targetId
+                                 conversationType:errorMessage.conversationType
+                                        messageId:errorMessage.messageId
+                                          content:errorMessage.content];
+            [self sendMessageComplete:errorMessage status:0];
             if (successBlock) {
-                successBlock(messageId);
+                successBlock(errorMessage.messageId);
             }
         } else {
-            [self postSendMessageErrorNotification:targetId
-                                  conversationType:conversationType
-                                         messageId:messageId
+            [self postSendMessageErrorNotification:errorMessage.targetId
+                                  conversationType:errorMessage.conversationType
+                                         messageId:errorMessage.messageId
                                              error:nErrorCode
-                                           content:content];
-            [self sendMessageComplete:message status:nErrorCode messageId:messageId];
+                                           content:errorMessage.content];
+            [self sendMessageComplete:errorMessage status:nErrorCode];
             if (errorBlock) {
-                errorBlock(nErrorCode, messageId);
+                errorBlock(nErrorCode, errorMessage.messageId);
             }
         }
     }];
@@ -1084,61 +1071,56 @@ static NSString *const RCIMKitVersion = @"5.4.4_opensource";
     if ([self beforeInterceptSendMessage:message]) {
         return nil;
     }
-    content = message.content;
-    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMediaMessage:conversationType
-    targetId:targetId
-    content:content
-    pushContent:pushContent
-    pushData:pushData
-    progress:^(int progress, long messageId) {
+    
+    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMediaMessage:message pushContent:pushContent pushData:pushData progress:^(int progress, RCMessage *progressMessage) {
         NSDictionary *statusDic = @{
-            @"targetId" : targetId,
-            @"conversationType" : @(conversationType),
-            @"messageId" : @(messageId),
+            @"targetId" : progressMessage.targetId,
+            @"conversationType" : @(progressMessage.conversationType),
+            @"messageId" : @(progressMessage.messageId),
             @"sentStatus" : @(SentStatus_SENDING),
             @"progress" : @(progress)
         };
+
         [[NSNotificationCenter defaultCenter] postNotificationName:RCKitSendingMessageNotification
                                                             object:nil
                                                           userInfo:statusDic];
         if (progressBlock) {
-            progressBlock(progress, messageId);
+            progressBlock(progress, progressMessage.messageId);
         }
-    }
-    success:^(long messageId) {
-        [self postSendMessageSentNotification:targetId
-                             conversationType:conversationType
-                                    messageId:messageId
-                                      content:content];
-        [self sendMessageComplete:message status:0 messageId:messageId];
+    } successBlock:^(RCMessage *successMessage) {
+        [self postSendMessageSentNotification:successMessage.targetId
+                             conversationType:successMessage.conversationType
+                                    messageId:successMessage.messageId
+                                      content:successMessage.content];
+        [self sendMessageComplete:successMessage status:0];
+        
         if (successBlock) {
-            successBlock(messageId);
+            successBlock(successMessage.messageId);
         }
-    }
-    error:^(RCErrorCode errorCode, long messageId) {
-        [self postSendMessageErrorNotification:targetId
-                              conversationType:conversationType
-                                     messageId:messageId
-                                         error:errorCode
-                                       content:content];
-        [self sendMessageComplete:message status:errorCode messageId:messageId];
+    } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
+        [self postSendMessageErrorNotification:errorMessage.targetId
+                              conversationType:errorMessage.conversationType
+                                     messageId:errorMessage.messageId
+                                         error:nErrorCode
+                                       content:errorMessage.content];
+        [self sendMessageComplete:errorMessage status:nErrorCode];
         if (errorBlock) {
-            errorBlock(errorCode, messageId);
+            errorBlock(nErrorCode, errorMessage.messageId);
         }
-    }
-    cancel:^(long messageId) {
+    } cancel:^(RCMessage *cancelMessage) {
         NSDictionary *statusDic = @{
-            @"targetId" : targetId,
-            @"conversationType" : @(conversationType),
-            @"messageId" : @(messageId),
+            @"targetId" : cancelMessage.targetId,
+            @"conversationType" : @(cancelMessage.conversationType),
+            @"messageId" : @(cancelMessage.messageId),
             @"sentStatus" : @(SentStatus_CANCELED),
-            @"content" : content
+            @"content" : cancelMessage.content
         };
+        
         [[NSNotificationCenter defaultCenter] postNotificationName:RCKitSendingMessageNotification
                                                             object:nil
                                                           userInfo:statusDic];
         if (cancelBlock) {
-            cancelBlock(messageId);
+            cancelBlock(cancelMessage.messageId);
         }
     }];
 

@@ -20,12 +20,15 @@ FOUNDATION_EXPORT const unsigned char RongLocationKitVersionString[];
 #import <RongLocationKit/RCLocationMessageCell.h>
 #import <RongLocationKit/RCLocationPickerViewController.h>
 #import <RongLocationKit/RCLocationViewController.h>
+#import <RongLocationKit/RongLocationKitAdaptiveHeader.h>
+
 
 #else
 
 #import "RCLocationMessageCell.h"
 #import "RCLocationPickerViewController.h"
 #import "RCLocationViewController.h"
+#import "RongLocationKitAdaptiveHeader.h"
 
 #endif
 

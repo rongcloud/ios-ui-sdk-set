@@ -72,7 +72,11 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-    RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate>
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate> {
+    int _defaultLocalHistoryMessageCount;
+    int _defaultMessageCount;
+    int _defaultRemoteHistoryMessageCount;
+}
 
 @property (nonatomic, strong) RCConversationDataSource *dataSource;
 @property (nonatomic, strong) RCConversationVCUtil *util;
@@ -156,8 +160,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.util = [[RCConversationVCUtil alloc] init:self];
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
     self.enableUnreadMentionedIcon = YES;
-    self.defaultLocalHistoryMessageCount = 10;
-    self.defaultRemoteHistoryMessageCount = 10;
+    self.defaultMessageCount = 10;
 }
 
 - (void)viewDidLoad {
@@ -1124,7 +1127,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     CGFloat height = 0;
     // 当加载本地历史消息小于 10 时，allMessagesAreLoaded 为 NO，此时高度设置为 0，否则会向下偏移 COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 的高度
     if(!self.dataSource.allMessagesAreLoaded) {
-        if (self.conversationDataRepository.count < self.defaultLocalHistoryMessageCount) {
+        if (self.conversationDataRepository.count < self.defaultMessageCount) {
             height = 1;
         } else {
             height = COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT;
@@ -3120,24 +3123,35 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     _locatedMessageSentTime = locatedMessageSentTime;
 }
 
-- (void)setDefaultLocalHistoryMessageCount:(int)defaultLocalHistoryMessageCount {
-    if (defaultLocalHistoryMessageCount > 100) {
-        defaultLocalHistoryMessageCount = 100;
-    }else if (defaultLocalHistoryMessageCount < 0){
-        defaultLocalHistoryMessageCount = 10;
-    }
-    _defaultLocalHistoryMessageCount = defaultLocalHistoryMessageCount;
+- (void)setDefaultLocalHistoryMessageCount:(int)count {
+    self.defaultMessageCount = count;
 }
 
-- (void)setDefaultRemoteHistoryMessageCount:(int)defaultRemoteHistoryMessageCount {
-    if (defaultRemoteHistoryMessageCount > 20) {
-        defaultRemoteHistoryMessageCount = 20;
-    }else if(defaultRemoteHistoryMessageCount < 0){
-        defaultRemoteHistoryMessageCount = 10;
-    }
-    _defaultRemoteHistoryMessageCount = defaultRemoteHistoryMessageCount;
+- (void)setDefaultRemoteHistoryMessageCount:(int)count {
+    self.defaultMessageCount = count;
 }
 
+- (void)setDefaultMessageCount:(int)count {
+    if (count > 100) {
+        _defaultMessageCount = 100;
+    }else if(count < 2){
+        _defaultMessageCount = 10;
+    } else {
+        _defaultMessageCount = count;
+    }
+}
+
+- (int)defaultMessageCount {
+    return _defaultMessageCount;
+}
+
+- (int)defaultLocalHistoryMessageCount {
+    return self.defaultMessageCount;
+}
+
+- (int)defaultRemoteHistoryMessageCount {
+    return self.defaultMessageCount;
+}
 //设置头像样式
 - (void)setMessageAvatarStyle:(RCUserAvatarStyle)avatarStyle {
     RCKitConfigCenter.ui.globalMessageAvatarStyle = avatarStyle;
@@ -3395,7 +3409,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (UILabel *)unReadMentionedLabel {
     if (!_unReadMentionedLabel) {
-        _unReadMentionedLabel = [[UILabel alloc] initWithFrame:CGRectMake(17 + 9 + 6, 0, 0, self.unReadMentionedButton.frame.size.height)];
+        _unReadMentionedLabel = [[UILabel alloc] initWithFrame:CGRectMake(17 + 9 + 6, 0, 0, 48)];
         _unReadMentionedLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         _unReadMentionedLabel.textColor = RCDYCOLOR(0x111f2c, 0x0099ff);
         _unReadMentionedLabel.textAlignment = NSTextAlignmentCenter;
