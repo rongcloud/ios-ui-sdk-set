@@ -129,8 +129,11 @@
 }
 
 + (NSDictionary *)getHTTPHeaderDict {
-
     NSString *appKey = [RCStickerModule sharedModule].appKey;
+    if (appKey.length == 0) {
+        RongStickerLog(@"error: appKey 为空，请先初始化: [RCIM.sharedRCIM initWithAppKey:AppKey option:nil];!!!");
+        return @{};
+    }
     NSString *sha1AppKey = [RCStickerUtility sha1:appKey];
     int num = (arc4random() % 10000);
     NSString *nonce = [NSString stringWithFormat:@"%.4d", num];

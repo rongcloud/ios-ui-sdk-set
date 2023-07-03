@@ -935,7 +935,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     }
     error:^(RCErrorCode status) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (status == KICKED_FROM_CHATROOM) {
+            if (status == RCErrorCodesKickedFromChatroom) {
                 [weakSelf.chatVC alertErrorAndLeft:RCLocalizedString(@"JoinChatRoomRejected")];
             } else {
                 [weakSelf.chatVC

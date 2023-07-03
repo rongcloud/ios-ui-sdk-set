@@ -108,7 +108,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         } else if ([statusDic[@"type"] isEqualToString:@"error"]) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self layoutForShowFileInfo];
-                if ([statusDic[@"errorCode"] intValue] == RC_NETWORK_UNAVAILABLE) {
+                if ([statusDic[@"errorCode"] intValue] == RCErrorCodesConnectionUnavailable) {
                     [self showAlertController:RCLocalizedString(@"ConnectionIsNotReachable")];
                 } else {
                     [self showAlertController:RCLocalizedString(@"FileDownloadFailed")];

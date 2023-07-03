@@ -666,7 +666,7 @@
             if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
                 [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
             }
-            RCLogE(@"download sight error , reason : RC_FILE_EXPIRED ");
+            RCLogE(@"download sight error , reason : RCErrorCodesFileExpired ");
             return;
         }
     }

@@ -331,10 +331,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self registerClass:[RCRichContentMessageCell class] forMessageClass:[RCRichContentMessage class]];
     [self registerClass:[RCFileMessageCell class] forMessageClass:[RCFileMessage class]];
     [self registerClass:[RCReferenceMessageCell class] forMessageClass:[RCReferenceMessage class]];
-    if (NSClassFromString(@"RCSightCapturer")) {
-        [self registerClass:[RCSightMessageCell class] forMessageClass:[RCSightMessage class]];
-    }
-
+    [self registerClass:[RCSightMessageCell class] forMessageClass:[RCSightMessage class]];
     [self registerClass:[RCTipMessageCell class] forMessageClass:[RCInformationNotificationMessage class]];
     [self registerClass:[RCTipMessageCell class] forMessageClass:[RCDiscussionNotificationMessage class]];
     [self registerClass:[RCTipMessageCell class] forMessageClass:[RCGroupNotificationMessage class]];
@@ -2726,7 +2723,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             }
         });
     }
-    if (nErrorCode == RC_MEDIA_EXCEPTION) {
+    if (nErrorCode == RCErrorCodesMediaFileInvalid) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSString *alertMessage = RCLocalizedString(@"CannotUploadFiles");
             [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];

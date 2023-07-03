@@ -108,8 +108,7 @@
 
 - (void)beginDestructing {
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
-    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0 &&
-        textMessage.destructDuration > 0) {
+    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0) {
         [[RCCoreClient sharedCoreClient]
             messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
     }
@@ -161,7 +160,7 @@
     self.destructTextImage.hidden = YES;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId];
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
-        numDuration != nil) {
+        !numDuration) {
         self.destructTextImage.hidden = NO;
     }
     
@@ -177,7 +176,7 @@
         self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
     
-    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && numDuration != nil) {
+    if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && !numDuration) {
         self.textLabel.text = RCLocalizedString(@"ClickToView");
     }else if(textMessage){
         self.textLabel.text = textMessage.content;
@@ -287,7 +286,7 @@
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:model.messageUId];
     CGSize textMessageSize;
     if (textMessage.destructDuration > 0 && model.messageDirection == MessageDirection_RECEIVE &&
-        numDuration != nil) {
+        !numDuration) {
         textMessageSize =
             [RCKitUtility getTextDrawingSize:RCLocalizedString(@"ClickToView")
                                         font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]

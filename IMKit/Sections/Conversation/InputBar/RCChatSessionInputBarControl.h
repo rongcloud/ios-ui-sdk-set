@@ -51,7 +51,7 @@
 /*!
  输入工具栏
  */
-@interface RCChatSessionInputBarControl : RCBaseView
+@interface RCChatSessionInputBarControl : UIView
 
 #pragma mark - 会话属性
 
@@ -154,6 +154,7 @@
 
 /**
  输入工具栏上面的线
+
  @since 5.4.4，合入 5.3.6
  */
 @property (nonatomic, strong, readonly) CALayer *topLineLayer;

@@ -74,8 +74,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 
 - (void)beginDestructing {
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
-    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0 &&
-        textMessage.destructDuration > 0) {
+    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0) {
         [[RCCoreClient sharedCoreClient]
             messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
     }
@@ -137,7 +136,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     self.destructTextImage.hidden = YES;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId];
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE &&
-        numDuration != nil) {
+        !numDuration) {
         self.contentAyncLab.text = RCLocalizedString(@"ClickToView");
         self.destructTextImage.hidden = NO;
     }else if(textMessage){
@@ -248,7 +247,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     CGSize textMessageSize;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:model.messageUId];
     if (textMessage.destructDuration > 0 && model.messageDirection == MessageDirection_RECEIVE &&
-        numDuration != nil) {
+        !numDuration) {
         textMessageSize =
             [RCKitUtility getTextDrawingSize:RCLocalizedString(@"ClickToView")
                                         font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]

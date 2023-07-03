@@ -65,27 +65,27 @@
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"NOT_IN_DISCUSSION")
                               extra:nil];
-    } else if (NOT_IN_GROUP == nErrorCode) {
+    } else if (RCErrorCodesNotInGroup == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"NOT_IN_GROUP")
                               extra:nil];
-    } else if (NOT_IN_CHATROOM == nErrorCode) {
+    } else if (RCErrorCodesNotInChatroom == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"NOT_IN_CHATROOM")
                               extra:nil];
-    } else if (REJECTED_BY_BLACKLIST == nErrorCode) {
+    } else if (RCErrorCodesRejectedByBlacklist == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"Message rejected")
                               extra:nil];
-    } else if (FORBIDDEN_IN_GROUP == nErrorCode) {
+    } else if (RCErrorCodesForbiddenInGroup == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"FORBIDDEN_IN_GROUP")
                               extra:nil];
-    } else if (FORBIDDEN_IN_CHATROOM == nErrorCode) {
+    } else if (RCErrorCodesForbiddenInChatroom == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"ForbiddenInChatRoom")
                               extra:nil];
-    } else if (KICKED_FROM_CHATROOM == nErrorCode) {
+    } else if (RCErrorCodesKickedFromChatroom == nErrorCode) {
         informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:RCLocalizedString(@"KickedFromChatRoom")
                               extra:nil];

@@ -519,14 +519,14 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  @param token                   从您服务器端获取的 token (用户身份令牌)
  @param timeLimit                 SDK 连接的超时时间，单位: 秒
                          timeLimit <= 0，SDK 会一直连接，直到连接成功或者出现 SDK 无法处理的错误（如 token 非法）。
-                         timeLimit > 0，SDK 最多连接 timeLimit 秒，超时时返回 RC_CONNECT_TIMEOUT 错误，并不再重连。
+                         timeLimit > 0，SDK 最多连接 timeLimit 秒，超时时返回 RCErrorCodesConnectionTimeout 错误，并不再重连。
  @param dbOpenedBlock                本地消息数据库打开的回调
  @param successBlock            连接建立成功的回调 [ userId: 当前连接成功所用的用户 ID]
  @param errorBlock              连接建立失败的回调，触发该回调代表 SDK 无法继续重连 [errorCode: 连接失败的错误码]
 
  @discussion 调用该接口，SDK 会在 timeLimit 秒内尝试重连，直到出现下面三种情况之一：
  第一、连接成功，回调 successBlock(userId)。
- 第二、超时，回调 errorBlock(RC_CONNECT_TIMEOUT)。
+ 第二、超时，回调 errorBlock(RCErrorCodesConnectionTimeout)。
  第三、出现 SDK 无法处理的错误，回调 errorBlock(errorCode)（如 token 非法）。
  
  @discussion 连接成功后，SDK 将接管所有的重连处理。当因为网络原因断线的情况下，SDK 会不停重连直到连接成功为止，不需要您做额外的连接操作。

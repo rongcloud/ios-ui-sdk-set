@@ -73,9 +73,9 @@
         return NO;
     }
     if (code == RC_CHANNEL_INVALID ||
-        code == RC_NETWORK_UNAVAILABLE ||
-        code == RC_MSG_RESPONSE_TIMEOUT ||
-        code == RC_FILE_UPLOAD_FAILED) {
+        code == RCErrorCodesConnectionUnavailable ||
+        code == RCErrorCodesMessageResponseTimeout ||
+        code == RCErrorCodesFileUploadError) {
         return YES;
     }
     return NO;
