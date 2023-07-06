@@ -7,8 +7,8 @@
 #Release_Node=113
 
 ## 1. 更新 git 仓库
-git checkout main
-git reset --hard origin/main
+git checkout hotfix/5.1.9
+git reset --hard origin/hotfix/5.1.9
 git clean -dfx
 git pull
 
@@ -78,5 +78,5 @@ rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
 git status
 git add .
 git commit -m "Release RongCloud SourceCode Version ${Version}"
-git push origin main -v
+git push origin hotfix/5.1.9 -v
 
