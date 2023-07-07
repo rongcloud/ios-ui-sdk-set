@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
-@interface RCCustomerServiceGroupCell : RCBaseTableViewCell
+
+@interface RCCustomerServiceGroupCell : UITableViewCell
 @property (nonatomic, strong) UILabel *groupName;
 @end

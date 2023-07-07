@@ -19,7 +19,7 @@
 
 @property (nonatomic, strong) NSArray *dataSource;
 
-@property (nonatomic, strong) RCBaseTableView *tableView;
+@property (nonatomic, strong) UITableView *tableView;
 
 @property (nonatomic, strong) UIView *headerView;
 
@@ -152,9 +152,9 @@
 
 #pragma mark - Lazy load
 
-- (RCBaseTableView *)tableView {
+- (UITableView *)tableView {
     if (_tableView == nil) {
-        _tableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
+        _tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
         _tableView.delegate = self;
         _tableView.dataSource = self;
         _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
@@ -166,11 +166,11 @@
 - (UIView *)headerView {
     if (_headerView == nil) {
         _headerView = [[UIView alloc] init];
-        RCBaseLabel *headerLabel = [[RCBaseLabel alloc] init];
+        UILabel *headerLabel = [[UILabel alloc] init];
         headerLabel.font = [UIFont systemFontOfSize:12];
         headerLabel.textColor = HEXCOLOR(0x999999);
         headerLabel.text = RongStickerString(@"download_package");
-        headerLabel.frame = CGRectMake(15, 10, ScreenWidth-30, 17);
+        headerLabel.frame = CGRectMake(15, 10, 200, 17);
         [_headerView addSubview:headerLabel];
     }
     return _headerView;
@@ -179,7 +179,7 @@
 - (UIView *)emptyView {
     if (_emptyView == nil) {
         _emptyView = [[UIView alloc] initWithFrame:self.view.bounds];
-        RCBaseImageView *emptyImage = [[RCBaseImageView alloc] init];
+        UIImageView *emptyImage = [[UIImageView alloc] init];
         CGFloat emptyViewWidth = 128.f;
         emptyImage.contentMode = UIViewContentModeScaleAspectFit;
         emptyImage.frame = CGRectMake((ScreenWidth - emptyViewWidth) / 2, 97, emptyViewWidth, emptyViewWidth);

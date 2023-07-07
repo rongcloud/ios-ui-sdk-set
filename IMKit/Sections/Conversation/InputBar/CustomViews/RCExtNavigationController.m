@@ -1,28 +1,25 @@
 //
-//  RCBaseNavigationController.m
+//  RCExtNavigationController.m
 //  RongExtensionKit
 //
 //  Created by 杨雨东 on 2018/5/22.
 //  Copyright © 2018 RongCloud. All rights reserved.
 //
 
-#import "RCBaseNavigationController.h"
+#import "RCExtNavigationController.h"
 #import "RCSemanticContext.h"
-@interface RCBaseNavigationController ()
+@interface RCExtNavigationController ()
 
 @end
 
-@implementation RCBaseNavigationController
- 
+@implementation RCExtNavigationController
+
 - (instancetype)initWithRootViewController:(UIViewController *)rootViewController {
     self = [super initWithRootViewController:rootViewController];
     if (self) {
         if ([RCSemanticContext isRTL]) {
             self.view.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
             self.navigationBar.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-        }else{
-            self.view.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
-            self.navigationBar.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
         }
     }
     return self;

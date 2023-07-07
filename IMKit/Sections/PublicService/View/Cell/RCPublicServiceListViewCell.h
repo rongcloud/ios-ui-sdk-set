@@ -9,8 +9,7 @@
 #import "RCThemeDefine.h"
 #import "RCloudImageView.h"
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
-@interface RCPublicServiceListViewCell : RCBaseTableViewCell
+@interface RCPublicServiceListViewCell : UITableViewCell
 @property (nonatomic, strong) RCloudImageView *headerImageView;
 @property (nonatomic) RCUserAvatarStyle portraitStyle;
 @property (nonatomic, copy) NSString *searchKey;

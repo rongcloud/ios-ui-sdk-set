@@ -7,7 +7,7 @@
 //
 
 #import "RCBaseCollectionViewController.h"
-#import "RCKitUtility.h"
+
 @interface RCBaseCollectionViewController ()
 
 @end
@@ -18,7 +18,6 @@ static NSString *const reuseIdentifier = @"Cell";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self updateRTLUI];
     [self.collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:reuseIdentifier];
 }
 
@@ -40,11 +39,4 @@ static NSString *const reuseIdentifier = @"Cell";
     }
 }
 
-- (void)updateRTLUI{
-    if ([RCKitUtility isRTL]) {
-        self.collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-    }else{
-        self.collectionView.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
-    }
-}
 @end

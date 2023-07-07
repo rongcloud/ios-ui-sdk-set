@@ -11,7 +11,7 @@
 #import "RCIM.h"
 #import "RCKitCommonDefine.h"
 #import "RCMessageCellTool.h"
-#import "RCCoreClient+Destructing.h"
+#import "RCIMClient+Destructing.h"
 
 @interface RCTextMessageCell()
 - (void)initialize;
@@ -21,7 +21,7 @@
 @interface RCTextMessageTranslatingCell() {
    
 }
-@property (nonatomic, strong) RCBaseImageView *translationBackgroundView;
+@property (nonatomic, strong) UIImageView *translationBackgroundView;
 @property (nonatomic, strong) UIView *translationContainer;
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 @end
@@ -81,9 +81,9 @@
     return model.translatingSize.height;
 }
 #pragma mark -- Property
-- (RCBaseImageView *)translationBackgroundView{
+- (UIImageView *)translationBackgroundView{
     if (!_translationBackgroundView) {
-        _translationBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
+        _translationBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
         _translationBackgroundView.accessibilityLabel = @"translationBackgroundView";
     }
     return _translationBackgroundView;

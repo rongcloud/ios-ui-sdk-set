@@ -34,24 +34,16 @@
 - (void)setHeadImageView:(UIImageView *)headImageView {
     [_headImageView removeFromSuperview];
     _headImageView = headImageView;
-    if([RCKitUtility isRTL]){
-        CGRect frame = self.nameLabel.frame;
-        frame.origin.x = CGRectGetMinX(_headImageView.frame) - frame.size.width - 10;
-        _nameLabel.frame = frame;
-    }
     [self.contentView addSubview:_headImageView];
 }
 
 #pragma mark - Getters and Setters
 
-- (RCBaseLabel *)nameLabel {
+- (UILabel *)nameLabel {
     if (!_nameLabel) {
-        _nameLabel = [[RCBaseLabel alloc] init];
+        _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(60.0, 5.0, self.bounds.size.width - 60.0, 40.0)];
         [_nameLabel setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
-        _nameLabel.textAlignment = [RCKitUtility isRTL] ? NSTextAlignmentRight : NSTextAlignmentLeft;
         _nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
-        CGRect frame = CGRectMake(60.0, 5.0, self.bounds.size.width - 60.0, 40.0);
-        _nameLabel.frame = frame;
     }
     return _nameLabel;
 }

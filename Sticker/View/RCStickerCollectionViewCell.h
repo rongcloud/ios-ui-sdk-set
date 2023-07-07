@@ -8,9 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "RCStickerSingle.h"
-#import "RongStickerAdaptiveHeader.h"
 
-@interface RCStickerCollectionViewCell : RCBaseCollectionViewCell
+@interface RCStickerCollectionViewCell : UICollectionViewCell
 /**
  表情背板视图
  */

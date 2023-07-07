@@ -17,17 +17,17 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 
 @interface RCSendCardMessageView ()
 
-@property (nonatomic, strong) RCBaseView *contentView;
-@property (nonatomic, strong) RCBaseLabel *sendToLabel;
+@property (nonatomic, strong) UIView *contentView;
+@property (nonatomic, strong) UILabel *sendToLabel;
 @property (nonatomic, strong) RCloudImageView *portraitView;
-@property (nonatomic, strong) RCBaseLabel *nicknameLabel;
+@property (nonatomic, strong) UILabel *nicknameLabel;
 @property (nonatomic, strong) UIView *separationView1;
-@property (nonatomic, strong) RCBaseLabel *cardLabel;
+@property (nonatomic, strong) UILabel *cardLabel;
 @property (nonatomic, strong) UITextField *messageTextField;
 @property (nonatomic, strong) UIView *separationView2;
 @property (nonatomic, strong) UIView *separationView3;
-@property (nonatomic, strong) RCBaseButton *cancleButton;
-@property (nonatomic, strong) RCBaseButton *sendButton;
+@property (nonatomic, strong) UIButton *cancleButton;
+@property (nonatomic, strong) UIButton *sendButton;
 @property (nonatomic, strong) NSDictionary *subViewsDic;
 @property (nonatomic) RCConversationType conversationType;
 @property (nonatomic, strong) NSString *targetId;
@@ -35,7 +35,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 @property (nonatomic, strong) RCCCGroupInfo *groupInfo;
 
 @property (nonatomic, assign) NSInteger destructDuration;
-@property (nonatomic, strong) RCBaseImageView *arrow;
+@property (nonatomic, strong) UIImageView *arrow;
 @end
 
 @implementation RCSendCardMessageView
@@ -70,7 +70,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 }
 
 - (void)setSubViews {
-    _contentView = [[RCBaseView alloc] initWithFrame:CGRectMake(0, 0, 280, 280)];
+    _contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 280, 280)];
     _contentView.center = self.center;
     _contentView.backgroundColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"ffffff" alpha:1] darkColor:HEXCOLOR(0x2c2c2c)];
     _contentView.layer.masksToBounds = YES;
@@ -78,7 +78,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [self addSubview:_contentView];
 
     //发送给：
-    _sendToLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+    _sendToLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     _sendToLabel.font = [UIFont systemFontOfSize:18.f];
     _sendToLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]
                                                       darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.9]];
@@ -101,7 +101,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_portraitView setPlaceholderImage:[RCCCUtilities imageNamed:@"default_portrait_msg" ofBundle:@"RongCloud.bundle"]];
 
     //昵称
-    _nicknameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+    _nicknameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     _nicknameLabel.font = [UIFont systemFontOfSize:17.f];
     _nicknameLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.9]];
     _nicknameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
@@ -117,7 +117,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_separationView1];
 
     //个人名片
-    _cardLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+    _cardLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     _cardLabel.font = [UIFont systemFontOfSize:14.f];
     _cardLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"999999" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.6]];
     _cardLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -157,7 +157,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_separationView3];
 
     //取消按钮
-    _cancleButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+    _cancleButton = [[UIButton alloc] initWithFrame:CGRectZero];
     _cancleButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
     [_cancleButton setTitleColor:[RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]
                                                           darkColor:[UIColor colorWithHexString:@"aaaaaa" alpha:1]]
@@ -168,7 +168,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_cancleButton];
 
     //发送按钮
-    _sendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+    _sendButton = [[UIButton alloc] initWithFrame:CGRectZero];
     _sendButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
     [_sendButton setTitleColor:[UIColor colorWithHexString:@"0099ff" alpha:1.f] forState:UIControlStateNormal];
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
@@ -176,9 +176,8 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     _sendButton.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_sendButton];
     
-    _arrow = [RCBaseImageView new];
-    UIImage *image = [self imageflippedForRTL:RCResourceImage(@"right_arrow")];
-    [_arrow setImage:image];
+    _arrow = [UIImageView new];
+    [_arrow setImage:RCResourceImage(@"right_arrow")];
     _arrow.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_arrow];
 
@@ -501,17 +500,6 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
         }
     }
     [UIView commitAnimations];
-}
-
-- (UIImage *)imageflippedForRTL:(UIImage *)image{
-    if (@available(iOS 9.0, *)) {
-        if ([RCKitUtility isRTL]) {
-            return [UIImage imageWithCGImage:image.CGImage
-                                       scale:image.scale
-                                 orientation:UIImageOrientationUpMirrored];
-        }
-    }
-    return image;
 }
 
 - (void)dealloc {

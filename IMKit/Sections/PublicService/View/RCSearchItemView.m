@@ -10,7 +10,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCPublicServiceViewConstants.h"
-#import "RCBaseImageView.h"
+
 @interface RCSearchItemView ()
 @property (nonatomic, strong) UILabel *keyLabel;
 @end
@@ -35,7 +35,7 @@
 #pragma mark – Private Methods
 
 - (void)setup {
-    RCBaseImageView *imageView = [[RCBaseImageView alloc]
+    UIImageView *imageView = [[UIImageView alloc]
         initWithFrame:CGRectMake(RCPublicServiceProfileCellPaddingLeft, RCPublicServiceProfileCellPaddingTop,
                                  RCPublicServiceProfileHeaderImageWidth - 20,
                                  RCPublicServiceProfileHeaderImageHeigh - 20)];

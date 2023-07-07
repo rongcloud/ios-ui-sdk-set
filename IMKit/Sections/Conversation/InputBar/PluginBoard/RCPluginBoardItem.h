@@ -6,9 +6,9 @@
 //  Copyright (c) 2015年 RongCloud. All rights reserved.
 //
 
-#import "RCBaseCollectionViewCell.h"
+#import <UIKit/UIKit.h>
 
-@interface RCPluginBoardItem : RCBaseCollectionViewCell
+@interface RCPluginBoardItem : UICollectionViewCell
 
 @property (nonatomic, copy) NSString *title;
 

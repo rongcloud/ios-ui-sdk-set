@@ -7,11 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseImageView.h"
-#import "RCBaseView.h"
-@interface RCNetworkIndicatorView : RCBaseView
 
-@property (nonatomic, strong) RCBaseImageView *networkUnreachableImageView;
+@interface RCNetworkIndicatorView : UIView
+
+@property (nonatomic, strong) UIImageView *networkUnreachableImageView;
 
 - (instancetype)initWithText:(NSString *)text;
 

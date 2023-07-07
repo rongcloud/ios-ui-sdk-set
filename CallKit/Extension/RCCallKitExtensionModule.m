@@ -47,9 +47,6 @@ static NSInteger kAppkeyLength = 13;
 }
 
 - (void)didTapMessageCell:(RCMessageModel *)messageModel {
-    if (![self cheackConnectionStatus]){
-        return;
-    }
     if ([messageModel.content isKindOfClass:[RCCallSummaryMessage class]]) {
         RCCallSummaryMessage *callMessage = (RCCallSummaryMessage *)messageModel.content;
         //  其他端接听显示的消息不可点击
@@ -76,16 +73,10 @@ static NSInteger kAppkeyLength = 13;
 
         if (conversationType == ConversationType_PRIVATE) {
             audioItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                if (![self cheackConnectionStatus]){
-                    return;
-                }
                 [self startSingleCall:targetId mediaType:RCCallMediaAudio];
             };
         } else if (conversationType == ConversationType_GROUP || conversationType == ConversationType_DISCUSSION) {
             audioItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                if (![self cheackConnectionStatus]){
-                    return;
-                }
                 [[RCCall sharedRCCall] startMultiCall:conversationType targetId:targetId mediaType:RCCallMediaAudio];
             };
         }
@@ -104,16 +95,10 @@ static NSInteger kAppkeyLength = 13;
         };
         if (conversationType == ConversationType_PRIVATE) {
             videoItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                if (![self cheackConnectionStatus]){
-                    return;
-                }
                 [self startSingleCall:targetId mediaType:RCCallMediaVideo];
             };
         } else if (conversationType == ConversationType_GROUP || conversationType == ConversationType_DISCUSSION) {
             videoItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {
-                if (![self cheackConnectionStatus]){
-                    return;
-                }
                 [[RCCall sharedRCCall] startMultiCall:conversationType targetId:targetId mediaType:RCCallMediaVideo];
             };
         }
@@ -185,14 +170,4 @@ static NSInteger kAppkeyLength = 13;
     }
 }
 
-- (BOOL)cheackConnectionStatus {
-    if ([[RCIM sharedRCIM] getConnectionStatus] == 0){
-        return YES;
-    }
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:RCCallKitLocalizedString(@"voip_network_bad_laterTry") preferredStyle:UIAlertControllerStyleAlert];
-    UIViewController *rootVC = [RCKitUtility getKeyWindow].rootViewController;
-    [rootVC presentViewController:alertController animated:YES completion:nil];
-    [alertController dismissViewControllerAnimated:YES completion:nil];
-    return NO;
-}
 @end

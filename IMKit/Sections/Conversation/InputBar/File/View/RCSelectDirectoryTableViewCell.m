@@ -9,7 +9,7 @@
 #import "RCSelectDirectoryTableViewCell.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
-#import "RCSemanticContext.h"
+
 @implementation RCSelectDirectoryTableViewCell
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -24,16 +24,15 @@
 - (void)setupSelectDirectoryCellView {
     //加载两个UI控件
 
-    _directoryImageView = [RCBaseImageView new];
+    _directoryImageView = [UIImageView new];
     _directoryImageView.translatesAutoresizingMaskIntoConstraints = NO;
     _directoryImageView.image = RCResourceImage(@"folder");
     [self.contentView addSubview:_directoryImageView];
 
-    _directoryNameLabel = [RCBaseLabel new];
+    _directoryNameLabel = [UILabel new];
     _directoryNameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _directoryNameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     _directoryNameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.9)];
-
     [self.contentView addSubview:_directoryNameLabel];
 
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:_directoryImageView

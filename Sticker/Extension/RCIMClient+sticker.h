@@ -1,19 +1,13 @@
 //
-//  RCIMClient+Destructing.h
-//  RongIMKit
+//  RCIMClient+sticker.h
+//  RongSticker
 //
-//  Created by Zhaoqianyu on 2018/7/16.
-//  Copyright © 2018年 RongCloud. All rights reserved.
+//  Created by 张改红 on 2020/12/23.
+//  Copyright © 2020 RongCloud. All rights reserved.
 //
 
-#import <RongIMLibCore/RongIMLibCore.h>
-#import "RCMessageCell.h"
-
-@interface RCMessageCell ()
-@property (nonatomic, strong) UIView *destructView;
-@property (nonatomic, strong) RCBaseButton *destructBtn;
-@end
-
+#ifndef RCIMClient_sticker_h
+#define RCIMClient_sticker_h
 /*!
  消息正在焚烧的Notification
 
@@ -25,7 +19,7 @@
  */
 FOUNDATION_EXPORT NSString *const RCKitMessageDestructingNotification;
 
-@interface RCCoreClient (Destructing)
+@interface RCIMClient (Destructing)
 
 /**
  获取消息的剩余焚烧时间
@@ -38,4 +32,4 @@ FOUNDATION_EXPORT NSString *const RCKitMessageDestructingNotification;
 - (NSNumber *)getDestructMessageRemainDuration:(NSString *)messageUId;
 
 @end
-
+#endif /* RCIMClient_sticker_h */

@@ -12,9 +12,8 @@
 #import "RCGIFImageView.h"
 #import "RCGIFImage.h"
 #import <MobileCoreServices/UTCoreTypes.h>
-#import "RCBaseScrollView.h"
 @interface RCPhotoPreviewCollectCell () <UIScrollViewDelegate>
-@property (nonatomic, strong) RCBaseScrollView *scrollView;
+@property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) RCGIFImageView *previewImageView;
 @property (nonatomic, assign) int32_t imageRequestID;
 @property (nonatomic, strong) RCAssetModel *model;
@@ -43,10 +42,11 @@
     if ([self showGifImageView]) {
         return;
     }
+    __weak typeof(self) weakSelf = self;
     [[RCAssetHelper shareAssetHelper]
         getPreviewWithAsset:model.asset
                      result:^(UIImage *photo, NSDictionary *info) {
-         if (![self.representedAssetIdentifier
+         if (![weakSelf.representedAssetIdentifier
                isEqualToString:[[RCAssetHelper shareAssetHelper] getAssetIdentifier:model.asset]]) {
              return;
          }
@@ -54,8 +54,8 @@
              return;
          }
          dispatch_async(dispatch_get_main_queue(), ^{
-             self.previewImageView.image = photo;
-             [self resizeSubviews];
+             weakSelf.previewImageView.image = photo;
+             [weakSelf resizeSubviews];
          });
      }];
 }
@@ -67,6 +67,7 @@
 
 - (BOOL)showGifImageView{
     if ([[self.model.asset valueForKey:@"uniformTypeIdentifier"] isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+        __weak typeof(self) weakSelf = self;
         [[RCAssetHelper shareAssetHelper]
          getOriginImageDataWithAsset:self.model
          result:^(NSData *imageData, NSDictionary *info, RCAssetModel *assetModel) {
@@ -75,8 +76,8 @@
             }
             RCGIFImage *gifImage = [RCGIFImage animatedImageWithGIFData:imageData];
             dispatch_async(dispatch_get_main_queue(), ^{
-                self.previewImageView.animatedImage = gifImage;
-                [self resetSubviews];
+                weakSelf.previewImageView.animatedImage = gifImage;
+                [weakSelf resetSubviews];
             });
         }progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
             
@@ -98,7 +99,7 @@
 
 #pragma mark - Private Methods
 - (void)creatPreviewCollectionCell {
-    _scrollView = [[RCBaseScrollView alloc] initWithFrame:self.bounds];
+    _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
     _scrollView.maximumZoomScale = ImageMaximumZoomScale;
     _scrollView.minimumZoomScale = 1.0;
     _scrollView.multipleTouchEnabled = YES;

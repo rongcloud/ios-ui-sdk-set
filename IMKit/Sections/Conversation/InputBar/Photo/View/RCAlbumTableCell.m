@@ -22,10 +22,7 @@
         self.imageView.frame = CGRectMake(self.contentView.frame.size.width - 65, 0, 65, 65);
         labelFrame.origin.x = 0;
         labelFrame.size.width = self.contentView.frame.size.width - self.imageView.frame.size.width - 12;
-        self.textLabel.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
     } else {
-        self.textLabel.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
-
         labelFrame.origin.x = self.imageView.frame.size.width + self.imageView.frame.origin.x + 12;
         labelFrame.size.width = self.contentView.frame.size.width - labelFrame.origin.x;
     }
@@ -53,16 +50,24 @@
             }];
     [nameString appendAttributedString:countString];
     self.textLabel.attributedText = nameString;
+
+    __weak typeof(self) weakSelf = self;
     if ([model.asset isKindOfClass:[PHFetchResult class]]) {
         [[RCAssetHelper shareAssetHelper] getThumbnailWithAsset:[model.asset lastObject]
                                                            size:CGSizeMake(65 * SCREEN_SCALE, 65 * SCREEN_SCALE)
                                                          result:^(UIImage *thumbnailImage) {
                                                              dispatch_async(dispatch_get_main_queue(), ^{
-                                                                 self.imageView.image = thumbnailImage;
-                                                                 self.textLabel.text = @""; //奇怪不给text重新赋值图片显示不出来？
-                                                                 self.textLabel.attributedText = nameString;
+                                                                 weakSelf.imageView.image = thumbnailImage;
+                                                                 weakSelf.textLabel.text =
+                                                                     @""; //奇怪不给text重新赋值图片显示不出来？
+                                                                 weakSelf.textLabel.attributedText = nameString;
                                                              });
                                                          }];
+    } else {
+        CGImageRef posterImage_CGImageRef_ = [model.asset posterImage];
+        UIImage *posterImage_ = [UIImage imageWithCGImage:posterImage_CGImageRef_];
+
+        self.imageView.image = posterImage_;
     }
 }
 

@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @interface RCConversationInfo : NSObject
 
@@ -15,13 +15,11 @@
 @property (nonatomic, assign) RCConversationType conversationType;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *portraitUri;
-@property (nonatomic, copy) NSString *extra;
 
 - (instancetype)initWithConversationId:(NSString *)targetId
                       conversationType:(RCConversationType)conversationType
                                   name:(NSString *)name
-                           portraitUri:(NSString *)portraitUri
-                                 extra:(NSString *)extra;
+                           portraitUri:(NSString *)portraitUri;
 
 - (instancetype)initWithGroupInfo:(RCGroup *)groupInfo;
 

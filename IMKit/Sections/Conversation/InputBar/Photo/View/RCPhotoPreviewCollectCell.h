@@ -6,9 +6,9 @@
 //  Copyright © 2016年 张改红. All rights reserved.
 //
 
-#import "RCBaseCollectionViewCell.h"
+#import <UIKit/UIKit.h>
 @class RCAssetModel;
-@interface RCPhotoPreviewCollectCell : RCBaseCollectionViewCell
+@interface RCPhotoPreviewCollectCell : UICollectionViewCell
 
 @property (nonatomic, strong) void (^singleTap)(void);
 

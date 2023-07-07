@@ -6,7 +6,7 @@
 //  Copyright © 2017年 ios-rongContactCard. All rights reserved.
 //
 
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @interface RCCCUserInfo : RCUserInfo
 

@@ -13,14 +13,13 @@
 #import "RCDestructSightCollectionCell.h"
 #import "RCKitCommonDefine.h"
 #import "RCSightPlayerOverlayView+imkit.h"
-#import "RCBaseImageView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 @interface RCDestructSightViewController () <UIScrollViewDelegate, RCDestructSightCollectionCellDelegate,
                                          UICollectionViewDataSource, UICollectionViewDelegate,
                                          UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate>
 
-@property (nonatomic, strong) RCBaseImageView *imageView;
+@property (nonatomic, strong) UIImageView *imageView;
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 
@@ -69,8 +68,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.navigationController.navigationBarHidden = YES;
     [self performSelector:@selector(setStatusBarHidden:) withObject:@(YES) afterDelay:0.6];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    [[RCCoreClient sharedCoreClient]
-        messageStopDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId]];
+    [[RCIMClient sharedRCIMClient]
+        messageStopDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId]];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onMessageDestructing:)
                                                  name:RCKitMessageDestructingNotification
@@ -92,8 +91,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     _statusBarHidden = NO;
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [[RCCoreClient sharedCoreClient]
-        messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId]];
+    [[RCIMClient sharedRCIMClient]
+        messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.messageModel.messageId]];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -236,9 +235,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
 }
 
-- (RCBaseImageView *)imageView {
+- (UIImageView *)imageView {
     if (!_imageView) {
-        _imageView = [[RCBaseImageView alloc] init];
+        _imageView = [[UIImageView alloc] init];
         _imageView.backgroundColor = [UIColor blackColor];
     }
     return _imageView;

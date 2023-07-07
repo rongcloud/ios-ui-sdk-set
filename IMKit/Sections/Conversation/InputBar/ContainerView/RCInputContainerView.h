@@ -10,10 +10,10 @@
 #import "RCButton.h"
 #import "RCTextView.h"
 #import "RCExtensionKitDefine.h"
-#import "RCBaseView.h"
+
 @protocol RCInputContainerViewDelegate;
 
-@interface RCInputContainerView : RCBaseView
+@interface RCInputContainerView : UIView
 /*!
  语音与文本输入切换的按钮
  */

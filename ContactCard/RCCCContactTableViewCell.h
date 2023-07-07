@@ -8,13 +8,13 @@
 
 #import <UIKit/UIKit.h>
 #import "RCloudImageView.h"
-#import "RongContactCardAdaptiveHeader.h"
-@interface RCCCContactTableViewCell : RCBaseTableViewCell
+
+@interface RCCCContactTableViewCell : UITableViewCell
 
 @property (nonatomic, strong) RCloudImageView *portraitView;
 
-@property (nonatomic, strong) RCBaseLabel *nicknameLabel;
+@property (nonatomic, strong) UILabel *nicknameLabel;
 
-@property (nonatomic, strong) RCBaseLabel *userIdLabel;
+@property (nonatomic, strong) UILabel *userIdLabel;
 
 @end

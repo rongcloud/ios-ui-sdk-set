@@ -15,7 +15,7 @@
 #import "RCKitConfig.h"
 #import "RCMessageCellTool.h"
 #import "RCResendManager.h"
-#import <RCCoreClient+Destructing.h>
+#import <RCIMClient+Destructing.h>
 #import <RongPublicService/RongPublicService.h>
 // 头像
 #define PortraitImageViewTop 0
@@ -82,10 +82,119 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
-    [self p_showBubbleBackgroundView];
+    if (self.showBubbleBackgroundView) {
+        self.bubbleBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+    }
+    self.receiptView.hidden = YES;
+    self.receiptStatusLabel.hidden = YES;
     self.messageFailedStatusView.hidden = YES;
-    [self p_setReadStatus];
-    [self p_setUserInfo];
+    if (model.readReceiptInfo.isReceiptRequestMessage && model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(model.conversationType)]) {
+        self.receiptStatusLabel.hidden = NO;
+        self.receiptStatusLabel.userInteractionEnabled = YES;
+        self.receiptStatusLabel.text = [NSString
+            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
+    } else {
+        self.receiptStatusLabel.hidden = YES;
+        self.receiptStatusLabel.userInteractionEnabled = NO;
+        self.receiptStatusLabel.text = nil;
+    }
+
+    if (model.messageDirection == MessageDirection_SEND && model.sentStatus == SentStatus_SENT) {
+        if (model.isCanSendReadReceipt) {
+            self.receiptView.hidden = NO;
+            self.receiptView.userInteractionEnabled = YES;
+            self.receiptStatusLabel.hidden = YES;
+        } else {
+            self.receiptView.hidden = YES;
+            self.receiptStatusLabel.hidden = NO;
+        }
+    }
+
+    // DebugLog(@"%s", __FUNCTION__);
+    //如果是客服，更换默认头像
+    if (ConversationType_CUSTOMERSERVICE == model.conversationType) {
+        if (model.messageDirection == MessageDirection_RECEIVE) {
+            [self.portraitImageView setPlaceholderImage:RCResourceImage(@"portrait_kefu")];
+
+            model.userInfo = model.content.senderUserInfo;
+            if (model.content.senderUserInfo != nil) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
+            } else {
+                [self.portraitImageView setImage:RCResourceImage(@"portrait_kefu")];
+                [self.nicknameLabel setText:nil];
+            }
+        } else {
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+            model.userInfo = userInfo;
+            [self.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+            if (userInfo) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+            } else {
+                [self.portraitImageView setImageURL:nil];
+                [self.nicknameLabel setText:nil];
+            }
+        }
+    } else if (ConversationType_APPSERVICE == model.conversationType ||
+               ConversationType_PUBLICSERVICE == model.conversationType) {
+        if (model.messageDirection == MessageDirection_RECEIVE) {
+            RCPublicServiceProfile *serviceProfile = nil;
+            if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
+                serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
+            } else {
+                serviceProfile =
+                    [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
+                                                           publicServiceId:model.targetId];
+            }
+            model.userInfo = model.content.senderUserInfo;
+            if (serviceProfile) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:serviceProfile.portraitUrl]];
+                [self.nicknameLabel setText:serviceProfile.name];
+            }
+        } else {
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+            model.userInfo = userInfo;
+            if (userInfo) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+            } else {
+                [self.portraitImageView setImageURL:nil];
+                [self.nicknameLabel setText:nil];
+            }
+        }
+    } else if (ConversationType_GROUP == model.conversationType) {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
+        RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+        userInfo.alias = tempUserInfo.alias;
+        model.userInfo = userInfo;
+        if (userInfo) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        } else {
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
+        }
+    } else {
+        //优先使用 RCMessage.senderUserId 确定用户，控制头像的显示
+        //否则使用 RCMessage.content.senderUserInfo.userId 确定用户，控制头像的显示
+        NSString *userId = model.senderUserId;
+        if (userId.length <= 0) {
+            userId = model.content.senderUserInfo.userId;
+        }
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+        model.userInfo = userInfo;
+        if (userInfo) {
+            if (model.conversationType != ConversationType_Encrypted) {
+                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            }
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        } else {
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
+        }
+    }
+
     [self setCellAutoLayout];
     [self messageDestructing];
 }
@@ -93,26 +202,27 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 #pragma mark - Public Methods
 
 - (void)updateStatusContentView:(RCMessageModel *)model {
+    __weak typeof(self) __blockSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        self.messageActivityIndicatorView.hidden = YES;
+        __blockSelf.messageActivityIndicatorView.hidden = YES;
         if (model.messageDirection == MessageDirection_RECEIVE) {
             return;
         }
         switch (model.sentStatus) {
             case SentStatus_SENDING:
-                [self updateStatusContentViewForSending:model];
+                [__blockSelf updateStatusContentViewForSending:model];
                 break;
             case SentStatus_FAILED:
-                [self updateStatusContentViewForFailed:model];
+                [__blockSelf updateStatusContentViewForFailed:model];
                 break;
             case SentStatus_CANCELED:
-                [self updateStatusContentViewForCanceled:model];
+                [__blockSelf updateStatusContentViewForCanceled:model];
                 break;
             case SentStatus_SENT:
-                [self updateStatusContentViewForSent:model];
+                [__blockSelf updateStatusContentViewForSent:model];
                 break;
             case SentStatus_READ:
-                [self updateStatusContentViewForRead:model];
+                [__blockSelf updateStatusContentViewForRead:model];
                 break;
             default:
                 break;
@@ -251,84 +361,78 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                                                  name:KNotificationMessageBaseCellUpdateCanReceiptStatus
                                                object:nil];
     
-    [self registerFrameUpdateLayoutIfNeed];
-    [self registerSizeUpdateLayoutIfNeed];
+    [self registerUpdateLayoutIfNeed];
     
 }
-
-- (void)registerFrameUpdateLayoutIfNeed{
+ 
+- (void)registerUpdateLayoutIfNeed{
     __weak typeof(self) weakSelf = self;
     [self.messageContentView registerFrameChangedEvent:^(CGRect frame) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (strongSelf.model) {
+        if (weakSelf.model) {
             if ([RCKitUtility isRTL]) {
-                if (strongSelf.model.messageDirection == MessageDirection_SEND) {
+                if (weakSelf.model.messageDirection == MessageDirection_SEND) {
                     CGRect statusFrame = CGRectMake(CGRectGetMaxX(frame)+StatusViewAndContentViewSpace, frame.origin.y, StatusContentViewWidth, frame.size.height);
-                    strongSelf.statusContentView.frame = statusFrame;
-                    strongSelf.receiptStatusLabel.frame = CGRectMake(0 , statusFrame.size.height - 12,statusFrame.size.width, 12);
-                    if (strongSelf.model.conversationType == ConversationType_PRIVATE || strongSelf.model.conversationType == ConversationType_Encrypted) {
-                        strongSelf.receiptView.frame = CGRectMake(0, statusFrame.size.height - 16, 16, 16);
-                        [strongSelf.receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
+                    weakSelf.statusContentView.frame = statusFrame;
+                    weakSelf.receiptStatusLabel.frame = CGRectMake(0 , statusFrame.size.height - 12,statusFrame.size.width, 12);
+                    if (weakSelf.model.conversationType == ConversationType_PRIVATE || weakSelf.model.conversationType == ConversationType_Encrypted) {
+                        weakSelf.receiptView.frame = CGRectMake(0, statusFrame.size.height - 16, 16, 16);
+                        [weakSelf.receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
                     } else {
-                        strongSelf.receiptView.frame = CGRectMake(0, statusFrame.size.height - 16, 14, 14);
-                        [strongSelf.receiptView setImage:RCResourceImage(@"receipt") forState:UIControlStateNormal];
+                        weakSelf.receiptView.frame = CGRectMake(0, statusFrame.size.height - 16, 14, 14);
+                        [weakSelf.receiptView setImage:RCResourceImage(@"receipt") forState:UIControlStateNormal];
                     }
-                    strongSelf.messageFailedStatusView.frame = CGRectMake(0, (statusFrame.size.height-16)/2, 16, 16);
+                    weakSelf.messageFailedStatusView.frame = CGRectMake(0, (statusFrame.size.height-16)/2, 16, 16);
                 } else {
                     CGRect statusFrame = CGRectMake(frame.origin.x - StatusContentViewWidth-StatusViewAndContentViewSpace, frame.origin.y, StatusContentViewWidth, frame.size.height);
-                    strongSelf.statusContentView.frame = statusFrame;
-                    strongSelf.messageFailedStatusView.frame = CGRectMake(statusFrame.size.width-16, (statusFrame.size.height-16)/2, 16, 16);
+                    weakSelf.statusContentView.frame = statusFrame;
+                    weakSelf.messageFailedStatusView.frame = CGRectMake(statusFrame.size.width-16, (statusFrame.size.height-16)/2, 16, 16);
                 }
-                strongSelf.messageActivityIndicatorView.frame = strongSelf.messageFailedStatusView.frame;
+                weakSelf.messageActivityIndicatorView.frame = weakSelf.messageFailedStatusView.frame;
             } else {
-                if (strongSelf.model.messageDirection == MessageDirection_SEND) {
+                if (weakSelf.model.messageDirection == MessageDirection_SEND) {
                     CGRect statusFrame = CGRectMake(frame.origin.x - StatusContentViewWidth-StatusViewAndContentViewSpace, frame.origin.y, StatusContentViewWidth, frame.size.height);
-                    strongSelf.statusContentView.frame = statusFrame;
-                    strongSelf.receiptStatusLabel.frame = CGRectMake(0 , statusFrame.size.height - 12,statusFrame.size.width, 12);
-                    if (strongSelf.model.conversationType == ConversationType_PRIVATE || strongSelf.model.conversationType == ConversationType_Encrypted) {
-                        strongSelf.receiptView.frame = CGRectMake(StatusContentViewWidth - 16, statusFrame.size.height - 16, 16, 16);
-                        [strongSelf.receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
+                    weakSelf.statusContentView.frame = statusFrame;
+                    weakSelf.receiptStatusLabel.frame = CGRectMake(0 , statusFrame.size.height - 12,statusFrame.size.width, 12);
+                    if (weakSelf.model.conversationType == ConversationType_PRIVATE || weakSelf.model.conversationType == ConversationType_Encrypted) {
+                        weakSelf.receiptView.frame = CGRectMake(StatusContentViewWidth - 16, statusFrame.size.height - 16, 16, 16);
+                        [weakSelf.receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
                     } else {
-                        strongSelf.receiptView.frame = CGRectMake(StatusContentViewWidth - 14, statusFrame.size.height - 16, 14, 14);
-                        [strongSelf.receiptView setImage:RCResourceImage(@"receipt") forState:UIControlStateNormal];
+                        weakSelf.receiptView.frame = CGRectMake(StatusContentViewWidth - 14, statusFrame.size.height - 16, 14, 14);
+                        [weakSelf.receiptView setImage:RCResourceImage(@"receipt") forState:UIControlStateNormal];
                     }
-                    strongSelf.messageFailedStatusView.frame = CGRectMake(statusFrame.size.width-16, (statusFrame.size.height-16)/2, 16, 16);
-                    strongSelf.messageActivityIndicatorView.frame = strongSelf.messageFailedStatusView.frame;
+                    weakSelf.messageFailedStatusView.frame = CGRectMake(statusFrame.size.width-16, (statusFrame.size.height-16)/2, 16, 16);
+                    weakSelf.messageActivityIndicatorView.frame = weakSelf.messageFailedStatusView.frame;
                 } else {
                     CGRect statusFrame = CGRectMake(CGRectGetMaxX(frame)+StatusViewAndContentViewSpace, frame.origin.y, StatusContentViewWidth, frame.size.height);
-                    strongSelf.statusContentView.frame = statusFrame;
-                    strongSelf.messageFailedStatusView.frame = CGRectMake(0, (statusFrame.size.height-16)/2, 16, 16);
-                    strongSelf.messageActivityIndicatorView.frame = strongSelf.messageFailedStatusView.frame;
+                    weakSelf.statusContentView.frame = statusFrame;
+                    weakSelf.messageFailedStatusView.frame = CGRectMake(0, (statusFrame.size.height-16)/2, 16, 16);
+                    weakSelf.messageActivityIndicatorView.frame = weakSelf.messageFailedStatusView.frame;
                 }
             }
-            if (strongSelf.showBubbleBackgroundView) {
-                strongSelf.bubbleBackgroundView.frame = strongSelf.messageContentView.bounds;
+            if (weakSelf.showBubbleBackgroundView) {
+                weakSelf.bubbleBackgroundView.frame = weakSelf.messageContentView.bounds;
             }
         }
     }];
-}
-
-- (void)registerSizeUpdateLayoutIfNeed{
-    __weak typeof(self) weakSelf = self;
+    
     [self.messageContentView registerSizeChangedEvent:^(CGSize size) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (strongSelf.model){
+        if (weakSelf.model){
             CGRect rect = CGRectMake(0, 0, size.width, size.height);
             CGFloat protraitWidth = RCKitConfigCenter.ui.globalMessagePortraitSize.width;
 
             if ([RCKitUtility isRTL]) {
-                if(strongSelf.model.messageDirection == MessageDirection_RECEIVE) {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
+                if(weakSelf.model.messageDirection == MessageDirection_RECEIVE) {
+                    if (weakSelf.showPortrait) {
+                        rect.origin.x = weakSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
                     } else {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
+                        rect.origin.x = weakSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
                     }
                     rect.origin.y = PortraitImageViewTop;
-                    if (strongSelf.model.isDisplayNickname) {
+                    if (weakSelf.model.isDisplayNickname) {
                         rect.origin.y = PortraitImageViewTop + NameHeight + NameAndContentSpace;
                     }
                 } else {
-                    if (strongSelf.showPortrait) {
+                    if (weakSelf.showPortrait) {
                         rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
                     } else {
                         rect.origin.x = PortraitViewEdgeSpace;
@@ -336,29 +440,29 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                     rect.origin.y = PortraitImageViewTop;
                 }
             } else {
-                if(strongSelf.model.messageDirection == MessageDirection_RECEIVE) {
-                    if (strongSelf.showPortrait) {
+                if(weakSelf.model.messageDirection == MessageDirection_RECEIVE) {
+                    if (weakSelf.showPortrait) {
                         rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
                     } else {
                         rect.origin.x = PortraitViewEdgeSpace;
                     }
                     CGFloat messageContentViewY = PortraitImageViewTop;
-                    if (strongSelf.model.isDisplayNickname) {
+                    if (weakSelf.model.isDisplayNickname) {
                         messageContentViewY = PortraitImageViewTop + NameHeight + NameAndContentSpace;
                     }
                     rect.origin.y = messageContentViewY;
                 } else {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
+                    if (weakSelf.showPortrait) {
+                        rect.origin.x = weakSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
                     } else {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
+                        rect.origin.x = weakSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
                     }
                 
                     rect.origin.y = PortraitImageViewTop;
                 }
             }
-            strongSelf.messageContentView.frame = rect;
-            [strongSelf setDestructViewLayout];
+            weakSelf.messageContentView.frame = rect;
+            [weakSelf setDestructViewLayout];
         }
     }];
 }
@@ -439,7 +543,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     if ([RCKitUtility isRTL]) {
         // receiver
         if (MessageDirection_RECEIVE == self.model.messageDirection) {
-            [self.nicknameLabel setTextAlignment:NSTextAlignmentRight];
             self.nicknameLabel.hidden = !self.model.isDisplayNickname;
             CGFloat portraitImageX = self.baseContentView.bounds.size.width - (protraitWidth + PortraitViewEdgeSpace);
             self.portraitImageView.frame = CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth, protraitHeight);
@@ -457,7 +560,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     } else {
         // receiver
            if (MessageDirection_RECEIVE == self.model.messageDirection) {
-               [self.nicknameLabel setTextAlignment:NSTextAlignmentLeft];
                self.nicknameLabel.hidden = !self.model.isDisplayNickname;
                CGFloat portraitImageX = PortraitViewEdgeSpace;
                self.portraitImageView.frame =
@@ -514,7 +616,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)messageDestructing {
     NSNumber *whisperMsgDuration =
-        [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId];
+        [[RCIMClient sharedRCIMClient] getDestructMessageRemainDuration:self.model.messageUId];
     if (whisperMsgDuration == nil) {
         [self.destructBtn setTitle:@"" forState:UIControlStateNormal];
         [self.destructBtn setImage:RCResourceImage(@"fire_identify") forState:UIControlStateNormal];
@@ -605,26 +707,27 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)sendMessageReadReceiptRequest:(NSString *)messageUId {
-    RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
+    RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:self.model.messageId];
     if (message) {
         if (!messageUId || [messageUId isEqualToString:@""]) {
             return;
         }
-        [[RCCoreClient sharedCoreClient] sendReadReceiptRequest:message success:^{
-            self.model.isCanSendReadReceipt = NO;
+        __weak typeof(self) weakSelf = self;
+        [[RCIMClient sharedRCIMClient] sendReadReceiptRequest:message success:^{
+            weakSelf.model.isCanSendReadReceipt = NO;
             dispatch_async(dispatch_get_main_queue(), ^{
-                self.receiptView.hidden = YES;
-                self.receiptView.userInteractionEnabled = NO;
-                self.receiptStatusLabel.hidden = NO;
-                self.receiptStatusLabel.userInteractionEnabled = YES;
-                self.receiptStatusLabel.text =
+                weakSelf.receiptView.hidden = YES;
+                weakSelf.receiptView.userInteractionEnabled = NO;
+                weakSelf.receiptStatusLabel.hidden = NO;
+                weakSelf.receiptStatusLabel.userInteractionEnabled = YES;
+                weakSelf.receiptStatusLabel.text =
                 [NSString stringWithFormat:RCLocalizedString(@"readNum"), 0];
-                if (!self.model.readReceiptInfo) {
-                    self.model.readReceiptInfo = [[RCReadReceiptInfo alloc] init];
+                if (!weakSelf.model.readReceiptInfo) {
+                    weakSelf.model.readReceiptInfo = [[RCReadReceiptInfo alloc] init];
                 }
-                self.model.readReceiptInfo.isReceiptRequestMessage = YES;
-                if ([self.delegate respondsToSelector:@selector(didTapNeedReceiptView:)]) {
-                    [self.delegate didTapNeedReceiptView:self.model];
+                weakSelf.model.readReceiptInfo.isReceiptRequestMessage = YES;
+                if ([weakSelf.delegate respondsToSelector:@selector(didTapNeedReceiptView:)]) {
+                    [weakSelf.delegate didTapNeedReceiptView:weakSelf.model];
                 }
             });
         }error:^(RCErrorCode nErrorCode) {
@@ -635,138 +738,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                 }
             });
         }];
-    }
-}
-
-- (void)p_showBubbleBackgroundView{
-    if (self.showBubbleBackgroundView) {
-        self.bubbleBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
-    }
-}
-
-- (void)p_setReadStatus{
-    if (self.model.readReceiptInfo.isReceiptRequestMessage && self.model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)]) {
-        self.receiptStatusLabel.hidden = NO;
-        self.receiptStatusLabel.userInteractionEnabled = YES;
-        self.receiptStatusLabel.text = [NSString
-            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
-    } else {
-        self.receiptStatusLabel.hidden = YES;
-        self.receiptStatusLabel.userInteractionEnabled = NO;
-        self.receiptStatusLabel.text = nil;
-    }
-
-    if (self.model.messageDirection == MessageDirection_SEND && self.model.sentStatus == SentStatus_SENT) {
-        if (self.model.isCanSendReadReceipt) {
-            self.receiptView.hidden = NO;
-            self.receiptView.userInteractionEnabled = YES;
-            self.receiptStatusLabel.hidden = YES;
-        } else {
-            self.receiptView.hidden = YES;
-            self.receiptStatusLabel.hidden = NO;
-        }
-    }else{
-        self.receiptView.hidden = YES;
-    }
-}
-
-- (void)p_setUserInfo{
-    RCMessageModel *model = self.model;
-    // DebugLog(@"%s", __FUNCTION__);
-    //如果是客服，更换默认头像
-    if (ConversationType_CUSTOMERSERVICE == model.conversationType) {
-        [self p_setCustomerServiceInfo:model];
-    } else if (ConversationType_APPSERVICE == model.conversationType ||
-               ConversationType_PUBLICSERVICE == model.conversationType) {
-        [self p_setPublicServiceInfo:model];
-    } else if (ConversationType_GROUP == model.conversationType) {
-        [self p_setGroupInfo:model];
-    } else {
-        //优先使用 RCMessage.senderUserId 确定用户，控制头像的显示
-        //否则使用 RCMessage.content.senderUserInfo.userId 确定用户，控制头像的显示
-        NSString *userId = model.senderUserId;
-        if (userId.length <= 0) {
-            userId = model.content.senderUserInfo.userId;
-        }
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
-        model.userInfo = userInfo;
-        if (userInfo) {
-            if (model.conversationType != ConversationType_Encrypted) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            }
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-        } else {
-            [self.portraitImageView setImageURL:nil];
-            [self.nicknameLabel setText:nil];
-        }
-    }
-}
-
-- (void)p_setCustomerServiceInfo:(RCMessageModel *)model{
-    if (model.messageDirection == MessageDirection_RECEIVE) {
-        [self.portraitImageView setPlaceholderImage:RCResourceImage(@"portrait_kefu")];
-
-        model.userInfo = model.content.senderUserInfo;
-        if (model.content.senderUserInfo != nil) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
-        } else {
-            [self.portraitImageView setImage:RCResourceImage(@"portrait_kefu")];
-            [self.nicknameLabel setText:nil];
-        }
-    } else {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
-        model.userInfo = userInfo;
-        [self.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
-        if (userInfo) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-        } else {
-            [self.portraitImageView setImageURL:nil];
-            [self.nicknameLabel setText:nil];
-        }
-    }
-}
-
-- (void)p_setPublicServiceInfo:(RCMessageModel *)model{
-    if (model.messageDirection == MessageDirection_RECEIVE) {
-        RCPublicServiceProfile *serviceProfile = nil;
-        if ([RCIM sharedRCIM].publicServiceInfoDataSource) {
-            serviceProfile = [[RCUserInfoCacheManager sharedManager] getPublicServiceProfile:model.targetId];
-        } else {
-            serviceProfile =
-                [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceProfile:(RCPublicServiceType)model.conversationType
-                                                       publicServiceId:model.targetId];
-        }
-        model.userInfo = model.content.senderUserInfo;
-        if (serviceProfile) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:serviceProfile.portraitUrl]];
-            [self.nicknameLabel setText:serviceProfile.name];
-        }
-    } else {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
-        model.userInfo = userInfo;
-        if (userInfo) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-        } else {
-            [self.portraitImageView setImageURL:nil];
-            [self.nicknameLabel setText:nil];
-        }
-    }
-}
-
-- (void)p_setGroupInfo:(RCMessageModel *)model{
-    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
-    RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
-    userInfo.alias = tempUserInfo.alias;
-    model.userInfo = userInfo;
-    if (userInfo) {
-        [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-    } else {
-        [self.portraitImageView setImageURL:nil];
-        [self.nicknameLabel setText:nil];
     }
 }
 
@@ -813,11 +784,12 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     self.currentDisplayedUserInfo = userInfo;
     
     self.model.userInfo = userInfo;
+    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (userInfo.portraitUri.length > 0) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            [weakSelf.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
         }
-        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+        [weakSelf.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
     });
 }
 
@@ -853,7 +825,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)enableShowReceiptView:(UIButton *)sender {
     if (!self.model.messageUId) {
-        RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
+        RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:self.model.messageId];
         if (message) {
             [self sendMessageReadReceiptRequest:message.messageUId];
         }
@@ -904,9 +876,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 #pragma mark - Getter && Setter
-- (RCBaseButton *)receiptView {
+- (UIButton *)receiptView {
     if (!_receiptView) {
-        _receiptView = [[RCBaseButton alloc] init];
+        _receiptView = [[UIButton alloc] init];
         [_receiptView setImage:RCResourceImage(@"message_read_status") forState:UIControlStateNormal];
         [_receiptView addTarget:self
                          action:@selector(enableShowReceiptView:)
@@ -940,9 +912,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _destructView;
 }
 
-- (RCBaseButton *)destructBtn {
+- (UIButton *)destructBtn {
     if (_destructBtn == nil) {
-        _destructBtn = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+        _destructBtn = [[UIButton alloc] initWithFrame:CGRectZero];
         [_destructBtn setTitleColor:RCDYCOLOR(0xffffff, 0x11111) forState:UIControlStateNormal];
         _destructBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         _destructBtn.layer.cornerRadius = 10.f;
@@ -1034,9 +1006,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _messageContentView;
 }
 
-- (RCBaseImageView *)bubbleBackgroundView{
+- (UIImageView *)bubbleBackgroundView{
     if (!_bubbleBackgroundView) {
-        _bubbleBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
+        _bubbleBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
         [self.messageContentView addSubview:self.bubbleBackgroundView];
     }
     return _bubbleBackgroundView;

@@ -12,14 +12,14 @@
 #import "RCKitCommonDefine.h"
 #import "RCIM.h"
 #import "RCKitConfig.h"
-#import "RCBaseTableView.h"
+
 typedef void (^CompleteBlock)(NSArray *conversationList);
 
 @interface RCSelectConversationViewController () <UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, strong) NSMutableArray *selectedConversationArray;
 
-@property (nonatomic, strong) RCBaseTableView *conversationTableView;
+@property (nonatomic, strong) UITableView *conversationTableView;
 
 @property (nonatomic, strong) UIBarButtonItem *rightBarButtonItem;
 
@@ -46,7 +46,7 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
     [self.view addSubview:self.conversationTableView];
     self.selectedConversationArray = [[NSMutableArray alloc] init];
     self.listingConversationArray =
-        [[RCCoreClient sharedCoreClient] getConversationList:@[ @(ConversationType_PRIVATE), @(ConversationType_GROUP) ]];
+        [[RCIMClient sharedRCIMClient] getConversationList:@[ @(ConversationType_PRIVATE), @(ConversationType_GROUP) ]];
 }
 
 #pragma mark - UITableViewDataSource
@@ -145,11 +145,11 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
 
 #pragma mark - Getters and Setters
 
-- (RCBaseTableView *)conversationTableView {
+- (UITableView *)conversationTableView {
     if (!_conversationTableView) {
         CGFloat homeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
         CGRect frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height-homeBarHeight);
-        _conversationTableView = [[RCBaseTableView alloc] initWithFrame:frame  style:UITableViewStyleGrouped];
+        _conversationTableView = [[UITableView alloc] initWithFrame:frame  style:UITableViewStyleGrouped];
         _conversationTableView.estimatedRowHeight = 0;
         _conversationTableView.estimatedSectionHeaderHeight = 0;
         _conversationTableView.estimatedSectionFooterHeight = 0;

@@ -302,8 +302,9 @@
     CGFloat changedBeforeHeight = self.frame.size.height;
     [self layoutInputBoxUIIfNeed];
     if (changedBeforeHeight != self.frame.size.height && self.inputTextView.text > 0) {
+        __weak typeof(self) weakSelf = self;
         [UIView animateWithDuration:0.5 animations:^{
-            [self.inputTextView scrollRangeToVisible:[self.inputTextView selectedRange]];
+            [weakSelf.inputTextView scrollRangeToVisible:[weakSelf.inputTextView selectedRange]];
         }];
     }
 }

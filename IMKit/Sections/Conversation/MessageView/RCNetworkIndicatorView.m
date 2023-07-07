@@ -17,7 +17,7 @@
 - (instancetype)initWithText:(NSString *)text {
     self = [super init];
     if (self) {
-        self.networkUnreachableImageView = [[RCBaseImageView alloc] init];
+        self.networkUnreachableImageView = [[UIImageView alloc] init];
         self.networkUnreachableImageView.image = RCResourceImage(@"network_fail");
         self.networkUnreachableDescriptionLabel = [[UILabel alloc] init];
         self.networkUnreachableDescriptionLabel.textColor = RCDYCOLOR(0x111f2c, 0xBE9393);

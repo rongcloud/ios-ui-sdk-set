@@ -85,12 +85,7 @@
             messageInfo = RCLocalizedString(@"unknown_message_cell_tip");
         }
     }
-    if([RCKitUtility isRTL]){
-        self.nameLabel.text = [NSString stringWithFormat:@":%@",[self getUserDisplayName]];
-    }else{
-        self.nameLabel.text = [NSString stringWithFormat:@"%@：",[self getUserDisplayName]];
-    }
-    
+    self.nameLabel.text = [NSString stringWithFormat:@"%@：",[self getUserDisplayName]];
     //替换换行符为空格
     messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\r\n" withString:@" "];
     messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
@@ -146,9 +141,7 @@
     NSDictionary *userInfoDic = notification.object;
     if ([self.referModel.senderUserId isEqualToString:userInfoDic[@"userId"]]) {
         //重新取一下混合的用户信息
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self setContentInfo];
-        });
+        [self setContentInfo];
     }
 }
 
@@ -158,17 +151,15 @@
         if ([self.referModel.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
             [self.referModel.senderUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
             //重新取一下混合的用户信息
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self setContentInfo];
-            });
+            [self setContentInfo];
         }
     }
 }
 
 #pragma mark - Getters and Setters
-- (RCBaseButton *)dismissButton {
+- (UIButton *)dismissButton {
     if (!_dismissButton) {
-        _dismissButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+        _dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_dismissButton setImage:RCResourceImage(@"referencing_view_dismiss_icon") forState:UIControlStateNormal];
         [_dismissButton addTarget:self
                            action:@selector(didClickDismissButton:)
@@ -177,18 +168,18 @@
     return _dismissButton;
 }
 
-- (RCBaseLabel *)nameLabel {
+- (UILabel *)nameLabel {
     if (!_nameLabel) {
-        _nameLabel = [[RCBaseLabel alloc] init];
+        _nameLabel = [[UILabel alloc] init];
         _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
     }
     return _nameLabel;
 }
 
-- (RCBaseLabel *)textLabel {
+- (UILabel *)textLabel {
     if (!_textLabel) {
-        _textLabel = [[RCBaseLabel alloc] init];
+        _textLabel = [[UILabel alloc] init];
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];

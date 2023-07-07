@@ -7,7 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
+
 @class RCDiscussion,RCPublicServiceProfile;
 /*!
  @const 收到消息的Notification
@@ -468,21 +469,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  @warning 如果您使用IMKit，请使用此方法初始化SDK；
  如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
  */
-- (void)initWithAppKey:(NSString *)appKey __deprecated_msg("Use [RCIM initWithAppKey:option:] instead");
-
-/*!
- 初始化融云SDK
-
- @param appKey  从融云开发者平台创建应用后获取到的App Key
- @param option  设置配置信息，详细配置项信息请查看 RCInitOption.h 文件
-
- @discussion 您在使用融云SDK所有功能（包括显示SDK中或者继承于SDK的View）之前，您必须先调用此方法初始化SDK。
- 在App整个生命周期中，您只需要执行一次初始化。
-
- @warning 如果您使用IMKit，请使用此方法初始化SDK；
- 如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
- */
-- (void)initWithAppKey:(NSString *)appKey option:(nullable RCInitOption *)option;
+- (void)initWithAppKey:(NSString *)appKey;
 
 #pragma mark - 连接与断开服务器
 
@@ -519,14 +506,14 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  @param token                   从您服务器端获取的 token (用户身份令牌)
  @param timeLimit                 SDK 连接的超时时间，单位: 秒
                          timeLimit <= 0，SDK 会一直连接，直到连接成功或者出现 SDK 无法处理的错误（如 token 非法）。
-                         timeLimit > 0，SDK 最多连接 timeLimit 秒，超时时返回 RCErrorCodesConnectionTimeout 错误，并不再重连。
+                         timeLimit > 0，SDK 最多连接 timeLimit 秒，超时时返回 RC_CONNECT_TIMEOUT 错误，并不再重连。
  @param dbOpenedBlock                本地消息数据库打开的回调
  @param successBlock            连接建立成功的回调 [ userId: 当前连接成功所用的用户 ID]
  @param errorBlock              连接建立失败的回调，触发该回调代表 SDK 无法继续重连 [errorCode: 连接失败的错误码]
 
  @discussion 调用该接口，SDK 会在 timeLimit 秒内尝试重连，直到出现下面三种情况之一：
  第一、连接成功，回调 successBlock(userId)。
- 第二、超时，回调 errorBlock(RCErrorCodesConnectionTimeout)。
+ 第二、超时，回调 errorBlock(RC_CONNECT_TIMEOUT)。
  第三、出现 SDK 无法处理的错误，回调 errorBlock(errorCode)（如 token 非法）。
  
  @discussion 连接成功后，SDK 将接管所有的重连处理。当因为网络原因断线的情况下，SDK 会不停重连直到连接成功为止，不需要您做额外的连接操作。
@@ -791,7 +778,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
  自定义类型的消息，需要您自己设置pushContent和pushData来定义推送内容，否则将不会进行远程推送。
  
  @warning 如果您使用IMKit，使用此方法发送媒体文件消息SDK会自动更新UI；
- 如果您使用IMLib，请使用 RCCoreClient 中的同名方法发送媒体文件消息，不会自动更新UI。
+ 如果您使用IMLib，请使用RCIMClient中的同名方法发送媒体文件消息，不会自动更新UI。
  
  @since 5.3.5
  */

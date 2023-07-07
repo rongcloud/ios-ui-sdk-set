@@ -6,7 +6,7 @@
 //  Copyright © 2016年 RongCloud. All rights reserved.
 //
 
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 /*!
  用户信息更新消息的类型名

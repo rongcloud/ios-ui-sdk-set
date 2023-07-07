@@ -14,7 +14,7 @@
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCMBProgressHUD.h"
-#import "RCBaseButton.h"
+
 
 #define WIDTH ((SCREEN_WIDTH - 20) / 4)
 #define SIZE CGSizeMake(WIDTH, WIDTH)
@@ -25,8 +25,8 @@ static NSString *const reuseIdentifier = @"Cell";
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *selectedAssets;
 
 @property (nonatomic, strong) UIView *toolBar;
-@property (nonatomic, strong) RCBaseButton *previewBtn;
-@property (nonatomic, strong) RCBaseButton *btnSend;
+@property (nonatomic, strong) UIButton *previewBtn;
+@property (nonatomic, strong) UIButton *btnSend;
 @property (nonatomic, assign) BOOL isFull;
 @property (nonatomic, assign) BOOL disableFirstAppear;
 @property (nonatomic, assign) BOOL isLoad;
@@ -46,7 +46,9 @@ static NSString *const reuseIdentifier = @"Cell";
         self.assetArray = [NSMutableArray new];
         self.selectedAssets = [NSMutableArray new];
         self.collectionView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
-        [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+        if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+            [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+        }
     }
     return self;
 }
@@ -136,7 +138,9 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)dealloc {
-    [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
+    if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+        [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
+    }
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -235,31 +239,33 @@ static NSString *const reuseIdentifier = @"Cell";
                                      allPhotosArr:self.assetArray
                                      currentIndex:selectModel.index
                                  accordToIsSelect:NO];
+    __weak typeof(self) weakself = self;
     [previewController
         setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
 
-            self.selectedAssets = selectArr;
-            self.assetArray = assetPhotos.mutableCopy;
-            self.isFull = isFull;
-            [self setButtonEnable];
-            [self.collectionView reloadData];
+            weakself.selectedAssets = selectArr;
+            weakself.assetArray = assetPhotos.mutableCopy;
+            weakself.isFull = isFull;
+            [weakself setButtonEnable];
+            [weakself.collectionView reloadData];
         }];
     [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
-        self.sendPhotosBlock(selectArr, isFull);
+        weakself.sendPhotosBlock(selectArr, isFull);
     }];
     [self.navigationController pushViewController:previewController animated:YES];
 }
 
 
 - (void)checkDownloadFailFromiCloud:(RCAssetModel *)model block:(void(^)(BOOL downloadFailFromiCloud))block {
+    __weak typeof(self) weakself = self;
     // 尝试获取大图或者视频，检查是否能获取
     model.isDownloadFailFromiCloud = NO;
     if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
         [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
             dispatch_main_async_safe(^{
-                if(self.progressHUD) {
-                    [self.progressHUD hideAnimated:YES afterDelay:0.5];
-                    self.progressHUD = nil;
+                if(weakself.progressHUD) {
+                    [weakself.progressHUD hideAnimated:YES afterDelay:0.5];
+                    weakself.progressHUD = nil;
                 }
 
                 BOOL isDownloadFail = !avAsset ? YES : NO;
@@ -270,8 +276,8 @@ static NSString *const reuseIdentifier = @"Cell";
             });
         } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
             dispatch_main_async_safe(^{
-                if(progress < 1 && !error && !self.progressHUD) {
-                    self.progressHUD = [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
+                if(progress < 1 && !error && !weakself.progressHUD) {
+                    weakself.progressHUD = [RCMBProgressHUD showHUDAddedTo:weakself.view animated:YES];
                 }
             });
         }];
@@ -279,9 +285,9 @@ static NSString *const reuseIdentifier = @"Cell";
     }else {
         [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model result:^(NSData *photo, NSDictionary *info, RCAssetModel *assetModel) {
             dispatch_main_async_safe(^{
-                if(self.progressHUD) {
-                    [self.progressHUD hideAnimated:YES afterDelay:0.5];
-                    self.progressHUD = nil;
+                if(weakself.progressHUD) {
+                    [weakself.progressHUD hideAnimated:YES afterDelay:0.5];
+                    weakself.progressHUD = nil;
                 }
 
                 BOOL isDownloadFail = !photo ? YES : NO;
@@ -292,8 +298,8 @@ static NSString *const reuseIdentifier = @"Cell";
             });
         } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
             dispatch_main_async_safe(^{
-                if(progress < 1 && !error && !self.progressHUD) {
-                    self.progressHUD = [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
+                if(progress < 1 && !error && !weakself.progressHUD) {
+                    weakself.progressHUD = [RCMBProgressHUD showHUDAddedTo:weakself.view animated:YES];
                 }
             });
         }];
@@ -330,16 +336,17 @@ static NSString *const reuseIdentifier = @"Cell";
                                      allPhotosArr:self.assetArray
                                      currentIndex:0
                                  accordToIsSelect:YES];
+    __weak typeof(self) weakself = self;
     [previewController
         setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
-            self.selectedAssets = selectArr;
-            [self setButtonEnable];
-            self.assetArray = assetPhotos.mutableCopy;
-            self.isFull = isFull;
-            [self.collectionView reloadData];
+            weakself.selectedAssets = selectArr;
+            [weakself setButtonEnable];
+            weakself.assetArray = assetPhotos.mutableCopy;
+            weakself.isFull = isFull;
+            [weakself.collectionView reloadData];
         }];
     [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
-        self.sendPhotosBlock(selectArr, isFull);
+        weakself.sendPhotosBlock(selectArr, isFull);
     }];
     [self.navigationController pushViewController:previewController animated:YES];
 }
@@ -408,11 +415,7 @@ static NSString *const reuseIdentifier = @"Cell";
     rightBarView.frame = CGRectMake(0, 0, 80, 40);
     UILabel *doneTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 40)];
     doneTitleLabel.text = RCLocalizedString(@"Cancel");
-    if([RCKitUtility isRTL]){
-        doneTitleLabel.textAlignment = NSTextAlignmentLeft;
-    }else{
-        doneTitleLabel.textAlignment = NSTextAlignmentRight;
-    }
+    doneTitleLabel.textAlignment = NSTextAlignmentRight;
     doneTitleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     doneTitleLabel.textColor = [RCKitUtility
         generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
@@ -431,13 +434,13 @@ static NSString *const reuseIdentifier = @"Cell";
     [self.view addSubview:_toolBar];
 
     // add button for bottom bar
-    _btnSend = [[RCBaseButton alloc] init];
+    _btnSend = [[UIButton alloc] init];
     [_btnSend setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_btnSend addTarget:self action:@selector(btnSendCliced:) forControlEvents:UIControlEventTouchUpInside];
     _btnSend.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_toolBar addSubview:_btnSend];
 
-    _previewBtn = [[RCBaseButton alloc] init];
+    _previewBtn = [[UIButton alloc] init];
     [_previewBtn setTitle:RCLocalizedString(@"Preview") forState:UIControlStateNormal];
     _previewBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
     [_previewBtn addTarget:self action:@selector(previewBtnCliced:) forControlEvents:UIControlEventTouchUpInside];
@@ -541,11 +544,12 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)_updateBottomSendImageCountButton {
+    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.selectedAssets.count && self.toolBar) {
-            [self.btnSend setTitle:[NSString stringWithFormat:@"%@ (%lu)",RCLocalizedString(@"Send"), (unsigned long)self.selectedAssets.count] forState:(UIControlStateNormal)];
+        if (weakSelf.selectedAssets.count && weakSelf.toolBar) {
+            [weakSelf.btnSend setTitle:[NSString stringWithFormat:@"%@ (%lu)",RCLocalizedString(@"Send"), (unsigned long)weakSelf.selectedAssets.count] forState:(UIControlStateNormal)];
         } else {
-            [self.btnSend setTitle:RCLocalizedString(@"Send") forState:(UIControlStateNormal)];
+            [weakSelf.btnSend setTitle:RCLocalizedString(@"Send") forState:(UIControlStateNormal)];
         }
     });
 }
@@ -632,15 +636,16 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (NSArray<PHAsset *> *)assetsInRects:(NSArray<NSValue *> *)rects {
+    __weak typeof(self) weakSelf = self;
     NSMutableArray *assets = [[NSMutableArray alloc] initWithCapacity:50];
     [rects enumerateObjectsUsingBlock:^(NSValue *_Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
         CGRect rect = [obj CGRectValue];
         NSArray<UICollectionViewLayoutAttributes *> *attribtutes =
-            [self.collectionView.collectionViewLayout layoutAttributesForElementsInRect:rect];
+            [weakSelf.collectionView.collectionViewLayout layoutAttributesForElementsInRect:rect];
         [attribtutes enumerateObjectsUsingBlock:^(UICollectionViewLayoutAttributes *_Nonnull obj, NSUInteger idx,
                                                   BOOL *_Nonnull stop) {
-            if (obj.indexPath.item < self.assetArray.count) {
-                RCAssetModel *model = [self.assetArray objectAtIndex:obj.indexPath.item];
+            if (obj.indexPath.item < weakSelf.assetArray.count) {
+                RCAssetModel *model = [weakSelf.assetArray objectAtIndex:obj.indexPath.item];
                 if ([model.asset isKindOfClass:[PHAsset class]]) {
                     [assets addObject:model.asset];
                 }

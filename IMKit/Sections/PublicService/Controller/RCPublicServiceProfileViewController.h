@@ -7,7 +7,7 @@
 //
 
 #import "RCThemeDefine.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import <UIKit/UIKit.h>
 #import "RCBaseTableViewController.h"
 @class RCPublicServiceProfile;

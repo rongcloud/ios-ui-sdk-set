@@ -66,7 +66,7 @@
 /*!
  会话免打扰状态显示的View
  */
-@property (nonatomic, strong) RCBaseImageView *conversationStatusImageView;
+@property (nonatomic, strong) UIImageView *conversationStatusImageView;
 
 /*!
  Cell中显示的头像形状

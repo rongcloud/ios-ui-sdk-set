@@ -72,16 +72,6 @@
 #import <RongIMKit/RCAlertView.h>
 #import <RongIMKit/RCActionSheetView.h>
 
-#import <RongIMKit/RCBaseTableView.h>
-#import <RongIMKit/RCBaseTableViewCell.h>
-#import <RongIMKit/RCBaseCollectionView.h>
-#import <RongIMKit/RCBaseCollectionViewCell.h>
-#import <RongIMKit/RCBaseButton.h>
-#import <RongIMKit/RCBaseImageView.h>
-#import <RongIMKit/RCBaseNavigationController.h>
-#import <RongIMKit/RCBaseView.h>
-#import <RongIMKit/RCBaseLabel.h>
-
 #else
 /// IMKit核心类
 #import "RCIM.h"
@@ -145,15 +135,4 @@
 #import "RongIMKitExtensionModule.h"
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
-
-//view 基类
-#import "RCBaseTableView.h"
-#import "RCBaseTableViewCell.h"
-#import "RCBaseCollectionView.h"
-#import "RCBaseCollectionViewCell.h"
-#import "RCBaseButton.h"
-#import "RCBaseImageView.h"
-#import "RCBaseNavigationController.h"
-#import "RCBaseView.h"
-#import "RCBaseLabel.h"
 #endif

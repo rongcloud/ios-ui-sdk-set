@@ -31,7 +31,7 @@
     if (self) {
         _currentIndex = 0;
         CGRect contentViewFrame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-        self.contentView = [[RCBaseCollectionView alloc] initWithFrame:contentViewFrame collectionViewLayout:self.layout];
+        self.contentView = [[UICollectionView alloc] initWithFrame:contentViewFrame collectionViewLayout:self.layout];
         self.contentView.dataSource = self;
         self.contentView.delegate = self;
         self.contentView.pagingEnabled = YES;
@@ -187,12 +187,11 @@
     cell.highlightedImage = item.highlightedImage;
     __weak typeof(self) weakSelf = self;
     [cell setItemclick:^{
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (strongSelf.pluginBoardDelegate &&
-            [strongSelf.pluginBoardDelegate respondsToSelector:@selector(pluginBoardView:clickedItemWithTag:)]) {
+        if (weakSelf.pluginBoardDelegate &&
+            [weakSelf.pluginBoardDelegate respondsToSelector:@selector(pluginBoardView:clickedItemWithTag:)]) {
             RCPluginBoardItem *item =
-            strongSelf.allItems[indexPath.row + indexPath.section * strongSelf.layout.itemsPerSection];
-            [strongSelf.pluginBoardDelegate pluginBoardView:strongSelf clickedItemWithTag:item.tag];
+                weakSelf.allItems[indexPath.row + indexPath.section * weakSelf.layout.itemsPerSection];
+            [weakSelf.pluginBoardDelegate pluginBoardView:weakSelf clickedItemWithTag:item.tag];
         }
     }];
     cell.tag = item.tag;

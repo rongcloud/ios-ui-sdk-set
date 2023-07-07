@@ -191,30 +191,32 @@
 }
 
 #pragma mark - Getters and Setters
-- (RCBaseView *)backView {
+- (UIView *)backView {
     if (!_backView) {
-        _backView = [[RCBaseView alloc] initWithFrame:CGRectZero];
+        _backView = [[UIView alloc] initWithFrame:CGRectZero];
         _backView.userInteractionEnabled = NO;
         _backView.backgroundColor = [UIColor clearColor];
     }
     return _backView;
 }
 
-- (RCBaseLabel *)titleLabel {
+- (UILabel *)titleLabel {
     if (!_titleLabel) {
-        _titleLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         _titleLabel.numberOfLines = 1;
+        _titleLabel.textAlignment = [RCKitUtility isRTL]?NSTextAlignmentRight:NSTextAlignmentLeft;
         _titleLabel.backgroundColor = [UIColor clearColor];
     }
     return _titleLabel;
 }
 
-- (RCBaseLabel *)contentLabel {
+- (UILabel *)contentLabel {
     if (!_contentLabel) {
-        _contentLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+        _contentLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _contentLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         _contentLabel.numberOfLines = 0;
+        _contentLabel.textAlignment = NSTextAlignmentLeft;
         [_contentLabel sizeToFit];
         _contentLabel.backgroundColor = [UIColor clearColor];
     }
@@ -228,11 +230,12 @@
     return _lineLable;
 }
 
-- (RCBaseLabel *)historyLabel {
+- (UILabel *)historyLabel {
     if (!_historyLabel) {
-        _historyLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
+        _historyLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _historyLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         _historyLabel.numberOfLines = 1;
+        _historyLabel.textAlignment = NSTextAlignmentLeft;
         _historyLabel.backgroundColor = [UIColor clearColor];
         _historyLabel.text = RCLocalizedString(@"ChatHistory");
     }

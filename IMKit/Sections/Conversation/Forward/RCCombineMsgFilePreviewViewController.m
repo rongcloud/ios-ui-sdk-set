@@ -14,8 +14,7 @@
 #import "RCKitConfig.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"
-#import "RCBaseButton.h"
-#import "RCBaseImageView.h"
+
 @interface RCCombineMsgFilePreviewViewController ()
 
 @property (nonatomic, copy) NSString *remoteURL;
@@ -29,10 +28,10 @@
 @property (nonatomic, strong) UILabel *nameLabel;
 @property (nonatomic, strong) UILabel *sizeLabel;
 @property (nonatomic, strong) UILabel *progressLabel;
-@property (nonatomic, strong) RCBaseImageView *typeIconView;
+@property (nonatomic, strong) UIImageView *typeIconView;
 @property (nonatomic, strong) UIProgressView *progressView;
-@property (nonatomic, strong) RCBaseButton *downloadButton;
-@property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
+@property (nonatomic, strong) UIButton *downloadButton;
+@property (nonatomic, strong) UIButton *openInOtherAppButton;
 
 @property (nonatomic, assign) int extentLayoutForY;
 
@@ -70,7 +69,7 @@
         self.extentLayoutForY = 0;
     }
     //设置右键
-    RCBaseButton *rightBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
+    UIButton *rightBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(moreAction) forControlEvents:UIControlEventTouchUpInside];
@@ -91,22 +90,23 @@
 #pragma mark - Private Methods
 - (void)startFileDownLoad {
     [self layoutForDownloading];
-    [[RCCoreClient sharedCoreClient] downloadMediaFile:self.fileName mediaUrl:self.remoteURL progress:^(int progress) {
+    __weak typeof(self) weakSelf = self;
+    [[RCIMClient sharedRCIMClient] downloadMediaFile:self.fileName mediaUrl:self.remoteURL progress:^(int progress) {
         dispatch_main_async_safe(^{
-            [self downloading:progress * 0.01];
+            [weakSelf downloading:progress * 0.01];
         });
     } success:^(NSString *mediaPath) {
         dispatch_main_async_safe(^{
-            self.localPath = mediaPath;
-            if ([self isFileSupported]) {
-                [self layoutAndPreviewFile];
+            weakSelf.localPath = mediaPath;
+            if ([weakSelf isFileSupported]) {
+                [weakSelf layoutAndPreviewFile];
             } else {
-                [self layoutForShowFileInfo];
+                [weakSelf layoutForShowFileInfo];
             }
         });
     } error:^(RCErrorCode errorCode) {
         dispatch_main_async_safe(^{
-            [self layoutForShowFileInfo];
+            [weakSelf layoutForShowFileInfo];
             UIAlertController *alertController = [UIAlertController
                                                   alertControllerWithTitle:nil
                                                   message:RCLocalizedString(@"FileDownloadFailed")
@@ -278,9 +278,9 @@
     return _webView;
 }
 
-- (RCBaseImageView *)typeIconView {
+- (UIImageView *)typeIconView {
     if (!_typeIconView) {
-        _typeIconView = [[RCBaseImageView alloc]
+        _typeIconView = [[UIImageView alloc]
             initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 30 + self.extentLayoutForY, 75, 75)];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileType];
 
@@ -341,9 +341,9 @@
     return _progressView;
 }
 
-- (RCBaseButton *)downloadButton {
+- (UIButton *)downloadButton {
     if (!_downloadButton) {
-        _downloadButton = [[RCBaseButton alloc]
+        _downloadButton = [[UIButton alloc]
             initWithFrame:CGRectMake(10, 197 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 40)];
         _downloadButton.backgroundColor = HEXCOLOR(0x0099ff);
         _downloadButton.layer.cornerRadius = 5.0f;
@@ -359,9 +359,9 @@
     return _downloadButton;
 }
 
-- (RCBaseButton *)openInOtherAppButton {
+- (UIButton *)openInOtherAppButton {
     if (!_openInOtherAppButton) {
-        _openInOtherAppButton = [[RCBaseButton alloc]
+        _openInOtherAppButton = [[UIButton alloc]
             initWithFrame:CGRectMake(10, 197 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 40)];
         _openInOtherAppButton.backgroundColor = HEXCOLOR(0x0099ff);
         _openInOtherAppButton.layer.cornerRadius = 5.0f;

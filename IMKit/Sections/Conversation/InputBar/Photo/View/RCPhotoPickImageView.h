@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "RCAssetModel.h"
-#import "RCBaseImageView.h"
-@interface RCPhotoPickImageView : RCBaseImageView
+
+@interface RCPhotoPickImageView : UIImageView
 - (void)setPhotoModel:(RCAssetModel *)model;
 @end
 

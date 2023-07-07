@@ -12,7 +12,7 @@
 #import "RCUserInfoCache.h"
 #import "RCUserInfoCacheDBHelper.h"
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 //消息分发
 FOUNDATION_EXPORT NSString *const RCKitDispatchUserInfoUpdateNotification;

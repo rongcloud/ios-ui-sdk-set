@@ -11,7 +11,6 @@
 #import "RCPublicServicePopupMenuView.h"
 #import "RCKitConfig.h"
 #import <RongPublicService/RCPublicServiceMenu.h>
-#import "RCBaseImageView.h"
 #define RC_PUBLIC_SERVICE_MENU_ICON_GAP 6
 #define RC_PUBLIC_SERVICE_MENU_SEPARATE_WIDTH 0.5
 #define RC_PUBLIC_SERVICE_SUBMENU_PADDING 6
@@ -64,8 +63,8 @@
                                    constrainedSize:CGSizeMake(itemWidth, 2000)];
 
         if (menuItem.type == RC_PUBLIC_SERVICE_MENU_ITEM_GROUP) {
-            RCBaseImageView *icon =
-                [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"public_serive_menu_icon")];
+            UIImageView *icon =
+                [[UIImageView alloc] initWithImage:RCResourceImage(@"public_serive_menu_icon")];
             CGSize iconSize = CGSizeMake(7, 7);
             CGRect iconFrame = CGRectZero;
             iconFrame.origin.x = (itemWidth - labelsize.width - iconSize.width - RC_PUBLIC_SERVICE_MENU_ICON_GAP) / 2;

@@ -14,7 +14,7 @@
 #import "RCAlertView.h"
 #import <RongCustomerService/RongCustomerService.h>
 #import "RCSemanticContext.h"
-#import "RCBaseButton.h"
+
 @interface RCCSLeaveMessageController ()
 @property (nonatomic, strong) NSMutableDictionary *leaveMessageInfoDic;
 @end
@@ -98,7 +98,7 @@
 
 - (void)setupTableFooterView {
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 43)];
-    RCBaseButton *submitButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(10, 0, self.view.frame.size.width - 20, 43)];
+    UIButton *submitButton = [[UIButton alloc] initWithFrame:CGRectMake(10, 0, self.view.frame.size.width - 20, 43)];
     submitButton.center = footerView.center;
     [submitButton setTitle:@"提交留言" forState:UIControlStateNormal];
     [submitButton setBackgroundImage:RCResourceImage(@"blue") forState:UIControlStateNormal];

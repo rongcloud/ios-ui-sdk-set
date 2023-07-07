@@ -7,10 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
-#import "RCBaseImageView.h"
-#import "RCBaseLabel.h"
-@interface RCUserListTableViewCell : RCBaseTableViewCell
-@property (nonatomic, strong) RCBaseImageView *headImageView; //头像
-@property (nonatomic, strong) RCBaseLabel *nameLabel;         //姓名
+
+@interface RCUserListTableViewCell : UITableViewCell
+@property (nonatomic, strong) UIImageView *headImageView; //头像
+@property (nonatomic, strong) UILabel *nameLabel;         //姓名
 @end

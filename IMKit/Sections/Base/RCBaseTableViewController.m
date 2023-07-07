@@ -7,7 +7,7 @@
 //
 
 #import "RCBaseTableViewController.h"
-#import "RCSemanticContext.h"
+
 @interface RCBaseTableViewController ()
 
 @end
@@ -23,7 +23,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self closeSelfSizing];
-    [self updateRTLUI];
 }
 
 - (void)viewWillLayoutSubviews {
@@ -52,14 +51,6 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     return CGFLOAT_MIN;
-}
-
-- (void)updateRTLUI{
-    if ([RCSemanticContext isRTL]) {
-        self.tableView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-    }else{
-        self.tableView.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
-    }
 }
 
 @end

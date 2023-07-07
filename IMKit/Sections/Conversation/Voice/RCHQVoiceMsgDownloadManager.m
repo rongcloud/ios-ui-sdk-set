@@ -106,7 +106,7 @@
         downloadMsg = self.failedMsgs.firstObject;
     }
     if (downloadMsg) {
-        if ([[RCCoreClient sharedCoreClient] getCurrentNetworkStatus] != RC_NotReachable) {
+        if ([[RCIMClient sharedRCIMClient] getCurrentNetworkStatus] != RC_NotReachable) {
             __block RCHQVoiceMsgDownloadInfo *info = [self.downloadInfos objectForKey:downloadMsg.messageUId];
             info.status = RCHQDownloadStatusDownloading;
             [[NSNotificationCenter defaultCenter] postNotificationName:RCHQDownloadStatusChangeNotify object:info];
@@ -191,7 +191,7 @@
 }
 
 - (void)networkChanged:(NSNotification *)note {
-    RCNetworkStatus status = [[RCCoreClient sharedCoreClient] getCurrentNetworkStatus];
+    RCNetworkStatus status = [[RCIMClient sharedRCIMClient] getCurrentNetworkStatus];
     self.status = status;
     if (status != RC_NotReachable) {
         [self startDownload];

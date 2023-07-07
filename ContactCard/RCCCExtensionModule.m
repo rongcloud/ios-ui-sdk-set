@@ -61,7 +61,7 @@
                 vc.conversationType = conversationType;
                 vc.targetId = targetId;
                 vc.modalPresentationStyle = UIModalPresentationFullScreen;
-                RCBaseNavigationController *nav = [[RCBaseNavigationController alloc] initWithRootViewController:vc];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 nav.modalPresentationStyle = UIModalPresentationFullScreen;
                 [[RCKitUtility getKeyWindow].rootViewController presentViewController:nav
                                                                          animated:YES

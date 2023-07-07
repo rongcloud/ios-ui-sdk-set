@@ -42,9 +42,9 @@
     }
 #endif
 
-static NSString *const __RongCallKit__Version = @"5.6.0_opensource";
-static NSString *const __RongCallKit__Commit = @"bd94931c7";
-static NSString *const __RongCallKit__Time = @"202307031549";
+static NSString *const __RongCallKit__Version = @"5.3.7_opensource";
+static NSString *const __RongCallKit__Commit = @"94911dc7f";
+static NSString *const __RongCallKit__Time = @"202307071733";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
@@ -436,17 +436,11 @@ static NSString *const __RongCallKit__Time = @"202307031549";
                 RCUserInfo *userInfo =
                     [[RCUserInfoCacheManager sharedManager] getUserInfo:self.currentCallSession.inviter];
                 if (userInfo) {
-                    if (self.currentCallSession.conversationType == ConversationType_PRIVATE) {
-                        pushContent =
-                            [NSString stringWithFormat:self.currentCallSession.mediaType == RCCallMediaAudio ?
-                                                           RCCallKitLocalizedString(@"VoIPCall_invite_audio_push_Content") :
-                                                           RCCallKitLocalizedString(@"VoIPCall_invite_video_push_Content")];
-                    } else {
-                        pushContent =
-                            [NSString stringWithFormat:@"%@ %@",userInfo.name,self.currentCallSession.mediaType == RCCallMediaAudio ?
-                                                           RCCallKitLocalizedString(@"VoIPCall_invite_audio_push_Content") :
-                                                           RCCallKitLocalizedString(@"VoIPCall_invite_video_push_Content")];
-                    }
+                    pushContent =
+                        [NSString stringWithFormat:self.currentCallSession.mediaType == RCCallMediaAudio ?
+                                                       RCCallKitLocalizedString(@"VoIPCall_invite_audio_push_Content") :
+                                                       RCCallKitLocalizedString(@"VoIPCall_invite_video_push_Content"),
+                                                   userInfo.name];
                 } else {
                     pushContent = self.currentCallSession.mediaType == RCCallMediaVideo ?
                         RCCallKitLocalizedString(@"VoIPVideoCallIncomingWithoutUserName") :

@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RCBaseTableViewCell.h"
-@interface RCPublicServiceProfilePlainCell : RCBaseTableViewCell
+
+@interface RCPublicServiceProfilePlainCell : UITableViewCell
 - (void)setTitle:(NSString *)title Content:(NSString *)content;
 @end

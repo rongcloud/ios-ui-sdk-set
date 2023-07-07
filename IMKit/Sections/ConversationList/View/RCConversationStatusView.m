@@ -66,7 +66,7 @@
         ((model.conversationType == ConversationType_PRIVATE &&
           [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(model.conversationType)]) ||
          model.conversationType == ConversationType_Encrypted)) {
-        RCMessage *msg = [[RCCoreClient sharedCoreClient] getMessage:model.lastestMessageId];
+        RCMessage *msg = [[RCIMClient sharedRCIMClient] getMessage:model.lastestMessageId];
         if (msg && msg.messageUId && msg.messageUId.length > 0 &&
             ![msg.objectName isEqualToString:RCRecallNotificationMessageIdentifier]) {
             self.messageReadStatusView.hidden = NO;
@@ -122,9 +122,9 @@
 }
 
 #pragma mark - Getter & Setter
-- (RCBaseImageView *)conversationNotificationStatusView {
+- (UIImageView *)conversationNotificationStatusView {
     if(!_conversationNotificationStatusView) {
-        _conversationNotificationStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(38, 3, 16, 16)];
+        _conversationNotificationStatusView = [[UIImageView alloc] initWithFrame:CGRectMake(38, 3, 16, 16)];
         _conversationNotificationStatusView.backgroundColor = [UIColor clearColor];
         _conversationNotificationStatusView.image = RCResourceImage(@"block_notification");
         _conversationNotificationStatusView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -132,9 +132,9 @@
     return _conversationNotificationStatusView;
 }
 
-- (RCBaseImageView *)messageReadStatusView {
+- (UIImageView *)messageReadStatusView {
     if (!_messageReadStatusView) {
-        _messageReadStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 16, 16)];
+        _messageReadStatusView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 16, 16)];
         _messageReadStatusView.backgroundColor = [UIColor clearColor];
         _messageReadStatusView.image = RCResourceImage(@"message_read_status");
         _messageReadStatusView.translatesAutoresizingMaskIntoConstraints = NO;

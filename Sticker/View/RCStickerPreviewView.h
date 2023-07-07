@@ -8,14 +8,14 @@
 
 #import <UIKit/UIKit.h>
 #import "RCStickerSingle.h"
-#import "RongStickerAdaptiveHeader.h"
+
 typedef NS_ENUM(NSInteger, RCStickerPreviewPosition) {
     RCStickerPreviewPositionLeft = 0,
     RCStickerPreviewPositionCenter,
     RCStickerPreviewPositionRight
 };
 
-@interface RCStickerPreviewView : RCBaseImageView
+@interface RCStickerPreviewView : UIImageView
 
 @property (nonatomic, strong) RCStickerSingle *stickerModel;
 @property (nonatomic, strong) NSString *packageId;

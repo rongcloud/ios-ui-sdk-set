@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "RongSightAdaptiveHeader.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class RCSightViewController;
@@ -21,7 +21,7 @@ typedef NS_ENUM(NSInteger, RCSightViewControllerCameraCaptureMode) {
 /**
  视频预览视图控制器
  */
-@interface RCSightViewController : RCBaseViewController
+@interface RCSightViewController : UIViewController
 
 - (instancetype)initWithCaptureMode:(RCSightViewControllerCameraCaptureMode)mode;
 

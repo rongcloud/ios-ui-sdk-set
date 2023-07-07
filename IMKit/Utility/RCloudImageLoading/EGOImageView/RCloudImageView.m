@@ -25,7 +25,7 @@
 //
 
 #import "RCloudImageView.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCloudMediaManager.h"
 #import "RCloudImageLoader.h"
 #import "RCloudCache.h"
@@ -66,12 +66,9 @@
     } else {
         imageURL = aURL;
     }
-    [self p_downloadImage];
-}
 
-- (void)p_downloadImage{
-    if (!imageURL.scheme || [imageURL.scheme.lowercaseString isEqualToString:@"file"]) {
-        NSString *path = imageURL.absoluteString;
+    if (!aURL.scheme || [aURL.scheme.lowercaseString isEqualToString:@"file"]) {
+        NSString *path = aURL.absoluteString;
         if ([path length] > 0) {
             path = [RCUtilities getCorrectedFilePath:path];
             UIImage *anImage = [[UIImage alloc] initWithContentsOfFile:path];
@@ -109,7 +106,7 @@
     }
 
     [[RCloudImageLoader sharedImageLoader] removeObserver:self];
-    UIImage *anImage = [[RCloudImageLoader sharedImageLoader] imageForURL:imageURL shouldLoadWithObserver:self];
+    UIImage *anImage = [[RCloudImageLoader sharedImageLoader] imageForURL:aURL shouldLoadWithObserver:self];
 
     if (anImage) {
         [[RCloudMediaManager sharedManager] downsizeImage:anImage
@@ -130,7 +127,7 @@
                     }
                     if (!doNothing) {
                         NSData *imageResource = UIImagePNGRepresentation(image);
-                        NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:imageURL];
+                        NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:aURL];
                         [imageResource writeToFile:imagePath atomically:YES];
                     }
                 }
@@ -161,27 +158,32 @@
 }
 
 - (void)imageLoaderDidLoad:(NSNotification *)notification {
-    NSURL *notifyURL = [notification userInfo][@"imageURL"];
-    if (![notifyURL isKindOfClass:[NSURL class]]) return;
-    if (![self.imageURL isEqual:notifyURL]) return;
+    if (![[notification userInfo][@"imageURL"] isEqual:self.imageURL])
+        return;
+
     UIImage *anImage = [notification userInfo][@"image"];
-    if (!anImage || ![anImage isKindOfClass:[UIImage class]]) return;
-    [[RCloudMediaManager sharedManager] downsizeImage:anImage
-                                      completionBlock:^(UIImage *image, BOOL doNothing) {
-        if (!image || ![self.imageURL isEqual:notifyURL]) return;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            self.image = image;
-            if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
-                [self.delegate imageViewLoadedImage:self];
+    if (anImage) {
+        [[RCloudMediaManager sharedManager] downsizeImage:anImage
+            completionBlock:^(UIImage *image, BOOL doNothing) {
+                if (image) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        self.image = image;
+                        if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
+                            [self.delegate imageViewLoadedImage:self];
+                        }
+                        [self setNeedsDisplay];
+                    });
+                    if (!doNothing) {
+                        NSData *imageResource = UIImagePNGRepresentation(image);
+                        NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:self.imageURL];
+                        [imageResource writeToFile:imagePath atomically:YES];
+                    }
+                }
             }
-            [self setNeedsDisplay];
-        });
-        if (!doNothing) {
-            NSData *imageResource = UIImagePNGRepresentation(image);
-            NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:self.imageURL];
-            [imageResource writeToFile:imagePath atomically:YES];
-        }
-    } progressBlock:^(UIImage *image, BOOL doNothing){}];
+            progressBlock:^(UIImage *image, BOOL doNothing){
+
+            }];
+    }
 }
 
 - (void)imageLoaderDidFailToLoad:(NSNotification *)notification {

@@ -9,7 +9,7 @@
 #import "RCSightPlayerController.h"
 #import "RCSightPlayerView.h"
 #import "RCSightProgressView.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCDownloadHelper.h"
 #import "RongSightAdaptiveHeader.h"
 #import "RCSightExtensionModule.h"
@@ -596,7 +596,7 @@
     didFinishDownloadingToURL:(NSURL *)location {
     session = nil;
     NSString *cachepath = [RCUtilities rongImageCacheDirectory];
-    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
+    NSString *currentUserId = [RCIMClient sharedRCIMClient].currentUserInfo.userId;
     NSString *localPath = [cachepath stringByAppendingFormat:@"/%@/RCSightCache/Sight_%@.mp4", currentUserId,
                            [RCFileUtility getFileKey:[self.rcSightURL description]]];
     self.localPath = localPath;
@@ -626,7 +626,7 @@
                 [self.transport setControlBarHidden:YES];
                 return;
             }
-            if([RCCoreClient sharedCoreClient].sdkRunningMode == RCSDKRunningMode_Background) {
+            if([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Background) {
                 [self makePlayButtonAppear];
                 return;
             }
@@ -666,7 +666,7 @@
             if ([[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
                 [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:nil];
             }
-            RCLogE(@"download sight error , reason : RCErrorCodesFileExpired ");
+            RCLogE(@"download sight error , reason : RC_FILE_EXPIRED ");
             return;
         }
     }

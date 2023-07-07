@@ -73,9 +73,9 @@
         return NO;
     }
     if (code == RC_CHANNEL_INVALID ||
-        code == RCErrorCodesConnectionUnavailable ||
-        code == RCErrorCodesMessageResponseTimeout ||
-        code == RCErrorCodesFileUploadError) {
+        code == RC_NETWORK_UNAVAILABLE ||
+        code == RC_MSG_RESPONSE_TIMEOUT ||
+        code == RC_FILE_UPLOAD_FAILED) {
         return YES;
     }
     return NO;
@@ -86,7 +86,7 @@
         if (RCKitConfigCenter.message.enableMessageResend && [self isResendErrorCode:code]) {
             NSString *key = [NSString stringWithFormat:@"%ld", messageId];
             if (![self.messageCacheDict objectForKey:key]) {
-                RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
+                RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
                 if(message != nil) {
                     [self.messageCacheDict setObject:message forKey:key];
                     [self.messageIds addObject:key];

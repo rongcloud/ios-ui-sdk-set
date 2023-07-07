@@ -6,7 +6,7 @@
 //  Copyright © 2018年 RongCloud. All rights reserved.
 //
 
-#import "RongStickerAdaptiveHeader.h"
+#import <UIKit/UIKit.h>
 
 @class RCAnimated;
 @protocol RCAnimatedViewDebugDelegate;
@@ -20,7 +20,7 @@
 //  Under the hood it uses a `CADisplayLink` for playback, which can be inspected with `currentFrame` &
 //  `currentFrameIndex`.
 //
-@interface RCAnimatedView : RCBaseImageView
+@interface RCAnimatedView : UIImageView
 
 // Setting `[UIImageView.image]` to a non-`nil` value clears out existing `animatedImage`.
 // And vice versa, setting `animatedImage` will initially populate the `[UIImageView.image]` to its `posterImage` and

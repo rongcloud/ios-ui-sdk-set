@@ -57,17 +57,18 @@
 
     [self.searchItem setHidden:YES];
 
+    __weak RCPublicServiceSearchViewController *weakSelf = self;
     [[RCPublicServiceClient sharedPublicServiceClient] searchPublicService:RC_SEARCH_TYPE_FUZZY
         searchKey:self.searchKey
         success:^(NSArray *accounts) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                self.searchResults = accounts;
-                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
+                weakSelf.searchResults = accounts;
+                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
             });
         }
         error:^(RCErrorCode status) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [RCKitUtility hideProgressViewFor:self.tableView animated:YES];
+                [RCKitUtility hideProgressViewFor:weakSelf.tableView animated:YES];
             });
         }];
 }

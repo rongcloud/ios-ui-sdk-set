@@ -8,14 +8,14 @@
 
 #import <UIKit/UIKit.h>
 #import "RCStickerPackage.h"
-#import "RongStickerAdaptiveHeader.h"
+
 @protocol RCStickerListCellDelegate <NSObject>
 
 - (void)onDeletePackage:(NSString *)packageId;
 
 @end
 
-@interface RCStickerListCell : RCBaseTableViewCell
+@interface RCStickerListCell : UITableViewCell
 
 @property (nonatomic, weak) id<RCStickerListCellDelegate> delegate;
 

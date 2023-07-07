@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import "RCCCGroupInfo.h"
 
 FOUNDATION_EXPORT NSString *const RCCC_CardMessageSend;

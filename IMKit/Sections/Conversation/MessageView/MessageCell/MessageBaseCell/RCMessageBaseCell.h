@@ -10,9 +10,8 @@
 #import "RCMessageCellNotificationModel.h"
 #import "RCMessageModel.h"
 #import "RCTipLabel.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import <UIKit/UIKit.h>
-#import "RCBaseCollectionViewCell.h"
 
 /*!
  消息发送状态更新的Notification
@@ -32,7 +31,7 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
  一是提醒类的Cell，不显示用户信息，如：RCTipMessageCell和RCUnknownMessageCell；
  二是展示类的Cell，显示用户信息和内容，如：RCMessageCell以及RCMessageCell的子类。
  */
-@interface RCMessageBaseCell : RCBaseCollectionViewCell
+@interface RCMessageBaseCell : UICollectionViewCell
 
 #pragma mark - overwrite
 

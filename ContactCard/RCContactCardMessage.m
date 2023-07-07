@@ -95,7 +95,7 @@
 - (NSString *)conversationDigest {
 
     NSString *displayContent;
-    if ([[RCCoreClient sharedCoreClient].currentUserInfo.userId isEqualToString:self.sendUserId]) {
+    if ([[RCIMClient sharedRCIMClient].currentUserInfo.userId isEqualToString:self.sendUserId]) {
         displayContent = [NSString
             stringWithFormat:RCLocalizedString(@"SharedContactCard"), self.name];
     } else {

@@ -8,7 +8,6 @@
 
 #import "RCAdminEvaluationView.h"
 #import "RCKitCommonDefine.h"
-#import "RCBaseButton.h"
 #define STAR_COUNT 5
 #define CLIENT_VIEW_HEIGHT 120
 #define CLIENT_VIEW_WIDTH 290
@@ -63,7 +62,7 @@
 #pragma mark - Private Methods
 
 - (UIButton *)starAtIndex:(int)index {
-    RCBaseButton *starButton = [[RCBaseButton alloc]
+    UIButton *starButton = [[UIButton alloc]
         initWithFrame:CGRectMake(STAR_PADDING_LEFT_RIGHT + index * (STARS_PADDING + STAR_WIDTH),
                                  STAR_PADDING_TOP_BUTTOM + TITLE_PADDING_TOP + TITLE_HEIGHT, STAR_WIDTH, STAR_HEIGHT)];
     [starButton setTag:index];

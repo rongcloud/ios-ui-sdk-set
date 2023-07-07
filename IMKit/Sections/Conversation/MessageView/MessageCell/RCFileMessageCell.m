@@ -261,11 +261,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)displayCancelButton {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if([RCKitUtility isRTL]){
-            self.baseContentView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-        }else{
-            self.baseContentView.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
-        }
         [self.baseContentView addSubview:self.cancelSendButton];
         RCContentView *messageContentView = self.messageContentView;
         [self.baseContentView
@@ -302,11 +297,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _nameLabel.numberOfLines = 2;
         _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x11f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-        if([RCKitUtility isRTL]){
-            _nameLabel.textAlignment = NSTextAlignmentRight;
-        }else{
-            _nameLabel.textAlignment = NSTextAlignmentLeft;
-        }
     }
     return _nameLabel;
 }
@@ -320,9 +310,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _sizeLabel;
 }
 
-- (RCBaseImageView *)typeIconView{
+- (UIImageView *)typeIconView{
     if (!_typeIconView) {
-        _typeIconView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 48, 48)];
+        _typeIconView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 48, 48)];
         _typeIconView.clipsToBounds = YES;
     }
     return _typeIconView;
@@ -336,9 +326,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _progressView;
 }
 
-- (RCBaseButton *)cancelSendButton{
+- (UIButton *)cancelSendButton{
     if (!_cancelSendButton) {
-        _cancelSendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
+        _cancelSendButton = [[UIButton alloc] initWithFrame:CGRectZero];
         [_cancelSendButton setImage:RCResourceImage(@"cancelButton") forState:UIControlStateNormal];
         [_cancelSendButton addTarget:self action:@selector(cancelSend) forControlEvents:UIControlEventTouchUpInside];
         _cancelSendButton.hidden = YES;

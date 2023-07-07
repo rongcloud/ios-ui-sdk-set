@@ -10,7 +10,7 @@
 #import "RCEmoticonTabSource.h"
 #import "RCExtensionPluginItemInfo.h"
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 /*!
  RongCloud IM扩展模块协议

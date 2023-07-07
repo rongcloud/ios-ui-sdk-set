@@ -87,12 +87,13 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
 
 - (void)setCurrentUserId:(NSString *)currentUserId {
     if ([RCIM sharedRCIM].enablePersistentUserInfoCache && ![currentUserId isEqualToString:_currentUserId]) {
+        __weak typeof(self) weakSelf = self;
         dispatch_async(self.dbQueue, ^{
             [self moveDBfile];
             NSString *libraryPath =
                 NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES)[0];
             libraryPath = [[[libraryPath stringByAppendingPathComponent:@"RongCloud"]
-                stringByAppendingPathComponent:self.appKey] stringByAppendingPathComponent:currentUserId];
+                stringByAppendingPathComponent:weakSelf.appKey] stringByAppendingPathComponent:currentUserId];
             if (![[NSFileManager defaultManager] fileExistsAtPath:libraryPath]) {
                 [[NSFileManager defaultManager] createDirectoryAtPath:libraryPath
                                           withIntermediateDirectories:YES
@@ -100,17 +101,17 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                                                                 error:nil];
             }
             NSString *libraryStoragePath = [libraryPath stringByAppendingPathComponent:@"IMKitUserInfoCache"];
-            if (self.writeDBHelper) {
-                [self.writeDBHelper closeDBIfNeed];
-                self.writeDBHelper = nil;
+            if (weakSelf.writeDBHelper) {
+                [weakSelf.writeDBHelper closeDBIfNeed];
+                weakSelf.writeDBHelper = nil;
             }
-            self.writeDBHelper = [[RCUserInfoCacheDBHelper alloc] initWithPath:libraryStoragePath];
+            weakSelf.writeDBHelper = [[RCUserInfoCacheDBHelper alloc] initWithPath:libraryStoragePath];
 
-            if (self.readDBHelper) {
-                [self.readDBHelper closeDBIfNeed];
-                self.readDBHelper = nil;
+            if (weakSelf.readDBHelper) {
+                [weakSelf.readDBHelper closeDBIfNeed];
+                weakSelf.readDBHelper = nil;
             }
-            self.readDBHelper = [[RCUserInfoCacheDBHelper alloc] initWithPath:libraryStoragePath];
+            weakSelf.readDBHelper = [[RCUserInfoCacheDBHelper alloc] initWithPath:libraryStoragePath];
         });
     }
 
@@ -138,6 +139,7 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
             if ([RCIM sharedRCIM].userInfoDataSource &&
                 [[RCIM sharedRCIM]
                         .userInfoDataSource respondsToSelector:@selector(getUserInfoWithUserId:completion:)]) {
+                __weak typeof(self) weakSelf = self;
                 dispatch_async(self.requestQueue, ^{
                     [[RCIM sharedRCIM]
                             .userInfoDataSource
@@ -146,7 +148,7 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                                        if (userInfo == nil || userInfo.name.length == 0) {
                                            RCLogE(@"getUserInfo:error;;;getUserInfoDataSource:userId=%@", userId);
                                        }
-                                       [self updateUserInfo:userInfo forUserId:userId];
+                                       [weakSelf updateUserInfo:userInfo forUserId:userId];
                                    }];
                 });
             }
@@ -169,10 +171,11 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                    [[RCIM sharedRCIM]
                            .userInfoDataSource respondsToSelector:@selector(getUserInfoWithUserId:completion:)]) {
             dispatch_async(self.requestQueue, ^{
+                __weak typeof(self) weakSelf = self;
                 [[RCIM sharedRCIM]
                         .userInfoDataSource getUserInfoWithUserId:userId
                                                        completion:^(RCUserInfo *userInfo) {
-                                                           [self updateUserInfo:userInfo forUserId:userId];
+                                                           [weakSelf updateUserInfo:userInfo forUserId:userId];
                                                                 if (completeBlock) {
                                                                     completeBlock(userInfo);
                                                                 }
@@ -242,6 +245,7 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
             [[RCIM sharedRCIM]
                     .groupUserInfoDataSource respondsToSelector:@selector(getUserInfoWithUserId:inGroup:completion:)]) {
             dispatch_async(self.requestQueue, ^{
+                __weak typeof(self) weakSelf = self;
                 [[RCIM sharedRCIM]
                         .groupUserInfoDataSource
                     getUserInfoWithUserId:userId
@@ -253,7 +257,7 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                                               @"error;;;groupUserInfoDataSource;;;groupId=%@;;;userInfo:userId=%@",
                                               groupId, userId);
                                    }
-                                   [self updateUserInfo:userInfo forUserId:userId inGroup:groupId];
+                                   [weakSelf updateUserInfo:userInfo forUserId:userId inGroup:groupId];
                                }];
             });
         }
@@ -299,6 +303,7 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                            .groupUserInfoDataSource
                        respondsToSelector:@selector(getUserInfoWithUserId:inGroup:completion:)]) {
             dispatch_async(self.requestQueue, ^{
+                __weak typeof(self) weakSelf = self;
                 [[RCIM sharedRCIM]
                         .groupUserInfoDataSource
                     getUserInfoWithUserId:userId
@@ -307,8 +312,8 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                                    if (!userInfo) {
                                        userInfo = [[RCUserInfo alloc] initWithUserId:userId name:nil portrait:nil];
                                    }
-                                   [self updateUserInfo:userInfo forUserId:userId inGroup:groupId];
-                                   [self fallBackOrdinaryUserInfo:userInfo
+                                   [weakSelf updateUserInfo:userInfo forUserId:userId inGroup:groupId];
+                                   [weakSelf fallBackOrdinaryUserInfo:userInfo
                                                             forUserId:userId
                                                              complete:^(RCUserInfo *userInfo) {
                                                                  if (completeBlock) {
@@ -462,21 +467,22 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
             [[RCConversationInfoCache sharedCache] getConversationInfo:ConversationType_GROUP targetId:groupId];
         if (!cacheConversationInfo && [RCIM sharedRCIM].groupInfoDataSource &&
             [[RCIM sharedRCIM].groupInfoDataSource respondsToSelector:@selector(getGroupInfoWithGroupId:completion:)]) {
+            __weak typeof(self) weakSelf = self;
             dispatch_async(self.requestQueue, ^{
                 [[RCIM sharedRCIM]
                         .groupInfoDataSource
                     getGroupInfoWithGroupId:groupId
                                  completion:^(RCGroup *groupInfo) {
                                      RCLogI(@"getUserInfo:;;;getGroupInfoDataSource:groupId=%@,groupName=%@,"
-                                            @"groupPortraitUri=%@,extra=%@",
-                                            groupInfo.groupId, groupInfo.groupName, groupInfo.portraitUri, groupInfo.extra);
-                                     [self updateGroupInfo:groupInfo forGroupId:groupId];
+                                            @"groupPortraitUri=%@",
+                                            groupInfo.groupId, groupInfo.groupName, groupInfo.portraitUri);
+                                     [weakSelf updateGroupInfo:groupInfo forGroupId:groupId];
                                  }];
             });
         }
         RCGroup *groupInfo = [cacheConversationInfo translateToGroupInfo];
-        RCLogI(@"getGroupInfo:;;;cacheGroupInfo:groupId=%@,groupName=%@,groupPortraitUri=%@,extra=%@", groupInfo.groupId,
-               groupInfo.groupName, groupInfo.portraitUri,groupInfo.extra);
+        RCLogI(@"getGroupInfo:;;;cacheGroupInfo:groupId=%@,groupName=%@,groupPortraitUri=%@", groupInfo.groupId,
+               groupInfo.groupName, groupInfo.portraitUri);
         return groupInfo;
     } else {
         RCLogI(@"getGroupInfo:;;;groupId = nil");
@@ -496,10 +502,11 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
                    [[RCIM sharedRCIM]
                            .groupInfoDataSource respondsToSelector:@selector(getGroupInfoWithGroupId:completion:)]) {
             dispatch_async(self.requestQueue, ^{
+                __weak typeof(self) weakSelf = self;
                 [[RCIM sharedRCIM]
                         .groupInfoDataSource getGroupInfoWithGroupId:groupId
                                                           completion:^(RCGroup *groupInfo) {
-                                                              [self updateGroupInfo:groupInfo forGroupId:groupId];
+                                                              [weakSelf updateGroupInfo:groupInfo forGroupId:groupId];
                                                                     if (completeBlock) {
                                                                         completeBlock(groupInfo);
                                                                     }
@@ -608,12 +615,13 @@ NSString *const RCKitDispatchPublicServiceInfoNotification = @"RCKitDispatchPubl
         if (!cacheProfile &&
             [[RCIM sharedRCIM]
                     .publicServiceInfoDataSource respondsToSelector:@selector(getPublicServiceProfile:completion:)]) {
+            __weak typeof(self) weakSelf = self;
             dispatch_async(self.requestQueue, ^{
                 [[RCIM sharedRCIM]
                         .publicServiceInfoDataSource
                     getPublicServiceProfile:serviceId
                                  completion:^(RCPublicServiceProfile *profile) {
-                                     [self updatePublicServiceProfileInfo:profile forServiceId:serviceId];
+                                     [weakSelf updatePublicServiceProfileInfo:profile forServiceId:serviceId];
                                  }];
             });
         } else {

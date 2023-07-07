@@ -7,6 +7,7 @@
 //
 
 #import "RCSightCapturer.h"
+#import <AssetsLibrary/AssetsLibrary.h>
 #import <UIKit/UIKit.h>
 #import <CoreTelephony/CTCallCenter.h>
 

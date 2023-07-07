@@ -22,12 +22,12 @@
 #import "RCSightModel+internal.h"
 #import "RCSightPlayerController+imkit.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
-#import "RCBaseButton.h"
+
 @interface RCSightSlideViewController () <UIScrollViewDelegate, RCSightCollectionViewCellDelegate,
                                           UICollectionViewDataSource, UICollectionViewDelegate,
                                           UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate>
 
-@property (nonatomic, strong) RCBaseImageView *imageView;
+@property (nonatomic, strong) UIImageView *imageView;
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 
@@ -42,7 +42,7 @@
 
 @property (nonatomic, assign) CGFloat previousContentOffsetX;
 
-@property (nonatomic, strong) RCBaseButton *rightTopButton;
+@property (nonatomic, strong) UIButton *rightTopButton;
 
 @property (nonatomic, assign) BOOL autoPlayFlag;
 
@@ -134,7 +134,7 @@
 #pragma mark - 数据源处理
 - (NSArray<RCMessageModel *> *)getBackMessagesForModel:(RCMessageModel *)model count:(NSInteger)count times:(int)times {
     NSArray<RCMessage *> *imageArrayBackward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -152,7 +152,7 @@
                                                   count:(NSInteger)count
                                                   times:(int)times {
     NSArray<RCMessage *> *imageArrayForward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCSightMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -173,7 +173,7 @@
     for (RCMessage *mesage in array) {
         if (!(mesage.content.destructDuration > 0)) {
             RCMessageModel *model = [RCMessageModel modelWithMessage:mesage];
-            if (model) [backwardMessages addObject:model];
+            [backwardMessages addObject:model];
         }
     }
     return backwardMessages.copy;
@@ -532,21 +532,24 @@
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor blackColor];
+        if (([RCKitUtility isRTL])) {
+            _collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
     }
     return _collectionView;
 }
 
-- (RCBaseImageView *)imageView {
+- (UIImageView *)imageView {
     if (!_imageView) {
-        _imageView = [[RCBaseImageView alloc] init];
+        _imageView = [[UIImageView alloc] init];
         _imageView.backgroundColor = [UIColor blackColor];
     }
     return _imageView;
 }
 
-- (RCBaseButton *)rightTopButton {
+- (UIButton *)rightTopButton {
     if (!_rightTopButton) {
-        _rightTopButton = [[RCBaseButton alloc] init];
+        _rightTopButton = [[UIButton alloc] init];
         UIImage *image = RCResourceImage(@"sight_list_button");
         [_rightTopButton setImage:image forState:UIControlStateNormal];
         _rightTopButton.hidden = self.topRightBtnHidden;

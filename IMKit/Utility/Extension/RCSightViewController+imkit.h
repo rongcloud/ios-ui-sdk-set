@@ -9,7 +9,7 @@
 #ifndef RCSightViewController_imkit_h
 #define RCSightViewController_imkit_h
 
-@interface RCSightViewController : RCBaseViewController
+@interface RCSightViewController : UIViewController
 @property (nonatomic, weak, nullable) id delegate;
 @end
 

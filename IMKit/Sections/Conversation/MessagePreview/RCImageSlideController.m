@@ -18,7 +18,7 @@
 #import "RCActionSheetView.h"
 #import "RCImagePreviewCell.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
-#import "RCBaseCollectionView.h"
+
 @interface RCImageSlideController () <UIScrollViewDelegate, RCImagePreviewCellDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
 //当前图片消息的数据模型
@@ -30,7 +30,7 @@
 
 @property (nonatomic, strong) RCPhotoPreviewCollectionViewFlowLayout *flowLayout;
 
-@property (nonatomic, strong) RCBaseCollectionView *collectionView;
+@property (nonatomic, strong) UICollectionView *collectionView;
 
 @property (nonatomic, assign) CGFloat previousContentOffsetX;
 
@@ -142,7 +142,7 @@
                                                    count:(NSInteger)count
                                                    times:(int)times {
     NSArray<RCMessage *> *imageArrayBackward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCImageMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -160,7 +160,7 @@
                                                    count:(NSInteger)count
                                                    times:(int)times {
     NSArray<RCMessage *> *imageArrayForward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCImageMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -180,7 +180,7 @@
     for (RCMessage *mesage in array) {
         if (!(mesage.content.destructDuration > 0)) {
             RCMessageModel *model = [RCMessageModel modelWithMessage:mesage];
-            if (model) [backwardMessages addObject:model];
+            [backwardMessages addObject:model];
         }
     }
     return backwardMessages.copy;
@@ -294,7 +294,7 @@
                                                  count:(NSInteger)count
                                                  times:(int)times {
     NSArray<RCMessage *> *imageArrayBackward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCImageMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -312,7 +312,7 @@
                                                   count:(NSInteger)count
                                                   times:(int)times {
     NSArray<RCMessage *> *imageArrayForward =
-        [[RCCoreClient sharedCoreClient] getHistoryMessages:model.conversationType
+        [[RCIMClient sharedRCIMClient] getHistoryMessages:model.conversationType
                                                  targetId:model.targetId
                                                objectName:[RCImageMessage getObjectName]
                                             baseMessageId:model.messageId
@@ -456,14 +456,14 @@
     return nil;
 }
 
-- (RCBaseCollectionView *)collectionView {
+- (UICollectionView *)collectionView {
     if(!_collectionView) {
         self.flowLayout = [[RCPhotoPreviewCollectionViewFlowLayout alloc] init];
         [self.flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
         self.flowLayout.itemSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height);
         self.flowLayout.minimumLineSpacing = 0;
         self.flowLayout.minimumInteritemSpacing = 0;
-        _collectionView = [[RCBaseCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:self.flowLayout];
+        _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:self.flowLayout];
         [_collectionView registerClass:[RCImagePreviewCell class] forCellWithReuseIdentifier:@"RCImagePreviewCell"];
         _collectionView.dataSource = self;
         _collectionView.alwaysBounceHorizontal = YES;
@@ -471,6 +471,9 @@
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.backgroundColor = [UIColor blackColor];
+        if (([RCKitUtility isRTL])) {
+            _collectionView.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }
     }
     return _collectionView;
 }

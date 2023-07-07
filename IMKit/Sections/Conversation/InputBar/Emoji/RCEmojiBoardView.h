@@ -7,7 +7,7 @@
 //
 
 #import "RCEmoticonTabSource.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 #import <UIKit/UIKit.h>
 
 @class RCPageControl;

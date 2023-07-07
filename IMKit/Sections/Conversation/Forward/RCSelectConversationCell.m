@@ -12,19 +12,18 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCloudImageView.h"
 #import "RCConversationModel.h"
-#import "RCBaseImageView.h"
-#import "RCBaseLabel.h"
+
 @interface RCSelectConversationCell ()
 /*!
  Cell的数据模型
  */
 @property (nonatomic, strong) RCConversation *model;
 
-@property (nonatomic, strong) RCBaseImageView *selectedImageView;
+@property (nonatomic, strong) UIImageView *selectedImageView;
 
 @property (nonatomic, strong) RCloudImageView *headerImageView;
 
-@property (nonatomic, strong) RCBaseLabel *nameLabel;
+@property (nonatomic, strong) UILabel *nameLabel;
 
 @end
 
@@ -148,9 +147,9 @@
 
 #pragma mark - Getters and Setters
 
-- (RCBaseImageView *)selectedImageView {
+- (UIImageView *)selectedImageView {
     if (!_headerImageView) {
-        _selectedImageView = [[RCBaseImageView alloc] init];
+        _selectedImageView = [[UIImageView alloc] init];
         if ([RCKitUtility isRTL]) {
             // 神奇的地方：这里的 self.bounds = (origin = (x = 0, y = 0), size = (width = 320, height = 44))
             _selectedImageView.frame = CGRectMake(self.bounds.size.width + 20 + 5, 25, 20, 20);
@@ -178,13 +177,15 @@
     return _headerImageView;
 }
 
-- (RCBaseLabel *)nameLabel {
+- (UILabel *)nameLabel {
     if (!_nameLabel) {
-        _nameLabel = [[RCBaseLabel alloc] init];
+        _nameLabel = [[UILabel alloc] init];
         if ([RCKitUtility isRTL]) {
             _nameLabel.frame = CGRectMake(0, 5, self.bounds.size.width - 55, 60);
+            _nameLabel.textAlignment = NSTextAlignmentRight;
         } else {
             _nameLabel.frame = CGRectMake(110, 5, self.bounds.size.width - 110, 60);
+            _nameLabel.textAlignment = NSTextAlignmentLeft;
         }
         _nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
     }

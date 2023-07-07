@@ -8,7 +8,7 @@
 
 #import "RCConversationInfo.h"
 #import <Foundation/Foundation.h>
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLib/RongIMLib.h>
 
 @protocol RCConversationInfoUpdateDelegate <NSObject>
 
