@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-
-@interface RCPublicServiceSearchHintCell : UITableViewCell
+#import "RCBaseTableViewCell.h"
+@interface RCPublicServiceSearchHintCell : RCBaseTableViewCell
 - (void)setSearchKey:(NSString *)key;
 @end

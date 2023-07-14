@@ -7,7 +7,7 @@
 //
 
 #import "RCSightActionButton.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RongSightAdaptiveHeader.h"
 
 @interface RCSightActionButton ()

@@ -81,7 +81,6 @@
         return NO;
     }
     __block BOOL detected = NO;
-    __weak __typeof(self)weakSelf = self;
     NSMutableArray *array = [NSMutableArray array];
     [self.dataDetector enumerateMatchesInString:text.string
                                         options:kNilOptions
@@ -98,7 +97,7 @@
                 }
                 if (dic.count) {
                     [dic enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-                        [weakSelf setAttributeOf:text name:key value:obj range:result.range];
+                        [self setAttributeOf:text name:key value:obj range:result.range];
                     }];
                 }
                 if (result) {

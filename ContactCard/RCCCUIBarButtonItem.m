@@ -26,9 +26,9 @@
                                    target:(id)target
                                    action:(SEL)method {
     self = [[RCCCUIBarButtonItem alloc] init];
-    self.button = [UIButton buttonWithType:UIButtonTypeCustom];
+    self.button = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     self.button.frame = buttonFrame;
-    UIImageView *image = [[UIImageView alloc] initWithImage:buttonImage];
+    RCBaseImageView *image = [[RCBaseImageView alloc] initWithImage:buttonImage];
     image.frame = imageFrame;
     [self.button addSubview:image];
     if (buttonTitle != nil && titleColor != nil) {
@@ -50,7 +50,7 @@
                                       target:(id)target
                                       action:(SEL)method {
     self = [[RCCCUIBarButtonItem alloc] init];
-    self.button = [[UIButton alloc] initWithFrame:buttonFrame];
+    self.button = [[RCBaseButton alloc] initWithFrame:buttonFrame];
     [self.button setTitle:buttonTitle forState:UIControlStateNormal];
     [self.button setTitleColor:titleColor forState:UIControlStateNormal];
     [self.button addTarget:target action:method forControlEvents:UIControlEventTouchUpInside];

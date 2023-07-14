@@ -15,7 +15,8 @@
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"
-
+#import "RCBaseButton.h"
+#import "RCBaseImageView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 @interface RCFilePreviewViewController ()
@@ -25,10 +26,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) UILabel *nameLabel;
 @property (nonatomic, strong) UILabel *sizeLabel;
 @property (nonatomic, strong) UILabel *progressLabel;
-@property (nonatomic, strong) UIImageView *typeIconView;
-@property (nonatomic, strong) UIButton *downloadButton;
-@property (nonatomic, strong) UIButton *openInOtherAppButton;
-@property (nonatomic, strong) UIButton *cancelButton;
+@property (nonatomic, strong) RCBaseImageView *typeIconView;
+@property (nonatomic, strong) RCBaseButton *downloadButton;
+@property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
+@property (nonatomic, strong) RCBaseButton *cancelButton;
 
 @end
 
@@ -313,7 +314,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)setNavigationItems {
     //设置右键
-    UIButton *rightBtn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
+    RCBaseButton *rightBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(moreAction) forControlEvents:UIControlEventTouchUpInside];
@@ -350,10 +351,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _webView;
 }
 
-- (UIImageView *)typeIconView {
+- (RCBaseImageView *)typeIconView {
     if (!_typeIconView) {
         _typeIconView =
-            [[UIImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
+            [[RCBaseImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileMessage.type];
 
         [self.view addSubview:_typeIconView];
@@ -398,9 +399,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _progressLabel;
 }
 
-- (UIButton *)cancelButton {
+- (RCBaseButton *)cancelButton {
     if (!_cancelButton) {
-        _cancelButton = [[UIButton alloc] initWithFrame:self.downloadButton.frame];
+        _cancelButton = [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
         [_cancelButton setTitle:RCLocalizedString(@"Close") forState:(UIControlStateNormal)];
         [_cancelButton addTarget:self
                           action:@selector(cancelFileDownload)
@@ -414,10 +415,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _cancelButton;
 }
 
-- (UIButton *)downloadButton {
+- (RCBaseButton *)downloadButton {
     if (!_downloadButton) {
         _downloadButton =
-            [[UIButton alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.sizeLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 40)];
+            [[RCBaseButton alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.sizeLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 40)];
         _downloadButton.backgroundColor = HEXCOLOR(0x0099ff);
         _downloadButton.layer.cornerRadius = 5.0f;
         _downloadButton.layer.borderWidth = 0.5f;
@@ -432,10 +433,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     return _downloadButton;
 }
 
-- (UIButton *)openInOtherAppButton {
+- (RCBaseButton *)openInOtherAppButton {
     if (!_openInOtherAppButton) {
         _openInOtherAppButton =
-            [[UIButton alloc] initWithFrame:self.downloadButton.frame];
+            [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
         _openInOtherAppButton.backgroundColor = HEXCOLOR(0x0099ff);
         _openInOtherAppButton.layer.cornerRadius = 5.0f;
         _openInOtherAppButton.layer.borderWidth = 0.5f;

@@ -12,13 +12,13 @@
 #import "RCKitCommonDefine.h"
 #import "RCPhotoPreviewCollectCell.h"
 #import "RCVideoPreviewCell.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "RCAlertView.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
 #import "RCKitConfig.h"
 #import "RCSemanticContext.h"
-
+#import "RCBaseButton.h"
 static NSString *const reuseIdentifier = @"Cell";
 static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
@@ -26,11 +26,11 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 
 @property (nonatomic, strong) UIView *topView;
-@property (nonatomic, strong) UIButton *selectedButton;
+@property (nonatomic, strong) RCBaseButton *selectedButton;
 @property (nonatomic, strong) UIView *bottomView;
-@property (nonatomic, strong) UIButton *fullButton;
-@property (nonatomic, strong) UIButton *editButton;
-@property (nonatomic, strong) UIButton *sendButton;
+@property (nonatomic, strong) RCBaseButton *fullButton;
+@property (nonatomic, strong) RCBaseButton *editButton;
+@property (nonatomic, strong) RCBaseButton *sendButton;
 
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *previewPhotosArr;
 @property (nonatomic, strong) NSArray<RCAssetModel *> *allPhotosArr;
@@ -372,7 +372,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     self.topView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, originY + 44)];
     _topView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_topView];
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    RCBaseButton *backButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     UIImage *img = RCResourceImage(@"navigator_white_back");
     img = [RCSemanticContext imageflippedForRTL:img];
     [backButton setImage:img forState:UIControlStateNormal];
@@ -387,7 +387,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [backButton addTarget:self action:@selector(backButtonAction) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:backButton];
 
-    UIButton *stateButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    RCBaseButton *stateButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     [stateButton setImage:RCResourceImage(@"photo_preview_unselected") forState:UIControlStateNormal];
     [stateButton setImage:RCResourceImage(@"photo_preview_selected") forState:UIControlStateSelected];
     [stateButton sizeToFit];
@@ -413,15 +413,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     _bottomView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_bottomView];
     // add button for bottom bar
-    _sendButton = [[UIButton alloc] init];
-    _sendButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    _sendButton = [[RCBaseButton alloc] init];
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_sendButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
                       forState:UIControlStateDisabled];
     [_sendButton addTarget:self action:@selector(sendImageMessageButton:) forControlEvents:UIControlEventTouchUpInside];
     [_bottomView addSubview:_sendButton];
     [self _updateBottomSendImageCountButton];
-    _fullButton = [[UIButton alloc] init];
+    _fullButton = [[RCBaseButton alloc] init];
     [_fullButton setTitle:[NSString stringWithFormat: @"%@", RCLocalizedString(@"Full_Image")]
                  forState:UIControlStateNormal];
     _fullButton.contentMode = UIViewContentModeLeft;
@@ -429,7 +428,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [_fullButton addTarget:self action:@selector(fullBtnCliced:) forControlEvents:UIControlEventTouchUpInside];
     [_bottomView addSubview:_fullButton];
 
-    _editButton = [UIButton buttonWithType:(UIButtonTypeCustom)];
+    _editButton = [RCBaseButton buttonWithType:(UIButtonTypeCustom)];
     [_editButton setTitle:RCLocalizedString(@"Edit") forState:(UIControlStateNormal)];
     [_editButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
                       forState:UIControlStateNormal];
@@ -551,6 +550,13 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [self.bottomView layoutIfNeeded];
     [self _updateFullButton];
     [self _updateEditButton];
+    if([RCSemanticContext isRTL]){
+        _fullButton.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        _sendButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    }else{
+        _fullButton.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
+        _sendButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    }
 }
 
 - (void)selectedImageCanSend:(RCAssetModel *)selectModel complete:(void (^)(BOOL canSend))completeBlock {
@@ -566,7 +572,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                     }
                                      dispatch_async(dispatch_get_main_queue(), ^{
                                          if (imageData.length >
-                                             [[RCIMClient sharedRCIMClient] getGIFLimitSize] * 1024) {
+                                             [[RCCoreClient sharedCoreClient] getGIFLimitSize] * 1024) {
                                              completeBlock(NO);
                                              UIAlertController *alertController = [UIAlertController
                                                  alertControllerWithTitle:RCLocalizedString(@"GIFAboveMaxSize")
@@ -624,14 +630,13 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 }
 
 - (void)_updateBottomSendImageCountButton {
-    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (weakSelf.selectedArr.count && weakSelf.bottomView) {
+        if (self.selectedArr.count && self.bottomView) {
             self.sendButton.enabled = YES;
             if ([RCKitUtility isRTL]) {
-                [self.sendButton setTitle:[NSString stringWithFormat:@"(%lu) %@", (unsigned long)weakSelf.selectedArr.count, RCLocalizedString(@"Send")] forState:(UIControlStateNormal)];
+                [self.sendButton setTitle:[NSString stringWithFormat:@"(%lu) %@", (unsigned long)self.selectedArr.count, RCLocalizedString(@"Send")] forState:(UIControlStateNormal)];
             } else {
-                [self.sendButton setTitle:[NSString stringWithFormat:@"%@ (%lu)",RCLocalizedString(@"Send"), (unsigned long)weakSelf.selectedArr.count] forState:(UIControlStateNormal)];
+                [self.sendButton setTitle:[NSString stringWithFormat:@"%@ (%lu)",RCLocalizedString(@"Send"), (unsigned long)self.selectedArr.count] forState:(UIControlStateNormal)];
             }
         } else {
             self.sendButton.enabled = NO;
@@ -696,16 +701,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
             [[PHImageManager defaultManager] cancelImageRequest:self.imageRequestID];
         }
         self.currentAssetIdentifier = [[RCAssetHelper shareAssetHelper] getAssetIdentifier:model.asset];
-        __weak typeof(self) weakSelf = self;
         self.imageRequestID = [[RCAssetHelper shareAssetHelper]
             getAssetDataSizeWithAsset:self.previewPhotosArr[self.currentIndex].asset
                                result:^(CGFloat size) {
-                                   if ([weakSelf.currentAssetIdentifier
+                                   if ([self.currentAssetIdentifier
                                            isEqualToString:[[RCAssetHelper shareAssetHelper]
                                                                getAssetIdentifier:model.asset]]) {
-                                       __strong typeof(weakSelf) strongSelf = weakSelf;
                                        dispatch_async(dispatch_get_main_queue(), ^{
-                                           [strongSelf getImageSize:size];
+                                           [self getImageSize:size];
                                        });
                                    }
                                }];

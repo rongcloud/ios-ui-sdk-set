@@ -88,11 +88,10 @@
     _allFriends = [NSMutableDictionary new];
     _allKeys = [NSMutableArray new];
     
-    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        _allFriends = [weakSelf sortedArrayWithPinYinDic:_friends];
+        _allFriends = [self sortedArrayWithPinYinDic:_friends];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.tableView reloadData];
+            [self.tableView reloadData];
         });
     });
 }

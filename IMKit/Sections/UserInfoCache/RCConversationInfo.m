@@ -13,7 +13,8 @@
 - (instancetype)initWithConversationId:(NSString *)targetId
                       conversationType:(RCConversationType)conversationType
                                   name:(NSString *)name
-                           portraitUri:(NSString *)portraitUri {
+                           portraitUri:(NSString *)portraitUri
+                                 extra:(NSString *)extra{
     self = [super init];
 
     if (self) {
@@ -21,6 +22,7 @@
         _conversationType = conversationType;
         _name = name;
         _portraitUri = portraitUri;
+        _extra = extra;
     }
 
     return self;
@@ -30,12 +32,15 @@
     return [self initWithConversationId:groupInfo.groupId
                        conversationType:ConversationType_GROUP
                                    name:groupInfo.groupName
-                            portraitUri:groupInfo.portraitUri];
+                            portraitUri:groupInfo.portraitUri
+                                  extra:groupInfo.extra];
 }
 
 - (RCGroup *)translateToGroupInfo {
     if (self.conversationType == ConversationType_GROUP) {
-        return [[RCGroup alloc] initWithGroupId:self.targetId groupName:self.name portraitUri:self.portraitUri];
+        RCGroup *group = [[RCGroup alloc] initWithGroupId:self.targetId groupName:self.name portraitUri:self.portraitUri];
+        group.extra = self.extra;
+        return group;
     } else {
         return nil;
     }
@@ -53,7 +58,8 @@
         RCConversationInfo *o = (RCConversationInfo *)object;
         return [_targetId isEqualToString:o.targetId] && (_conversationType == o.conversationType) &&
                (_portraitUri == o.portraitUri || [_portraitUri isEqualToString:o.portraitUri]) &&
-               (_name == o.name || [_name isEqualToString:o.name]);
+               (_name == o.name || [_name isEqualToString:o.name]) &&
+               (_extra == o.extra || [_extra isEqualToString:o.extra]);
     }
     return NO;
 }

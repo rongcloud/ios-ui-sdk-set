@@ -6,9 +6,9 @@
 //  Copyright © 2018年 RongCloud. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "RCBaseButton.h"
 
-@interface RCDestructCountDownButton : UIButton
+@interface RCDestructCountDownButton : RCBaseButton
 
 - (void)setDestructCountDownButtonHighlighted;
 

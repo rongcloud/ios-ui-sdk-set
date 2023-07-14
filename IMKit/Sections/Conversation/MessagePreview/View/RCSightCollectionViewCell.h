@@ -6,7 +6,7 @@
 //  Copyright © 2017年 RongCloud. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "RCBaseCollectionViewCell.h"
 @class RCSightModel;
 
 @protocol RCSightCollectionViewCellDelegate <NSObject>
@@ -19,7 +19,7 @@
 
 @end
 
-@interface RCSightCollectionViewCell : UICollectionViewCell
+@interface RCSightCollectionViewCell : RCBaseCollectionViewCell
 
 @property (nonatomic, strong) UILabel *label;
 

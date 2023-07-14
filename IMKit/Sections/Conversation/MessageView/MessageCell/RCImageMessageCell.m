@@ -14,9 +14,9 @@
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
 @interface RCImageMessageCell ()
-@property (nonatomic, strong) UIImageView *destructPicture;
+@property (nonatomic, strong) RCBaseImageView *destructPicture;
 @property (nonatomic, strong) UILabel *destructLabel;
-@property (nonatomic, strong) UIImageView *destructBackgroundView;
+@property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
 @end
 
 @implementation RCImageMessageCell
@@ -203,9 +203,9 @@
 
 #pragma mark - Getter
 
-- (UIImageView *)destructBackgroundView{
+- (RCBaseImageView *)destructBackgroundView{
     if (!_destructBackgroundView) {
-        _destructBackgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _destructBackgroundView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
     }
     return _destructBackgroundView;
 }
@@ -220,16 +220,16 @@
     return _destructLabel;
 }
 
-- (UIImageView *)destructPicture{
+- (RCBaseImageView *)destructPicture{
     if (!_destructPicture) {
-        _destructPicture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
+        _destructPicture = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
     }
     return _destructPicture;
 }
 
-- (UIImageView *)pictureView{
+- (RCBaseImageView *)pictureView{
     if (!_pictureView) {
-        _pictureView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _pictureView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _pictureView.layer.masksToBounds = YES;
         _pictureView.layer.cornerRadius = 6;
     }

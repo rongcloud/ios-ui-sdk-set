@@ -8,6 +8,7 @@
 
 #import "RCCSStarView.h"
 #import "RCKitCommonDefine.h"
+#import "RCBaseButton.h"
 @interface RCCSStarView ()
 @property (nonatomic) int starValue; // 0-4
 @property (nonatomic, strong) NSArray *starButtonArray;
@@ -37,7 +38,7 @@
         }
 
         for (NSInteger j = 0; j < 5; j++) {
-            UIButton *btn = [[UIButton alloc]
+            RCBaseButton *btn = [[RCBaseButton alloc]
                 initWithFrame:CGRectMake(j * (starWidth + space), 0, starWidth, startFrame.size.height)];
 
             btn.enabled = YES;

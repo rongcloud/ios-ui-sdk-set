@@ -18,7 +18,7 @@
 @interface RCContactCardMessageCell ()
 @property (nonatomic, strong) NSMutableArray *messageContentConstraint;
 
-@property (nonatomic, strong) UILabel *typeLabel;     //个人名片的字样
+@property (nonatomic, strong) RCBaseLabel *typeLabel;     //个人名片的字样
 @property (nonatomic, strong) UIView *separationView; //分割线
 @property (nonatomic, assign) BOOL isConversationAppear;
 @end
@@ -71,7 +71,7 @@
         setPlaceholderImage:[RCCCUtilities imageNamed:@"default_portrait_msg" ofBundle:@"RongCloud.bundle"]];
 
     //昵称label
-    self.nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.nameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     [self.nameLabel setFont:[UIFont systemFontOfSize:17.f]];
     [self.messageContentView addSubview:self.nameLabel];
     self.nameLabel.translatesAutoresizingMaskIntoConstraints = YES;
@@ -87,7 +87,7 @@
     [self.messageContentView addSubview:self.separationView];
 
     // typeLabel
-    self.typeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.typeLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     self.typeLabel.text = RCLocalizedString(@"ContactCard");
     self.typeLabel.font = [UIFont systemFontOfSize:12.f];
     self.typeLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"939393" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.4]];
@@ -152,7 +152,6 @@
     self.nameLabel.accessibilityLabel  = @"nameLabel";
     self.portraitView.accessibilityLabel  = @"portraitView";
     if ([RCKitUtility isRTL]) {
-        self.typeLabel.textAlignment = NSTextAlignmentRight;
         self.portraitView.frame = CGRectMake(size.width - Cart_Portrait_View_Width- 12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
         self.nameLabel.frame = CGRectMake(12, 17.5,  self.portraitView.frame.origin.x - 24 , 25);
         self.separationView.frame = CGRectMake(CGRectGetMinX(self.nameLabel.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
@@ -170,8 +169,8 @@
     if (self.model.messageDirection == MessageDirection_RECEIVE && cardMessage.destructDuration > 0 &&
         [UIApplication sharedApplication].applicationState != UIApplicationStateBackground &&
         self.isConversationAppear) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessageByUId:self.model.messageUId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessageByUId:self.model.messageUId]];
     }
 }
 

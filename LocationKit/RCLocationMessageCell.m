@@ -17,8 +17,8 @@
 @end
 
 @interface RCLocationMessageCell ()
-@property (nonatomic, strong) UIImageView *maskView;
-@property (nonatomic, strong) UIImageView *shadowMaskView;
+@property (nonatomic, strong) RCBaseImageView *maskView;
+@property (nonatomic, strong) RCBaseImageView *shadowMaskView;
 @end
 
 @implementation RCLocationMessageCell
@@ -69,8 +69,8 @@
     RCLocationMessage *_locationMessage = (RCLocationMessage *)self.model.content;
     if (self.model.messageDirection == MessageDirection_RECEIVE && _locationMessage.destructDuration > 0 &&
         [UIApplication sharedApplication].applicationState != UIApplicationStateBackground) {
-        [[RCIMClient sharedRCIMClient]
-            messageBeginDestruct:[[RCIMClient sharedRCIMClient] getMessage:self.model.messageId]];
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
     }
 }
 
@@ -83,7 +83,7 @@
 
 - (void)setMaskImage:(UIImage *)maskImage {
     if (_maskView == nil) {
-        _maskView = [[UIImageView alloc] initWithImage:maskImage];
+        _maskView = [[RCBaseImageView alloc] initWithImage:maskImage];
 
         _maskView.frame = self.pictureView.bounds;
         self.pictureView.layer.mask = _maskView.layer;
@@ -95,7 +95,7 @@
     if (_shadowMaskView) {
         [_shadowMaskView removeFromSuperview];
     }
-    _shadowMaskView = [[UIImageView alloc] initWithImage:maskImage];
+    _shadowMaskView = [[RCBaseImageView alloc] initWithImage:maskImage];
     _shadowMaskView.frame = self.pictureView.bounds;
     [self.messageContentView addSubview:_shadowMaskView];
     [self.messageContentView bringSubviewToFront:self.pictureView];
@@ -128,9 +128,9 @@
 }
 
 #pragma mark - Getter
-- (UIImageView *)pictureView{
+- (RCBaseImageView *)pictureView{
     if (!_pictureView) {
-        _pictureView = [[UIImageView alloc] initWithFrame:CGRectZero];
+        _pictureView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _pictureView.clipsToBounds = YES;
         _pictureView.contentMode = UIViewContentModeScaleAspectFill;
     }

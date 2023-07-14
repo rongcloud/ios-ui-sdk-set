@@ -25,10 +25,10 @@
 //
 
 #import "RCloudImageLoader.h"
-#import <UIKit/UIKit.h>
+#import "RCBaseImageView.h"
 
 @protocol RCloudImageViewDelegate;
-@interface RCloudImageView : UIImageView <RCloudImageLoaderObserver> {
+@interface RCloudImageView : RCBaseImageView <RCloudImageLoaderObserver> {
   @private
     NSURL *imageURL;
     UIImage *placeholderImage;

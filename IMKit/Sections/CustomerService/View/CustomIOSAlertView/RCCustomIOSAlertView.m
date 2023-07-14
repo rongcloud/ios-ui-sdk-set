@@ -12,6 +12,7 @@
 #import "RCCustomIOSAlertView.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
+#import "RCBaseButton.h"
 const static CGFloat kRCCustomIOSAlertViewDefaultButtonHeight = 50;
 const static CGFloat kRCCustomIOSAlertViewDefaultButtonSpacerHeight = 1;
 const static CGFloat kRCCustomIOSAlertViewCornerRadius = 7;
@@ -186,21 +187,19 @@ CGFloat rcButtonSpacerHeight = 0;
 
     dialogView.layer.opacity = 1.0f;
 
-    __weak typeof(self) weakSelf = self;
     [UIView animateWithDuration:0.2f
         delay:0.0
         options:UIViewAnimationOptionTransitionNone
         animations:^{
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            strongSelf.dialogView.layer.transform =
+            self.dialogView.layer.transform =
                 CATransform3DConcat(currentTransform, CATransform3DMakeScale(0.6f, 0.6f, 1.0));
-            strongSelf.dialogView.layer.opacity = 0.0f;
+            self.dialogView.layer.opacity = 0.0f;
         }
         completion:^(BOOL finished) {
-            for (UIView *v in [weakSelf subviews]) {
+            for (UIView *v in [self subviews]) {
                 [v removeFromSuperview];
             }
-            [weakSelf removeFromSuperview];
+            [self removeFromSuperview];
         }];
 }
 
@@ -268,7 +267,7 @@ CGFloat rcButtonSpacerHeight = 0;
 
     for (int i = 0; i < [buttonTitles count]; i++) {
 
-        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        RCBaseButton *closeButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
 
         [closeButton setFrame:CGRectMake(i * buttonWidth, container.bounds.size.height - rcButtonHeight, buttonWidth,
                                          rcButtonHeight)];

@@ -152,7 +152,7 @@
     switch (self.bubbleTipAlignment) {
     case RC_MESSAGE_BUBBLE_TIP_VIEW_ALIGNMENT_TOP_LEFT:
         newFrame.origin.x = -viewWidth / 2.0f;
-        newFrame.origin.y = -viewHeight / 2.0f;
+        newFrame.origin.y = 0;
         break;
     case RC_MESSAGE_BUBBLE_TIP_VIEW_ALIGNMENT_TOP_RIGHT:
         newFrame.origin.y = 0;

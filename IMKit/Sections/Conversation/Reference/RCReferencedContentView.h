@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "RCMessageModel.h"
+#import "RCBaseImageView.h"
+#import "RCBaseLabel.h"
 #define name_and_image_view_space 5
 @protocol RCReferencedContentViewDelegate <NSObject>
 @optional
@@ -24,7 +26,7 @@
 /*!
  被引用消息发送者名称
 */
-@property (nonatomic, strong) UILabel *nameLabel;
+@property (nonatomic, strong) RCBaseLabel *nameLabel;
 
 /*!
  被引用消息内容文本 label
@@ -34,7 +36,7 @@
 /*!
  被引用图片消息显示的 View
 */
-@property (nonatomic, strong) UIImageView *msgImageView;
+@property (nonatomic, strong) RCBaseImageView *msgImageView;
 
 @property (nonatomic, weak) id<RCReferencedContentViewDelegate> delegate;
 

@@ -8,7 +8,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 @protocol RCVoiceCaptureControlDelegate <NSObject>
 - (void)RCVoiceCaptureControlTimeout:(double)duration;
 

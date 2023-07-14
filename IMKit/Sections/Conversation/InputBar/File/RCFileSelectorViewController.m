@@ -13,7 +13,6 @@
 #import "RCKitConfig.h"
 #import "RCAlertView.h"
 #import "RCSemanticContext.h"
-
 @interface RCFileSelectorViewController ()
 
 @property (nonatomic, strong) NSString *rootPath;

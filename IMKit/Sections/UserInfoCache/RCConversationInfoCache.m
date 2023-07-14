@@ -51,7 +51,7 @@
     if (!cacheConversationInfo) {
         return nil;
     }
-    RCConversationInfo *conInfo = [[RCConversationInfo alloc] initWithConversationId:cacheConversationInfo.targetId conversationType:cacheConversationInfo.conversationType name:cacheConversationInfo.name portraitUri:cacheConversationInfo.portraitUri];
+    RCConversationInfo *conInfo = [[RCConversationInfo alloc] initWithConversationId:cacheConversationInfo.targetId conversationType:cacheConversationInfo.conversationType name:cacheConversationInfo.name portraitUri:cacheConversationInfo.portraitUri extra:cacheConversationInfo.extra];
     return conInfo;
 }
 
@@ -120,7 +120,7 @@
     __weak typeof(self) weakSelf = self;
     dispatch_async(rcUserInfoDBQueue, ^{
         [rcUserInfoWriteDBHelper deleteConversationInfoFromDB:conversationType targetId:targetId];
-        RCConversationInfo *conversationInfo = [[RCConversationInfo alloc] initWithConversationId:targetId conversationType:conversationType name:nil portraitUri:nil];
+        RCConversationInfo *conversationInfo = [[RCConversationInfo alloc] initWithConversationId:targetId conversationType:conversationType name:nil portraitUri:nil extra:nil];
         [weakSelf.updateDelegate onConversationInfoUpdate:conversationInfo];
     });
 }

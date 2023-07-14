@@ -494,9 +494,9 @@ static NSHashTable *allAnimatedImagesWeak;
 #if defined(DEBUG) && DEBUG
                 CFTimeInterval predrawDuration = CACurrentMediaTime() - predrawBeginTime;
                 CFTimeInterval slowdownDuration = 0.0;
-                if ([self.debug_delegate respondsToSelector:@selector(debug_animatedImagePredrawingSlowdownFactor:)]) {
+                if ([weakSelf.debug_delegate respondsToSelector:@selector(debug_animatedImagePredrawingSlowdownFactor:)]) {
                     CGFloat predrawingSlowdownFactor =
-                        [self.debug_delegate debug_animatedImagePredrawingSlowdownFactor:self];
+                        [weakSelf.debug_delegate debug_animatedImagePredrawingSlowdownFactor:self];
                     slowdownDuration = predrawDuration * predrawingSlowdownFactor - predrawDuration;
                     [NSThread sleepForTimeInterval:slowdownDuration];
                 }

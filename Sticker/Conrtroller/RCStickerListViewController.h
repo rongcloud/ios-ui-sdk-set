@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-
-@interface RCStickerListViewController : UIViewController
+#import "RongStickerAdaptiveHeader.h"
+@interface RCStickerListViewController : RCBaseViewController
 
 @end

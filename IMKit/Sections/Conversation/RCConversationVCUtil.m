@@ -252,7 +252,7 @@
 
 - (BOOL)canRecallMessageOfModel:(RCMessageModel *)model {
     long long cTime = [[NSDate date] timeIntervalSince1970] * 1000;
-    long long ServerTime = cTime - [[RCIMClient sharedRCIMClient] getDeltaTime];
+    long long ServerTime = cTime - [[RCCoreClient sharedCoreClient] getDeltaTime];
     long long interval = ServerTime - model.sentTime > 0 ? ServerTime - model.sentTime : model.sentTime - ServerTime;
     return (interval <= RCKitConfigCenter.message.maxRecallDuration * 1000 && model.messageDirection == MessageDirection_SEND &&
             RCKitConfigCenter.message.enableMessageRecall && model.sentStatus != SentStatus_SENDING &&
@@ -379,7 +379,7 @@
     long long currentTime = [[NSDate date] timeIntervalSince1970] * 1000;
     NSString *path = [RCUtilities rongImageCacheDirectory];
     path = [path
-        stringByAppendingFormat:@"/%@/RCHQVoiceCache", [RCIMClient sharedRCIMClient].currentUserInfo.userId];
+        stringByAppendingFormat:@"/%@/RCHQVoiceCache", [RCCoreClient sharedCoreClient].currentUserInfo.userId];
     if ([[NSFileManager defaultManager] fileExistsAtPath:path] == NO) {
         [[NSFileManager defaultManager] createDirectoryAtPath:path
                                   withIntermediateDirectories:YES
@@ -469,7 +469,7 @@
         center.y = sender.center.y;
         view.center = center;
     }else{
-        UIImageView *imageView = [[UIImageView alloc] initWithFrame:imageViewFrame];
+        RCBaseImageView *imageView = [[RCBaseImageView alloc] initWithFrame:imageViewFrame];
         CGPoint center = imageView.center;
         center.y = sender.center.y;
         imageView.center = center;
@@ -513,14 +513,14 @@
 - (void)startSyncConversationReadStatus:(long long)sentTime needDelay:(BOOL)needDelay{
     if (needDelay) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [[RCIMClient sharedRCIMClient] syncConversationReadStatus:self.chatVC.conversationType
+            [[RCCoreClient sharedCoreClient] syncConversationReadStatus:self.chatVC.conversationType
                                                              targetId:self.chatVC.targetId
                                                                  time:sentTime
                                                               success:nil
                                                                 error:nil];
         });
     }else{
-        [[RCIMClient sharedRCIMClient] syncConversationReadStatus:self.chatVC.conversationType
+        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:self.chatVC.conversationType
                                                          targetId:self.chatVC.targetId
                                                              time:sentTime
                                                           success:nil
@@ -542,7 +542,7 @@
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
-            [[RCIMClient sharedRCIMClient] sendReadReceiptMessage:self.chatVC.conversationType
+            [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
                                                          targetId:self.chatVC.targetId
                                                              time:lastReceiveMessageTime
                                                           success:nil
@@ -576,7 +576,7 @@
         }
 
         if (readReceiptarray && readReceiptarray.count > 0) {
-            [[RCIMClient sharedRCIMClient] sendReadReceiptResponse:self.chatVC.conversationType
+            [[RCCoreClient sharedCoreClient] sendReadReceiptResponse:self.chatVC.conversationType
                                                           targetId:self.chatVC.targetId
                                                        messageList:readReceiptarray
                                                            success:nil

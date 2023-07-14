@@ -18,7 +18,7 @@
 @interface RCCCUserListViewController () <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate,
                                           UISearchDisplayDelegate>
 
-@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) RCBaseTableView *tableView;
 @property (nonatomic, strong) NSArray *userListArr; //数据源
 @property (nonatomic, strong) NSMutableArray *dataArr;
 @property (nonatomic, strong) UISearchBar *searchBar; //搜索框
@@ -164,12 +164,17 @@
                                                                 darkColor:[UIColor blackColor]]
                                            .CGColor;
         _searchBar.layer.borderWidth = 1;
+        if ([RCKitUtility isRTL]) {
+            _searchBar.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
+        }else{
+            _searchBar.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
+        }
     }
     return _searchBar;
 }
-- (UITableView *)tableView {
+- (RCBaseTableView *)tableView {
     if (!_tableView) {
-        _tableView = [[UITableView alloc]
+        _tableView = [[RCBaseTableView alloc]
             initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, self.view.bounds.size.height)
                     style:UITableViewStyleGrouped];
         [_tableView setDelegate:self];

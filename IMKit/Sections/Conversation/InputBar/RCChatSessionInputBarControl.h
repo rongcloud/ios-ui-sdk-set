@@ -9,10 +9,12 @@
 #import "RCEmojiBoardView.h"
 #import "RCPluginBoardView.h"
 #import "RCTextView.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
+#import <CoreLocation/CoreLocation.h>
 #import <UIKit/UIKit.h>
 #import "RCInputContainerView.h"
 #import "RCMenuContainerView.h"
+#import "RCBaseNavigationController.h"
 #define RC_ChatSessionInputBar_Height 49.5f
 ///输入栏扩展输入的唯一标示
 #define INPUT_MENTIONED_SELECT_TAG 1000
@@ -152,7 +154,8 @@
 
 /**
  输入工具栏上面的线
- @since 5.6.0，合入 5.3.6
+
+ @since 5.4.4，合入 5.3.6
  */
 @property (nonatomic, strong, readonly) CALayer *topLineLayer;
 

@@ -11,7 +11,7 @@
 #import "RCCombineMessageUtility.h"
 #import "RCMessageModel.h"
 #import "RCKitUtility.h"
-#import "RCIMClient+Destructing.h"
+#import "RCCoreClient+Destructing.h"
 #import "RCKitCommonDefine.h"
 #import "RCLocationMessage+imkit.h"
 #import "RCForwardKeyItem.h"
@@ -398,7 +398,7 @@
         return @"";
     }
     
-    NSMutableString *templateString = [[NSMutableString alloc] init];
+    NSMutableString *templateString;
     if ([self p_isCommonMessage:model]) {
         templateString = [self p_generateCommonStringWith:model
                                                  userInfo:userInfo
@@ -452,7 +452,7 @@
     if (!portraitUri || portraitUri.length <= 0) {
         return @"";
     }
-    NSString *portrait = [[NSString alloc] init];
+    NSString *portrait;
     if ([RCUtilities isRemoteUrl:portraitUri]) {
         portrait = portraitUri;
     } else {

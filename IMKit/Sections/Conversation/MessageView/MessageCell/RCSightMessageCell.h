@@ -14,7 +14,7 @@
 /*!
  显示小视频缩略图的View
  */
-@property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, strong) RCBaseImageView *thumbnailView;
 
 /*!
  显示发送进度的View

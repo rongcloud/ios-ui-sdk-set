@@ -8,12 +8,13 @@
 
 #import "RCImagePreviewCell.h"
 #import "RCloudImageView.h"
-#import <RongIMLib/RongIMLib.h>
+#import <RongIMLibCore/RongIMLibCore.h>
 #import "RCMessageModel.h"
 #import "RCImageMessageProgressView.h"
 #import "RCKitCommonDefine.h"
+#import "RCBaseScrollView.h"
 @interface RCImagePreviewCell () <UIScrollViewDelegate, RCloudImageViewDelegate>
-@property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) RCBaseScrollView *scrollView;
 @property (nonatomic, strong) RCloudImageView *previewImageView;
 @property (nonatomic, strong) RCImageMessageProgressView *progressView;
 @end
@@ -277,9 +278,9 @@
 
 #pragma mark - Getter
 
-- (UIScrollView *)scrollView{
+- (RCBaseScrollView *)scrollView{
     if (!_scrollView) {
-        _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
+        _scrollView = [[RCBaseScrollView alloc] initWithFrame:self.bounds];
         _scrollView.minimumZoomScale = 1.0;
         _scrollView.maximumZoomScale = 4.0;
         [_scrollView setZoomScale:1.0];
