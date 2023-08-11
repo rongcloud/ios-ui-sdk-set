@@ -13,9 +13,7 @@
 
 @interface RCMenuContainerView : UIView
 
-/*!
- 公众服务账号菜单
- */
+/// 公众服务账号菜单
 @property (nonatomic, strong) RCPublicServiceMenu *publicServiceMenu;
 
 @property (nonatomic, weak) id<RCMenuContainerViewDelegate> delegate;

@@ -282,9 +282,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [[RCSystemSoundPlayer defaultPlayer] resetIgnoreConversation];
     [self stopPlayingVoiceMessage];
     self.isConversationAppear = NO;
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId];
-    });
+    [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId completion:nil];
     [self.util saveDraftIfNeed];
 
     [self.chatSessionInputBarControl cancelVoiceRecord];
@@ -693,9 +691,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [self.util sendReadReceipt];
         [self sendGroupReadReceiptResponseForCache];
     }
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId];
-    });
+    [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId completion:nil];
 }
 
 - (void)sendGroupReadReceiptResponseForCache{
@@ -1302,67 +1298,68 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     __weak typeof(self) ws = self;
     RCConversationType conversationType = self.conversationType;
     NSString *targetId = [self.targetId copy];
-    RCMessage *rcMessage = [[RCCoreClient sharedCoreClient] sendMediaMessage:conversationType
-        targetId:targetId
-        content:messageContent
-        pushContent:pushContent
-        pushData:@""
-        uploadPrepare:^(RCUploadMediaStatusListener *uploadListener) {
-            [ws uploadMedia:uploadListener.currentMessage uploadListener:uploadListener];
-        }
-        progress:^(int progress, long messageId) {
-            NSDictionary *statusDic = @{
-                @"targetId" : targetId,
-                @"conversationType" : @(conversationType),
-                @"messageId" : @(messageId),
-                @"sentStatus" : @(SentStatus_SENDING),
-                @"progress" : @(progress)
-            };
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                                object:nil
-                                                              userInfo:statusDic];
-        }
-        success:^(long messageId) {
-            NSDictionary *statusDic = @{
-                @"targetId" : targetId,
-                @"conversationType" : @(conversationType),
-                @"messageId" : @(messageId),
-                @"sentStatus" : @(SentStatus_SENT),
-                @"content" : messageContent
-            };
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                                object:nil
-                                                              userInfo:statusDic];
-        }
-        error:^(RCErrorCode errorCode, long messageId) {
-            NSDictionary *statusDic = @{
-                @"targetId" : targetId,
-                @"conversationType" : @(conversationType),
-                @"messageId" : @(messageId),
-                @"sentStatus" : @(SentStatus_FAILED),
-                @"error" : @(errorCode),
-                @"content" : messageContent
-            };
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                                object:nil
-                                                              userInfo:statusDic];
-        }
-        cancel:^(long messageId) {
-            NSDictionary *statusDic = @{
-                @"targetId" : targetId,
-                @"conversationType" : @(conversationType),
-                @"messageId" : @(messageId),
-                @"sentStatus" : @(SentStatus_CANCELED),
-                @"content" : messageContent
-            };
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                                object:nil
-                                                              userInfo:statusDic];
-        }];
+    [[RCCoreClient sharedCoreClient] sendMediaMessage:conversationType
+                                             targetId:targetId
+                                              content:messageContent
+                                          pushContent:pushContent
+                                             pushData:@""
+                                             attached:^(RCMessage * _Nullable message) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
+                                                            object:message
+                                                          userInfo:nil];
+    }uploadPrepare:^(RCUploadMediaStatusListener *uploadListener) {
+        [ws uploadMedia:uploadListener.currentMessage uploadListener:uploadListener];
+    }
+                                             progress:^(int progress, long messageId) {
+        NSDictionary *statusDic = @{
+            @"targetId" : targetId,
+            @"conversationType" : @(conversationType),
+            @"messageId" : @(messageId),
+            @"sentStatus" : @(SentStatus_SENDING),
+            @"progress" : @(progress)
+        };
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
+                                                            object:nil
+                                                          userInfo:statusDic];
+    }
+                                              success:^(long messageId) {
+        NSDictionary *statusDic = @{
+            @"targetId" : targetId,
+            @"conversationType" : @(conversationType),
+            @"messageId" : @(messageId),
+            @"sentStatus" : @(SentStatus_SENT),
+            @"content" : messageContent
+        };
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
+                                                            object:nil
+                                                          userInfo:statusDic];
+    }
+                                                error:^(RCErrorCode errorCode, long messageId) {
+        NSDictionary *statusDic = @{
+            @"targetId" : targetId,
+            @"conversationType" : @(conversationType),
+            @"messageId" : @(messageId),
+            @"sentStatus" : @(SentStatus_FAILED),
+            @"error" : @(errorCode),
+            @"content" : messageContent
+        };
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
+                                                            object:nil
+                                                          userInfo:statusDic];
+    }
+                                               cancel:^(long messageId) {
+        NSDictionary *statusDic = @{
+            @"targetId" : targetId,
+            @"conversationType" : @(conversationType),
+            @"messageId" : @(messageId),
+            @"sentStatus" : @(SentStatus_CANCELED),
+            @"content" : messageContent
+        };
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
+                                                            object:nil
+                                                          userInfo:statusDic];
+    }];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                        object:rcMessage
-                                                      userInfo:nil];
 }
 
 - (void)uploadMedia:(RCMessage *)message uploadListener:(RCUploadMediaStatusListener *)uploadListener {
@@ -1882,45 +1879,47 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 //撤回消息事件
 - (void)recallMessage:(long)messageId {
-    RCMessage *msg = [[RCCoreClient sharedCoreClient] getMessage:messageId];
-    if (msg.messageDirection != MessageDirection_SEND && msg.sentStatus != SentStatus_SENT) {
-        NSLog(@"Error，only successfully sent messages can be recalled！！！");
-        return;
-    }
-
-    __block RCRecallMessageImageView *recallMessageImageView =
-        [[RCRecallMessageImageView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
-    //将 recallMessageImageView 添加到优先级最高的 window 上,避免键盘被遮挡
-    [[RCKitUtility getKeyWindow] addSubview:recallMessageImageView];
-    [recallMessageImageView setCenter:CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2)];
-    [recallMessageImageView startAnimating];
-    __weak typeof(self) ws = self;
-    [[RCCoreClient sharedCoreClient] recallMessage:msg
-        pushContent:nil
-        success:^(long messageId) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if ([RCVoicePlayer defaultPlayer].isPlaying &&
-                    [RCVoicePlayer defaultPlayer].messageId == msg.messageId) {
-                    [[RCVoicePlayer defaultPlayer] stopPlayVoice];
-                }
-
-                [ws reloadRecalledMessage:messageId];
-
-                [recallMessageImageView stopAnimating];
-                [recallMessageImageView removeFromSuperview];
-                // private method
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"RCEConversationUpdateNotification"
-                                                                    object:nil];
-            });
+    [[RCCoreClient sharedCoreClient] getMessage:messageId completion:^(RCMessage * _Nullable msg) {
+        if (msg.messageDirection != MessageDirection_SEND && msg.sentStatus != SentStatus_SENT) {
+            NSLog(@"Error，only successfully sent messages can be recalled！！！");
+            return;
         }
-        error:^(RCErrorCode errorcode) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __block RCRecallMessageImageView *recallMessageImageView =
+                [[RCRecallMessageImageView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
+            //将 recallMessageImageView 添加到优先级最高的 window 上,避免键盘被遮挡
+            [[RCKitUtility getKeyWindow] addSubview:recallMessageImageView];
+            [recallMessageImageView setCenter:CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2)];
+            [recallMessageImageView startAnimating];
+            __weak typeof(self) ws = self;
+            [[RCCoreClient sharedCoreClient] recallMessage:msg
+                pushContent:nil
+                success:^(long messageId) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if ([RCVoicePlayer defaultPlayer].isPlaying &&
+                            [RCVoicePlayer defaultPlayer].messageId == msg.messageId) {
+                            [[RCVoicePlayer defaultPlayer] stopPlayVoice];
+                        }
 
-                [recallMessageImageView stopAnimating];
-                [recallMessageImageView removeFromSuperview];
-                [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallFailed") cancelTitle:RCLocalizedString(@"OK") inViewController:self];
-            });
-        }];
+                        [ws reloadRecalledMessage:messageId];
+
+                        [recallMessageImageView stopAnimating];
+                        [recallMessageImageView removeFromSuperview];
+                        // private method
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"RCEConversationUpdateNotification"
+                                                                            object:nil];
+                    });
+                }
+                error:^(RCErrorCode errorcode) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+
+                        [recallMessageImageView stopAnimating];
+                        [recallMessageImageView removeFromSuperview];
+                        [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallFailed") cancelTitle:RCLocalizedString(@"OK") inViewController:self];
+                    });
+                }];
+        });
+    }];
 }
 //重新加载撤回消息
 - (void)reloadRecalledMessage:(long)recalledMsgId {
@@ -2134,7 +2133,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             content:command
             pushContent:nil
             pushData:nil
-            success:^(long messageId) {
+            attached:^(RCMessage * _Nullable message) {
+            
+            } success:^(long messageId) {
 
             }
             error:^(RCErrorCode nErrorCode, long messageId){
@@ -2489,12 +2490,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         self.currentSelectedModel = nil;
     }
     [self showToolBar:[RCMessageSelectionUtility sharedManager].multiSelect];
-    NSArray<NSIndexPath *> *indexPathsForVisibleItems = [self.conversationMessageCollectionView indexPathsForVisibleItems];
-    if (indexPathsForVisibleItems) {
-        // 刷新可视范围的 Cell
-        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPathsForVisibleItems];
-    }
+    
     // Xcode13、iOS15 下需要刷新不可视范围的 Cell，否则会出现 禅道 44945 这个问题
+    // reloadItemsAtIndexPaths 和 reloadData 同时调用会有某些 cell 没有 reload 的情况
+    // 网上也有人遇到类似的问题，提到如果间隔 0.3 秒以上就不会有问题
     [self.conversationMessageCollectionView reloadData];
 }
 
@@ -2714,17 +2713,20 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
     RCInformationNotificationMessage *informationNotifiMsg = [self.util getInfoNotificationMessageByErrorCode:nErrorCode];
     if (nil != informationNotifiMsg && !ifResendNotification) {
-        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertOutgoingMessage:self.conversationType
-                                                                                     targetId:self.targetId
-                                                                                   sentStatus:SentStatus_SENT
-                                                                                      content:informationNotifiMsg
-                                                                                     sentTime:(message.sentTime + 1)];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            tempMessage = [self willAppendAndDisplayMessage:tempMessage];
-            if (tempMessage) {
-                [self appendAndDisplayMessage:tempMessage];
-            }
-        });
+        [[RCCoreClient sharedCoreClient] insertOutgoingMessage:self.conversationType
+                                                      targetId:self.targetId
+                                                    sentStatus:SentStatus_SENT
+                                                       content:informationNotifiMsg
+                                                      sentTime:(message.sentTime + 1)
+                                                    completion:^(RCMessage * _Nullable message) {
+            __block RCMessage *tempMessage = message;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                tempMessage = [self willAppendAndDisplayMessage:tempMessage];
+                if (tempMessage) {
+                    [self appendAndDisplayMessage:tempMessage];
+                }
+            });
+        }];
     }
     if (nErrorCode == RC_MEDIA_EXCEPTION) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -2802,7 +2804,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
  @discussion
  该方法即RCKitMessageDestructingNotification通知方法，如果继承该类则不需要注册RCKitMessageDestructingNotification通知，直接实现该方法即可
- @discussion 如果您使用IMLib请参考RCIMClient的RCMessageDestructDelegate
+ @discussion 如果您使用IMLib请参考 RCCoreClient 的RCMessageDestructDelegate
  */
 - (void)onMessageDestructing:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -3607,17 +3609,18 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
         NSUInteger row = [self.conversationDataRepository indexOfObject:model];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        if (model.messageDirection == MessageDirection_RECEIVE && textMsg.destructDuration > 0) {
-            [[RCCoreClient sharedCoreClient]
-                messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:model.messageId]];
-        }
-        model.cellSize = CGSizeZero;
-        //更新UI
-        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-        // 滚动到最底部
-        [self.conversationMessageCollectionView setNeedsLayout];
-        [self.conversationMessageCollectionView layoutIfNeeded];
-        [self scrollToBottomAnimated:YES];
+        [[RCCoreClient sharedCoreClient] getMessage:model.messageId completion:^(RCMessage * _Nullable message) {
+            [[RCCoreClient sharedCoreClient] messageBeginDestruct:message];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                model.cellSize = CGSizeZero;
+                //更新UI
+                [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
+                // 滚动到最底部
+                [self.conversationMessageCollectionView setNeedsLayout];
+                [self.conversationMessageCollectionView layoutIfNeeded];
+                [self scrollToBottomAnimated:YES];
+            });
+        }];
     }
     // phoneNumber
 }

@@ -149,33 +149,42 @@
 }
 
 - (void)fetchPOIInfo {
+    void (^updateUserLocationBlock)(void) = ^(void){
+        CLGeocoder *geocoder = [[CLGeocoder alloc] init];
+        CLLocationCoordinate2D locationCoordinate2D = self.mapView.centerCoordinate;
+        CLLocation *location =
+            [[CLLocation alloc] initWithLatitude:locationCoordinate2D.latitude longitude:locationCoordinate2D.longitude];
+        __weak typeof(self) weakSelf = self;
+        if (self.ifUpdateUserLocation) {
+            [geocoder reverseGeocodeLocation:location
+                           completionHandler:^(NSArray *placemarks, NSError *error) {
+                               //        for (CLPlacemark *placemark in placemarks) {
+                               //            DebugLog(@"%@", [placemark description]);
+                               //        }
+                               if (placemarks.count && weakSelf.completion) {
+                                   weakSelf.completion(placemarks, YES, NO, nil);
+                               }
+                           }];
+        }
+    };
+    
     if (self.lastPoiLocation == nil) {
         self.lastPoiLocation = [[CLLocation alloc] initWithLatitude:self.mapView.centerCoordinate.latitude
                                                           longitude:self.mapView.centerCoordinate.longitude];
+        updateUserLocationBlock();
     } else {
-        CLLocation *currentLocation = [[CLLocation alloc] initWithLatitude:self.mapView.centerCoordinate.latitude
-                                                                 longitude:self.mapView.centerCoordinate.longitude];
-        if ([self.lastPoiLocation distanceFromLocation:currentLocation] < 5) {
-            return;
-        }
-        self.lastPoiLocation = currentLocation;
+        // 关闭精确定位时，这里会获取不到最新设置的值，会导致 < 5 生效，进而导致无法获取位置信息。加了延迟之后就正常了。
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            CLLocation *currentLocation = [[CLLocation alloc] initWithLatitude:self.mapView.centerCoordinate.latitude
+                                                                     longitude:self.mapView.centerCoordinate.longitude];
+            if ([self.lastPoiLocation distanceFromLocation:currentLocation] < 5) {
+                return;
+            }
+            self.lastPoiLocation = currentLocation;
+            updateUserLocationBlock();
+        });
     }
-    CLGeocoder *geocoder = [[CLGeocoder alloc] init];
-    CLLocationCoordinate2D locationCoordinate2D = self.mapView.centerCoordinate;
-    CLLocation *location =
-        [[CLLocation alloc] initWithLatitude:locationCoordinate2D.latitude longitude:locationCoordinate2D.longitude];
-    __weak typeof(self) weakSelf = self;
-    if (self.ifUpdateUserLocation) {
-        [geocoder reverseGeocodeLocation:location
-                       completionHandler:^(NSArray *placemarks, NSError *error) {
-                           //        for (CLPlacemark *placemark in placemarks) {
-                           //            DebugLog(@"%@", [placemark description]);
-                           //        }
-                           if (placemarks.count && weakSelf.completion) {
-                               weakSelf.completion(placemarks, YES, NO, nil);
-                           }
-                       }];
-    }
+    
 }
 
 - (NSString *)titleOfPlaceMark:(id)placeMark {

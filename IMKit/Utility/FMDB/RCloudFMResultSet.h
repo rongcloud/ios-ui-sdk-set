@@ -56,7 +56,7 @@
 
  @param aDB A `<RCloudFMDatabase>` to be used
 
- @return A `RCloudFMResultSet` on success; `nil` on failure
+ - Returns: A `RCloudFMResultSet` on success; `nil` on failure
  */
 
 + (instancetype)resultSetWithStatement:(RCloudFMStatement *)statement usingParentDatabase:(RCloudFMDatabase *)aDB;
@@ -76,7 +76,7 @@
  You must always invoke `next` or `nextWithError` before attempting to access the values returned in a query, even if
  you're only expecting one.
 
- @return `YES` if row successfully retrieved; `NO` if end of result set reached
+ - Returns: `YES` if row successfully retrieved; `NO` if end of result set reached
 
  @see hasAnotherRow
  */
@@ -90,7 +90,7 @@
 
  @param outErr A 'NSError' object to receive any error object (if any).
 
- @return 'YES' if row successfully retrieved; 'NO' if end of result set reached
+ - Returns: 'YES' if row successfully retrieved; 'NO' if end of result set reached
 
  @see hasAnotherRow
  */
@@ -99,7 +99,7 @@
 
 /** Did the last call to `<next>` succeed in retrieving another row?
 
- @return `YES` if the last call to `<next>` succeeded in retrieving another record; `NO` if not.
+ - Returns: `YES` if the last call to `<next>` succeeded in retrieving another record; `NO` if not.
 
  @see next
 
@@ -115,7 +115,7 @@
 
 /** How many columns in result set
 
- @return Integer value of the number of columns.
+ - Returns: Integer value of the number of columns.
  */
 
 - (int)columnCount;
@@ -124,7 +124,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return Zero-based index for column.
+ - Returns: Zero-based index for column.
  */
 
 - (int)columnIndexForName:(NSString *)columnName;
@@ -133,7 +133,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return columnName `NSString` value of the name of the column.
+ - Returns: columnName `NSString` value of the name of the column.
  */
 
 - (NSString *)columnNameForIndex:(int)columnIdx;
@@ -142,7 +142,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `int` value of the result set's column.
+ - Returns: `int` value of the result set's column.
  */
 
 - (int)intForColumn:(NSString *)columnName;
@@ -151,7 +151,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `int` value of the result set's column.
+ - Returns: `int` value of the result set's column.
  */
 
 - (int)intForColumnIndex:(int)columnIdx;
@@ -160,7 +160,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `long` value of the result set's column.
+ - Returns: `long` value of the result set's column.
  */
 
 - (long)longForColumn:(NSString *)columnName;
@@ -169,7 +169,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `long` value of the result set's column.
+ - Returns: `long` value of the result set's column.
  */
 
 - (long)longForColumnIndex:(int)columnIdx;
@@ -178,7 +178,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `long long int` value of the result set's column.
+ - Returns: `long long int` value of the result set's column.
  */
 
 - (long long int)longLongIntForColumn:(NSString *)columnName;
@@ -187,7 +187,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `long long int` value of the result set's column.
+ - Returns: `long long int` value of the result set's column.
  */
 
 - (long long int)longLongIntForColumnIndex:(int)columnIdx;
@@ -196,7 +196,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `unsigned long long int` value of the result set's column.
+ - Returns: `unsigned long long int` value of the result set's column.
  */
 
 - (unsigned long long int)unsignedLongLongIntForColumn:(NSString *)columnName;
@@ -205,7 +205,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `unsigned long long int` value of the result set's column.
+ - Returns: `unsigned long long int` value of the result set's column.
  */
 
 - (unsigned long long int)unsignedLongLongIntForColumnIndex:(int)columnIdx;
@@ -214,7 +214,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `BOOL` value of the result set's column.
+ - Returns: `BOOL` value of the result set's column.
  */
 
 - (BOOL)boolForColumn:(NSString *)columnName;
@@ -223,7 +223,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `BOOL` value of the result set's column.
+ - Returns: `BOOL` value of the result set's column.
  */
 
 - (BOOL)boolForColumnIndex:(int)columnIdx;
@@ -232,7 +232,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `double` value of the result set's column.
+ - Returns: `double` value of the result set's column.
 
  */
 
@@ -242,7 +242,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `double` value of the result set's column.
+ - Returns: `double` value of the result set's column.
 
  */
 
@@ -252,7 +252,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `NSString` value of the result set's column.
+ - Returns: `NSString` value of the result set's column.
 
  */
 
@@ -262,7 +262,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `NSString` value of the result set's column.
+ - Returns: `NSString` value of the result set's column.
  */
 
 - (NSString *)stringForColumnIndex:(int)columnIdx;
@@ -271,7 +271,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `NSDate` value of the result set's column.
+ - Returns: `NSDate` value of the result set's column.
  */
 
 - (NSDate *)dateForColumn:(NSString *)columnName;
@@ -280,7 +280,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `NSDate` value of the result set's column.
+ - Returns: `NSDate` value of the result set's column.
 
  */
 
@@ -292,7 +292,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `NSData` value of the result set's column.
+ - Returns: `NSData` value of the result set's column.
 
  */
 
@@ -302,7 +302,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `NSData` value of the result set's column.
+ - Returns: `NSData` value of the result set's column.
  */
 
 - (NSData *)dataForColumnIndex:(int)columnIdx;
@@ -311,7 +311,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `(const unsigned char *)` value of the result set's column.
+ - Returns: `(const unsigned char *)` value of the result set's column.
  */
 
 - (const unsigned char *)UTF8StringForColumnName:(NSString *)columnName;
@@ -320,7 +320,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return `(const unsigned char *)` value of the result set's column.
+ - Returns: `(const unsigned char *)` value of the result set's column.
  */
 
 - (const unsigned char *)UTF8StringForColumnIndex:(int)columnIdx;
@@ -329,7 +329,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
+ - Returns: Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
  object.
 
  @see objectForKeyedSubscript:
@@ -341,7 +341,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
+ - Returns: Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
  object.
 
  @see objectAtIndexedSubscript:
@@ -366,7 +366,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
+ - Returns: Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
  object.
  */
 
@@ -389,7 +389,7 @@
 
  @param columnIdx Zero-based index for column.
 
- @return Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
+ - Returns: Either `NSNumber`, `NSString`, `NSData`, or `NSNull`. If the column was `NULL`, this returns `[NSNull null]`
  object.
  */
 
@@ -399,7 +399,7 @@
 
  @param columnName `NSString` value of the name of the column.
 
- @return `NSData` value of the result set's column.
+ - Returns: `NSData` value of the result set's column.
 
  @warning If you are going to use this data after you iterate over the next row, or after you close the
 result set, make sure to make a copy of the data first (or just use `<dataForColumn:>`/`<dataForColumnIndex:>`)
@@ -413,7 +413,7 @@ If you don't, you're going to be in a world of hurt when you try and use the dat
 
  @param columnIdx Zero-based index for column.
 
- @return `NSData` value of the result set's column.
+ - Returns: `NSData` value of the result set's column.
 
  @warning If you are going to use this data after you iterate over the next row, or after you close the
  result set, make sure to make a copy of the data first (or just use `<dataForColumn:>`/`<dataForColumnIndex:>`)
@@ -427,7 +427,7 @@ If you don't, you're going to be in a world of hurt when you try and use the dat
 
  @param columnIdx Zero-based index for column.
 
- @return `YES` if column is `NULL`; `NO` if not `NULL`.
+ - Returns: `YES` if column is `NULL`; `NO` if not `NULL`.
  */
 
 - (BOOL)columnIndexIsNull:(int)columnIdx;
@@ -436,14 +436,14 @@ If you don't, you're going to be in a world of hurt when you try and use the dat
 
  @param columnName `NSString` value of the name of the column.
 
- @return `YES` if column is `NULL`; `NO` if not `NULL`.
+ - Returns: `YES` if column is `NULL`; `NO` if not `NULL`.
  */
 
 - (BOOL)columnIsNull:(NSString *)columnName;
 
 /** Returns a dictionary of the row results mapped to case sensitive keys of the column names.
 
- @returns `NSDictionary` of the row results.
+ - Returns: s `NSDictionary` of the row results.
 
  @warning The keys to the dictionary are case sensitive of the column names.
  */

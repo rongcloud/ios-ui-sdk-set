@@ -20,15 +20,15 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RCIMNotificationDataContext : NSObject
 
 ///按照会话列表构建level
-/// @param conversations 会话列表
+/// - Parameter conversations: 会话列表
 + (void)updateNotificationLevelWith:(NSArray<RCConversation *> *)conversations;
 
 /// 获取level
-/// @param type 会话类型
-/// @param targetId 会话ID
-/// @param channelId 频道ID
-/// @param completion 成功回调
-/// @param errorBlock 失败回调
+/// - Parameter type: 会话类型
+/// - Parameter targetId: 会话ID
+/// - Parameter channelId: 频道ID
+/// - Parameter completion: 成功回调
+/// - Parameter errorBlock: 失败回调
 + (void)queryNotificationLevelWith:(RCConversationType)type
                       targetId:(NSString *__nullable)targetId
                      channelId:(NSString *__nullable )channelId

@@ -86,9 +86,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    if ([self respondsToSelector:@selector(setEdgesForExtendedLayout:)]) {
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    }
+    self.navigationController.view.backgroundColor = RCDYCOLOR(0xffffff, 0x191919);
+    self.navigationController.navigationBar.translucent = NO;
     if (!self.mapViewContainer) {
         [self loadMapViewContainer];
     }

@@ -8,9 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-/*!
- MessageCell信息
- */
+/// MessageCell信息
 @interface RCExtensionMessageCellInfo : NSObject
 
 @property (nonatomic, strong) Class messageContentClass;

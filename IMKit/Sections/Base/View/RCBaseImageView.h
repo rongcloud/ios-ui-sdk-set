@@ -9,9 +9,7 @@
 #import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
-/*!
- @since 5.4.0
- */
+/// - Since: 5.4.0
 @interface RCBaseImageView : UIImageView
 
 @end

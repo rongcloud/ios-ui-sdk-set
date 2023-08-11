@@ -66,7 +66,7 @@
 
  @param aPath The file path of the database.
 
- @return The `RCloudFMDatabasePool` object. `nil` on error.
+ - Returns: The `RCloudFMDatabasePool` object. `nil` on error.
  */
 
 + (instancetype)databasePoolWithPath:(NSString *)aPath;
@@ -76,7 +76,7 @@
  @param aPath The file path of the database.
  @param openFlags Flags passed to the openWithFlags method of the database
 
- @return The `RCloudFMDatabasePool` object. `nil` on error.
+ - Returns: The `RCloudFMDatabasePool` object. `nil` on error.
  */
 
 + (instancetype)databasePoolWithPath:(NSString *)aPath flags:(int)openFlags;
@@ -85,7 +85,7 @@
 
  @param aPath The file path of the database.
 
- @return The `RCloudFMDatabasePool` object. `nil` on error.
+ - Returns: The `RCloudFMDatabasePool` object. `nil` on error.
  */
 
 - (instancetype)initWithPath:(NSString *)aPath;
@@ -95,7 +95,7 @@
  @param aPath The file path of the database.
  @param openFlags Flags passed to the openWithFlags method of the database
 
- @return The `RCloudFMDatabasePool` object. `nil` on error.
+ - Returns: The `RCloudFMDatabasePool` object. `nil` on error.
  */
 
 - (instancetype)initWithPath:(NSString *)aPath flags:(int)openFlags;
@@ -106,21 +106,21 @@
 
 /** Number of checked-in databases in pool
 
- @returns Number of databases
+ - Returns: s Number of databases
  */
 
 - (NSUInteger)countOfCheckedInDatabases;
 
 /** Number of checked-out databases in pool
 
- @returns Number of databases
+ - Returns: s Number of databases
  */
 
 - (NSUInteger)countOfCheckedOutDatabases;
 
 /** Total number of databases in pool
 
- @returns Number of databases
+ - Returns: s Number of databases
  */
 
 - (NSUInteger)countOfOpenDatabases;
@@ -158,7 +158,7 @@
 
  @param block The code to be run on the `RCloudFMDatabasePool` pool.
 
- @return `NSError` object if error; `nil` if successful.
+ - Returns: `NSError` object if error; `nil` if successful.
 
  @warning You can not nest these, since calling it will pull another database out of the pool and you'll get a deadlock.
  If you need to nest, use `<[RCloudFMDatabase startSavePointWithName:error:]>` instead.
@@ -180,7 +180,7 @@
  @param pool     The `RCloudFMDatabasePool` object.
  @param database The `RCloudFMDatabase` object.
 
- @return `YES` if it should add database to pool; `NO` if not.
+ - Returns: `YES` if it should add database to pool; `NO` if not.
 
  */
 

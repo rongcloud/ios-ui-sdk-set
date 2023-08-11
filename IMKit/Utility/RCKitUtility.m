@@ -519,7 +519,8 @@
                conversation.conversationType == ConversationType_DISCUSSION ||
                conversation.conversationType == ConversationType_APPSERVICE ||
                conversation.conversationType == ConversationType_PUBLICSERVICE ||
-               conversation.conversationType == ConversationType_Encrypted) {
+               conversation.conversationType == ConversationType_Encrypted ||
+               conversation.conversationType == ConversationType_SYSTEM) {
         [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
                                                          targetId:conversation.targetId
                                                              time:conversation.sentTime

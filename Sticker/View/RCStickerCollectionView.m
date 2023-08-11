@@ -206,7 +206,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
 - (CGFloat)collectionView:(UICollectionView *)collectionView
                                       layout:(UICollectionViewLayout *)collectionViewLayout
     minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
-    return (self.frame.size.width - 4 * 60 - 27 * 2) / 3;
+    return  (self.frame.size.width - 4 * 60 - 27 * 2-1) / 3;
 }
 
 #pragma mark - Notification
@@ -240,7 +240,8 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
         flowLayout.itemSize = (CGSize){60, 60 + 22};
         flowLayout.sectionInset = UIEdgeInsetsMake(6, 27, 6, 27);
         flowLayout.minimumLineSpacing = 0;
-        flowLayout.minimumInteritemSpacing = (self.frame.size.width - 4 * 60 - 27 * 2) / 3;
+        // -1 是为了解决iphone 14 pro max的 间距问题
+        flowLayout.minimumInteritemSpacing = (self.frame.size.width - 4 * 60 - 27 * 2-1) / 3;
         _collectionView = [[RCBaseCollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
         _collectionView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
         _collectionView.dataSource = self;

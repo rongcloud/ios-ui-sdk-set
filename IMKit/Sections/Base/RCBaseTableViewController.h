@@ -8,10 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-/*!
-IMKit UITableViewController 基类
-
-*/
+/// IMKit UITableViewController 基类
 
 @interface RCBaseTableViewController : UITableViewController
 

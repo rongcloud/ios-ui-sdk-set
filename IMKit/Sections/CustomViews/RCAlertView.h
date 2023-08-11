@@ -13,11 +13,11 @@
 /*!
  显示 AlertController
  
- @param title title
- @param message  message
- @param cancelTitle 取消 title
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter cancelTitle: 取消 title
  
- @discussion 默认显示在 keyWindow rootViewController 上
+  默认显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message
@@ -26,10 +26,10 @@
 /*!
  显示 AlertController
  
- @param title title
- @param message  message
- @param cancelTitle 取消 title
- @param controller AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter cancelTitle: 取消 title
+ - Parameter controller: AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message
@@ -39,11 +39,11 @@
 /*!
  显示 AlertController（可设置自动消失时间）
  
- @param title title
- @param message  message
- @param timeInterval 消失时间
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter timeInterval: 消失时间
  
- @discussion 默认显示在 keyWindow rootViewController 上
+  默认显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message
@@ -52,10 +52,10 @@
 /*!
  显示 AlertController（可设置自动消失时间）
  
- @param title title
- @param message  message
- @param timeInterval 消失时间
- @param controller AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter timeInterval: 消失时间
+ - Parameter controller: AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message
@@ -65,11 +65,11 @@
 /*!
  显示 AlertController（可设置自动消失时间）
  
- @param title title
- @param message  message
- @param timeInterval 消失时间
- @param controller AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
- @param completion  AlertController 消失回调
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter timeInterval: 消失时间
+ - Parameter controller: AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
+ - Parameter completion:  AlertController 消失回调
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message
@@ -80,11 +80,11 @@
 /*!
  显示 AlertController
  
- @param actionTitles 操作事件 title 列表
- @param cancelTitle 取消 title
- @param style    ActionSheet or Alert
- @param actionsBlock 操作事件回调，回调参数 index 、alertAction 与 actionTitles 顺序一致
- @param controller AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
+ - Parameter actionTitles: 操作事件 title 列表
+ - Parameter cancelTitle: 取消 title
+ - Parameter style:    ActionSheet or Alert
+ - Parameter actionsBlock: 操作事件回调，回调参数 index 、alertAction 与 actionTitles 顺序一致
+ - Parameter controller: AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSArray *)actionTitles
                 cancelTitle:(NSString *)cancelTitle
@@ -95,16 +95,16 @@
 /*!
  显示 AlertController
  
- @param title title
- @param message  message
- @param actionTitles 操作事件 title 列表
- @param cancelTitle 取消 title
- @param confirmTitle 确认 title
- @param style    ActionSheet or Alert
- @param actionsBlock 操作事件回调，回调参数 index 、alertAction 与 actionTitles 顺序一致
- @param cancelBlock 取消按钮点击回调
- @param confirmBlock  确认按钮点击回调
- @param controller AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
+ - Parameter title: title
+ - Parameter message:  message
+ - Parameter actionTitles: 操作事件 title 列表
+ - Parameter cancelTitle: 取消 title
+ - Parameter confirmTitle: 确认 title
+ - Parameter style:    ActionSheet or Alert
+ - Parameter actionsBlock: 操作事件回调，回调参数 index 、alertAction 与 actionTitles 顺序一致
+ - Parameter cancelBlock: 取消按钮点击回调
+ - Parameter confirmBlock:  确认按钮点击回调
+ - Parameter controller: AlertController 展示的父类控制器，如果 controller 为 nil，则显示在 keyWindow rootViewController 上
  */
 + (void)showAlertController:(NSString *)title
                     message:(NSString *)message

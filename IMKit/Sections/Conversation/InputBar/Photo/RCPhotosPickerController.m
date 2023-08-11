@@ -91,16 +91,25 @@ static NSString *const reuseIdentifier = @"Cell";
              }
          }
      }
+    self.collectionView.alpha = self.disableFirstAppear?1:0;
      [self.collectionView reloadData];
      if (!self.disableFirstAppear) {
-         [self.collectionView
-             setContentOffset:CGPointMake(0, (self.count / 4) * (WIDTH + 4))];
+         dispatch_async(dispatch_get_main_queue(), ^{
+             CGSize size = self.collectionView.frame.size;
+             CGSize contentSize = self.collectionView.contentSize;
+             CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
+             [self.collectionView scrollRectToVisible:frame animated:NO];
+             [UIView animateWithDuration:0.1 animations:^{
+                 self.collectionView.alpha = 1;
+             }];
+         });
          self.disableFirstAppear = YES;
      }
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor whiteColor];
     self.previousPreheatRect = CGRectZero;
     CGFloat scale = [UIScreen mainScreen].scale;
     self.thumbnailSize = (CGSize){WIDTH * scale, WIDTH * scale};
