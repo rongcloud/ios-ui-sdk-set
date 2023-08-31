@@ -20,6 +20,7 @@
 #if __IPHONE_10_0
 #import <UserNotifications/UserNotifications.h>
 #endif
+#import "RCKitListenerManager.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -51,17 +52,25 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     return __rc__LocalNotification;
 }
 
+- (BOOL)shouldStopLocalNotificationWithMessage:(RCMessage *)message senderName:(NSString *)senderName {
+    NSArray *receiveDelegates = [[RCKitListenerManager sharedManager] allReceiveMessageDelegates];
+    for (id<RCIMReceiveMessageDelegate> delegate in receiveDelegates) {
+        if ([delegate respondsToSelector:@selector(onRCIMCustomLocalNotification:withSenderName:)]) {
+            if ([delegate onRCIMCustomLocalNotification:message
+                                         withSenderName:senderName])
+                return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)postLocalNotificationWithMessage:(RCMessage *)message userInfo:(NSDictionary *)userInfo {
     [self getNotificationInfo:message result:^(NSString *senderName, NSString *pushContent) {
         if ([[RongIMKitExtensionManager sharedManager] handleNotificationForMessageReceived:message from:senderName userInfo:userInfo]) {
             return;
         }
-        
-        if ([[RCIM sharedRCIM].receiveMessageDelegate
-             respondsToSelector:@selector(onRCIMCustomLocalNotification:withSenderName:)]) {
-            if ([[RCIM sharedRCIM].receiveMessageDelegate onRCIMCustomLocalNotification:message
-                                                                         withSenderName:senderName])
-                return;
+        if([self shouldStopLocalNotificationWithMessage:message senderName:senderName]) {
+            return;
         }
         [self postLocalNotification:senderName pushContent:pushContent message:message userInfo:userInfo];
     } errorBlock:^(NSString *errorDescription) {

@@ -352,7 +352,7 @@
 
 - (void)resetAudioSession {
     CTCallCenter *center = [[CTCallCenter alloc] init];
-    if (center.currentCalls.count == 0) return; // 打电话期间不需要设置 audio session
+    if (center.currentCalls.count != 0) return; // 打电话期间不需要设置 audio session
     AVCaptureDevice *newAudioDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         /*audio*/

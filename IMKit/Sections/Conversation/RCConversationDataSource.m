@@ -803,11 +803,16 @@ static BOOL msgRoamingServiceAvailable = YES;
             // 1. 先读取本地
             [[RCCoreClient sharedCoreClient] getHistoryMessages:self.chatVC.conversationType targetId:self.chatVC.targetId oldestMessageId:-1 count:self.chatVC.defaultMessageCount completion:^(NSArray<RCMessage *> * _Nullable messages) {
                 completeHandle(messages, RC_SUCCESS);
-                
-                // 2. 再读取断档接口
-                [[RCCoreClient sharedCoreClient] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId option:option complete:^(NSArray *messages, RCErrorCode code) {
-                    completeHandle(messages, code);
-                }];
+
+                    // 2. 再读取断档接口
+                    [[RCCoreClient sharedCoreClient] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId option:option complete:^(NSArray *messages, RCErrorCode code) {
+                        // 因为消息列表做了排重，这里清空步骤 1 拉取到的消息，防止断档拉到的消息排序有问题
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self.chatVC.conversationDataRepository removeAllObjects];
+                            [self.chatVC.conversationMessageCollectionView reloadData];
+                            completeHandle(messages, code);
+                        });
+                    }];
             }];
         }else {
             [[RCCoreClient sharedCoreClient] getMessages:self.chatVC.conversationType targetId:self.chatVC.targetId option:option complete:^(NSArray *messages, RCErrorCode code) {
@@ -950,11 +955,8 @@ static BOOL msgRoamingServiceAvailable = YES;
         return;
     }
     __weak typeof(self) weakSelf = self;
-    [[RCChatRoomClient sharedChatRoomClient] joinChatRoom:self.chatVC.targetId
-    messageCount:self.chatVC.defaultHistoryMessageCountOfChatRoom
-    success:^{
-    }
-    error:^(RCErrorCode status) {
+    [[RCChatRoomClient sharedChatRoomClient] joinChatRoom:self.chatVC.targetId messageCount:self.chatVC.defaultHistoryMessageCountOfChatRoom success:^{
+    } error:^(RCErrorCode status) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (status == KICKED_FROM_CHATROOM) {
                 [weakSelf.chatVC alertErrorAndLeft:RCLocalizedString(@"JoinChatRoomRejected")];
@@ -1183,7 +1185,10 @@ static BOOL msgRoamingServiceAvailable = YES;
                 for (int i = 0; i < msgArr.count; i ++) {
                     RCMessage *message = msgArr[i];
                     if(message.messageId == strongSelf2.firstUnreadMessage.messageId){
-                        [msgArr insertObject:[strongSelf2 generateOldMessage] atIndex:i];
+                        RCMessage *oldMsg = [strongSelf2 generateOldMessage];
+                        if(oldMsg) {
+                            [msgArr insertObject:oldMsg atIndex:i];
+                        }
                         break;
                     }
                 }
@@ -1249,7 +1254,10 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
         [oldMessageArray addObjectsFromArray:messages];
         if (oldMessageArray.count > 0) {
-            [oldMessageArray insertObject:[strongSelf generateOldMessage] atIndex:0];
+            RCMessage *oldMsg = [strongSelf generateOldMessage];
+            if(oldMsg) {
+                [oldMessageArray insertObject:oldMsg atIndex:0];
+            }
         }
         [strongSelf loadMoreNewerMessageV2:oldMessageArray];
         [strongSelf scrollToSpecifiedPosition:NO baseMeassage:strongSelf.firstUnreadMessage];

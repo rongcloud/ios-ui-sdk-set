@@ -12,8 +12,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCDownloadHelper : NSObject
 
-- (void)getDownloadFileToken:(int)fileType completeBlock:(void (^)(NSString *token))completion;
+- (void)getDownloadFileToken:(int)fileType queryUrl:(NSString *)queryUrl completeBlock:(void (^)(NSString *_Nullable token, NSString *_Nullable authInfo))completion;
 
++ (void)handleRequest:(NSMutableURLRequest *)request token:(nullable NSString *)token authInfo:(nullable NSString *)authInfo;
 @end
 
 NS_ASSUME_NONNULL_END

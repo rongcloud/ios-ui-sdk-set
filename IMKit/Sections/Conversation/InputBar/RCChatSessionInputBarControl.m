@@ -808,7 +808,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (RCBaseButton *)commonPhrasesButton {
     if (!_commonPhrasesButton) {
-        _commonPhrasesButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(16, 10, 66, 25)];
+        CGRect rect = CGRectMake(16, 10, 66, 25);
+        if ([RCKitUtility isRTL]) {
+            rect = CGRectMake(self.bounds.size.width-16-66, 10, 66, 25);
+        }
+        _commonPhrasesButton = [[RCBaseButton alloc] initWithFrame:rect];
         _commonPhrasesButton.backgroundColor = RCDYCOLOR(0xffffff, 0x1a1a1a);
         [_commonPhrasesButton.titleLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
         [_commonPhrasesButton setTitle:RCLocalizedString(@"common_phrases")
@@ -1041,6 +1045,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 }
 
 - (void)commonPhrasesButtonAction:(UIButton *)button {
+    // 如果 commonPhrasesButtonDidTouch 返回 YES，表示拦截内部已有逻辑，客户自行实现逻辑
+    if ([self.delegate respondsToSelector:@selector(commonPhrasesButtonDidTouch)]
+        && [self.delegate commonPhrasesButtonDidTouch]) {
+        return;
+    }
     [self didTouchCommonPhrasesButton:button];
     [self.commonPhrasesListView reloadCommonPhrasesList];
 }

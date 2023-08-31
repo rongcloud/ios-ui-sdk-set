@@ -153,7 +153,7 @@
         __weak typeof(self) weakSelf = self;
         dispatch_main_async_safe(^{
             if([RCKitUtility isRTL]) {
-                weakSelf.nameLabel.text = [@":" stringByAppendingString:name];
+                weakSelf.nameLabel.text = [@":" stringByAppendingString:name ?: @""];
             } else {
                 weakSelf.nameLabel.text = [name stringByAppendingString:@":"];
             }

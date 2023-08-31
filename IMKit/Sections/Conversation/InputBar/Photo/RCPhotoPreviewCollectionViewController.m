@@ -306,12 +306,11 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                               if (round(model.duration) <= durationLimit) {
                                                   [self.selectedArr addObject:model];
                                               } else {
-                                                  CGFloat minutes = durationLimit / 60.0f;
-                                                  NSString *minutesText = [NSString stringWithFormat:@"%.2g", minutes];
-                                                  NSString *msg =
-                                                      [NSString stringWithFormat:RCLocalizedString(
-                                                                                     @"Selected_Video_Warning_fmt"),
-                                                                                 minutesText];
+                                                  NSString *localizedString = durationLimit < 60 ? RCLocalizedString(@"Selected_Video_Warning_fmt_second") : RCLocalizedString(@"Selected_Video_Warning_fmt");
+                                                  CGFloat limit = durationLimit < 60 ? durationLimit : (durationLimit / 60.0f);
+                                                  NSString *format = durationLimit < 60 ? @"%.0f" : @"%.1f";
+                                                  NSString *text = [NSString stringWithFormat:format, limit];
+                                                  NSString *msg = [NSString stringWithFormat:localizedString, text];
                                                   [self showAlertWithMessage:msg];
                                                   model.isSelect = NO;
                                                   return;

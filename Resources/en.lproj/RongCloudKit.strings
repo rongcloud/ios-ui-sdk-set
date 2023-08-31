@@ -29,6 +29,7 @@
 "Preview"="Preview";
 "Max_Selected_Photos"="You can only select 9 photos at most";
 "Selected_Video_Warning_fmt"="Unable to share video with a duration longer than %@ minutes";
+"Selected_Video_Warning_fmt_second"="Unable to share video with a duration longer than %@ seconds";
 "Selected_Damaged_Video"="Unable to share damaged video";
 "Confirm"="Confirm";
 "Location_Service"="Unable to get your location data,Please enable location service in “Settings”->“Privacy”->“Location Services” and allows the application to use location services.";

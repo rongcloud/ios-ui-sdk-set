@@ -34,6 +34,7 @@
 "SelectMentionedUser"="选择提醒的人";
 "Max_Selected_Photos"="最多只能选择9张照片";
 "Selected_Video_Warning_fmt"="不能分享超过 %@ 分钟的视频";
+"Selected_Video_Warning_fmt_second"="不能分享超过 %@ 秒的视频";
 "Selected_Damaged_Video"="不能分享损坏的视频";
 "Confirm"="确定";
 "ToSearch"="搜索";
@@ -108,7 +109,7 @@
 "SavePhotoFailed"="图片保存失败";
 "SavePhotoSuccess"="图片保存成功";
 "Done"="完成";
-"LocationInformation"="位置信息";
+"LocationInformation"="位置";
 "LocalNotificationShow"="显示";
 "MaxNumSelectPhoto"="最多选择9张";
 "AllPhoto"="全部照片";

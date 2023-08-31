@@ -590,6 +590,7 @@ static dispatch_once_t onceToken;
         _formatter = [[NSDateFormatter alloc] init];
         [_formatter setDateFormat:@"YYYY-MM-dd HH:mm:ss"];
         [_formatter setTimeZone:[NSTimeZone localTimeZone]];
+        [_formatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]];
     }
     return _formatter;
 }

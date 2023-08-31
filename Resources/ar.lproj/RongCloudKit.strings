@@ -29,6 +29,7 @@
 "Preview"="معاينة";
 "Max_Selected_Photos"="يمكنك إختيار 9 صور كحد أقصى";
 "Selected_Video_Warning_fmt"="لا يمكن مشاركة فيديو أطول من %@ دقائق";
+"Selected_Video_Warning_fmt_second"="لا يمكن مشاركة مقاطع الفيديو التي تزيد على ٪ @ ثانية";
 "Selected_Damaged_Video"="ملف الفيديو المختار تالف";
 "Confirm"="تأكيد";
 "Location_Service"="فشل في جلب بيانات الموقع، الرجاء تفعيل خيار مشاركة الموقع في الإعدادت";

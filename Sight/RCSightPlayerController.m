@@ -466,15 +466,14 @@
         __weak typeof(self) weakSelf = self;
         [[RCDownloadHelper new]
             getDownloadFileToken:MediaType_SIGHT
-                   completeBlock:^(NSString *_Nonnull token) {
+                        queryUrl:[self.rcSightURL absoluteString]
+                   completeBlock:^(NSString *_Nullable token, NSString *_Nullable authInfo) {
                        dispatch_async(dispatch_get_main_queue(), ^{
                            NSMutableURLRequest *urlRequest =
-                               [NSMutableURLRequest requestWithURL:self.rcSightURL
+                               [NSMutableURLRequest requestWithURL:weakSelf.rcSightURL
                                                        cachePolicy:NSURLRequestUseProtocolCachePolicy
                                                    timeoutInterval:30];
-                           if (token) {
-                               [urlRequest setValue:token forHTTPHeaderField:@"authorization"];
-                           }
+                           [RCDownloadHelper handleRequest:urlRequest token:token authInfo:authInfo];
                            weakSelf.session = [NSURLSession
                                sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration]
                                                delegate:weakSelf

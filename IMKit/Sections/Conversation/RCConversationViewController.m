@@ -161,6 +161,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
     self.enableUnreadMentionedIcon = YES;
     self.defaultMessageCount = 10;
+    // 5.6.3 修改为默认删除服务端消息
+    self.needDeleteRemoteMessage = YES;
 }
 
 - (void)viewDidLoad {
@@ -1644,6 +1646,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     self.placeholderLabel.hidden = NO;
 }
 
+- (BOOL)commonPhrasesButtonDidTouch {
+    return [self didTapCommonPhrasesButton];
+}
+
 //点击常用语的回调
 - (void)commonPhrasesViewDidTouch:(NSString *)commonPhrases {
     RCTextMessage *rcTextMessage = [RCTextMessage messageWithContent:commonPhrases];
@@ -1931,6 +1937,15 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 }
 //删除消息
 - (void)deleteMessage:(RCMessageModel *)model {
+    [self deleteMessage:model memoryOnly:NO];
+}
+
+
+/// 删除消息
+/// - Parameters:
+///   - model: model
+///   - memoryOnly: 只删除内存数据(针对阅后即焚)
+- (void)deleteMessage:(RCMessageModel *)model memoryOnly:(BOOL)memoryOnly {
     if (self.conversationDataRepository.count == 0) {
         return;
     }
@@ -1964,13 +1979,21 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 
     long msgId = model.messageId;
-    if (self.needDeleteRemoteMessage) {
-        // 用户设置需要删除远端消息
-        RCMessage *delMsg = [[RCCoreClient sharedCoreClient] getMessage:msgId];
-        [[RCCoreClient sharedCoreClient] deleteRemoteMessage:model.conversationType targetId:model.targetId messages:@[delMsg] success:nil error:nil];
-    }else {
-        // 用户未设置，只删除本地消息
-        [[RCCoreClient sharedCoreClient] deleteMessages:@[@(msgId)]];
+    if(!memoryOnly) { // 已读回执的远端和本地都已清理, 无需重复删除
+        if (self.needDeleteRemoteMessage ) {
+            // 用户设置需要删除远端消息
+            RCMessage *delMsg = [[RCCoreClient sharedCoreClient] getMessage:msgId];
+            if (delMsg && delMsg.messageUId.length > 0) {
+                // 有远端消息可以调用删除远端删除
+                [[RCCoreClient sharedCoreClient] deleteRemoteMessage:model.conversationType targetId:model.targetId messages:@[delMsg] success:nil error:nil];
+            }else {
+                // 未发送成功的，只删除本地消息
+                [[RCCoreClient sharedCoreClient] deleteMessages:@[@(msgId)] completion:nil];
+            }
+        }else {
+            // 用户未设置，只删除本地消息
+            [[RCCoreClient sharedCoreClient] deleteMessages:@[@(msgId)] completion:nil];
+        }
     }
     [self.conversationDataRepository removeObjectAtIndex:indexPath.item];
     //偶现 查看阅后即焚小视频或者图片， 切换到后台在进入崩溃，原因是 indexPath 越界，怀疑从后台进入后会自动重新刷新 collecttionView
@@ -2356,6 +2379,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
 }
 
+- (BOOL)didTapCommonPhrasesButton {
+    return NO;
+}
+
 #pragma mark 内部点击方法
 - (void)tapRightBottomMsgCountIcon:(UIGestureRecognizer *)gesture {
     [self.dataSource tapRightBottomMsgCountIcon:gesture];
@@ -2512,11 +2539,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 
 - (void)deleteMessages {
     NSArray *tempArray = [self.selectedMessages mutableCopy];
+    self.allowsMessageCellSelection = NO;
     for (int i = 0; i < tempArray.count; i++) {
         [self deleteMessage:tempArray[i]];
     }
-    self.allowsMessageCellSelection = NO;
-    
     // 批量删除后，缺少重置collectionViewNewContentSize 导致 IMSDK-8250
    RCConversationViewLayout *currentLayout = (RCConversationViewLayout *)self.conversationMessageCollectionView.collectionViewLayout;
     currentLayout.collectionViewNewContentSize = CGSizeZero;
@@ -2835,7 +2861,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                     break;
                 }
             }
-            [self deleteMessage:delModel];
+            [self deleteMessage:delModel memoryOnly:YES];
             UIMenuController *menu = [UIMenuController sharedMenuController];
             menu.menuVisible = NO;
         }

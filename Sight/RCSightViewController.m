@@ -79,6 +79,9 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:UIApplicationDidChangeStatusBarOrientationNotification
                                                   object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:AVCaptureSessionInterruptionEndedNotification
+                                                  object:nil];
 }
 #pragma mark - Properties
 - (RCSightPreviewView *)sightView {
@@ -230,6 +233,12 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
                           selector:@selector(appWillEnterBackground)
                               name:UIApplicationDidEnterBackgroundNotification
                             object:nil];
+        [defaultCenter addObserver:self
+                                selector:@selector(sessionInterruptionEnded:)
+                                    name:AVCaptureSessionInterruptionEndedNotification
+                                  object:nil];
+
+
     }
     return self;
 }
@@ -242,6 +251,12 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
                           selector:@selector(appWillEnterBackground)
                               name:UIApplicationDidEnterBackgroundNotification
                             object:nil];
+        [defaultCenter addObserver:self
+                                selector:@selector(sessionInterruptionEnded:)
+                                    name:AVCaptureSessionInterruptionEndedNotification
+                                  object:nil];
+
+
     }
     return self;
 }
@@ -791,5 +806,13 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (void)appWillEnterBackground {
     [self.playerController pause];
     self.playBtn.selected = NO;
+}
+
+- (void)sessionInterruptionEnded:(NSNotification*)notification
+{
+#if !(TARGET_OS_SIMULATOR)
+    [self.capturer resetAudioSession];
+    [self.capturer resetSessionInput];
+#endif
 }
 @end

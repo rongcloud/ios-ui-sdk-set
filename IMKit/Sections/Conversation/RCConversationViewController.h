@@ -323,7 +323,9 @@ typedef enum : NSUInteger {
 
 #pragma mark 删除消息
 
-/// 默认值为 NO 长按只删除本地消息，设置为 YES 时长按删除消息，会把远端的消息也进行删除
+/// YES: 长按删除消息，会把本地消息、远端消息都删除
+/// NO: 长按只删除本地消息
+/// 5.6.3 版本将默认值改为 YES
 @property (nonatomic, assign) BOOL needDeleteRemoteMessage;
 
 /// 删除消息并更新UI
@@ -474,6 +476,11 @@ typedef enum : NSUInteger {
 /// 长按Cell中头像的回调
 /// - Parameter userId:  头像对应的用户ID
 - (void)didLongPressCellPortrait:(NSString *)userId;
+
+/// 常用语按钮点击事件
+///
+/// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
+- (BOOL)didTapCommonPhrasesButton;
 
 #pragma mark - 语音消息、图片消息、位置消息、文件消息显示与操作
 

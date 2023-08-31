@@ -328,7 +328,6 @@
  - Parameter commonPhrasesList: 您需要展示的常用语列表
 
   常用语条数需大于 0 条，每条内容最多可配置 30 个字，且只支持单聊。
- 如果二次设置常用语列表，需要设置后主动调用 - (void)updateStatus:(KBottomBarStatus)status animated:(BOOL)animated 方法
  */
 - (BOOL)setCommonPhrasesList:(NSArray<NSString *> *)commonPhrasesList;
 
@@ -436,6 +435,11 @@
  - Parameter sendButton: 发送按钮
  */
 - (void)emojiView:(RCEmojiBoardView *)emojiView didTouchSendButton:(UIButton *)sendButton;
+
+/// 常用语按钮点击事件
+///
+/// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
+- (BOOL)commonPhrasesButtonDidTouch;
 
 /*!
  点击常用语的回调
