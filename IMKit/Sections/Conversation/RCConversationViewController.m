@@ -2527,9 +2527,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 - (void)showToolBar:(BOOL)show {
     if (show) {
         [self.view addSubview:self.messageSelectionToolbar];
-        [self dismissReferencingView:self.referencingView];
+        [self dismissReferencingViewAndCommonPhrasesView:self.referencingView];
     } else {
         [self.messageSelectionToolbar removeFromSuperview];
+        [self showCommonPhrasesViewIfNeeded];
     }
 }
 
@@ -3041,6 +3042,32 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             self.conversationMessageCollectionView.frame = messageCollectionView;
         }
         
+    }];
+}
+
+- (void)dismissReferencingViewAndCommonPhrasesView:(RCReferencingView *)referencingView {
+    [self removeReferencingView];
+    __block CGRect messageCollectionView = self.conversationMessageCollectionView.frame;
+    [UIView animateWithDuration:0.25
+                     animations:^{
+        if (self.chatSessionInputBarControl) {
+            NSInteger diff = [self.chatSessionInputBarControl currentCommonPhrasesViewHeight];
+            messageCollectionView.size.height =
+            CGRectGetMinY(self.chatSessionInputBarControl.frame) - messageCollectionView.origin.y + diff;
+            self.conversationMessageCollectionView.frame = messageCollectionView;
+        }
+    }];
+}
+
+- (void)showCommonPhrasesViewIfNeeded {
+    __block CGRect messageCollectionView = self.conversationMessageCollectionView.frame;
+    [UIView animateWithDuration:0.25
+                     animations:^{
+        NSInteger diff = [self.chatSessionInputBarControl currentCommonPhrasesViewHeight];
+        if (self.chatSessionInputBarControl) {
+            messageCollectionView.size.height = messageCollectionView.size.height - diff;
+            self.conversationMessageCollectionView.frame = messageCollectionView;
+        }
     }];
 }
 

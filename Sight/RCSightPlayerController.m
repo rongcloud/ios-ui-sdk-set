@@ -554,6 +554,7 @@
 }
 
 - (void)cancel {
+    [RCSightExtensionModule sharedInstance].isSightPlayerHolding = NO;
     [_player setRate:0.0f];
     if ([self.delegate respondsToSelector:@selector(closeSightPlayer)]) {
         [self.delegate closeSightPlayer];

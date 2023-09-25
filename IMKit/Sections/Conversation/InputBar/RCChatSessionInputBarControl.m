@@ -129,6 +129,13 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     return NO; //隐藏系统默认的菜单项
 }
 
+- (NSInteger)currentCommonPhrasesViewHeight{
+    NSInteger height = 0;
+    if (self.commonPhrasesSource.count > 0 && (self.conversationType == ConversationType_PRIVATE || self.conversationType == ConversationType_GROUP)) {
+        height = RC_CommonPhrasesView_Height;
+    }
+    return height;
+}
 #pragma mark - Public Methods
 - (void)setInputBarType:(RCChatSessionInputBarControlType)type style:(RCChatSessionInputBarControlStyle)style {
     self.currentControlType = type;
@@ -282,9 +289,13 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         if (currentFrame.size.height != (RC_CommonPhrasesView_Height + RC_ChatSessionInputBar_Height)) {
             currentFrame.origin.y -= RC_CommonPhrasesView_Height;
         }
-        self.frame = CGRectMake(currentFrame.origin.x, currentFrame.origin.y, currentFrame.size.width,
-                                RC_CommonPhrasesView_Height + RC_ChatSessionInputBar_Height);
+        self.frame = CGRectMake(currentFrame.origin.x,
+                                currentFrame.origin.y,
+                                currentFrame.size.width
+                                ,RC_CommonPhrasesView_Height + RC_ChatSessionInputBar_Height);
+        KBottomBarStatus status = self.inputContainerView.currentBottomBarStatus;
         [self resetInputContainerView];
+        [self layoutBottomBarWithStatus: status];
         return YES;
     } else {
         RCLogI(@"Common Phrases list conversationType must be ConversationType_PRIVATE or ConversationType_GROUP");

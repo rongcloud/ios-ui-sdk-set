@@ -338,6 +338,10 @@
 */
 - (void)openDynamicFunction:(NSInteger)functionTag;
 
+
+
+/// 当前常用语视图的高度 0或者38
+- (NSInteger)currentCommonPhrasesViewHeight;
 /*!
  是否处于阅后即焚模式
 */
