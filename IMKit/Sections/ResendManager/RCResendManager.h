@@ -11,34 +11,36 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// 重新发送消息管理类
+/**
+重新发送消息管理类
+*/
 @interface RCResendManager : NSObject
 
 /**
  重新发送消息管理类单例
 
- - Returns: 单例
+ @return 单例
  */
 + (instancetype)sharedManager;
 
 /**
  该消息是否需要重新发送
 
- - Parameter messageId: 消息 Id
+ @param messageId 消息 Id
 */
 - (BOOL)needResend:(long)messageId;
 
 /**
  将消息加入重新发送消息池
 
- - Parameter messageId: 消息 Id
+ @param messageId 消息 Id
  */
 - (void)addResendMessageIfNeed:(long)messageId error:(RCErrorCode)code;
 
 /**
  将消息从重新发送消息池删除
  
- - Parameter messageId: 消息 Id
+ @param messageId 消息 Id
  */
 - (void)removeResendMessage:(long)messageId;
 

@@ -31,7 +31,9 @@
 
 - (id)init;
 
-/// DEPRECATED: Use the [RCCustomIOSAlertView init] method without passing a parent view.
+/*!
+ DEPRECATED: Use the [RCCustomIOSAlertView init] method without passing a parent view.
+ */
 - (id)initWithParentView:(UIView *)_parentView __attribute__((deprecated));
 
 - (void)show;

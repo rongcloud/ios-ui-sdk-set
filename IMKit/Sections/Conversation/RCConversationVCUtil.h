@@ -58,7 +58,7 @@
 
 
 /// 根据消息ID获取model
-/// - Parameter messageID: <#messageID description#>
+/// @param messageID <#messageID description#>
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
 #pragma mark - Util
 //保存草稿

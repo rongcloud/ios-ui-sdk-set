@@ -130,7 +130,7 @@
 
 - (void)action:(NSTimer *)scheduledTimer {
     RCImageMessage *message = (RCImageMessage *)self.messageModel.content;
-    NSString *imageUrl = message.imageUrl;
+    NSString *imageUrl = message.remoteUrl;
     if (!self.progressView.hidden) {
         [self.progressView stopAnimating];
         [self.progressView setHidden:YES];

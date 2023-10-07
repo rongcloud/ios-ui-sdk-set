@@ -22,7 +22,7 @@
 /*!
  初始化灰条提示Label对象
 
- - Returns: 灰条提示Label对象
+ @return 灰条提示Label对象
  */
 + (instancetype)greyTipLabel;
 

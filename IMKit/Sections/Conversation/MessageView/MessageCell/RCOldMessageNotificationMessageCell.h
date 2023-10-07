@@ -11,7 +11,9 @@
 
 @interface RCOldMessageNotificationMessageCell : RCMessageBaseCell
 
-/// tipMessage显示Label
+/**
+ *  tipMessage显示Label
+ */
 @property (strong, nonatomic) RCTipLabel *tipMessageLabel;
 
 @end

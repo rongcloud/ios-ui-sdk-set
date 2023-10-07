@@ -18,7 +18,7 @@
 @interface RCConversationListDataSource ()
 @property (nonatomic, strong) dispatch_queue_t updateEventQueue;
 @property (nonatomic, assign) NSInteger currentCount;
-@property (nonatomic, strong) NSMutableDictionary<NSNumber *, RCConversationModel *> *collectedModelDict;
+@property (nonatomic, strong) NSMutableDictionary *collectedModelDict;
 @property (nonatomic, assign) BOOL isWaitingForForceRefresh;
 @property (nonatomic, copy) void(^throttleReloadAction)(void);
 @end
@@ -41,26 +41,20 @@
     return self;
 }
 - (void)loadMoreConversations:(void (^)(NSMutableArray<RCConversationModel *> *modelList))completion {
-    __block NSMutableArray *modelList = [[NSMutableArray alloc] init];
-    if ([[RCIM sharedRCIM] getConnectionStatus] == ConnectionStatus_SignOut) {
-        if(completion) {
-            completion(modelList);
-        }
-        return;
-    }
-    
     __block RCConversationModel *lastModel;
     __block long long sentTime = 0;
     __weak typeof(self) ws = self;
-    lastModel = self.dataList.lastObject;
-    if (lastModel && lastModel.sentTime > 0) {
-        sentTime = lastModel.sentTime;
-    }
-    [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
-                                                   count:PagingCount
-                                               startTime:sentTime
-                                              completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
-        dispatch_async(self.updateEventQueue, ^{
+    dispatch_async(self.updateEventQueue, ^{
+        NSMutableArray *modelList = [[NSMutableArray alloc] init];
+        if ([[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
+            lastModel = ws.dataList.lastObject;
+            if (lastModel && lastModel.sentTime > 0) {
+                sentTime = lastModel.sentTime;
+            }
+            NSArray *conversationList =
+                [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
+                                                             count:PagingCount
+                                                         startTime:sentTime];
             [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
             ws.currentCount += conversationList.count;
             for (RCConversation *conversation in conversationList) {
@@ -71,22 +65,22 @@
                     [modelList addObject:model];
                 }
             }
-            if (modelList.count > 0) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willReloadTableData:)]) {
-                    modelList = [ws.delegate dataSource:ws willReloadTableData:modelList];
-                }
-                modelList = [ws collectConversation:modelList collectionTypes:ws.collectionConversationTypeArray];
+        }
+        if (modelList.count > 0) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willReloadTableData:)]) {
+                modelList = [ws.delegate dataSource:ws willReloadTableData:modelList];
             }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if(modelList.count > 0) {
-                    [ws.dataList addObjectsFromArray:modelList.copy];
-                }
-                if(completion) {
-                    completion(modelList);
-                }
-            });
+            modelList = [ws collectConversation:modelList collectionTypes:ws.collectionConversationTypeArray];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if(modelList.count > 0) {
+                [ws.dataList addObjectsFromArray:modelList.copy];
+            }
+            if(completion) {
+                completion(modelList);
+            }
         });
-    }];
+    });
 }
 
 - (BOOL)containInCurrentDataSource:(RCConversationModel *)model {
@@ -202,25 +196,22 @@
                 }
             }
         } else {
-            [[RCCoreClient sharedCoreClient] getConversation:conversationType
-                                                    targetId:targetId
-                                                  completion:^(RCConversation * _Nullable conversation) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    RCConversationModel *newModel =
-                    [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
-                    if ([self.collectionConversationTypeArray
-                         containsObject:@(conversation.conversationType)]) {
-                        newModel.conversationModelType = RC_CONVERSATION_MODEL_TYPE_COLLECTION;
-                    }
-                    newModel.topCellBackgroundColor = self.topCellBackgroundColor;
-                    newModel.cellBackgroundColor = self.cellBackgroundColor;
-                    NSUInteger newIndex = [self getFirstModelIndex:newModel.isTop sentTime:newModel.sentTime];
-                    [self.dataList insertObject:newModel atIndex:newIndex];
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willInsertAtIndexPaths:)]) {
-                        [self.delegate dataSource:self willInsertAtIndexPaths:@[ [NSIndexPath indexPathForRow:newIndex inSection:0] ]];
-                    }
-                });
-            }];
+            RCConversation *conversation =
+                [[RCCoreClient sharedCoreClient] getConversation:conversationType
+                                                      targetId:targetId];
+            RCConversationModel *newModel =
+                [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
+            if ([self.collectionConversationTypeArray
+                    containsObject:@(conversation.conversationType)]) {
+                newModel.conversationModelType = RC_CONVERSATION_MODEL_TYPE_COLLECTION;
+            }
+            newModel.topCellBackgroundColor = self.topCellBackgroundColor;
+            newModel.cellBackgroundColor = self.cellBackgroundColor;
+            NSUInteger newIndex = [self getFirstModelIndex:newModel.isTop sentTime:newModel.sentTime];
+            [self.dataList insertObject:newModel atIndex:newIndex];
+            if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willInsertAtIndexPaths:)]) {
+                [self.delegate dataSource:self willInsertAtIndexPaths:@[ [NSIndexPath indexPathForRow:newIndex inSection:0] ]];
+            }
         }
     });
 }
@@ -256,21 +247,18 @@
                 for (RCConversationModel *model in self.dataList) {
                     if ([model.targetId isEqualToString:targetId]) {
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                        [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
-                                                                targetId:model.targetId
-                                                              completion:^(RCConversation * _Nullable conversation) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                model.lastestMessage = conversation.latestMessage;
-                                model.sentStatus = conversation.sentStatus;
-                                updateInfo.model = model;
-                                updateInfo.updateType = RCConversationCell_MessageContent_Update;
-                                [[NSNotificationCenter defaultCenter]
-                                 postNotificationName:RCKitConversationCellUpdateNotification
-                                 object:updateInfo
-                                 userInfo:nil];
-                            });
-                        }];
-                        
+
+                        RCConversation *conversation =
+                            [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
+                                                                  targetId:model.targetId];
+                        model.lastestMessage = conversation.lastestMessage;
+                        model.sentStatus = conversation.sentStatus;
+                        updateInfo.model = model;
+                        updateInfo.updateType = RCConversationCell_MessageContent_Update;
+                        [[NSNotificationCenter defaultCenter]
+                            postNotificationName:RCKitConversationCellUpdateNotification
+                                          object:updateInfo
+                                        userInfo:nil];
                         break;
                     }
                 }
@@ -306,18 +294,15 @@
             if (refreshIndex < 0) {
                 return;
             }
-            [[RCCoreClient sharedCoreClient] getConversation:message.conversationType targetId:message.targetId completion:^(RCConversation * _Nullable conversation) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
-                    model.topCellBackgroundColor = self.topCellBackgroundColor;
-                    model.cellBackgroundColor = self.cellBackgroundColor;
-                    self.dataList[refreshIndex] = model;
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willReloadAtIndexPaths:)]) {
-                        [self.delegate dataSource:self willReloadAtIndexPaths:@[[NSIndexPath indexPathForRow:refreshIndex inSection:0]]];
-                    }
-                });
-            }];
-           
+            RCConversation *conversation =
+                [[RCCoreClient sharedCoreClient] getConversation:message.conversationType targetId:message.targetId];
+            RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];
+            model.topCellBackgroundColor = self.topCellBackgroundColor;
+            model.cellBackgroundColor = self.cellBackgroundColor;
+            self.dataList[refreshIndex] = model;
+            if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willReloadAtIndexPaths:)]) {
+                [self.delegate dataSource:self willReloadAtIndexPaths:@[[NSIndexPath indexPathForRow:refreshIndex inSection:0]]];
+            }
         });
     }
 }
@@ -338,30 +323,24 @@
                                                               .currentUserInfo
                                                               .userId]) { //由于多端阅读消息数同步而触发通知执行该方法时
                             if (model.unreadMessageCount != 0) {
-                                void (^completion)(int) = ^(int unreadMessageCount) {
-                                    dispatch_async(dispatch_get_main_queue(), ^{
-                                        if (unreadMessageCount != model.unreadMessageCount) {
-                                            model.unreadMessageCount = unreadMessageCount;
-                                            RCConversationCellUpdateInfo *updateInfo =
-                                                [[RCConversationCellUpdateInfo alloc] init];
-                                            updateInfo.model = model;
-                                            updateInfo.updateType = RCConversationCell_UnreadCount_Update;
-                                            [[NSNotificationCenter defaultCenter]
-                                                postNotificationName:RCKitConversationCellUpdateNotification
-                                                              object:updateInfo
-                                                            userInfo:nil];
-                                        }
-                                        if(self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]){
-                                            [self.delegate notifyUpdateUnreadMessageCountInDataSource];
-                                        }
-                                    });
-                                };
-                                
+                                NSInteger unreadMessageCount;
                                 if (model.lastestMessageDirection == MessageDirection_RECEIVE &&
                                     model.sentTime <= readTime && model.conversationModelType != RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-                                    completion(0);
+                                    unreadMessageCount = 0;
                                 } else {
-                                    [self getConversationUnreadCount:model completion:completion];
+                                    unreadMessageCount = [RCKitUtility getConversationUnreadCount:model];
+                                }
+
+                                if (unreadMessageCount != model.unreadMessageCount) {
+                                    model.unreadMessageCount = unreadMessageCount;
+                                    RCConversationCellUpdateInfo *updateInfo =
+                                        [[RCConversationCellUpdateInfo alloc] init];
+                                    updateInfo.model = model;
+                                    updateInfo.updateType = RCConversationCell_UnreadCount_Update;
+                                    [[NSNotificationCenter defaultCenter]
+                                        postNotificationName:RCKitConversationCellUpdateNotification
+                                                      object:updateInfo
+                                                    userInfo:nil];
                                 }
                             }
 
@@ -376,6 +355,9 @@
                                      object:updateInfo
                                      userInfo:nil];
                                 }];
+                            }
+                            if(self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]){
+                                [self.delegate notifyUpdateUnreadMessageCountInDataSource];
                             }
                         } else { //由于已读回执而触发通知执行该方法时
                             if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversationType)]) {
@@ -401,58 +383,55 @@
     });
 }
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
-    long messageId = [notification.object longValue];
-    [[RCCoreClient sharedCoreClient] getMessage:messageId completion:^(RCMessage * _Nullable message) {
+    dispatch_async(self.updateEventQueue, ^{
+        long messageId = [notification.object longValue];
+
         dispatch_async(dispatch_get_main_queue(), ^{
+            RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
             NSString *targetId = message.targetId;
             for (RCConversationModel *model in self.dataList) {
-                if (model.lastestMessageId == messageId || [model isMatching:message.conversationType targetId:message.targetId]) {
-                    [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId completion:^(RCConversation * _Nullable conversation) {
-                        model.lastestMessage = conversation.latestMessage;
-                        model.lastestMessageId = conversation.latestMessageId;
-                        model.mentionedCount = conversation.mentionedCount;
-                        [self getConversationUnreadCount:model completion:^(int unreadMessageCount) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                if (unreadMessageCount != model.unreadMessageCount) {
-                                    RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                                    model.unreadMessageCount = unreadMessageCount;
-                                    unreadUpdateInfo.model = model;
-                                    unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;
-                                    [[NSNotificationCenter defaultCenter]
-                                     postNotificationName:RCKitConversationCellUpdateNotification
-                                     object:unreadUpdateInfo
-                                     userInfo:nil];
-                                }
-                                RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                                updateInfo.model = model;
-                                updateInfo.updateType = RCConversationCell_MessageContent_Update;
-                                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitConversationCellUpdateNotification
-                                                                                    object:updateInfo
-                                                                                  userInfo:nil];
-                            });
-                        }];
-                    }];
+                if ([targetId isEqualToString:model.targetId] || model.lastestMessageId == messageId) {
+
+                    RCConversation *conversation =
+                        [[RCCoreClient sharedCoreClient] getConversation:model.conversationType targetId:model.targetId];
+                    model.lastestMessage = conversation.lastestMessage;
+                    model.lastestMessageId = conversation.lastestMessageId;
+                    model.mentionedCount = conversation.mentionedCount;
+                    NSInteger unreadMessageCount =
+                        [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId];
+                    if (unreadMessageCount != model.unreadMessageCount) {
+                        RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
+                        model.unreadMessageCount = unreadMessageCount;
+                        unreadUpdateInfo.model = model;
+                        unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;
+                        [[NSNotificationCenter defaultCenter]
+                            postNotificationName:RCKitConversationCellUpdateNotification
+                                          object:unreadUpdateInfo
+                                        userInfo:nil];
+                    }
+                    RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
+                    updateInfo.model = model;
+                    updateInfo.updateType = RCConversationCell_MessageContent_Update;
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitConversationCellUpdateNotification
+                                                                        object:updateInfo
+                                                                      userInfo:nil];
                     break;
                 } else if (!message) {
                     if (model.unreadMessageCount > 0) {
                         RCConversationCellUpdateInfo *unreadUpdateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                         [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType
-                                                                                          targetId:model.targetId completion:^(int count) {
-                             dispatch_async(dispatch_get_main_queue(), ^{
-                                 model.unreadMessageCount = count;
-                                 unreadUpdateInfo.model = model;
-                                 unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;
-                                 [[NSNotificationCenter defaultCenter]
-                                  postNotificationName:RCKitConversationCellUpdateNotification
-                                  object:unreadUpdateInfo
-                                  userInfo:nil];
-                             });
-                        }];
+                        model.unreadMessageCount = [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType
+                                                                                        targetId:model.targetId];
+                        unreadUpdateInfo.model = model;
+                        unreadUpdateInfo.updateType = RCConversationCell_UnreadCount_Update;
+                        [[NSNotificationCenter defaultCenter]
+                            postNotificationName:RCKitConversationCellUpdateNotification
+                                          object:unreadUpdateInfo
+                                        userInfo:nil];
                     }
                 }
             }
         });
-    }];
+    });
 }
 
 - (void)registerNotifications {
@@ -491,14 +470,6 @@
             action();
         });
     };
-}
-
-- (void)getConversationUnreadCount:(RCConversationModel *)model completion:(void (^)(int unreadMessageCount))completion {
-    if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-        [[RCCoreClient sharedCoreClient] getUnreadCount:@[ @(model.conversationType) ] completion:completion];
-    } else {
-        [[RCCoreClient sharedCoreClient] getUnreadCount:model.conversationType targetId:model.targetId completion:completion];
-    }
 }
 
 #pragma mark - getter

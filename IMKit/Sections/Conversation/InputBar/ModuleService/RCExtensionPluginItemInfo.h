@@ -12,7 +12,9 @@
 
 typedef void (^RCConversationPluginItemTapBlock)(RCChatSessionInputBarControl *chatSessionInputBar);
 
-/// Plugin board item信息
+/*!
+ Plugin board item信息
+ */
 @interface RCExtensionPluginItemInfo : NSObject
 
 @property (nonatomic, strong) UIImage *normalImage;

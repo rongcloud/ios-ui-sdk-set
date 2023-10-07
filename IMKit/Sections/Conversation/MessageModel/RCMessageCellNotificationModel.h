@@ -21,16 +21,24 @@ UIKIT_EXTERN NSString *const CONVERSATION_CELL_STATUS_SEND_READCOUNT; //已读�
 
 #import <Foundation/Foundation.h>
 
-/// 消息Cell状态更新通知的数据模型
+/*!
+ 消息Cell状态更新通知的数据模型
+ */
 @interface RCMessageCellNotificationModel : NSObject
 
-/// 消息ID
+/*!
+ 消息ID
+ */
 @property (nonatomic) long messageId;
 
-/// 更新的状态名
+/*!
+ 更新的状态名
+ */
 @property (strong, nonatomic) NSString *actionName;
 
-/// 进度
+/*!
+ 进度
+ */
 @property (nonatomic) NSInteger progress;
 
 @end

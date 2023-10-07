@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.6.4_opensource";
+static NSString *const RCIMKitVersion = @"5.5.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -767,17 +767,11 @@ static NSString *const RCIMKitVersion = @"5.6.4_opensource";
                   pushData:(NSString *)pushData
                    success:(void (^)(long messageId))successBlock
                      error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock {
-    if (targetId == nil) {
+    if (targetId == nil || content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_TARGETID, 0);
+            errorBlock(INVALID_PARAMETER, 0);
         }
-        return nil;
-    }
-    
-    if (content == nil) {
-        if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
-        }
+        NSLog(@"Parameters error");
         return nil;
     }
     content = [self beforeSendMessage:content];
@@ -840,8 +834,9 @@ static NSString *const RCIMKitVersion = @"5.6.4_opensource";
                 errorBlock:(void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock {
     if (message.targetId == nil || message.content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_MESSAGE, message);
+            errorBlock(INVALID_PARAMETER, message);
         }
+        NSLog(@"Parameters error");
         return nil;
     }
     message.content = [self beforeSendMessage:message.content];
@@ -901,20 +896,13 @@ static NSString *const RCIMKitVersion = @"5.6.4_opensource";
                              pushData:(NSString *)pushData
                               success:(void (^)(long messageId))successBlock
                                 error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock {
-    if (targetId == nil) {
+    if (targetId == nil || content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_TARGETID, 0);
+            errorBlock(INVALID_PARAMETER, 0);
         }
+        NSLog(@"Parameters error");
         return nil;
     }
-    
-    if (content == nil) {
-        if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
-        }
-        return nil;
-    }
-    
     content = [self beforeSendMessage:content];
     if (!content) {
         return nil;
@@ -1063,20 +1051,13 @@ static NSString *const RCIMKitVersion = @"5.6.4_opensource";
                         success:(void (^)(long messageId))successBlock
                           error:(void (^)(RCErrorCode errorCode, long messageId))errorBlock
                          cancel:(void (^)(long messageId))cancelBlock {
-    if (targetId == nil) {
+    if (targetId == nil || content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_TARGETID, 0);
+            errorBlock(INVALID_PARAMETER, 0);
         }
+        NSLog(@"Parameters error");
         return nil;
     }
-    
-    if (content == nil) {
-        if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
-        }
-        return nil;
-    }
-    
     content = [self beforeSendMessage:content];
     if (!content) {
         return nil;
@@ -1159,7 +1140,7 @@ static NSString *const RCIMKitVersion = @"5.6.4_opensource";
                          cancel:(void (^)(RCMessage *cancelMessage))cancelBlock {
     if (message.targetId == nil || message.content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER_MESSAGE, message);
+            errorBlock(INVALID_PARAMETER, message);
         }
         NSLog(@"Parameters error");
         return nil;

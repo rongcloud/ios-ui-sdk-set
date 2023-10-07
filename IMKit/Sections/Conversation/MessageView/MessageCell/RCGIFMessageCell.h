@@ -14,10 +14,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCGIFMessageCell : RCMessageCell
 
-/// 显示图片缩略图的View
+/*!
+ 显示图片缩略图的View
+ */
 @property (nonatomic, strong) RCGIFImageView *gifImageView;
 
-/// 显示发送进度的View
+/*!
+ 显示发送进度的View
+ */
 @property (nonatomic, strong) RCImageMessageProgressView *progressView;
 
 @end

@@ -494,8 +494,7 @@
     if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
          ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
-        self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
-        self.chatVC.conversationType == ConversationType_SYSTEM) {
+        self.chatVC.conversationType == ConversationType_PUBLICSERVICE) {
         
         if (0 == sentTime){
             for (long i = self.chatVC.conversationDataRepository.count - 1; i >= 0; i--) {

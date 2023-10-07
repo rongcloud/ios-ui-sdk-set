@@ -31,8 +31,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
 @property (nonatomic, strong) RCBaseButton *cancelButton;
 
-@property (nonatomic, assign) BOOL isVCPoped;
-
 @end
 
 @implementation RCFilePreviewViewController
@@ -57,8 +55,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 - (void)dealloc {
-    self.isVCPoped = YES;
-    [self p_stopWebView];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -102,11 +98,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             [self downloading:progress];
         } else if ([statusDic[@"type"] isEqualToString:@"success"]) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                // VC已经返回，此处不再发起预览/播放
-                if (self.isVCPoped) {
-                    return;
-                }
-                
                 self.fileMessage.localPath = statusDic[@"mediaPath"];
                 if ([self isFileSupported]) {
                     [self layoutAndPreviewFile];
@@ -216,15 +207,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)clickBackBtn:(id)sender {
     [self.navigationController popViewControllerAnimated:YES];
-    self.isVCPoped = YES;
-    [self p_stopWebView];
-}
-
-- (void)p_stopWebView {
-    self.webView.hidden = YES;
-    [self.webView stopLoading];
-    [self.webView removeFromSuperview];
-    self.webView = nil;
 }
 
 - (void)openInOtherApp:(NSString *)localPath {

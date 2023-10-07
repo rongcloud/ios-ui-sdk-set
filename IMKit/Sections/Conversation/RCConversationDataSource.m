@@ -94,11 +94,8 @@ static BOOL msgRoamingServiceAvailable = YES;
         [self loadLatestHistoryMessage];
         self.chatVC.unReadMessage = conversation.unreadMessageCount;
         if (self.chatVC.unReadMessage) {
-            [[RCCoreClient sharedCoreClient] getFirstUnreadMessage:self.chatVC.conversationType targetId:self.chatVC.targetId completion:^(RCMessage * _Nullable message) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    self.firstUnreadMessage = message;
-                });
-            }];
+            self.firstUnreadMessage =
+                [[RCCoreClient sharedCoreClient] getFirstUnreadMessage:self.chatVC.conversationType targetId:self.chatVC.targetId];
         }
         if((self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_ULTRAGROUP)) {
             if(RCKitConfigCenter.message.enableMessageMentioned) {
@@ -827,12 +824,9 @@ static BOOL msgRoamingServiceAvailable = YES;
     if (self.chatVC.unReadMessage > 0) {
         [self.chatVC.util syncReadStatus];
         [self.chatVC.util sendReadReceipt];
-        [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.chatVC.conversationType targetId:self.chatVC.targetId completion:^(BOOL ret) {
-            /// 清除完未读数需要通知更新UI
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.chatVC notifyUpdateUnreadMessageCount];
-            });
-        }];
+        [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.chatVC.conversationType targetId:self.chatVC.targetId];
+        /// 清除完未读数需要通知更新UI
+        [self.chatVC notifyUpdateUnreadMessageCount];
     }
 
     if (self.chatVC.conversationDataRepository.count == 0 && self.chatVC.unReadButton != nil) {
@@ -955,8 +949,11 @@ static BOOL msgRoamingServiceAvailable = YES;
         return;
     }
     __weak typeof(self) weakSelf = self;
-    [[RCChatRoomClient sharedChatRoomClient] joinChatRoom:self.chatVC.targetId messageCount:self.chatVC.defaultHistoryMessageCountOfChatRoom success:^{
-    } error:^(RCErrorCode status) {
+    [[RCChatRoomClient sharedChatRoomClient] joinChatRoom:self.chatVC.targetId
+    messageCount:self.chatVC.defaultHistoryMessageCountOfChatRoom
+    success:^{
+    }
+    error:^(RCErrorCode status) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (status == KICKED_FROM_CHATROOM) {
                 [weakSelf.chatVC alertErrorAndLeft:RCLocalizedString(@"JoinChatRoomRejected")];
@@ -1024,7 +1021,6 @@ static BOOL msgRoamingServiceAvailable = YES;
     [self didReloadRecalledMessage:recalledMsg.messageId];
 }
 
-//cell 展示时
 - (void)removeMentionedMessage:(long )curMessageId {
     if (self.unreadMentionedMessages.count <= 0 || !curMessageId) {
         return;
@@ -1053,16 +1049,13 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
         
         if(index >= 0) {
-            [[RCCoreClient sharedCoreClient] getMessage:recalledMsgId completion:^(RCMessage * _Nullable newMsg) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if(newMsg) {
-                        RCMessageModel *newModel = [RCMessageModel modelWithMessage:newMsg];
-                        newModel.isDisplayMessageTime = msgModel.isDisplayMessageTime;
-                        newModel.isDisplayNickname = msgModel.isDisplayNickname;
-                        self.cachedReloadMessages[index] = newModel;
-                    }
-                });
-            }];
+            RCMessage *newMsg = [[RCCoreClient sharedCoreClient] getMessage:recalledMsgId];
+            if(newMsg) {
+                RCMessageModel *newModel = [RCMessageModel modelWithMessage:newMsg];
+                newModel.isDisplayMessageTime = msgModel.isDisplayMessageTime;
+                newModel.isDisplayNickname = msgModel.isDisplayNickname;
+                self.cachedReloadMessages[index] = newModel;
+            }
             return;
         }
     }
@@ -1079,19 +1072,16 @@ static BOOL msgRoamingServiceAvailable = YES;
     if (index >= 0) {
         NSIndexPath *indexPath =  [NSIndexPath indexPathForRow:index inSection:0];
         [self.chatVC.conversationDataRepository removeObject:msgModel];
-        [[RCCoreClient sharedCoreClient] getMessage:recalledMsgId completion:^(RCMessage * _Nullable newMsg) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (newMsg) {
-                    RCMessageModel *newModel = [RCMessageModel modelWithMessage:newMsg];
-                    newModel.isDisplayMessageTime = msgModel.isDisplayMessageTime;
-                    newModel.isDisplayNickname = msgModel.isDisplayNickname;
-                    [self.chatVC.conversationDataRepository insertObject:newModel atIndex:index];
-                    [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-                } else {
-                    [self.chatVC.conversationMessageCollectionView deleteItemsAtIndexPaths:@[ indexPath ]];
-                }
-            });
-        }];
+        RCMessage *newMsg = [[RCCoreClient sharedCoreClient] getMessage:recalledMsgId];
+        if (newMsg) {
+            RCMessageModel *newModel = [RCMessageModel modelWithMessage:newMsg];
+            newModel.isDisplayMessageTime = msgModel.isDisplayMessageTime;
+            newModel.isDisplayNickname = msgModel.isDisplayNickname;
+            [self.chatVC.conversationDataRepository insertObject:newModel atIndex:index];
+            [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
+        } else {
+            [self.chatVC.conversationMessageCollectionView deleteItemsAtIndexPaths:@[ indexPath ]];
+        }
     }
 }
 
@@ -1391,6 +1381,32 @@ static BOOL msgRoamingServiceAvailable = YES;
     }
 }
 
+- (void)scrollToFirstUnreadMentionedMessage {
+    if (self.unreadMentionedMessages) {
+        for (int j = 0; j < self.unreadMentionedMessages.count; j++) {
+            RCMessage *mentionedMsg = [self.unreadMentionedMessages objectAtIndex:j];
+            BOOL isFindMentionedMessage = NO;
+            for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+                RCMessage *rcMsg = [self.chatVC.conversationDataRepository objectAtIndex:i];
+                RCMessageModel *model = [RCMessageModel modelWithMessage:rcMsg];
+                if (model.messageId == mentionedMsg.messageId) {
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+                    [self.chatVC.conversationMessageCollectionView scrollToItemAtIndexPath:indexPath
+                                                                   atScrollPosition:UICollectionViewScrollPositionTop
+                                                                           animated:NO];
+                    isFindMentionedMessage = YES;
+                    break;
+                }
+            }
+            if (isFindMentionedMessage) {
+                break;
+            }
+        }
+    }
+}
+
+
+
 - (void)scrollToLocatedMessage {
     if (self.chatVC.locatedMessageSentTime != 0) {
         for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
@@ -1432,6 +1448,9 @@ static BOOL msgRoamingServiceAvailable = YES;
                                                        inSection:0]] != nil;
     }
     return self.isShowingLastestMessage;
+}
+- (void)clearUnreadMentionedMessages {
+    self.unreadMentionedMessages = nil;
 }
 
 - (BOOL)isLoadingHistoryMessage {

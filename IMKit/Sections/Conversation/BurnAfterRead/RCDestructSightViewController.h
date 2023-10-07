@@ -13,7 +13,9 @@
 
 @interface RCDestructSightViewController : RCBaseViewController
 
-/// 当前消息的数据模型
+/*!
+ 当前消息的数据模型
+ */
 @property (nonatomic, strong) RCMessageModel *messageModel;
 
 @end

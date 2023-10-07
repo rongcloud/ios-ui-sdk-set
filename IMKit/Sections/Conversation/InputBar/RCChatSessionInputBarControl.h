@@ -16,7 +16,7 @@
 #import "RCMenuContainerView.h"
 #import "RCBaseNavigationController.h"
 #define RC_ChatSessionInputBar_Height 49.5f
-///输入栏扩展输入的唯一标识
+///输入栏扩展输入的唯一标示
 #define INPUT_MENTIONED_SELECT_TAG 1000
 #define PLUGIN_BOARD_ITEM_ALBUM_TAG 1001
 #define PLUGIN_BOARD_ITEM_CAMERA_TAG 1002
@@ -51,7 +51,7 @@
 /*!
  输入工具栏
  */
-@interface RCChatSessionInputBarControl : UIView
+@interface RCChatSessionInputBarControl : RCBaseView
 
 #pragma mark - 会话属性
 
@@ -154,8 +154,7 @@
 
 /**
  输入工具栏上面的线
-
- - Since: 5.4.4，合入 5.3.6
+ @since 5.4.4，合入 5.3.6
  */
 @property (nonatomic, strong, readonly) CALayer *topLineLayer;
 
@@ -183,7 +182,7 @@
 /**
  输入框最大输入行数
 
-  该变量设置范围为: 1~6, 超过该范围会自动调整为边界值
+ @discussion 该变量设置范围为: 1~6, 超过该范围会自动调整为边界值
  */
 @property (nonatomic, assign) NSInteger maxInputLines;
 
@@ -207,13 +206,13 @@
 /*!
  初始化输入工具栏
 
- - Parameter frame:            显示的Frame
- - Parameter containerView:    所处的会话页面View
- - Parameter controlType:      菜单类型
- - Parameter controlStyle:     显示布局
- - Parameter defaultInputType: 默认的输入模式
+ @param frame            显示的Frame
+ @param containerView    所处的会话页面View
+ @param controlType      菜单类型
+ @param controlStyle     显示布局
+ @param defaultInputType 默认的输入模式
 
- - Returns: 输入工具栏对象
+ @return 输入工具栏对象
  */
 - (instancetype)initWithFrame:(CGRect)frame
             withContainerView:(UIView *)containerView
@@ -224,10 +223,10 @@
 /*!
  设置输入工具栏的样式
 
- - Parameter type:  菜单类型
- - Parameter style: 显示布局
+ @param type  菜单类型
+ @param style 显示布局
 
-  您可以在会话页面RCConversationViewController的viewDidLoad之后设置，改变输入工具栏的样式。
+ @discussion 您可以在会话页面RCConversationViewController的viewDidLoad之后设置，改变输入工具栏的样式。
  */
 - (void)setInputBarType:(RCChatSessionInputBarControlType)type style:(RCChatSessionInputBarControlStyle)style;
 
@@ -254,10 +253,10 @@
 /*!
  设置输入框的输入状态
 
- - Parameter status:          输入框状态
- - Parameter animated:        是否使用动画效果
+ @param status          输入框状态
+ @param animated        是否使用动画效果
 
-  如果需要设置，请在输入框执行containerViewWillAppear之后（即会话页面viewWillAppear之后）。
+ @discussion 如果需要设置，请在输入框执行containerViewWillAppear之后（即会话页面viewWillAppear之后）。
  */
 - (void)updateStatus:(KBottomBarStatus)status animated:(BOOL)animated;
 
@@ -269,79 +268,76 @@
 /*!
  内容区域大小发生变化。
 
-  当本view所在的view frame发生变化，需要重新计算本view的frame时，调用此方法
+ @discussion 当本view所在的view frame发生变化，需要重新计算本view的frame时，调用此方法
  */
 - (void)containerViewSizeChanged;
 
 /**
  内容区域大小发生变化。
 
-  当本view所在的view frame发生变化，需要重新计算本view的frame时，调用此方法，无动画
+ @discussion 当本view所在的view frame发生变化，需要重新计算本view的frame时，调用此方法，无动画
  */
 - (void)containerViewSizeChangedNoAnnimation;
 
 /*!
  设置默认的输入框类型
 
- - Parameter defaultInputType:  默认输入框类型
+ @param defaultInputType  默认输入框类型
  */
 - (void)setDefaultInputType:(RCChatSessionInputBarInputType)defaultInputType;
 
 /*!
  添加被@的用户
 
- - Parameter userInfo:    被@的用户信息
+ @param userInfo    被@的用户信息
  */
 - (void)addMentionedUser:(RCUserInfo *)userInfo;
 
 /*!
  打开系统相册，选择图片
 
-  选择结果通过delegate返回
+ @discussion 选择结果通过delegate返回
  */
 - (void)openSystemAlbum;
 
 /*!
  打开系统相机，拍摄图片
 
-  拍摄结果通过delegate返回
+ @discussion 拍摄结果通过delegate返回
  */
 - (void)openSystemCamera;
 
 /*!
  打开地图picker，选择位置
 
-  选择结果通过delegate返回
+ @discussion 选择结果通过delegate返回
  */
 - (void)openLocationPicker;
 
 /*!
  打开文件选择器，选择文件
 
-  选择结果通过delegate返回
+ @discussion 选择结果通过delegate返回
  */
 - (void)openFileSelector;
 
 /*!
  常用语列表设置
 
- - Parameter commonPhrasesList: 您需要展示的常用语列表
+ @param commonPhrasesList 您需要展示的常用语列表
 
-  常用语条数需大于 0 条，每条内容最多可配置 30 个字，且只支持单聊。
+ @discussion 常用语条数需大于 0 条，每条内容最多可配置 30 个字，且只支持单聊。
+ 如果二次设置常用语列表，需要设置后主动调用 - (void)updateStatus:(KBottomBarStatus)status animated:(BOOL)animated 方法
  */
 - (BOOL)setCommonPhrasesList:(NSArray<NSString *> *)commonPhrasesList;
 
 /*!
  按照 tag 触发扩展中某个 pluginItem 的事件
  
- - Parameter functionTag: 某个 pluginItem 的 tag
+ @param functionTag 某个 pluginItem 的 tag
 */
 - (void)openDynamicFunction:(NSInteger)functionTag;
 
-
-
-/// 当前常用语视图的高度 0或者38
-- (NSInteger)currentCommonPhrasesViewHeight;
 /*!
  是否处于阅后即焚模式
 */
@@ -357,8 +353,8 @@
 /*!
  显示ViewController
 
- - Parameter viewController: 需要显示的ViewController
- - Parameter functionTag:    功能标识
+ @param viewController 需要显示的ViewController
+ @param functionTag    功能标识
  */
 - (void)presentViewController:(UIViewController *)viewController functionTag:(NSInteger)functionTag;
 
@@ -367,15 +363,15 @@
 /*!
  输入工具栏尺寸（高度）发生变化的回调
 
- - Parameter chatInputBar: 输入工具栏
- - Parameter frame:        输入工具栏最终需要显示的Frame
+ @param chatInputBar 输入工具栏
+ @param frame        输入工具栏最终需要显示的Frame
  */
 - (void)chatInputBar:(RCChatSessionInputBarControl *)chatInputBar shouldChangeFrame:(CGRect)frame;
 
 /*!
  点击键盘Return按钮的回调
 
- - Parameter inputTextView: 文本输入框
+ @param inputTextView 文本输入框
  */
 - (void)inputTextViewDidTouchSendKey:(UITextView *)inputTextView;
 
@@ -387,9 +383,9 @@
 /*!
  输入框中内容发生变化的回调
 
- - Parameter inputTextView: 文本输入框
- - Parameter range:         当前操作的范围
- - Parameter text:          插入的文本
+ @param inputTextView 文本输入框
+ @param range         当前操作的范围
+ @param text          插入的文本
  */
 - (void)inputTextView:(UITextView *)inputTextView
     shouldChangeTextInRange:(NSRange)range
@@ -398,57 +394,52 @@
 /*!
  输入框中内容已经发生变化的回调
 
- - Parameter inputTextView: 文本输入框
+ @param inputTextView 文本输入框
  */
 - (void)inputTextViewDidChange:(UITextView *)inputTextView;
 
 /*!
  输入框中内容已经发生变化的回调-讯飞
 
- - Parameter inputTextView: 文本输入框
+ @param inputTextView 文本输入框
  */
 - (void)inputTextViewDidChangeOnEndVoiceTransfer:(UITextView *)inputTextView;
 
 /*!
  公众服务菜单的点击回调
 
- - Parameter selectedMenuItem: 点击的公众服务菜单项
+ @param selectedMenuItem 点击的公众服务菜单项
  */
 - (void)onPublicServiceMenuItemSelected:(RCPublicServiceMenuItem *)selectedMenuItem;
 
 /*!
  点击扩展功能板中的扩展项的回调
 
- - Parameter pluginBoardView: 当前扩展功能板
- - Parameter tag:             点击的扩展项的唯一标识符
+ @param pluginBoardView 当前扩展功能板
+ @param tag             点击的扩展项的唯一标示符
  */
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag;
 
 /*!
  点击表情的回调
 
- - Parameter emojiView:    表情输入的View
- - Parameter touchedEmoji: 点击的表情对应的字符串编码
+ @param emojiView    表情输入的View
+ @param touchedEmoji 点击的表情对应的字符串编码
  */
 - (void)emojiView:(RCEmojiBoardView *)emojiView didTouchedEmoji:(NSString *)touchedEmoji;
 
 /*!
  点击发送按钮的回调
 
- - Parameter emojiView:  表情输入的View
- - Parameter sendButton: 发送按钮
+ @param emojiView  表情输入的View
+ @param sendButton 发送按钮
  */
 - (void)emojiView:(RCEmojiBoardView *)emojiView didTouchSendButton:(UIButton *)sendButton;
-
-/// 常用语按钮点击事件
-///
-/// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
-- (BOOL)commonPhrasesButtonDidTouch;
 
 /*!
  点击常用语的回调
 
- - Parameter commonPhrases:  常用语
+ @param commonPhrases  常用语
  */
 - (void)commonPhrasesViewDidTouch:(NSString *)commonPhrases;
 
@@ -477,33 +468,33 @@
 /*!
   相机拍照图片
 
- - Parameter image:   相机拍摄，选择发送的图片
+ @param image   相机拍摄，选择发送的图片
  */
 - (void)imageDidCapture:(UIImage *)image;
 
 /**
  相机录制小视频完成后调用
 
- - Parameter url: 小视频url
- - Parameter image: 小视频首帧图片
- - Parameter duration: 小视频时长 单位秒
+ @param url 小视频url
+ @param image 小视频首帧图片
+ @param duration 小视频时长 单位秒
  */
 - (void)sightDidFinishRecord:(NSString *)url thumbnail:(UIImage *)image duration:(NSUInteger)duration;
 
 /**
  相机录制小视频失败后调用
 
- - Parameter error: 错误
- - Parameter status: AVAssetWriter 状态
+ @param error 错误
+ @param status AVAssetWriter 状态
  */
 - (void)sightDidRecordFailedWith:(NSError *)error status:(NSInteger)status;
 
 /*!
  地理位置选择完成之后的回调
- - Parameter location:       位置的二维坐标
- - Parameter locationName:   位置的名称
- - Parameter mapScreenShot:  位置在地图中的缩略图
-  已废弃，请通过实现扩展区位置按钮点击跳转, 设置 RCLocationPickerViewController 的代理 RCLocationPickerViewControllerDelegate，来实现地理位置选择完成之后的代理回调方法。实现扩展区位置按钮点击跳转参考
+ @param location       位置的二维坐标
+ @param locationName   位置的名称
+ @param mapScreenShot  位置在地图中的缩略图
+ @discussion 已废弃，请通过实现扩展区位置按钮点击跳转, 设置 RCLocationPickerViewController 的代理 RCLocationPickerViewControllerDelegate，来实现地理位置选择完成之后的代理回调方法。实现扩展区位置按钮点击跳转参考
  - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag {
      if(tag == PLUGIN_BOARD_ITEM_LOCATION_TAG){
          RCLocationPickerViewController *picker = [[RCLocationPickerViewController alloc] init];
@@ -523,31 +514,31 @@
 /*!
  相册选择图片列表,返回图片的 NSData
 
- - Parameter selectedImages:   选中的图片
- - Parameter full:             用户是否要求原图
+ @param selectedImages   选中的图片
+ @param full             用户是否要求原图
  */
 - (void)imageDataDidSelect:(NSArray *)selectedImages fullImageRequired:(BOOL)full;
 
 /*!
  选择文件列表
 
- - Parameter filePathList:   被选中的文件路径list
+ @param filePathList   被选中的文件路径list
  */
 - (void)fileDidSelect:(NSArray *)filePathList;
 
 /**
  会话页面发送文件消息，在文件选择页面选择某个文件时调用该方法方法
 
- - Parameter path: 文件路径
- - Returns: 返回 YES 允许文件被选中，否则不允许选中
-  该方法默认返回YES，这个方法可以控制某些文件是否可以被选中。
+ @param path 文件路径
+ @return 返回 YES 允许文件被选中，否则不允许选中
+ @discussion 该方法默认返回YES，这个方法可以控制某些文件是否可以被选中。
  */
 - (BOOL)canBeSelectedAtFilePath:(NSString *)path;
 
 /*!
  输入工具栏状态变化时的回调（暂未实现）
 
- - Parameter bottomBarStatus: 当前状态
+ @param bottomBarStatus 当前状态
  */
 - (void)chatSessionInputBarStatusChanged:(KBottomBarStatus)bottomBarStatus;
 
@@ -558,16 +549,16 @@
 /*!
  获取待选择的用户ID列表
 
- - Parameter completion:  获取完成的回调
- - Parameter functionTag: 功能标识
+ @param completion  获取完成的回调
+ @param functionTag 功能标识
  */
 - (void)getSelectingUserIdList:(void (^)(NSArray<NSString *> *userIdList))completion functionTag:(NSInteger)functionTag;
 
 /*!
  获取待选择的UserId的用户信息
 
- - Parameter userId:           用户ID
- - Returns: 用户信息
+ @param userId           用户ID
+ @return 用户信息
  */
 - (RCUserInfo *)getSelectingUserInfo:(NSString *)userId;
 
@@ -581,9 +572,9 @@
 /**
  点击编辑按钮时的回调，可以通过rootCtrl控制器进行页面的跳转，在源码中默认跳转到RCPictureEditViewController
 
- - Parameter rootCtrl: 图片编辑根控制器，用于页面跳转
- - Parameter originalImage: 原图片
- - Parameter editCompletion: 编辑过的图片通过Block回传给SDK
+ @param rootCtrl 图片编辑根控制器，用于页面跳转
+ @param originalImage 原图片
+ @param editCompletion 编辑过的图片通过Block回传给SDK
  */
 - (void)onClickEditPicture:(UIViewController *)rootCtrl
              originalImage:(UIImage *)originalImage

@@ -394,7 +394,7 @@
 
     RCSightSlideViewController *svc = [[RCSightSlideViewController alloc] init];
     svc.messageModel = model;
-//    svc.topRightBtnHidden = YES;
+    svc.topRightBtnHidden = YES;
     svc.onlyPreviewCurrentMessage = YES;
     RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:svc];
     navc.modalPresentationStyle = UIModalPresentationFullScreen;

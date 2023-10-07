@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  点击常用语的回调
 
- - Parameter commonPhrase: 点击的常用语
+ @param commonPhrase 点击的常用语
  */
 - (void)didTouchCommonPhrasesView:(NSString *)commonPhrase;
 
@@ -24,15 +24,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCCommonPhrasesListView : UIView
 
-/// 点击常用语的回调
+/*!
+ 点击常用语的回调
+ */
 @property (nonatomic, weak) id<RCCommonPhrasesListViewDelegate> delegate;
 
 - (instancetype)initWithFrame:(CGRect)frame dataSource:(NSArray *)dataSource;
 
-/// 常用语的数据源
+/*!
+常用语的数据源
+*/
 @property (nonatomic, strong) NSArray *dataSource;
 
-/// 刷新常用语
+/*!
+刷新常用语
+*/
 - (void)reloadCommonPhrasesList;
 
 @end

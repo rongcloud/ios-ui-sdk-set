@@ -9,16 +9,24 @@
 #import "RCAttributedLabel.h"
 #import "RCMessageCell.h"
 
-/// 富文本（图文）消息Cell
+/*!
+ 富文本（图文）消息Cell
+ */
 @interface RCRichContentMessageCell : RCMessageCell
 
-/// 图片内容显示的View
+/*!
+ 图片内容显示的View
+ */
 @property (nonatomic, strong) RCloudImageView *richContentImageView;
 
-/// 文本内容显示的Label
+/*!
+ 文本内容显示的Label
+ */
 @property (nonatomic, strong) RCAttributedLabel *digestLabel;
 
-/// 标题显示的Label
+/*!
+ 标题显示的Label
+ */
 @property (nonatomic, strong) RCAttributedLabel *titleLabel;
 
 @end

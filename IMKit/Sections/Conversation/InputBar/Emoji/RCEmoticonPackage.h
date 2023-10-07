@@ -12,7 +12,9 @@
 #import "RCBaseScrollView.h"
 @interface RCEmoticonPackage : NSObject
 
-/// 表情包唯一标识
+/**
+ *  表情包唯一标示
+ */
 @property (nonatomic, copy) NSString *identify;
 
 //表情包总页数
@@ -21,10 +23,14 @@
 // tabIcon
 @property (nonatomic, strong) UIImage *tabImage;
 
-/// 表情包容器
+/**
+ *  表情包容器
+ */
 @property (nonatomic, strong) RCBaseScrollView *emotionContainerView;
 
-/// 表情数据源
+/**
+ *  表情数据源
+ */
 @property (nonatomic, strong) id<RCEmoticonTabSource> tabSource;
 
 @property (nonatomic, weak) RCEmojiBoardView *emojBoardView;

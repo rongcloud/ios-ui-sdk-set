@@ -11,7 +11,9 @@
 #import "RCMessageModel.h"
 #import <Foundation/Foundation.h>
 
-/// RongCloud IM扩展模块协议
+/*!
+ RongCloud IM扩展模块协议
+ */
 @protocol RongIMKitExtensionModule <RCExtensionModule>
 
 @optional
@@ -20,12 +22,12 @@
 /*!
  获取会话页面的cell信息。
 
- - Parameter conversationType:  会话类型
- - Parameter targetId:          targetId
+ @param conversationType  会话类型
+ @param targetId          targetId
 
- - Returns: cell信息列表。
+ @return cell信息列表。
 
-  当进入到会话页面时，SDK需要了解扩展模块的消息对应的MessageCell和reuseIdentifier。
+ @discussion 当进入到会话页面时，SDK需要了解扩展模块的消息对应的MessageCell和reuseIdentifier。
  */
 - (NSArray<RCExtensionMessageCellInfo *> *)getMessageCellInfoList:(RCConversationType)conversationType
                                                          targetId:(NSString *)targetId;
@@ -33,16 +35,16 @@
 /*!
  点击MessageCell的处理
 
- - Parameter messageModel:   被点击MessageCell的model
+ @param messageModel   被点击MessageCell的model
  */
 - (void)didTapMessageCell:(RCMessageModel *)messageModel;
 
 /**
  会话页面 WillAppear 时会调用，可以自己修改 extensionView 的 frame 及内容
 
- - Parameter conversationType: 会话类型
- - Parameter targetId:         targetId
- - Parameter extensionView:    扩展view
+ @param conversationType 会话类型
+ @param targetId         targetId
+ @param extensionView    扩展view
  */
 - (void)extensionViewWillAppear:(RCConversationType)conversationType
                        targetId:(NSString *)targetId
@@ -52,16 +54,16 @@
  会话页面 WillDisappear 时会调用（如果您的扩展模块里有其他需要改变会话页面的
  extensionView,在收到这个方法之后就应该终止修改）
 
- - Parameter conversationType: 会话类型
- - Parameter targetId:         targetId
+ @param conversationType 会话类型
+ @param targetId         targetId
  */
 - (void)extensionViewWillDisappear:(RCConversationType)conversationType targetId:(NSString *)targetId;
 
 /**
  会话页面即将被销毁，点击会话页面左上角的“返回”按钮会触发这个回调
 
- - Parameter conversationType: 会话类型
- - Parameter targetId: targetId
+ @param conversationType 会话类型
+ @param targetId targetId
  */
 - (void)containerViewWillDestroy:(RCConversationType)conversationType targetId:(NSString *)targetId;
 
