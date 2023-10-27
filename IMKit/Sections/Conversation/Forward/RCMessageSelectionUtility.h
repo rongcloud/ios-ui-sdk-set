@@ -13,29 +13,25 @@ typedef enum : NSUInteger {
     RCMessageMultiSelectStatusSelected = 0,
     RCMessageMultiSelectStatusCancelSelected,
 } RCMessageMultiSelectStatus;
-/*!
- message cell 选择状态发生变化
- */
+/// message cell 选择状态发生变化
 UIKIT_EXTERN NSString *const RCMessageMultiSelectStatusChanged;
 
-/*!
-message cell 选择数量发生变化的代理
-*/
+/// message cell 选择数量发生变化的代理
 @protocol RCMessagesMultiSelectedProtocol <NSObject>
 @optional
 /*!
 message cell 消息选择数量即将发生变化的回调
 
-@param status 消息 Cell 的选择状态
-@param model 消息 Cell 的数据模型
+- Parameter status: 消息 Cell 的选择状态
+- Parameter model: 消息 Cell 的数据模型
 */
 - (BOOL)onMessagesMultiSelectedCountWillChanged:(RCMessageMultiSelectStatus)status model:(RCMessageModel *)model;
 
 /*!
 message cell 消息选择数量发生变化的回调
 
-@param status 消息 Cell 的选择状态
-@param model 消息 Cell 的数据模型
+- Parameter status: 消息 Cell 的选择状态
+- Parameter model: 消息 Cell 的数据模型
 */
 - (void)onMessagesMultiSelectedCountDidChanged:(RCMessageMultiSelectStatus)status model:(RCMessageModel *)model;
 

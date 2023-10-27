@@ -53,22 +53,20 @@
 - (void)start {
     RCDownloadHelper *downloadHelper = [RCDownloadHelper new];
     [downloadHelper getDownloadFileToken:MediaType_IMAGE
-                           completeBlock:^(NSString *_Nonnull token) {
+                                queryUrl:[self.imageURL absoluteString]
+                           completeBlock:^(NSString *_Nullable token, NSString *_Nullable authInfo) {
                                dispatch_async(dispatch_get_main_queue(), ^{
-                                   [self startDownload:token];
+                                   [self startDownload:token authInfo:authInfo];
                                });
                            }];
 }
 
-- (void)startDownload:(NSString *)token {
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.imageURL
-                                                                cachePolicy:NSURLRequestReturnCacheDataElseLoad
-                                                            timeoutInterval:self.timeoutInterval];
+- (void)startDownload:(NSString *)token authInfo:(nullable NSString *)authInfo  {
+    
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.imageURL cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:self.timeoutInterval];
+    [RCDownloadHelper handleRequest:request token:token authInfo:authInfo];
+    
     [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
-    if (token) {
-        [request setValue:token forHTTPHeaderField:@"authorization"];
-    }
-    request.timeoutInterval = 10;
     
     NSURLSessionConfiguration *configuration = [self rcSessionConfiguration];
     _session = [NSURLSession sessionWithConfiguration:configuration

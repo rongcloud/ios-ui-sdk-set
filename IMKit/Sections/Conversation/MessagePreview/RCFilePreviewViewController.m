@@ -15,7 +15,7 @@
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"
-#import "RCBaseButton.h"
+#import "RCButton.h"
 #import "RCBaseImageView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
@@ -30,6 +30,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) RCBaseButton *downloadButton;
 @property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
 @property (nonatomic, strong) RCBaseButton *cancelButton;
+
+@property (nonatomic, assign) BOOL isVCPoped;
 
 @end
 
@@ -55,6 +57,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 - (void)dealloc {
+    self.isVCPoped = YES;
+    [self p_stopWebView];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -98,6 +102,11 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             [self downloading:progress];
         } else if ([statusDic[@"type"] isEqualToString:@"success"]) {
             dispatch_async(dispatch_get_main_queue(), ^{
+                // VC已经返回，此处不再发起预览/播放
+                if (self.isVCPoped) {
+                    return;
+                }
+                
                 self.fileMessage.localPath = statusDic[@"mediaPath"];
                 if ([self isFileSupported]) {
                     [self layoutAndPreviewFile];
@@ -207,6 +216,15 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)clickBackBtn:(id)sender {
     [self.navigationController popViewControllerAnimated:YES];
+    self.isVCPoped = YES;
+    [self p_stopWebView];
+}
+
+- (void)p_stopWebView {
+    self.webView.hidden = YES;
+    [self.webView stopLoading];
+    [self.webView removeFromSuperview];
+    self.webView = nil;
 }
 
 - (void)openInOtherApp:(NSString *)localPath {
@@ -314,7 +332,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)setNavigationItems {
     //设置右键
-    RCBaseButton *rightBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
+    RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
+    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(9.5, 0, 9.5, -9.5);
+    rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(moreAction) forControlEvents:UIControlEventTouchUpInside];

@@ -15,17 +15,17 @@
 /**
  *  attributeDictionaryForTextType
  *
- *  @param textType textType
+ *  - Parameter textType: textType
  *
- *  @return return NSDictionary
+ *  - Returns: return NSDictionary
  */
 - (NSDictionary *)attributeDictionaryForTextType:(NSTextCheckingTypes)textType;
 /**
  *  highlightedAttributeDictionaryForTextType
  *
- *  @param textType textType
+ *  - Parameter textType: textType
  *
- *  @return NSDictionary
+ *  - Returns: NSDictionary
  */
 - (NSDictionary *)highlightedAttributeDictionaryForTextType:(NSTextCheckingType)textType;
 
@@ -92,16 +92,16 @@
 /**
  *  setTextdataDetectorEnabled
  *
- *  @param text                text
- *  @param dataDetectorEnabled dataDetectorEnabled
+ *  - Parameter text:                text
+ *  - Parameter dataDetectorEnabled: dataDetectorEnabled
  */
 - (void)setText:(NSString *)text dataDetectorEnabled:(BOOL)dataDetectorEnabled;
 
 /**
  *  setTextHighlighted
  *
- *  @param highlighted highlighted
- *  @param point       point
+ *  - Parameter highlighted: highlighted
+ *  - Parameter point:       point
  */
 - (void)setTextHighlighted:(BOOL)highlighted atPoint:(CGPoint)point;
 
@@ -116,24 +116,24 @@
 /*!
  点击URL的回调
 
- @param label 当前Label
- @param url   点击的URL
+ - Parameter label: 当前Label
+ - Parameter url:   点击的URL
  */
 - (void)attributedLabel:(RCAttributedLabel *)label didSelectLinkWithURL:(NSURL *)url;
 
 /*!
  点击电话号码的回调
 
- @param label       当前Label
- @param phoneNumber 点击的URL
+ - Parameter label:       当前Label
+ - Parameter phoneNumber: 点击的URL
  */
 - (void)attributedLabel:(RCAttributedLabel *)label didSelectLinkWithPhoneNumber:(NSString *)phoneNumber;
 
 /*!
  点击Label的回调
 
- @param label   当前Label
- @param content 点击的内容
+ - Parameter label:   当前Label
+ - Parameter content: 点击的内容
  */
 - (void)attributedLabel:(RCAttributedLabel *)label didTapLabel:(NSString *)content;
 

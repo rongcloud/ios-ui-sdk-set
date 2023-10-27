@@ -9,6 +9,7 @@
 #import "RCSightCapturer.h"
 #import <UIKit/UIKit.h>
 #import <CoreTelephony/CTCallCenter.h>
+#import <RongIMKit/RCKitConfig.h>
 
 @interface RCSightCapturer () <AVCaptureVideoDataOutputSampleBufferDelegate,
                                AVCaptureAudioDataOutputSampleBufferDelegate>
@@ -291,6 +292,10 @@
     if (![self.captureSession isRunning]) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(self.sessionQueue, ^{
+            [[AVAudioSession sharedInstance] setActive:NO error:nil];
+            [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+            [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            weakSelf.captureSession.automaticallyConfiguresApplicationAudioSession = NO;
             [weakSelf.captureSession startRunning];
         });
     }
@@ -301,6 +306,15 @@
         __weak typeof(self) weakSelf = self;
         dispatch_async(self.sessionQueue, ^{
             [weakSelf.captureSession stopRunning];
+            if (RCKitConfigCenter.message.isExclusiveSoundPlayer) {
+                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+                [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+                [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            } else {
+                [[AVAudioSession sharedInstance] setActive:NO
+                                               withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                                     error:nil];
+            }
             [weakSelf teardownCaptureSession];
         });
     }

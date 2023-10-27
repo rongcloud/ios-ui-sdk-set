@@ -217,31 +217,33 @@
 
         if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL ||
             model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE) {
-            [[RCCoreClient sharedCoreClient] removeConversation:model.conversationType targetId:model.targetId];
-            [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
-            [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
-                                                  withRowAnimation:UITableViewRowAnimationFade];
+            [[RCCoreClient sharedCoreClient] removeConversation:model.conversationType targetId:model.targetId completion:^(BOOL ret) {
+                if(ret){
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
+                        [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
+                                                              withRowAnimation:UITableViewRowAnimationFade];
+                        [self deleteAndReloadConversationCell:model];
+                    });
+                }
+            }];
         } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-            [[RCCoreClient sharedCoreClient] clearConversations:@[ @(model.conversationType) ]];
-            [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
-            [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
-                                                  withRowAnimation:UITableViewRowAnimationFade];
+            [[RCCoreClient sharedCoreClient] clearConversations:@[ @(model.conversationType)] completion:^(BOOL ret) {
+                if(ret){
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.dataSource.dataList removeObjectAtIndex:indexPath.row];
+                        [self.conversationListTableView deleteRowsAtIndexPaths:@[ indexPath ]
+                                                              withRowAnimation:UITableViewRowAnimationFade];
+                        [self deleteAndReloadConversationCell:model];
+                    });
+                }
+            }];
         } else {
             [self rcConversationListTableView:tableView commitEditingStyle:editingStyle forRowAtIndexPath:indexPath];
+            [self deleteAndReloadConversationCell:model];
         }
 
-        [self didDeleteConversationCell:model];
-        [self notifyUpdateUnreadMessageCount];
-
-        if (self.isEnteredToCollectionViewController && self.dataSource.dataList.count == 0) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(),
-                           ^{
-                               [self.conversationListTableView removeFromSuperview];
-                               [self.navigationController popViewControllerAnimated:YES];
-                           });
-        } else {
-            [self updateEmptyConversationView];
-        }
+        
     } else {
         DebugLog(@"editingStyle %ld is unsupported.", (long)editingStyle);
     }
@@ -253,6 +255,21 @@
 }
 
 #pragma mark - Target action
+- (void)deleteAndReloadConversationCell:(RCConversationModel *)model{
+    [self didDeleteConversationCell:model];
+    [self notifyUpdateUnreadMessageCount];
+
+    if (self.isEnteredToCollectionViewController && self.dataSource.dataList.count == 0) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(),
+                       ^{
+                           [self.conversationListTableView removeFromSuperview];
+                           [self.navigationController popViewControllerAnimated:YES];
+                       });
+    } else {
+        [self updateEmptyConversationView];
+    }
+}
+
 - (void)loadMore {
     __weak typeof(self) ws = self;
     [self.dataSource loadMoreConversations:^(NSMutableArray<RCConversationModel *> *modelList) {

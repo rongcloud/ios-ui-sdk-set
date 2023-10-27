@@ -14,8 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RCMessageNotificationHelper : NSObject
 
 /// 验证消息是否可以通知
-/// @param message 消息
-/// @param completion 回调
+/// - Parameter message: 消息
+/// - Parameter completion: 回调
 + (void)checkNotifyAbilityWith:(RCMessage *)message
                     completion:(void (^)(BOOL show))completion;
 @end

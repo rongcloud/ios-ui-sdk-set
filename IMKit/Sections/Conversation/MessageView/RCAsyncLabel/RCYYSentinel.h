@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) int32_t value;
 
 /// Increase the value atomically.
-/// @return The new value.
+/// - Returns: The new value.
 - (int32_t)increase;
 
 @end

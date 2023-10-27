@@ -14,29 +14,19 @@
 @protocol RCInputContainerViewDelegate;
 
 @interface RCInputContainerView : RCBaseView
-/*!
- 语音与文本输入切换的按钮
- */
+/// 语音与文本输入切换的按钮
 @property (strong, nonatomic) RCButton *switchButton;
 
-/*!
- 录制语音消息的按钮
- */
+/// 录制语音消息的按钮
 @property (nonatomic, strong) RCButton *recordButton;
 
-/*!
- 文本输入框
- */
+/// 文本输入框
 @property (nonatomic, strong) RCTextView *inputTextView;
 
-/*!
- 表情的按钮
- */
+/// 表情的按钮
 @property (nonatomic, strong) RCButton *emojiButton;
 
-/*!
- 扩展输入的按钮
- */
+/// 扩展输入的按钮
 @property (nonatomic, strong) RCButton *additionalButton;
 
 @property (nonatomic, assign) KBottomBarStatus currentBottomBarStatus;
@@ -44,7 +34,7 @@
 /**
  输入框最大输入行数
 
- @discussion 该变量设置范围为: 1~6, 超过该范围会自动调整为边界值
+  该变量设置范围为: 1~6, 超过该范围会自动调整为边界值
  */
 @property (nonatomic, assign) NSInteger maxInputLines;
 

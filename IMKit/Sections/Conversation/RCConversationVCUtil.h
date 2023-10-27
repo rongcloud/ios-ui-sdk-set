@@ -18,6 +18,9 @@
 #pragma mark - 消息处理
 //聊天页面做具体的发送消息的动作
 - (void)doSendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
+// 专属发送, 内部无焚毁逻辑
+- (void)doOnlySendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
+
 //批量发送从相册中选择出来的媒体消息，包含图片，视频，gif
 - (void)doSendSelectedMediaMessage:(NSArray *)selectedImages fullImageRequired:(BOOL)full;
 //同步未读数
@@ -58,7 +61,7 @@
 
 
 /// 根据消息ID获取model
-/// @param messageID <#messageID description#>
+/// - Parameter messageID: <#messageID description#>
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
 #pragma mark - Util
 //保存草稿
@@ -67,5 +70,7 @@
 - (NSString *)getHQVoiceMessageCachePath;
 
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)errorCode;
+
++ (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model;
 @end
 

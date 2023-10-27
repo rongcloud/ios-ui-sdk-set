@@ -12,7 +12,7 @@
 /*!
  IMKit ViewController基类
 
- @discussion 主要定义了View的默认大小。
+  主要定义了View的默认大小。
  */
 @interface RCBaseViewController : UIViewController
 

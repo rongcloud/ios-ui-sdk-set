@@ -131,7 +131,7 @@ typedef void (^OnPoiSearchResult)(NSArray *pois, BOOL clearPreviousResult, BOOL 
 - (void)didUpdateUserLocation;
 
 /*!
- 选择位置标示
+ 选择位置标注
 
  @param placeMark 选择的位置标注
 

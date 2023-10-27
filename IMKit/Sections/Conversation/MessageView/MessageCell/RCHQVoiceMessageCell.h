@@ -8,34 +8,22 @@
 
 #import "RongIMKit.h"
 
-/*!
- 语音消息Cell
- */
+/// 语音消息Cell
 @interface RCHQVoiceMessageCell : RCMessageCell
 
-/*!
- 语音播放的View
- */
+/// 语音播放的View
 @property (nonatomic, strong) RCBaseImageView *playVoiceView;
 
-/*!
- 显示是否已播放的View
- */
+/// 显示是否已播放的View
 @property (nonatomic, strong) RCBaseImageView *voiceUnreadTagView;
 
-/*!
- 显示语音时长的Label
- */
+/// 显示语音时长的Label
 @property (nonatomic, strong) UILabel *voiceDurationLabel;
 
-/*!
- 播放语音
- */
+/// 播放语音
 - (void)playVoice;
 
-/*!
- 停止播放语音
- */
+/// 停止播放语音
 - (void)stopPlayingVoice;
 
 @end

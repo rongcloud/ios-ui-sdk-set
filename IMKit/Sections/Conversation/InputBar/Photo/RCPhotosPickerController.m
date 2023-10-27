@@ -91,7 +91,7 @@ static NSString *const reuseIdentifier = @"Cell";
              }
          }
      }
-    self.collectionView.alpha = 0;
+    self.collectionView.alpha = self.disableFirstAppear?1:0;
      [self.collectionView reloadData];
      if (!self.disableFirstAppear) {
          dispatch_async(dispatch_get_main_queue(), ^{
