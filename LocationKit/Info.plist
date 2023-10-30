@@ -19,12 +19,12 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>202310271741</string>
+	<string>202310301347</string>
 	<key>RCVersion</key>
 	<string>5.6.6</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
 	<key>RCCommitId</key>
-	<string>4e5ecfdb</string>
+	<string>1409f65d</string>
 </dict>
 </plist>

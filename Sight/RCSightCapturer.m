@@ -9,7 +9,7 @@
 #import "RCSightCapturer.h"
 #import <UIKit/UIKit.h>
 #import <CoreTelephony/CTCallCenter.h>
-#import <RongIMKit/RCKitConfig.h>
+#import "RongSightAdaptiveHeader.h"
 
 @interface RCSightCapturer () <AVCaptureVideoDataOutputSampleBufferDelegate,
                                AVCaptureAudioDataOutputSampleBufferDelegate>
