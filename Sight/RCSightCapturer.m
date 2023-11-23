@@ -495,7 +495,7 @@
         }
     };
     // Capture still image
-    if (connection) {
+    if (connection && connection.enabled && connection.active) {
         [self.imageOutput captureStillImageAsynchronouslyFromConnection:connection completionHandler:handler];
     }
 }

@@ -397,6 +397,10 @@
     return [self linkAtCharacterIndex:idx];
 }
 
+- (BOOL)canBecomeFirstResponder {
+    return YES;
+}
+
 #pragma mark - Getters and Setters
 - (void)setText:(NSString *)text {
     [self setText:text dataDetectorEnabled:YES];

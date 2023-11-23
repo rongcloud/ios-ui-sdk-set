@@ -206,11 +206,11 @@
 
     [_selectbutton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[_selectbutton(28)]-2-|"
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[_selectbutton(44)]-2-|"
                                                                  options:kNilOptions
                                                                  metrics:nil
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];  
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_selectbutton(28)]-2-|"
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_selectbutton(44)]-2-|"
                                                                  options:kNilOptions
                                                                  metrics:nil
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];
@@ -251,9 +251,9 @@
         [_selectbutton setImage:RCResourceImage(@"photopicker_state_selected")
                        forState:UIControlStateSelected];
         if ([RCKitUtility isRTL]) {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(12, 0 , 0, 12);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 0 , 0, 28);
         } else {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(12, 12 , 0, 0);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 28 , 0, 0);
         }
     }
     return _selectbutton;

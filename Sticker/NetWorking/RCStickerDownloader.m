@@ -8,6 +8,7 @@
 
 #import "RCStickerDownloader.h"
 #import "RCStickerUtility.h"
+#import "RongStickerAdaptiveHeader.h"
 
 /**
  Async download queue
@@ -62,7 +63,10 @@ static NSOperationQueue *rong_st_download_queue() {
                      progress:(void (^)(int progress))progressBlock
                       success:(void (^)(NSURL *localURL))successBlock
                         error:(void (^)(int errorCode))errorBlock {
-
+    if (identifier.length == 0) {
+        RCLogD(@"sticker download, identifier is nil");
+        return;
+    }
     [self.progressBlocks setObject:progressBlock forKey:identifier];
     [self.successBlocks setObject:successBlock forKey:identifier];
     [self.errorBlocks setObject:errorBlock forKey:identifier];
@@ -87,6 +91,10 @@ static NSOperationQueue *rong_st_download_queue() {
             totalBytesWritten:(int64_t)totalBytesWritten
     totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
     NSString *sessionIdentifier = session.sessionDescription;
+    if (sessionIdentifier.length == 0) {
+        RCLogD(@"sticker download progress, sessionIdentifier is nil");
+        return;
+    }
     void (^progressBlock)(int) = [self.progressBlocks objectForKey:sessionIdentifier];
     if (progressBlock) {
         progressBlock((int)(100 * totalBytesWritten / totalBytesExpectedToWrite));
@@ -105,6 +113,10 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
                  downloadTask:(NSURLSessionDownloadTask *)downloadTask
     didFinishDownloadingToURL:(NSURL *)location {
     NSString *sessionIdentifier = session.sessionDescription;
+    if (sessionIdentifier.length == 0) {
+        RCLogD(@"sticker download finish, sessionIdentifier is nil");
+        return;
+    }
     void (^successBlock)(NSURL *localURL) = [self.successBlocks objectForKey:sessionIdentifier];
     if (successBlock) {
         successBlock(location);
@@ -118,6 +130,10 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
 // download failed
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     NSString *sessionIdentifier = session.sessionDescription;
+    if (sessionIdentifier.length == 0) {
+        RCLogD(@"sticker download complete, sessionIdentifier is nil");
+        return;
+    }
     void (^errorBlock)(int errorCode) = [self.errorBlocks objectForKey:sessionIdentifier];
     if (errorBlock) {
         errorBlock((int)error.code);

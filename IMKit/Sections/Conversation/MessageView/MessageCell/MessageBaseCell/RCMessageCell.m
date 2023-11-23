@@ -15,7 +15,7 @@
 #import "RCKitConfig.h"
 #import "RCMessageCellTool.h"
 #import "RCResendManager.h"
-#import <RCCoreClient+Destructing.h>
+#import "RCCoreClient+Destructing.h"
 #import <RongPublicService/RongPublicService.h>
 // 头像
 #define PortraitImageViewTop 0
