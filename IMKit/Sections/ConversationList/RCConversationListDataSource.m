@@ -49,16 +49,16 @@
         return;
     }
     
-    __block RCConversationModel *lastModel;
-    __block long long sentTime = 0;
-    __weak typeof(self) ws = self;
+    RCConversationModel *lastModel;
+    long long operationTime = 0;
     lastModel = self.dataList.lastObject;
-    if (lastModel && lastModel.sentTime > 0) {
-        sentTime = lastModel.sentTime;
+    if (lastModel && lastModel.operationTime > 0) {
+        operationTime = lastModel.operationTime;
     }
-    [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
+    __weak typeof(self) ws = self;
+    [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray
                                                    count:PagingCount
-                                               startTime:sentTime
+                                               startTime:operationTime
                                               completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
         dispatch_async(self.updateEventQueue, ^{
             [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];

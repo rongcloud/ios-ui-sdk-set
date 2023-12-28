@@ -109,6 +109,7 @@ RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCRefer
 @end
 
 static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellIndentifier";
+static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndentifier";
 
 #pragma clang diagnostic ignored "-Wincomplete-implementation"
 @implementation RCConversationViewController
@@ -188,14 +189,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     }
 #endif
     [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
-    
-    [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.dataSource getInitialMessage:conversation];
-            NSString *draft = conversation.draft;
-            self.chatSessionInputBarControl.draft = draft;
-        });
-    }];
+    [self updateDraftBeforeViewAppear];
     [self setNavigationItem];
     
 
@@ -272,6 +266,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self.util sendReadReceipt];
     [self sendGroupReadReceiptResponseForCache];
     [self.chatSessionInputBarControl containerViewDidAppear];
+    [self updateDraftAfterViewAppear];
     self.navigationTitle = self.navigationItem.title;
     [[RCCoreClient sharedCoreClient] setRCTypingStatusDelegate:self];
 }
@@ -348,7 +343,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
 #pragma clang diagnostic pop
     [self registerClass:[RCOldMessageNotificationMessageCell class]
         forMessageClass:[RCOldMessageNotificationMessage class]];
-
+    [self registerClass:[RCMessageBaseCell class] forCellWithReuseIdentifier:rcMessageBaseCellIndentifier];
     //注册 Extention 消息，如 callkit 的
     self.extensionMessageCellInfoList =
         [[RongIMKitExtensionManager sharedManager] getMessageCellInfoList:self.conversationType targetId:self.targetId];
@@ -540,6 +535,33 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     [self scrollToBottomAnimated:animated];
 }
 
+// 当从搜索进来时，如果设置了草稿，会弹起键盘，导致列表滚动到底部
+// 需要判断是否需要定位消息，如果不定位消息可以直接设置
+- (void)updateDraftBeforeViewAppear {
+    if (self.locatedMessageSentTime == 0) {
+        [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.dataSource getInitialMessage:conversation];
+                NSString *draft = conversation.draft;
+                self.chatSessionInputBarControl.draft = draft;
+            });
+        }];
+    }
+}
+
+// 当从搜索进来时，如果设置了草稿，会弹起键盘，导致列表滚动到底部
+// 需要判断是否需要定位消息，如果定位消息需要在 containerViewDidAppear 之后设置
+- (void)updateDraftAfterViewAppear {
+    if (self.locatedMessageSentTime) {
+        [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.dataSource getInitialMessage:conversation];
+                NSString *draft = conversation.draft;
+                self.chatSessionInputBarControl.draft = draft;
+            });
+        }];
+    }
+}
 
 #pragma mark - Notification selector
 
@@ -962,7 +984,9 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     // 数据越界保护，开发者可以拿到 conversationDataRepository 并做任何处理
     if (indexPath.row >= self.conversationDataRepository.count) {
-        return [[RCMessageBaseCell alloc] init];
+        RCMessageBaseCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:rcMessageBaseCellIndentifier forIndexPath:indexPath];
+        DebugLog(@"indexPath row out of conversationDataRepository range ");
+        return cell;
     }
 
     RCMessageModel *model = [self.conversationDataRepository objectAtIndex:indexPath.row];
@@ -2531,6 +2555,8 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
     // reloadItemsAtIndexPaths 和 reloadData 同时调用会有某些 cell 没有 reload 的情况
     // 网上也有人遇到类似的问题，提到如果间隔 0.3 秒以上就不会有问题
     [self.conversationMessageCollectionView reloadData];
+    [self.conversationMessageCollectionView setNeedsLayout];
+    [self.conversationMessageCollectionView layoutIfNeeded];
 }
 
 - (void)showToolBar:(BOOL)show {
@@ -3255,7 +3281,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
             // 找到距离发送时间最近的一个音频消息
             if (currentVoiceSentTime < rcMsg.sentTime && ([rcMsg.content isMemberOfClass:[RCVoiceMessage class]] ||
                                                 [rcMsg.content isMemberOfClass:[RCHQVoiceMessage class]]) &&
-                rcMsg.receivedStatus != ReceivedStatus_LISTENED && rcMsg.messageDirection == MessageDirection_RECEIVE &&
+                NO == rcMsg.receivedStatusInfo.isListened && rcMsg.messageDirection == MessageDirection_RECEIVE &&
                 rcMsg.content.destructDuration == 0) {
                 index = i;
                 break;
@@ -3271,7 +3297,7 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                 (RCVoiceMessageCell *)[self.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
             //如果是空说明被回收了，重新dequeue一个cell
             if (__cell && ([__cell isKindOfClass:[RCVoiceMessageCell class]] || [__cell isKindOfClass:[RCHQVoiceMessageCell class]])) {
-                rcMsg.receivedStatus = ReceivedStatus_LISTENED;
+                [rcMsg.receivedStatusInfo markAsListened];
                 [__cell setDataModel:rcMsg];
                 [__cell playVoice];
             } else {
@@ -3279,13 +3305,13 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                     __cell = (RCVoiceMessageCell *)[self.conversationMessageCollectionView
                         dequeueReusableCellWithReuseIdentifier:[[RCVoiceMessage class] getObjectName]
                                                   forIndexPath:indexPath];
-                    rcMsg.receivedStatus = ReceivedStatus_LISTENED;
+                    [rcMsg.receivedStatusInfo markAsListened];
                 } else if ([rcMsg.content isKindOfClass:RCHQVoiceMessage.class]) {
                     __cell = [self.conversationMessageCollectionView
                         dequeueReusableCellWithReuseIdentifier:[[RCHQVoiceMessage class] getObjectName]
                                                   forIndexPath:indexPath];
                     if (((RCHQVoiceMessage *)rcMsg.content).localPath.length > 0) {
-                        rcMsg.receivedStatus = ReceivedStatus_LISTENED;
+                        [rcMsg.receivedStatusInfo markAsListened];
                     }
                 }
                 [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
@@ -3627,12 +3653,12 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
         return;
     }
-    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+    if (model.messageDirection == MessageDirection_RECEIVE && NO == model.receivedStatusInfo.isListened) {
         self.isContinuousPlaying = YES;
     } else {
         self.isContinuousPlaying = NO;
     }
-    model.receivedStatus = ReceivedStatus_LISTENED;
+    [model.receivedStatusInfo markAsListened];
     NSUInteger row = [self.conversationDataRepository indexOfObject:model];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
     RCVoiceMessageCell *cell =
@@ -3649,13 +3675,13 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
         [RCAlertView showAlertController:nil message:alertMessage hiddenAfterDelay:1 inViewController:self];
         return;
     }
-    if (model.messageDirection == MessageDirection_RECEIVE && model.receivedStatus != ReceivedStatus_LISTENED) {
+    if (model.messageDirection == MessageDirection_RECEIVE && NO == model.receivedStatusInfo.isListened) {
         self.isContinuousPlaying = YES;
     } else {
         self.isContinuousPlaying = NO;
     }
     if (((RCHQVoiceMessage *)_messageContent).localPath.length > 0) {
-        model.receivedStatus = ReceivedStatus_LISTENED;
+        [model.receivedStatusInfo markAsListened];
     }
     NSUInteger row = [self.conversationDataRepository indexOfObject:model];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
@@ -3686,10 +3712,10 @@ static NSString *const rcUnknownMessageCellIndentifier = @"rcUnknownMessageCellI
                 model.cellSize = CGSizeZero;
                 //更新UI
                 [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-                // 滚动到最底部
-                [self.conversationMessageCollectionView setNeedsLayout];
-                [self.conversationMessageCollectionView layoutIfNeeded];
-                [self scrollToBottomAnimated:YES];
+                
+                [self.conversationMessageCollectionView scrollToItemAtIndexPath:indexPath
+                                                               atScrollPosition:UICollectionViewScrollPositionNone
+                                                                       animated:YES];
             });
         }];
     }

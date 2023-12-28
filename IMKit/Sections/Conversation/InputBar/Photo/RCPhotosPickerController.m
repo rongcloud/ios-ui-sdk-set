@@ -6,6 +6,8 @@
 //  Copyright © 2016年 RongCloud. All rights reserved.
 //
 
+#import <MobileCoreServices/UTCoreTypes.h>
+
 #import "RCPhotosPickerController.h"
 #import "RCAssetModel.h"
 #import "RCKitCommonDefine.h"
@@ -60,7 +62,7 @@ static NSString *const reuseIdentifier = @"Cell";
     flowLayout.sectionInset = UIEdgeInsetsMake(4, 4, 1, 4);
     flowLayout.footerReferenceSize = CGSizeMake(SCREEN_WIDTH, 49);
     RCPhotosPickerController *pickerViewController =
-        [[RCPhotosPickerController alloc] initWithCollectionViewLayout:flowLayout];
+    [[RCPhotosPickerController alloc] initWithCollectionViewLayout:flowLayout];
     return pickerViewController;
 }
 
@@ -73,38 +75,38 @@ static NSString *const reuseIdentifier = @"Cell";
     }
     __weak RCPhotosPickerController *weakSelf = self;
     [[RCAssetHelper shareAssetHelper]
-        getPhotosOfGroup:self.currentAsset
-                 results:^(NSArray<RCAssetModel *> *photos) {
+     getPhotosOfGroup:self.currentAsset
+     results:^(NSArray<RCAssetModel *> *photos) {
         [weakSelf updateDataSource:photos];
-     }];
+    }];
 }
 
 - (void)updateDataSource:(NSArray<RCAssetModel *> *)photos {
-     self.assetArray = [NSMutableArray arrayWithArray:photos];
-     self.isLoad = YES;
-     for (int i = 0; i < photos.count; i++) {
-
-         for (int j = 0; j < self.selectedAssets.count; j++) {
-             if ([self.selectedAssets[j].asset isEqual:photos[i].asset]) {
-                 self.assetArray[i].isSelect = YES;
-                 break;
-             }
-         }
-     }
+    self.assetArray = [NSMutableArray arrayWithArray:photos];
+    self.isLoad = YES;
+    for (int i = 0; i < photos.count; i++) {
+        
+        for (int j = 0; j < self.selectedAssets.count; j++) {
+            if ([self.selectedAssets[j].asset isEqual:photos[i].asset]) {
+                self.assetArray[i].isSelect = YES;
+                break;
+            }
+        }
+    }
     self.collectionView.alpha = self.disableFirstAppear?1:0;
-     [self.collectionView reloadData];
-     if (!self.disableFirstAppear) {
-         dispatch_async(dispatch_get_main_queue(), ^{
-             CGSize size = self.collectionView.frame.size;
-             CGSize contentSize = self.collectionView.contentSize;
-             CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
-             [self.collectionView scrollRectToVisible:frame animated:NO];
-             [UIView animateWithDuration:0.1 animations:^{
-                 self.collectionView.alpha = 1;
-             }];
-         });
-         self.disableFirstAppear = YES;
-     }
+    [self.collectionView reloadData];
+    if (!self.disableFirstAppear) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            CGSize size = self.collectionView.frame.size;
+            CGSize contentSize = self.collectionView.contentSize;
+            CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
+            [self.collectionView scrollRectToVisible:frame animated:NO];
+            [UIView animateWithDuration:0.1 animations:^{
+                self.collectionView.alpha = 1;
+            }];
+        });
+        self.disableFirstAppear = YES;
+    }
 }
 
 - (void)viewDidLoad {
@@ -113,7 +115,7 @@ static NSString *const reuseIdentifier = @"Cell";
     self.previousPreheatRect = CGRectZero;
     CGFloat scale = [UIScreen mainScreen].scale;
     self.thumbnailSize = (CGSize){WIDTH * scale, WIDTH * scale};
-
+    
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
@@ -162,54 +164,16 @@ static NSString *const reuseIdentifier = @"Cell";
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     RCPhotoPickerCollectCell *cell =
-        [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
-
+    [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
+    
     RCAssetModel *model = self.assetArray[indexPath.row];
     model.index = indexPath.row;
-
+    
     [cell configPickerCellWithItem:self.assetArray[indexPath.row] delegate:self];
-
+    
     return cell;
 }
 
-- (void)collectionView:(UICollectionView *)collectionView
-       willDisplayCell:(UICollectionViewCell *)cell
-    forItemAtIndexPath:(NSIndexPath *)indexPath {
-    RCAssetModel *model = self.assetArray[indexPath.row];
-    if(![model.asset isKindOfClass:PHAsset.class]) {
-        return;
-    }
-    
-    RCPhotoPickerCollectCell *pickerCell = nil;
-    if ([cell isKindOfClass:RCPhotoPickerCollectCell.class]) {
-        pickerCell = (RCPhotoPickerCollectCell *)cell;
-    }
-    
-    PHAsset *phasset = (PHAsset *)model.asset;
-    if (phasset.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
-        if (!model.avAsset) {
-            [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:phasset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
-                if (!avAsset) {
-                    return;
-                }
-                if (![pickerCell.representedAssetIdentifier isEqualToString:imageIdentifier]) {
-                    return;
-                }
-                model.avAsset = avAsset;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (indexPath.row < self.assetArray.count) {
-                        [collectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-                    }
-                });
-            } progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
-                
-            }];
-        } else {
-            RCPhotoPickerCollectCell *pickerCell = (RCPhotoPickerCollectCell *)cell;
-            [pickerCell configPickerCellWithItem:model delegate:self];
-        }
-    }
-}
 #pragma mark - RCPhotoPickerCollectCellDelegate
 /// 是否可以变成选中状态
 - (BOOL)canChangeSelectedState:(RCAssetModel *)asset {
@@ -238,21 +202,21 @@ static NSString *const reuseIdentifier = @"Cell";
     }
     
     RCPhotoPreviewCollectionViewController *previewController =
-        [RCPhotoPreviewCollectionViewController imagePickerViewController];
+    [RCPhotoPreviewCollectionViewController imagePickerViewController];
     previewController.isFull = self.isFull;
     [previewController previewPhotosWithSelectArr:self.selectedAssets
                                      allPhotosArr:self.assetArray
                                      currentIndex:selectModel.index
                                  accordToIsSelect:NO];
     [previewController
-        setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
-
-            self.selectedAssets = selectArr;
-            self.assetArray = assetPhotos.mutableCopy;
-            self.isFull = isFull;
-            [self setButtonEnable];
-            [self.collectionView reloadData];
-        }];
+     setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
+        
+        self.selectedAssets = selectArr;
+        self.assetArray = assetPhotos.mutableCopy;
+        self.isFull = isFull;
+        [self setButtonEnable];
+        [self.collectionView reloadData];
+    }];
     [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
         self.sendPhotosBlock(selectArr, isFull);
     }];
@@ -263,49 +227,40 @@ static NSString *const reuseIdentifier = @"Cell";
 - (void)checkDownloadFailFromiCloud:(RCAssetModel *)model block:(void(^)(BOOL downloadFailFromiCloud))block {
     // 尝试获取大图或者视频，检查是否能获取
     model.isDownloadFailFromiCloud = NO;
-    if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
-        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
-            dispatch_main_async_safe(^{
-                if(self.progressHUD) {
-                    [self.progressHUD hideAnimated:YES afterDelay:0.5];
-                    self.progressHUD = nil;
-                }
-
-                BOOL isDownloadFail = !avAsset ? YES : NO;
-                model.isDownloadFailFromiCloud = isDownloadFail;
-                if(block) {
-                    block(isDownloadFail);
-                }
-            });
-        } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
-            dispatch_main_async_safe(^{
-                if(progress < 1 && !error && !self.progressHUD) {
-                    self.progressHUD = [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
-                }
-            });
-        }];
-
-    }else {
+    void(^callback)(BOOL) = ^(BOOL result) {
+        model.isDownloadFailFromiCloud = result;
+        if (block) block(result);
+    };
+    void(^progressHandler)(double, NSError *, BOOL *, NSDictionary *) = ^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+        dispatch_main_async_safe(^{
+            if(progress < 1 && !error && !self.progressHUD) {
+                self.progressHUD = [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
+            }
+        });
+    };
+    if (model.mediaType == PHAssetMediaTypeImage) {
         [[RCAssetHelper shareAssetHelper] getOriginImageDataWithAsset:model result:^(NSData *photo, NSDictionary *info, RCAssetModel *assetModel) {
             dispatch_main_async_safe(^{
                 if(self.progressHUD) {
                     [self.progressHUD hideAnimated:YES afterDelay:0.5];
                     self.progressHUD = nil;
                 }
-
-                BOOL isDownloadFail = !photo ? YES : NO;
-                model.isDownloadFailFromiCloud = isDownloadFail;
-                if(block) {
-                    block(isDownloadFail);
-                }
+                callback(!photo);
             });
-        } progressHandler:^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
+        } progressHandler:progressHandler];
+    } else if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        [[RCAssetHelper shareAssetHelper] getOriginVideoWithAsset:model.asset result:^(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier) {
             dispatch_main_async_safe(^{
-                if(progress < 1 && !error && !self.progressHUD) {
-                    self.progressHUD = [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
+                if(self.progressHUD) {
+                    [self.progressHUD hideAnimated:YES afterDelay:0.5];
+                    self.progressHUD = nil;
                 }
+                model.avAsset = avAsset;
+                callback(!avAsset);
             });
-        }];
+        } progressHandler:progressHandler];
+    } else {
+        callback(YES);
     }
 }
 
@@ -323,8 +278,8 @@ static NSString *const reuseIdentifier = @"Cell";
 - (void)dismissCurrentModelViewController {
     [self dismissViewControllerAnimated:YES
                              completion:^{
-
-                             }];
+        
+    }];
 }
 
 - (void)btnSendCliced:(UIButton *)sender {
@@ -333,20 +288,20 @@ static NSString *const reuseIdentifier = @"Cell";
 
 - (void)previewBtnCliced:(UIButton *)sender {
     RCPhotoPreviewCollectionViewController *previewController =
-        [RCPhotoPreviewCollectionViewController imagePickerViewController];
+    [RCPhotoPreviewCollectionViewController imagePickerViewController];
     previewController.isFull = self.isFull;
     [previewController previewPhotosWithSelectArr:self.selectedAssets
                                      allPhotosArr:self.assetArray
                                      currentIndex:0
                                  accordToIsSelect:YES];
     [previewController
-        setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
-            self.selectedAssets = selectArr;
-            [self setButtonEnable];
-            self.assetArray = assetPhotos.mutableCopy;
-            self.isFull = isFull;
-            [self.collectionView reloadData];
-        }];
+     setFinishPreviewAndBackPhotosPicker:^(NSMutableArray *selectArr, NSArray *assetPhotos, BOOL isFull) {
+        self.selectedAssets = selectArr;
+        [self setButtonEnable];
+        self.assetArray = assetPhotos.mutableCopy;
+        self.isFull = isFull;
+        [self.collectionView reloadData];
+    }];
     [previewController setFinishiPreviewAndSendImage:^(NSArray *selectArr, BOOL isFull) {
         self.sendPhotosBlock(selectArr, isFull);
     }];
@@ -354,22 +309,28 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 #pragma mark - Private Methods
-- (BOOL)cellCanChangeSelectedState:(RCAssetModel *)asset {
-    if (!asset.isSelect) {
+- (BOOL)cellCanChangeSelectedState:(RCAssetModel *)assetModel {
+    if (!assetModel.isSelect) {
         if (self.selectedAssets.count >= 9) {
             [RCAlertView showAlertController:nil message:RCLocalizedString(@"Max_Selected_Photos") cancelTitle:RCLocalizedString(@"i_know_it") inViewController:self];
             return NO;
         }
-
-        if (asset.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
+        
+        if (assetModel.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
             CGFloat durationLimit = RCKitConfigCenter.message.uploadVideoDurationLimit;
-            if (round(asset.duration) > durationLimit) {
+            if (round(assetModel.duration) > durationLimit) {
                 NSString *localizedString = durationLimit < 60 ? RCLocalizedString(@"Selected_Video_Warning_fmt_second") : RCLocalizedString(@"Selected_Video_Warning_fmt");
                 CGFloat limit = durationLimit < 60 ? durationLimit : (durationLimit / 60.0f);
                 NSString *format = durationLimit < 60 ? @"%.0f" : @"%.1f";
                 NSString *text = [NSString stringWithFormat:format, limit];
                 NSString *msg = [NSString stringWithFormat:localizedString, text];
                 [self showAlertWithMessage:msg];
+                return NO;
+            }
+        } else if ([[assetModel.asset valueForKey:@"uniformTypeIdentifier"]
+                    isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+            if (assetModel.imageSize > [[RCCoreClient sharedCoreClient] getGIFLimitSize] * 1024) {
+                [self showAlertWithMessage:RCLocalizedString(@"GIFAboveMaxSize")];
                 return NO;
             }
         }
@@ -392,7 +353,7 @@ static NSString *const reuseIdentifier = @"Cell";
         if (isNotContains) {
             [self.selectedAssets addObject:asset];
         }
-
+        
     } else {
         asset.isSelect = NO;
         for (int i = 0; i < self.selectedAssets.count; i++) {
@@ -425,8 +386,8 @@ static NSString *const reuseIdentifier = @"Cell";
     }
     doneTitleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     doneTitleLabel.textColor = [RCKitUtility
-        generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
-                   darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
+                                generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
+                                darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
     [rightBarView addSubview:doneTitleLabel];
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissCurrentModelViewController)];
     [rightBarView addGestureRecognizer:tap];
@@ -439,38 +400,38 @@ static NSString *const reuseIdentifier = @"Cell";
     _toolBar = [[UIView alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT - height, SCREEN_WIDTH, height)];
     _toolBar.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     [self.view addSubview:_toolBar];
-
+    
     // add button for bottom bar
     _btnSend = [[RCBaseButton alloc] init];
     [_btnSend setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_btnSend addTarget:self action:@selector(btnSendCliced:) forControlEvents:UIControlEventTouchUpInside];
     _btnSend.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_toolBar addSubview:_btnSend];
-
+    
     _previewBtn = [[RCBaseButton alloc] init];
     [_previewBtn setTitle:RCLocalizedString(@"Preview") forState:UIControlStateNormal];
     _previewBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
     [_previewBtn addTarget:self action:@selector(previewBtnCliced:) forControlEvents:UIControlEventTouchUpInside];
     [_toolBar addSubview:_previewBtn];
-
+    
     [_btnSend setTranslatesAutoresizingMaskIntoConstraints:NO];
     [_previewBtn setTranslatesAutoresizingMaskIntoConstraints:NO];
-
+    
     if ([RCKitUtility isRTL]) {
         [_toolBar addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-13-[_previewBtn(30)]"
                                                                          options:kNilOptions
                                                                          metrics:nil
                                                                            views:NSDictionaryOfVariableBindings(_previewBtn)]];
         [_toolBar
-            addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-13-[_btnSend(30)]"
-                                                                   options:kNilOptions
-                                                                   metrics:nil
-                                                                     views:NSDictionaryOfVariableBindings(_btnSend)]];
+         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-13-[_btnSend(30)]"
+                                                                options:kNilOptions
+                                                                metrics:nil
+                                                                  views:NSDictionaryOfVariableBindings(_btnSend)]];
         [_toolBar
-            addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_btnSend]"
-                                                                   options:kNilOptions
-                                                                   metrics:nil
-                                                                     views:NSDictionaryOfVariableBindings(_btnSend)]];
+         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_btnSend]"
+                                                                options:kNilOptions
+                                                                metrics:nil
+                                                                  views:NSDictionaryOfVariableBindings(_btnSend)]];
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_previewBtn
                                                              attribute:NSLayoutAttributeRight
                                                              relatedBy:NSLayoutRelationEqual
@@ -478,7 +439,7 @@ static NSString *const reuseIdentifier = @"Cell";
                                                              attribute:NSLayoutAttributeRight
                                                             multiplier:1
                                                               constant:-10]];
-
+        
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_btnSend
                                                              attribute:NSLayoutAttributeLeft
                                                              relatedBy:NSLayoutRelationEqual
@@ -491,17 +452,17 @@ static NSString *const reuseIdentifier = @"Cell";
                                                                          options:kNilOptions
                                                                          metrics:nil
                                                                            views:NSDictionaryOfVariableBindings(_btnSend)]];
-
+        
         [_toolBar
-            addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-13-[_previewBtn(30)]"
-                                                                   options:kNilOptions
-                                                                   metrics:nil
-                                                                     views:NSDictionaryOfVariableBindings(_previewBtn)]];
+         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-13-[_previewBtn(30)]"
+                                                                options:kNilOptions
+                                                                metrics:nil
+                                                                  views:NSDictionaryOfVariableBindings(_previewBtn)]];
         [_toolBar
-            addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_previewBtn]"
-                                                                   options:kNilOptions
-                                                                   metrics:nil
-                                                                     views:NSDictionaryOfVariableBindings(_previewBtn)]];
+         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_previewBtn]"
+                                                                options:kNilOptions
+                                                                metrics:nil
+                                                                  views:NSDictionaryOfVariableBindings(_previewBtn)]];
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_btnSend
                                                              attribute:NSLayoutAttributeRight
                                                              relatedBy:NSLayoutRelationEqual
@@ -509,7 +470,7 @@ static NSString *const reuseIdentifier = @"Cell";
                                                              attribute:NSLayoutAttributeRight
                                                             multiplier:1
                                                               constant:-10]];
-
+        
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_previewBtn
                                                              attribute:NSLayoutAttributeLeft
                                                              relatedBy:NSLayoutRelationEqual
@@ -518,7 +479,7 @@ static NSString *const reuseIdentifier = @"Cell";
                                                             multiplier:1
                                                               constant:10]];
     }
-
+    
     [_btnSend setTitleColor:RCResourceColor(@"photoPicker_send_disable", @"0x9fcdfd")
                    forState:UIControlStateDisabled];
     [_btnSend setTitleColor:RCResourceColor(@"photoPicker_send_normal", @"0x0099ff")
@@ -527,11 +488,11 @@ static NSString *const reuseIdentifier = @"Cell";
     [_previewBtn setTitleColor:RCResourceColor(@"photoPicker_preview_disable", @"0x959595")
                       forState:UIControlStateDisabled];
     [_previewBtn
-        setTitleColor:[RCKitUtility
-                          generateDynamicColor:RCResourceColor(@"photoPicker_preview_normal", @"0x000000")
-                                     darkColor:RCResourceColor(@"photoPicker_preview_normal_dark",
-                                                                        @"0xffffff")]
-             forState:UIControlStateNormal];
+     setTitleColor:[RCKitUtility
+                    generateDynamicColor:RCResourceColor(@"photoPicker_preview_normal", @"0x000000")
+                    darkColor:RCResourceColor(@"photoPicker_preview_normal_dark",
+                                              @"0xffffff")]
+     forState:UIControlStateNormal];
     [self.previewBtn setEnabled:NO];
 }
 
@@ -592,10 +553,10 @@ static NSString *const reuseIdentifier = @"Cell";
                     }
                 }
             }
-
+            
             [self.collectionView reloadData];
         }
-
+        
     });
 }
 
@@ -608,26 +569,26 @@ static NSString *const reuseIdentifier = @"Cell";
     if (!self.isViewLoaded && !self.view.window) {
         return;
     }
-
+    
     CGRect visibleRect = (CGRect){self.collectionView.contentOffset.x, self.collectionView.contentOffset.y,
-                                  self.collectionView.bounds.size.width, self.collectionView.bounds.size.height};
+        self.collectionView.bounds.size.width, self.collectionView.bounds.size.height};
     CGRect preheatRect = CGRectInset(visibleRect, 0, -0.5 * visibleRect.size.height);
-
+    
     CGFloat delta = fabs(CGRectGetMinY(preheatRect) - CGRectGetMinY(self.previousPreheatRect));
     if (delta < self.collectionView.bounds.size.height / 3) {
         return;
     }
-
+    
     NSArray<NSValue *> *addedRects = [self addedRectsBetween:self.previousPreheatRect and:preheatRect];
     NSArray<NSValue *> *removedRects = [self removedRectsBetween:self.previousPreheatRect and:preheatRect];
     NSArray<PHAsset *> *addAssets = [self assetsInRects:addedRects];
     NSArray<PHAsset *> *removedAssets = [self assetsInRects:removedRects];
-
+    
     PHImageRequestOptions *imageRequestOptions = [[PHImageRequestOptions alloc] init];
     imageRequestOptions.synchronous = NO;
     imageRequestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
     imageRequestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
-
+    
     CGFloat screenScale = [UIScreen mainScreen].scale;
     CGSize thumbnailSize = (CGSize){SIZE.width * screenScale, SIZE.height * screenScale};
     [self.cachingImageManager startCachingImagesForAssets:addAssets
@@ -646,7 +607,7 @@ static NSString *const reuseIdentifier = @"Cell";
     [rects enumerateObjectsUsingBlock:^(NSValue *_Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
         CGRect rect = [obj CGRectValue];
         NSArray<UICollectionViewLayoutAttributes *> *attribtutes =
-            [self.collectionView.collectionViewLayout layoutAttributesForElementsInRect:rect];
+        [self.collectionView.collectionViewLayout layoutAttributesForElementsInRect:rect];
         [attribtutes enumerateObjectsUsingBlock:^(UICollectionViewLayoutAttributes *_Nonnull obj, NSUInteger idx,
                                                   BOOL *_Nonnull stop) {
             if (obj.indexPath.item < self.assetArray.count) {
@@ -665,12 +626,12 @@ static NSString *const reuseIdentifier = @"Cell";
         NSMutableArray *rects = [[NSMutableArray alloc] initWithCapacity:2];
         if (CGRectGetMaxY(new) > CGRectGetMaxY(old)) {
             CGRect rect =
-                (CGRect){new.origin.x, CGRectGetMaxY(old), new.size.width, CGRectGetMaxY(new) - CGRectGetMaxY(old)};
+            (CGRect){new.origin.x, CGRectGetMaxY(old), new.size.width, CGRectGetMaxY(new) - CGRectGetMaxY(old)};
             [rects addObject:[NSValue valueWithCGRect:rect]];
         }
         if (CGRectGetMinY(old) > CGRectGetMinY(new)) {
             CGRect rect =
-                (CGRect){new.origin.x, CGRectGetMinY(new), new.size.width, CGRectGetMinY(old) - CGRectGetMinY(new)};
+            (CGRect){new.origin.x, CGRectGetMinY(new), new.size.width, CGRectGetMinY(old) - CGRectGetMinY(new)};
             [rects addObject:[NSValue valueWithCGRect:rect]];
         }
         return [rects copy];
@@ -682,15 +643,15 @@ static NSString *const reuseIdentifier = @"Cell";
 - (NSArray<NSValue *> *)removedRectsBetween:(CGRect)old and:(CGRect) new {
     if (CGRectIntersectsRect(old, new)) {
         NSMutableArray *rects = [[NSMutableArray alloc] initWithCapacity:2];
-
+        
         if (CGRectGetMaxY(new) < CGRectGetMaxY(old)) {
             CGRect rect =
-                (CGRect){new.origin.x, CGRectGetMaxY(new), new.size.width, CGRectGetMaxY(old) - CGRectGetMaxY(new)};
+            (CGRect){new.origin.x, CGRectGetMaxY(new), new.size.width, CGRectGetMaxY(old) - CGRectGetMaxY(new)};
             [rects addObject:[NSValue valueWithCGRect:rect]];
         }
         if (CGRectGetMinY(old) < CGRectGetMinY(new)) {
             CGRect rect =
-                (CGRect){new.origin.x, CGRectGetMinY(old), new.size.width, CGRectGetMinY(new) - CGRectGetMinY(old)};
+            (CGRect){new.origin.x, CGRectGetMinY(old), new.size.width, CGRectGetMinY(new) - CGRectGetMinY(old)};
             [rects addObject:[NSValue valueWithCGRect:rect]];
         }
         return [rects copy];

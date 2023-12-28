@@ -773,23 +773,25 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 #pragma mark - UserInfo Update
 - (void)onUserInfoUpdate:(NSNotification *)notification {
     NSDictionary *userInfoDic = notification.object;
-    if ([self.model.senderUserId isEqualToString:userInfoDic[@"userId"]]) {
-        if (self.model.conversationType == ConversationType_GROUP) {
-            //重新取一下混合的用户信息
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-            RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
-            userInfo.alias = tempUserInfo.alias;
-            [self updateUserInfoUI:userInfo];
-        } else if (self.model.messageDirection == MessageDirection_SEND) {
-            [self updateUserInfoUI:userInfoDic[@"userInfo"]];
-        } else if (self.model.conversationType != ConversationType_APPSERVICE &&
-                   self.model.conversationType != ConversationType_PUBLICSERVICE) {
-            if (self.model.conversationType == ConversationType_CUSTOMERSERVICE && self.model.content.senderUserInfo) {
-                return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.model.senderUserId isEqualToString:userInfoDic[@"userId"]]) {
+            if (self.model.conversationType == ConversationType_GROUP) {
+                //重新取一下混合的用户信息
+                RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+                RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+                userInfo.alias = tempUserInfo.alias;
+                [self updateUserInfoUI:userInfo];
+            } else if (self.model.messageDirection == MessageDirection_SEND) {
+                [self updateUserInfoUI:userInfoDic[@"userInfo"]];
+            } else if (self.model.conversationType != ConversationType_APPSERVICE &&
+                       self.model.conversationType != ConversationType_PUBLICSERVICE) {
+                if (self.model.conversationType == ConversationType_CUSTOMERSERVICE && self.model.content.senderUserInfo) {
+                    return;
+                }
+                [self updateUserInfoUI:userInfoDic[@"userInfo"]];
             }
-            [self updateUserInfoUI:userInfoDic[@"userInfo"]];
         }
-    }
+    });
 }
 
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {

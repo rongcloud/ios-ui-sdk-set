@@ -94,7 +94,10 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
 /*!
  会话中最后一条消息的接收状态
  */
-@property (nonatomic, assign) RCReceivedStatus receivedStatus;
+@property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
+
+/// 消息的接收状态类(针对接收的消息生效)
+@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
 
 /*!
  会话中最后一条消息的发送状态
@@ -110,6 +113,11 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
  会话中最后一条消息的发送时间（Unix时间戳、毫秒）
  */
 @property (nonatomic, assign) long long sentTime;
+
+/// 会话的操作时间（Unix时间戳、毫秒），用于分页获取会话列表时传入的时间戳
+/// 初始值与 sentTime 相同，置顶等操作会更新此时间戳
+/// - Since: 5.6.7
+@property (nonatomic, assign) long long operationTime;
 
 /*!
  会话中存在的草稿

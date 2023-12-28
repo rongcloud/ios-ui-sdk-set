@@ -57,7 +57,10 @@
 /*!
  消息的接收状态
  */
-@property (nonatomic, assign) RCReceivedStatus receivedStatus;
+@property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
+
+/// 消息的接收状态类(针对接收的消息生效)
+@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
 
 /*!
  消息的发送状态

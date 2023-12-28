@@ -74,6 +74,8 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 }
 
 - (void)dealloc {
+    [self.actionButton quit];
+    
     [RCSightExtensionModule sharedInstance].isSightCameraHolding = NO;
     [self.motionManager stopAccelerometerUpdates];
     [[NSNotificationCenter defaultCenter] removeObserver:self

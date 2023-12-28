@@ -34,9 +34,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 - (void)setPhotoModel:(RCAssetModel *)model{
     if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
         [self showSightTypeView];
-        if (model.avAsset) {
-            self.durationLabel.text = model.durationText;
-        }
+        self.durationLabel.text = model.durationText;
     } else if([[model.asset valueForKey:@"uniformTypeIdentifier"]
                isEqualToString:(__bridge NSString *)kUTTypeGIF]){
         [self showGifTypeView];

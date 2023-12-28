@@ -33,7 +33,7 @@ static NSOperationQueue *rong_st_download_queue() {
 @property (nonatomic, strong) NSMutableDictionary *progressBlocks;
 @property (nonatomic, strong) NSMutableDictionary *successBlocks;
 @property (nonatomic, strong) NSMutableDictionary *errorBlocks;
-
+@property(nonatomic, strong) NSLock *lock;
 @end
 
 @implementation RCStickerDownloader
@@ -50,6 +50,7 @@ static NSOperationQueue *rong_st_download_queue() {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        self.lock = [[NSLock alloc] init];
         self.progressBlocks = [[NSMutableDictionary alloc] init];
         self.successBlocks = [[NSMutableDictionary alloc] init];
         self.errorBlocks = [[NSMutableDictionary alloc] init];
@@ -67,9 +68,11 @@ static NSOperationQueue *rong_st_download_queue() {
         RCLogD(@"sticker download, identifier is nil");
         return;
     }
+    [self.lock lock];
     [self.progressBlocks setObject:progressBlock forKey:identifier];
     [self.successBlocks setObject:successBlock forKey:identifier];
     [self.errorBlocks setObject:errorBlock forKey:identifier];
+    [self.lock unlock];
     NSURLSession *session =
         [NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]
                                       delegate:self
@@ -95,7 +98,9 @@ static NSOperationQueue *rong_st_download_queue() {
         RCLogD(@"sticker download progress, sessionIdentifier is nil");
         return;
     }
+    [self.lock lock];
     void (^progressBlock)(int) = [self.progressBlocks objectForKey:sessionIdentifier];
+    [self.lock unlock];
     if (progressBlock) {
         progressBlock((int)(100 * totalBytesWritten / totalBytesExpectedToWrite));
     }
@@ -117,13 +122,17 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
         RCLogD(@"sticker download finish, sessionIdentifier is nil");
         return;
     }
+    [self.lock lock];
     void (^successBlock)(NSURL *localURL) = [self.successBlocks objectForKey:sessionIdentifier];
+    [self.lock unlock];
     if (successBlock) {
         successBlock(location);
     }
+    [self.lock lock];
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
+    [self.lock unlock];
     [session finishTasksAndInvalidate];
 }
 
@@ -134,13 +143,17 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
         RCLogD(@"sticker download complete, sessionIdentifier is nil");
         return;
     }
+    [self.lock lock];
     void (^errorBlock)(int errorCode) = [self.errorBlocks objectForKey:sessionIdentifier];
+    [self.lock unlock];
     if (errorBlock) {
         errorBlock((int)error.code);
     }
+    [self.lock lock];
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
+    [self.lock unlock];
     [session finishTasksAndInvalidate];
 }
 

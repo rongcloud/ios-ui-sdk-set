@@ -306,8 +306,10 @@
     return [self willReloadTableData:modelList];
 }
 - (void)dataSource:(RCConversationListDataSource *)dataSource willReloadAtIndexPaths:(NSArray <NSIndexPath *> *)indexPaths {
-    [self.conversationListTableView reloadRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
-    [self updateEmptyConversationView];
+    if (self.dataSource.isConverstaionListAppear) {
+        [self.conversationListTableView reloadRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationNone];
+        [self updateEmptyConversationView];
+    }
 }
 - (void)dataSource:(RCConversationListDataSource *)dataSource willInsertAtIndexPaths:(NSArray <NSIndexPath *> *)indexPaths {
     [self.conversationListTableView insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -480,6 +482,9 @@
 
 - (void)conversationStatusChanged:(NSNotification *)notification {
     NSArray<RCConversationStatusInfo *> *conversationStatusInfos = notification.object;
+    if (!self.dataSource.isConverstaionListAppear) {
+        return;
+    }
     __weak typeof(self) ws = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (ws.conversationListDataSource.count <= 0) {

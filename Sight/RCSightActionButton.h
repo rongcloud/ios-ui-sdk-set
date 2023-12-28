@@ -26,4 +26,6 @@ typedef NS_ENUM(NSInteger, RCSightActionState) {
 
 @property (nonatomic, copy) void (^action)(RCSightActionState state);
 
+- (void)quit;
+
 @end
