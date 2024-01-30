@@ -352,7 +352,7 @@
             if ([self.captureSession canAddInput:videoInput]) {
                 [self.captureSession addInput:videoInput];
                 self.activeVideoInput = videoInput;
-            } else {
+            } else if ([self.captureSession canAddInput:self.activeVideoInput]) {
                 [self.captureSession addInput:self.activeVideoInput];
             }
             [self.captureSession commitConfiguration];
@@ -377,7 +377,7 @@
             [self.captureSession addInput:audioDeviceInput];
             self.activeAudioInput = audioDeviceInput;
             _audioDevice = newAudioDevice;
-        }else {
+        }else if ([self.captureSession canAddInput:self.activeAudioInput]) {
             [self.captureSession addInput:self.activeAudioInput];
         }
         
@@ -387,7 +387,7 @@
         if ([self.captureSession canAddOutput:audioDeviceOutput]) {
             [self.captureSession addOutput:audioDeviceOutput];
             self.activeAudioDeviceOutput = audioDeviceOutput;
-        }else {
+        }else if ([self.captureSession canAddOutput:self.activeAudioDeviceOutput]) {
             [self.captureSession addOutput:self.activeAudioDeviceOutput];
         }
         self.audioConnection = [self.activeAudioDeviceOutput connectionWithMediaType:AVMediaTypeAudio];
@@ -416,7 +416,7 @@
         if ([self.captureSession canAddInput:videoInput]) {
             [self.captureSession addInput:videoInput];
             self.activeVideoInput = videoInput;
-        } else {
+        } else if ([self.captureSession canAddInput:self.activeVideoInput]) {
             [self.captureSession addInput:self.activeVideoInput];
         }
         [self.captureSession commitConfiguration];

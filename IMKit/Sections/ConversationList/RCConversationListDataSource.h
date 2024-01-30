@@ -69,4 +69,6 @@
 - (void)refreshConversationTableViewIfNeededInDataSource:(RCConversationListDataSource *)datasource;
 
 - (void)notifyUpdateUnreadMessageCountInDataSource;
+
+- (BOOL)showConversationOnTopPriority;
 @end

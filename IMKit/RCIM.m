@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.6.8_opensource";
+static NSString *const RCIMKitVersion = @"5.6.9_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -1335,6 +1335,9 @@ static NSString *const RCIMKitVersion = @"5.6.8_opensource";
                                messageId:(long)messageId
                                    error:(RCErrorCode)nErrorCode
                                  content:(RCMessageContent *)content {
+    if (![targetId isKindOfClass:[NSString class]] || targetId.length == 0) {
+        return;
+    }
     [[RCResendManager sharedManager] addResendMessageIfNeed:messageId error:nErrorCode];
     NSDictionary *statusDic = @{
         @"targetId" : targetId,

@@ -82,6 +82,10 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
 - (instancetype)init {
     self = [super init];
     if (self) {
+        self.preloadPackages = [[NSMutableArray alloc] init];
+        self.manualLoadPackages = [NSMutableArray array];
+        self.preloadPackagesConfig = [NSMutableArray array];
+        self.manualLoadPackagesConfig = [NSMutableArray array];
         self.downloadingPackages = [[NSMutableDictionary alloc] init];
         self.packagesConfigLock = [[RCSThreadLock alloc] init];
         self.preloadPackagesLock = [[RCSThreadLock alloc] init];
@@ -109,13 +113,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
             [self.preloadPackages addObjectsFromArray:array];
         }
     }];
-}
-
-- (NSMutableArray *)preloadPackages {
-    if (!_preloadPackages) {
-        _preloadPackages = [[NSMutableArray alloc] init];
-    }
-    return _preloadPackages;
 }
 
 #pragma mark - manualLoadPackages
@@ -153,13 +150,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
     }];
 }
 
-- (NSMutableArray *)manualLoadPackages {
-    if (!_manualLoadPackages) {
-        _manualLoadPackages = [NSMutableArray array];
-    }
-    return _manualLoadPackages;
-}
-
 #pragma mark - preloadPackagesConfig
 
 - (NSArray *)preloadPackagesConfigData {
@@ -179,13 +169,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
     }];
 }
 
-- (NSMutableArray *)preloadPackagesConfig {
-    if (!_preloadPackagesConfig) {
-        _preloadPackagesConfig = [NSMutableArray array];
-    }
-    return _preloadPackagesConfig;
-}
-
 #pragma mark - manualLoadPackagesConfig
 
 - (NSArray *)manualLoadPackagesConfigData {
@@ -203,13 +186,6 @@ NSString *const RCStickersDownloadFiledNotification = @"RCStickersDownloadFiledN
             [self.manualLoadPackagesConfig addObjectsFromArray:array];
         }
     }];
-}
-
-- (NSMutableArray *)manualLoadPackagesConfig {
-    if (!_manualLoadPackagesConfig) {
-        _manualLoadPackagesConfig = [NSMutableArray array];
-    }
-    return _manualLoadPackagesConfig;
 }
 
 #pragma mark - downloadingPackages

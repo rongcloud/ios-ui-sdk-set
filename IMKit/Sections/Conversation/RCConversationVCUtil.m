@@ -568,13 +568,17 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
-            [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
-                                                         targetId:self.chatVC.targetId
-                                                             time:lastReceiveMessageTime
-                                                          success:nil
-                                                            error:nil];
+            [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }
+}
+
+- (void)sendReadReceiptWithTime:(long long)time {
+    [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
+                                                 targetId:self.chatVC.targetId
+                                                     time:time
+                                                  success:nil
+                                                    error:nil];
 }
 
 - (BOOL)canSendReadReceipt {

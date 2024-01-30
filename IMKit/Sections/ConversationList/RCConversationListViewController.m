@@ -302,6 +302,11 @@
 }
 
 #pragma mark - RCConversationListDataSourceDelegate
+
+- (BOOL)showConversationOnTopPriority {
+    return self.topPriority;
+}
+
 - (NSMutableArray<RCConversationModel *> *)dataSource:(RCConversationListDataSource *)datasource willReloadTableData:(NSMutableArray<RCConversationModel *> *)modelList {
     return [self willReloadTableData:modelList];
 }

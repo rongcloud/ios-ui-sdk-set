@@ -319,11 +319,17 @@
 
 - (void)playerDidChangeRate{
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self.isPlaying) {
+            return;
+        }
         // rate = 0 ,表示视频播放被打断
-        if (self.isPlaying && self.player.rate == 0){
+        if (self.player.rate == 0) {
             [self.player pause];
             [self makePlayButtonAppear];
             [self setAudioSessionUnActive];
+        } else {
+            self.transport.centerPlayBtn.hidden = YES;
+            self.transport.playBtn.selected = YES;
         }
     });
 }
@@ -730,6 +736,6 @@
     self.isPlaying = NO;
     self.transport.centerPlayBtn.hidden = NO;
     self.transport.centerPlayBtn.selected = NO;
-    self.transport.playBtn.selected = !self.transport.playBtn.selected;
+    self.transport.playBtn.selected = NO;
 }
 @end

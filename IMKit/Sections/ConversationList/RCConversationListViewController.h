@@ -53,6 +53,10 @@
 /// 您在点击会话列表中的聚合Cell跳转到到子会话列表时，需要将此属性设置为YES。
 @property (nonatomic, assign) BOOL isEnteredToCollectionViewController;
 
+#pragma mark - 置顶的会话排序优先
+/// 查询结果的排序方式，是否置顶优先，传 true 表示置顶会话优先返回，否则结果只以会话时间排序
+@property(nonatomic, assign) BOOL topPriority;
+
 #pragma mark - 列表属性
 
 /// 列表中会话数据模型的数据源

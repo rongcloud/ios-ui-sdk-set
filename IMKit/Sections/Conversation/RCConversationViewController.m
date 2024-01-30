@@ -263,7 +263,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [super viewDidAppear:animated];
     DebugLog(@"%s======%@", __func__, self);
     self.isConversationAppear = YES;
-    [self.util sendReadReceipt];
     [self sendGroupReadReceiptResponseForCache];
     [self.chatSessionInputBarControl containerViewDidAppear];
     [self updateDraftAfterViewAppear];
@@ -542,6 +541,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource getInitialMessage:conversation];
+                [self.util sendReadReceipt];
                 NSString *draft = conversation.draft;
                 self.chatSessionInputBarControl.draft = draft;
             });
@@ -556,6 +556,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [[RCChannelClient sharedChannelManager] getConversation:self.conversationType targetId:self.targetId channelId:self.channelId completion:^(RCConversation * _Nullable conversation) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource getInitialMessage:conversation];
+                [self.util sendReadReceiptWithTime:conversation.sentTime];
                 NSString *draft = conversation.draft;
                 self.chatSessionInputBarControl.draft = draft;
             });
@@ -1520,10 +1521,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         //在viewwillapear和viewdidload之前，如果强制定位，则不滑动到底部
         if (self.dataSource.isLoadingHistoryMessage || [self isRemainMessageExisted]) {
             [self loadRemainMessageAndScrollToBottom:YES];
-        } else {
-            if (self.isConversationAppear) {
-                [self scrollToBottomAnimated:NO];
-            }
+        } else if (self.isConversationAppear || self.chatSessionInputBarControl.currentBottomBarStatus == KBottomBarKeyboardStatus) {
+            [self scrollToBottomAnimated:NO];
         }
     }
 }
@@ -2452,6 +2451,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
     if ([content isMemberOfClass:[RCHQVoiceMessage class]] && model.messageDirection == MessageDirection_RECEIVE) {
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:model.messageId];
+        if (!message) {
+            return;
+        }
         [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[ message ] priority:NO];
         [self.conversationMessageCollectionView reloadItemsAtIndexPaths:[NSArray arrayWithObject:indexPath]];
     } else {

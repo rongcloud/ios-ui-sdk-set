@@ -56,9 +56,15 @@
         operationTime = lastModel.operationTime;
     }
     __weak typeof(self) ws = self;
-    [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray
+
+    BOOL topPriority = NO;
+    if ([self.delegate respondsToSelector:@selector(showConversationOnTopPriority)]) {
+        topPriority = [self.delegate showConversationOnTopPriority];
+    }
+    [[RCCoreClient sharedCoreClient] getConversationList:ws.displayConversationTypeArray
                                                    count:PagingCount
                                                startTime:operationTime
+                                             topPriority:topPriority
                                               completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
         dispatch_async(self.updateEventQueue, ^{
             [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
@@ -102,11 +108,14 @@
 - (void)forceLoadConversationModelList:(void (^)(NSMutableArray<RCConversationModel *> *modelList))completion {
     dispatch_async(self.updateEventQueue, ^{
         NSMutableArray<RCConversationModel *> *modelList = [[NSMutableArray alloc] init];
-
+        BOOL topPriority = NO;
+        if ([self.delegate respondsToSelector:@selector(showConversationOnTopPriority)]) {
+            topPriority = [self.delegate showConversationOnTopPriority];
+        }
         if ([[RCIM sharedRCIM] getConnectionStatus] != ConnectionStatus_SignOut) {
             int count = (int)MAX(self.currentCount, PagingCount);
             dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-            [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray count:count startTime:0 completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
+            [[RCCoreClient sharedCoreClient] getConversationList:self.displayConversationTypeArray count:count startTime:0 topPriority:topPriority completion:^(NSArray<RCConversation *> * _Nullable conversationList) {
                 [RCIMNotificationDataContext updateNotificationLevelWith:conversationList];
                 for (RCConversation *conversation in conversationList) {
                     RCConversationModel *model = [[RCConversationModel alloc] initWithConversation:conversation extend:nil];

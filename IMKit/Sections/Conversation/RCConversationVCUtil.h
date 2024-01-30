@@ -28,6 +28,7 @@
 - (void)syncReadStatus:(long long)sentTime needDelay:(BOOL)needDelay;
 //发送已读回执
 - (void)sendReadReceipt;
+- (void)sendReadReceiptWithTime:(long long)time;
 //批量发送已读回执
 - (void)sendReadReceiptResponseForMessages:(NSArray *)array;
 //停止播放语音消息

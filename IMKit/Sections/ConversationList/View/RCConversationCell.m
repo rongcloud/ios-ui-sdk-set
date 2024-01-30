@@ -190,7 +190,9 @@
     }
 
     [self.headerView updateBubbleUnreadNumber:(int)model.unreadMessageCount];
-    self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    if (model.sentTime > 0) {
+        self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    }
     [self.statusView updateNotificationStatus:model];
     [self.statusView updateReadStatus:model];
 }
