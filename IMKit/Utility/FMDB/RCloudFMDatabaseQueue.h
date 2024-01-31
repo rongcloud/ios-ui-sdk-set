@@ -89,7 +89,7 @@
 
  @param aPath The file path of the database.
 
- - Returns: The `RCloudFMDatabaseQueue` object. `nil` on error.
+ @return The `RCloudFMDatabaseQueue` object. `nil` on error.
  */
 
 + (instancetype)databaseQueueWithPath:(NSString *)aPath;
@@ -99,7 +99,7 @@
  @param aPath The file path of the database.
  @param openFlags Flags passed to the openWithFlags method of the database
 
- - Returns: The `RCloudFMDatabaseQueue` object. `nil` on error.
+ @return The `RCloudFMDatabaseQueue` object. `nil` on error.
  */
 + (instancetype)databaseQueueWithPath:(NSString *)aPath flags:(int)openFlags;
 
@@ -107,7 +107,7 @@
 
  @param aPath The file path of the database.
 
- - Returns: The `RCloudFMDatabaseQueue` object. `nil` on error.
+ @return The `RCloudFMDatabaseQueue` object. `nil` on error.
  */
 
 - (instancetype)initWithPath:(NSString *)aPath;
@@ -117,7 +117,7 @@
  @param aPath The file path of the database.
  @param openFlags Flags passed to the openWithFlags method of the database
 
- - Returns: The `RCloudFMDatabaseQueue` object. `nil` on error.
+ @return The `RCloudFMDatabaseQueue` object. `nil` on error.
  */
 
 - (instancetype)initWithPath:(NSString *)aPath flags:(int)openFlags;
@@ -128,7 +128,7 @@
  @param openFlags Flags passed to the openWithFlags method of the database
  @param vfsName The name of a custom virtual file system
 
- - Returns: The `RCloudFMDatabaseQueue` object. `nil` on error.
+ @return The `RCloudFMDatabaseQueue` object. `nil` on error.
  */
 
 - (instancetype)initWithPath:(NSString *)aPath flags:(int)openFlags vfs:(NSString *)vfsName;
@@ -137,7 +137,7 @@
 
  Subclasses can override this method to return specified Class of 'RCloudFMDatabase' subclass.
 
- - Returns: The Class of 'RCloudFMDatabase' subclass, that will be used to instantiate database object.
+ @return The Class of 'RCloudFMDatabase' subclass, that will be used to instantiate database object.
  */
 
 + (Class)databaseClass;

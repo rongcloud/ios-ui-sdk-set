@@ -266,12 +266,12 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
     CLLocation *location = [locations lastObject];
 
+    [(MKMapView *)self.mapView setCenterCoordinate:location.coordinate];
     MKCoordinateRegion coordinateRegion;
     coordinateRegion.center = location.coordinate;
     coordinateRegion.span.latitudeDelta = 0.01;
     coordinateRegion.span.longitudeDelta = 0.01;
     [self.dataSource didUpdateUserLocation];
-    [self.dataSource setMapViewCenter:location.coordinate animated:YES];
     [self.dataSource setMapViewCoordinateRegion:coordinateRegion animated:YES];
 }
 

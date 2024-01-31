@@ -12,7 +12,9 @@
 //聊天页面客服相关功能
 @interface RCConversationCSUtil : NSObject
 - (instancetype)init:(RCConversationViewController *)chatVC;
-/// 用户的详细信息，此数据用于上传用户信息到客服后台，数据的nickName和portraitUrl必须填写。
+/*!
+ 用户的详细信息，此数据用于上传用户信息到客服后台，数据的nickName和portraitUrl必须填写。
+ */
 @property (nonatomic, strong) RCCustomerServiceInfo *csInfo;
 
 @property (nonatomic, assign) RCCustomerServiceStatus currentServiceStatus;

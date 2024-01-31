@@ -30,13 +30,19 @@
 @protocol RCVoiceRecordControlDelegate <NSObject>
 
 - (BOOL)recordWillBegin;
-/// 开始录制语音消息
+/*!
+ 开始录制语音消息
+ */
 - (void)voiceRecordControlDidBegin:(RCVoiceRecordControl *)voiceRecordControl;
 
-/// 取消录制语音消息
+/*!
+ 取消录制语音消息
+ */
 - (void)voiceRecordControlDidCancel:(RCVoiceRecordControl *)voiceRecordControl;
 
-/// 结束录制语音消息
+/*!
+ 结束录制语音消息
+ */
 - (void)voiceRecordControl:(RCVoiceRecordControl *)voiceRecordControl
                     didEnd:(NSData *)recordData
                   duration:(long)duration

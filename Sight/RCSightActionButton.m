@@ -38,10 +38,6 @@
 
 @implementation RCSightActionButton
 
-- (void)quit {
-    [self.displayLink invalidate];
-}
-
 #pragma mark - Properties
 - (CAShapeLayer *)ringLayer {
     if (!_ringLayer) {

@@ -14,7 +14,7 @@
 #import "RCKitConfig.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"
-#import "RCButton.h"
+#import "RCBaseButton.h"
 #import "RCBaseImageView.h"
 @interface RCCombineMsgFilePreviewViewController ()
 
@@ -70,9 +70,7 @@
         self.extentLayoutForY = 0;
     }
     //设置右键
-    RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
-    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(9.5, 0, 9.5, -9.5);
-    rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    RCBaseButton *rightBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 17.5, 17.5)];
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(moreAction) forControlEvents:UIControlEventTouchUpInside];

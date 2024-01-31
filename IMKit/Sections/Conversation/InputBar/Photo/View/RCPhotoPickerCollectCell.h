@@ -23,7 +23,9 @@
  */
 - (void)downloadFailFromiCloud;
 
-/// 当按钮selected状态改变后,回调
+/**
+ *  当按钮selected状态改变后,回调
+ */
 - (void)didChangeSelectedState:(BOOL)selected model:(RCAssetModel *)asset;
 
 - (void)didTapPickerCollectCell:(RCAssetModel *)model;

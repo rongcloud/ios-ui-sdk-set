@@ -62,6 +62,8 @@
 //点击右上角未读消息个数的按钮
 - (void)tapRightTopMsgUnreadButton;
 - (void)tapRightTopUnReadMentionedButton:(UIButton *)sender;
+//viewWillDisappear 清空未读的 @ 消息
+- (void)clearUnreadMentionedMessages;
 
 - (void)quitChatRoomIfNeed;
 

@@ -23,14 +23,8 @@
 #import "RCSightMessage+imkit.h"
 #import "RCConversationDataSource.h"
 
-NSInteger const RCMessageCellDisplayTimeHeightForCommon = 45;
-NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
-
 @interface RCConversationViewController ()
 @property (nonatomic, strong, readonly) RCConversationDataSource *dataSource;
-
-// 私有方法
-- (void)onlySendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
 @end
 
 @interface RCConversationVCUtil ()
@@ -99,14 +93,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     return informationNotifiMsg;
 }
 
-+ (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model {
-    if ([model.content isKindOfClass:[RCHQVoiceMessage class]]) {
-        return RCMessageCellDisplayTimeHeightForHQVoice;
-    } else {
-        return RCMessageCellDisplayTimeHeightForCommon;
-    }
-}
-
 - (void)figureOutAllConversationDataRepository {
     for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
         RCMessageModel *model = [self.chatVC.conversationDataRepository objectAtIndex:i];
@@ -121,18 +107,17 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
             long long interval =
                 current_time - previous_time > 0 ? current_time - previous_time : previous_time - current_time;
-            CGFloat increment = [[self class] incrementOfTimeLabelBy:model];
             if (interval / 1000 <= 3 * 60) {
                 if (model.isDisplayMessageTime && model.cellSize.height > 0) {
                     CGSize size = model.cellSize;
-                    size.height = model.cellSize.height - increment;
+                    size.height = model.cellSize.height - 45;
                     model.cellSize = size;
                 }
                 model.isDisplayMessageTime = NO;
             } else if (![model.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
                 if (!model.isDisplayMessageTime && model.cellSize.height > 0) {
                     CGSize size = model.cellSize;
-                    size.height = model.cellSize.height + increment;
+                    size.height = model.cellSize.height + 45;
                     model.cellSize = size;
                 }
                 model.isDisplayMessageTime = YES;
@@ -246,12 +231,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 //获取具体消息的阅后即焚倒计时时长
 - (NSUInteger)getMessageDestructDuration:(RCMessageContent *)content {
-    return [self getMessageDestructDuration:content destructMessageMode:self.chatVC.chatSessionInputBarControl.destructMessageMode];
-}
-
-- (NSUInteger)getMessageDestructDuration:(RCMessageContent *)content destructMessageMode:(BOOL)destructMessageMode {
     NSUInteger duration = content.destructDuration;
-    if (destructMessageMode) {
+    if (self.chatVC.chatSessionInputBarControl.destructMessageMode) {
         if ([content isKindOfClass:[RCTextMessage class]]) {
             RCTextMessage *msg = (RCTextMessage *)content;
             if (msg.content.length <= 20) {
@@ -309,39 +290,36 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 - (void)doSendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent {
     messageContent.destructDuration = [self getMessageDestructDuration:messageContent];
-    [self doOnlySendMessage:messageContent pushContent:pushContent];
-}
-
-// 专属发送, 内部无焚毁逻辑
-- (void)doOnlySendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent {
     if (messageContent.destructDuration > 0) {
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
-    RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
-        [[RCIM sharedRCIM] sendMediaMessage:message
+        [[RCIM sharedRCIM] sendMediaMessage:self.chatVC.conversationType
+                                   targetId:self.chatVC.targetId
+                                    content:messageContent
                                 pushContent:pushContent
                                    pushData:nil
                                    progress:nil
-                               successBlock:nil
-                                 errorBlock:nil
+                                    success:nil
+                                      error:nil
                                      cancel:nil];
     } else {
-        [[RCIM sharedRCIM] sendMessage:message
-                           pushContent:pushContent
-                              pushData:nil
-                          successBlock:^(RCMessage *successMessage) {
-            
-        } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
-            DebugLog(@"error: %@", @(nErrorCode));
-        }];
+        [[RCIM sharedRCIM] sendMessage:self.chatVC.conversationType
+            targetId:self.chatVC.targetId
+            content:messageContent
+            pushContent:pushContent
+            pushData:nil
+            success:^(long messageId) {
+            }
+            error:^(RCErrorCode nErrorCode, long messageId) {
+                DebugLog(@"error");
+            }];
     }
 }
 
 - (void)doSendSelectedMediaMessage:(NSArray *)selectedImages fullImageRequired:(BOOL)full {
     //耗时操作异步执行，以免阻塞主线程
     RCConversationViewController *chatVC = self.chatVC;
-    BOOL destructMessageMode = self.chatVC.chatSessionInputBarControl.destructMessageMode;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         for (int i = 0; i < selectedImages.count; i++) {
             @autoreleasepool {
@@ -362,8 +340,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                                 imagemsg = [RCImageMessage messageWithImageData:newImageData];
                                 imagemsg.full = full;
                             }
-                            imagemsg.destructDuration = [self getMessageDestructDuration:imagemsg destructMessageMode:destructMessageMode];
-                            [chatVC onlySendMessage:imagemsg pushContent:nil];
+                            [chatVC sendMessage:imagemsg pushContent:nil];
                         }
                         progressBlock:^(UIImage *outimage, BOOL doNothing){
 
@@ -379,8 +356,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                             RCSightMessage *sightMsg =
                                 [RCSightMessage messageWithAsset:model thumbnail:image duration:duration];
                             sightMsg.localPath = localPath;
-                            sightMsg.destructDuration = [self getMessageDestructDuration:sightMsg destructMessageMode:destructMessageMode];
-                            [chatVC onlySendMessage:sightMsg pushContent:nil];
+                            [chatVC sendMessage:sightMsg pushContent:nil];
                         });
                     } else {
                         NSData *gifImageData = (NSData *)[assertInfo objectForKey:@"imageData"];
@@ -389,8 +365,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                             RCGIFMessage *gifMsg = [RCGIFMessage messageWithGIFImageData:gifImageData
                                                                                    width:gifImage.size.width
                                                                                   height:gifImage.size.height];
-                            gifMsg.destructDuration = [self getMessageDestructDuration:gifMsg destructMessageMode:destructMessageMode];
-                            [chatVC onlySendMessage:gifMsg pushContent:nil];
+                            [chatVC sendMessage:gifMsg pushContent:nil];
                         }
                     }
                 }
@@ -519,8 +494,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
          ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
-        self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
-        self.chatVC.conversationType == ConversationType_SYSTEM) {
+        self.chatVC.conversationType == ConversationType_PUBLICSERVICE) {
         
         if (0 == sentTime){
             for (long i = self.chatVC.conversationDataRepository.count - 1; i >= 0; i--) {
@@ -568,17 +542,13 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
-            [self sendReadReceiptWithTime:self.lastReadReceiptTime];
+            [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
+                                                         targetId:self.chatVC.targetId
+                                                             time:lastReceiveMessageTime
+                                                          success:nil
+                                                            error:nil];
         }
     }
-}
-
-- (void)sendReadReceiptWithTime:(long long)time {
-    [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
-                                                 targetId:self.chatVC.targetId
-                                                     time:time
-                                                  success:nil
-                                                    error:nil];
 }
 
 - (BOOL)canSendReadReceipt {

@@ -94,10 +94,7 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
 /*!
  会话中最后一条消息的接收状态
  */
-@property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
-
-/// 消息的接收状态类(针对接收的消息生效)
-@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
+@property (nonatomic, assign) RCReceivedStatus receivedStatus;
 
 /*!
  会话中最后一条消息的发送状态
@@ -113,11 +110,6 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
  会话中最后一条消息的发送时间（Unix时间戳、毫秒）
  */
 @property (nonatomic, assign) long long sentTime;
-
-/// 会话的操作时间（Unix时间戳、毫秒），用于分页获取会话列表时传入的时间戳
-/// 初始值与 sentTime 相同，置顶等操作会更新此时间戳
-/// - Since: 5.6.7
-@property (nonatomic, assign) long long operationTime;
 
 /*!
  会话中存在的草稿
@@ -174,7 +166,7 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
  会话中第一条未读消息时间戳（Unix时间戳、毫秒）
 
  仅支持 超级群会话
- - Since: 5.2.5
+ @since 5.2.5
 
 */
 @property (nonatomic, assign) long long firstUnreadMsgSendTime;
@@ -183,25 +175,25 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
 /*!
  初始化会话显示数据模型
 
- - Parameter conversation:          会话
- - Parameter extend:                用户自定义的扩展数据
- - Returns: 会话Cell的数据模型对象
+ @param conversation          会话
+ @param extend                用户自定义的扩展数据
+ @return 会话Cell的数据模型对象
  */
 - (instancetype)initWithConversation:(RCConversation *)conversation extend:(id)extend;
 
 /*!
  更新数据模型中的消息
 
- - Parameter message: 此会话中最新的消息
+ @param message 此会话中最新的消息
  */
 - (void)updateWithMessage:(RCMessage *)message;
 
 /*!
  会话和数据模型是否匹配
 
- - Parameter conversationType: 会话类型
- - Parameter targetId:         目标会话ID
- - Returns: 会话和数据模型是否匹配
+ @param conversationType 会话类型
+ @param targetId         目标会话ID
+ @return 会话和数据模型是否匹配
  */
 - (BOOL)isMatching:(RCConversationType)conversationType targetId:(NSString *)targetId;
 @end

@@ -12,11 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSDictionary (safeaccessor)
 
-/// 慎用，此方法只用于融云兼容性解析（支持 string、map、array 、nsnumber 四种格式兼容解析）
-/// 普通场景解析 string 请使用 rclib_stringForKey
-/// - Parameter key: key
-- (nullable NSString *)rclib_mix_stringForKey:(id)key;
-
 - (nullable NSString *)rclib_stringForKey:(id)key;
 - (nullable NSDictionary *)rclib_dictionaryForKey:(id)key;
 - (nullable NSArray *)rclib_arrayForKey:(id)key;

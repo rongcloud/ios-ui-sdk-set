@@ -57,10 +57,7 @@
 /*!
  消息的接收状态
  */
-@property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
-
-/// 消息的接收状态类(针对接收的消息生效)
-@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
+@property (nonatomic, assign) RCReceivedStatus receivedStatus;
 
 /*!
  消息的发送状态
@@ -100,13 +97,13 @@
 /*!
  消息展示时的Cell高度
 
-  用于大量消息的显示优化
+ @discussion 用于大量消息的显示优化
  */
 @property (nonatomic) CGSize cellSize;
 /*!
  全局唯一ID
 
-  服务器消息唯一ID（在同一个Appkey下全局唯一）
+ @discussion 服务器消息唯一ID（在同一个Appkey下全局唯一）
  */
 @property (nonatomic, copy) NSString *messageUId;
 
@@ -125,31 +122,31 @@
 /*!
  消息是否可以包含扩展信息
  
-  该属性在消息发送时确定，发送之后不能再做修改
-  扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
+ @discussion 该属性在消息发送时确定，发送之后不能再做修改
+ @discussion 扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
 */
 @property (nonatomic, assign) BOOL canIncludeExpansion;
 
 /*!
  消息扩展信息列表
  
-  扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
+ @discussion 扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
 */
 @property (nonatomic, strong) NSDictionary<NSString *, NSString *> *expansionDic;
 
 /*!
  初始化消息Cell的数据模型
 
- - Parameter rcMessage:   消息实体
- - Returns: 消息Cell的数据模型对象
+ @param rcMessage   消息实体
+ @return            消息Cell的数据模型对象
  */
 + (instancetype)modelWithMessage:(RCMessage *)rcMessage;
 
 /*!
  初始化消息Cell的数据模型
 
- - Parameter rcMessage:   消息实体
- - Returns: 消息Cell的数据模型对象
+ @param rcMessage   消息实体
+ @return            消息Cell的数据模型对象
  */
 - (instancetype)initWithMessage:(RCMessage *)rcMessage;
 @end

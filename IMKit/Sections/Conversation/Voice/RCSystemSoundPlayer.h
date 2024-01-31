@@ -19,10 +19,14 @@ typedef void (^RCSystemSoundPlayerCompletion)(BOOL complete);
 
 - (void)playSoundByMessage:(RCMessage *)rcMessage completeBlock:(RCSystemSoundPlayerCompletion)completion;
 
-/// 设置忽略响铃的会话
+/**
+ * 设置忽略响铃的会话
+ */
 - (void)setIgnoreConversationType:(RCConversationType)conversationType targetId:(NSString *)targetId;
 
-/// 清除忽略响铃的会话
+/**
+ * 清除忽略响铃的会话
+ */
 - (void)resetIgnoreConversation;
 
 @end

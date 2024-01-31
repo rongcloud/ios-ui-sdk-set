@@ -10,7 +10,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// - Since: 5.4.0
+/*!
+ @since 5.4.0
+ */
 @interface RCBaseButton : UIButton
 
 @end

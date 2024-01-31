@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** 默认使用的语言版本, 默认为 nil. 将随系统的语言自动改变 */
 @property (copy, nonatomic, nullable) NSString *languageCode;
 
-/** - Returns: Singleton Config instance */
+/** @return Singleton Config instance */
 + (instancetype)defaultConfig;
 
 - (instancetype)init NS_UNAVAILABLE;

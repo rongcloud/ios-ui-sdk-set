@@ -84,6 +84,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     [self.navigationController setNavigationBarHidden:YES];
     // fix: https://admin.rongcloud.cn/ticket/reply/138658?user_id=167777&type=1&action=first
     // iOS14 之后在 viewWillAppear 中调用 scrollToItemAtIndexPath 不生效，原因是：collectionView 在完成布局之前调用 scrollToItemAtIndexPath 是不会执行的。
@@ -104,6 +105,16 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     if (_fullButton.selected) {
         [self updateImageSize];
     }
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark - Public Methods

@@ -93,13 +93,33 @@
                                                                              options:kNilOptions
                                                                              metrics:nil
                                                                                views:views]];
-    [self.contentView
-     addConstraints:[NSLayoutConstraint
-                     constraintsWithVisualFormat:@"H:|-10-[_portraitView(40)]-12-[_nicknameLabel]-40-|"
-                     options:kNilOptions
-                     metrics:nil
-                     views:views]];
-    
+
+    BOOL isDisplayID = [[NSUserDefaults standardUserDefaults] boolForKey:@"isDisplayID"];
+
+    if (isDisplayID == YES) {
+        [self.contentView addConstraints:[NSLayoutConstraint
+                                             constraintsWithVisualFormat:
+                                                 @"H:|-12-[_portraitView(40)]-12-[_nicknameLabel][_userIdLabel(90)]-40-|"
+                                                                 options:kNilOptions
+                                                                 metrics:nil
+                                                                   views:views]];
+
+        [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:_userIdLabel
+                                                                     attribute:NSLayoutAttributeCenterY
+                                                                     relatedBy:NSLayoutRelationEqual
+                                                                        toItem:self.contentView
+                                                                     attribute:NSLayoutAttributeCenterY
+                                                                    multiplier:1.0f
+                                                                      constant:0]];
+    } else {
+        [self.contentView
+            addConstraints:[NSLayoutConstraint
+                               constraintsWithVisualFormat:@"H:|-10-[_portraitView(40)]-12-[_nicknameLabel]-40-|"
+                                                   options:kNilOptions
+                                                   metrics:nil
+                                                     views:views]];
+    }
+
     self.selectedBackgroundView = [[UIView alloc] initWithFrame:self.frame];
     self.selectedBackgroundView.backgroundColor = [UIColor colorWithHexString:@"f5f5f5" alpha:1.0];
 }

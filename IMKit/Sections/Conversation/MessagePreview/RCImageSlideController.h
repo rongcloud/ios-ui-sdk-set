@@ -31,9 +31,9 @@
 /**
  长按图片内容的回调
 
- - Parameter sender: 长按手势
+ @param sender 长按手势
 
-  如需使用SDK的长按图片内容处理，请调用父类方法 [super longPressed:sender];
+ @discussion 如需使用SDK的长按图片内容处理，请调用父类方法 [super longPressed:sender];
  */
 - (void)longPressed:(id)sender;
 

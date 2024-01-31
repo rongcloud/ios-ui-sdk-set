@@ -462,28 +462,24 @@
  *  长时间没有收到消息的超时提醒
  *
  */
-- (void)longTimeNotReceiveMessageAlert {
+- (void)longTimeNotReciveMessageAlert {
     if (self.currentServiceStatus == RCCustomerService_HumanService) {
         RCInformationNotificationMessage *informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:self.customerServiceReciveMessageOverTimeRemindContent
                               extra:nil];
 
-        RCReceivedStatusInfo *statusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
-        [statusInfo markAsRead];
-        [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
-                                                      targetId:self.chatVC.targetId
-                                                  senderUserId:self.chatVC.targetId
-                                            receivedStatusInfo:statusInfo
-                                                       content:informationNotifiMsg
-                                                    completion:^(RCMessage * _Nullable message) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                RCMessage *tempMessage = [self.chatVC willAppendAndDisplayMessage:message];
-                if (tempMessage) {
-                    [self.chatVC appendAndDisplayMessage:tempMessage];
-                }
-                [self stopNotReciveMessageAlertTimer];
-            });
-        }];
+        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
+                                                                                     targetId:self.chatVC.targetId
+                                                                                 senderUserId:self.chatVC.targetId
+                                                                               receivedStatus:(ReceivedStatus_READ)
+                                                                                      content:informationNotifiMsg];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            tempMessage = [self.chatVC willAppendAndDisplayMessage:tempMessage];
+            if (tempMessage) {
+                [self.chatVC appendAndDisplayMessage:tempMessage];
+            }
+            [self stopNotReciveMessageAlertTimer];
+        });
     } else {
         [self stopNotReciveMessageAlertTimer];
     }
@@ -498,24 +494,19 @@
         RCInformationNotificationMessage *informationNotifiMsg = [RCInformationNotificationMessage
             notificationWithMessage:self.customerServiceSendMessageOverTimeRemindContent
                               extra:nil];
-        
-        RCReceivedStatusInfo *statusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
-        [statusInfo markAsRead];
-        [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
-                                                      targetId:self.chatVC.targetId
-                                                  senderUserId:self.chatVC.targetId
-                                            receivedStatusInfo:statusInfo
-                                                       content:informationNotifiMsg
-                                                    completion:^(RCMessage * _Nullable message) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                RCMessage *tempMessage = [self.chatVC willAppendAndDisplayMessage:message];
-                if (tempMessage) {
-                    [self.chatVC appendAndDisplayMessage:tempMessage];
-                }
-                
-                [self stopNotSendMessageAlertTimer];
-            });
-        }];
+        __block RCMessage *tempMessage = [[RCCoreClient sharedCoreClient] insertIncomingMessage:self.chatVC.conversationType
+                                                                                     targetId:self.chatVC.targetId
+                                                                                 senderUserId:self.chatVC.targetId
+                                                                               receivedStatus:(ReceivedStatus_READ)
+                                                                                      content:informationNotifiMsg];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            tempMessage = [self.chatVC willAppendAndDisplayMessage:tempMessage];
+            if (tempMessage) {
+                [self.chatVC appendAndDisplayMessage:tempMessage];
+            }
+
+            [self stopNotSendMessageAlertTimer];
+        });
     } else {
         [self stopNotReciveMessageAlertTimer];
     }
@@ -565,7 +556,7 @@
             ws.notReciveMessageAlertTimer =
                 [NSTimer scheduledTimerWithTimeInterval:self.customerServiceReciveMessageOverTimeRemindTimer
                                                  target:self
-                                               selector:@selector(longTimeNotReceiveMessageAlert)
+                                               selector:@selector(longTimeNotReciveMessageAlert)
                                                userInfo:nil
                                                 repeats:YES];
 
