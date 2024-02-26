@@ -9,6 +9,7 @@
 #import "RCSightCapturer.h"
 #import <UIKit/UIKit.h>
 #import <CoreTelephony/CTCallCenter.h>
+#import "RongSightAdaptiveHeader.h"
 
 @interface RCSightCapturer () <AVCaptureVideoDataOutputSampleBufferDelegate,
                                AVCaptureAudioDataOutputSampleBufferDelegate>
@@ -291,6 +292,10 @@
     if (![self.captureSession isRunning]) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(self.sessionQueue, ^{
+            [[AVAudioSession sharedInstance] setActive:NO error:nil];
+            [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+            [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            weakSelf.captureSession.automaticallyConfiguresApplicationAudioSession = NO;
             [weakSelf.captureSession startRunning];
         });
     }
@@ -301,6 +306,15 @@
         __weak typeof(self) weakSelf = self;
         dispatch_async(self.sessionQueue, ^{
             [weakSelf.captureSession stopRunning];
+            if (RCKitConfigCenter.message.isExclusiveSoundPlayer) {
+                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+                [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+                [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            } else {
+                [[AVAudioSession sharedInstance] setActive:NO
+                                               withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                                     error:nil];
+            }
             [weakSelf teardownCaptureSession];
         });
     }
@@ -338,7 +352,7 @@
             if ([self.captureSession canAddInput:videoInput]) {
                 [self.captureSession addInput:videoInput];
                 self.activeVideoInput = videoInput;
-            } else {
+            } else if ([self.captureSession canAddInput:self.activeVideoInput]) {
                 [self.captureSession addInput:self.activeVideoInput];
             }
             [self.captureSession commitConfiguration];
@@ -363,7 +377,7 @@
             [self.captureSession addInput:audioDeviceInput];
             self.activeAudioInput = audioDeviceInput;
             _audioDevice = newAudioDevice;
-        }else {
+        }else if ([self.captureSession canAddInput:self.activeAudioInput]) {
             [self.captureSession addInput:self.activeAudioInput];
         }
         
@@ -373,7 +387,7 @@
         if ([self.captureSession canAddOutput:audioDeviceOutput]) {
             [self.captureSession addOutput:audioDeviceOutput];
             self.activeAudioDeviceOutput = audioDeviceOutput;
-        }else {
+        }else if ([self.captureSession canAddOutput:self.activeAudioDeviceOutput]) {
             [self.captureSession addOutput:self.activeAudioDeviceOutput];
         }
         self.audioConnection = [self.activeAudioDeviceOutput connectionWithMediaType:AVMediaTypeAudio];
@@ -402,7 +416,7 @@
         if ([self.captureSession canAddInput:videoInput]) {
             [self.captureSession addInput:videoInput];
             self.activeVideoInput = videoInput;
-        } else {
+        } else if ([self.captureSession canAddInput:self.activeVideoInput]) {
             [self.captureSession addInput:self.activeVideoInput];
         }
         [self.captureSession commitConfiguration];
@@ -481,7 +495,7 @@
         }
     };
     // Capture still image
-    if (connection) {
+    if (connection && connection.enabled && connection.active) {
         [self.imageOutput captureStillImageAsynchronouslyFromConnection:connection completionHandler:handler];
     }
 }

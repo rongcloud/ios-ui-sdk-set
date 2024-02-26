@@ -22,7 +22,7 @@
 /*!
  展示的消息Cell类
 
- @discussion 需要展示用户信息和内容的消息Cell可以继承此类，
+  需要展示用户信息和内容的消息Cell可以继承此类，
  如：RCTextMessageCell、RCImageMessageCell、RCLocationMessageCell、RCVoiceMessageCell、RCRichContentMessageCell等。
  如果您需要显示自定义消息，可以继承此类。
  */
@@ -51,7 +51,7 @@
 /*!
  显示发送状态的View
 
- @discussion 其中包含messageFailedStatusView子View。
+  其中包含messageFailedStatusView子View。
  */
 @property (nonatomic, strong) UIView *statusContentView;
 
@@ -73,7 +73,7 @@
 /*!
  显示是否消息回执的Button
 
- @discussion 仅在群组和讨论组中显示
+  仅在群组和讨论组中显示
  */
 @property (nonatomic, strong) RCBaseButton *receiptView;
 
@@ -91,28 +91,28 @@
 /*!
  设置当前消息Cell的数据模型
 
- @param model 消息Cell的数据模型
+ - Parameter model: 消息Cell的数据模型
  */
 - (void)setDataModel:(RCMessageModel *)model;
 
 /*!
  更新消息发送状态
 
- @param model 消息Cell的数据模型
+ - Parameter model: 消息Cell的数据模型
  */
 - (void)updateStatusContentView:(RCMessageModel *)model;
 
 /*!
  是否显示消息的背景气泡 View
 
-@param show 消息Cell的数据模型
+- Parameter show: 消息Cell的数据模型
 */
 - (void)showBubbleBackgroundView:(BOOL)show;
 
 /*!
 阅后即焚的回调
 
-@discussion 阅后即焚的消息，每过 1 秒都会触发该回调更新时间
+ 阅后即焚的消息，每过 1 秒都会触发该回调更新时间
 */
 - (void)messageDestructing;
 

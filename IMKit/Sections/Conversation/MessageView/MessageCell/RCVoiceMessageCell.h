@@ -12,44 +12,28 @@
 #define kAudioBubbleMaxWidth 180
 #define kMessageContentViewHeight 36
 
-/*!
- 开始语音播放的Notification
- */
+/// 开始语音播放的Notification
 UIKIT_EXTERN NSString *const kNotificationPlayVoice;
 
-/*!
- 语音消息播放停止的Notification
- */
+/// 语音消息播放停止的Notification
 UIKIT_EXTERN NSString *const kNotificationStopVoicePlayer;
 
-/*!
- 语音消息Cell
- */
+/// 语音消息Cell
 @interface RCVoiceMessageCell : RCMessageCell
 
-/*!
- 语音播放的View
- */
+/// 语音播放的View
 @property (nonatomic, strong) RCBaseImageView *playVoiceView;
 
-/*!
- 显示是否已播放的View
- */
+/// 显示是否已播放的View
 @property (nonatomic, strong) RCBaseImageView *voiceUnreadTagView;
 
-/*!
- 显示语音时长的Label
- */
+/// 显示语音时长的Label
 @property (nonatomic, strong) UILabel *voiceDurationLabel;
 
-/*!
- 播放语音
- */
+/// 播放语音
 - (void)playVoice;
 
-/*!
- 停止播放语音
- */
+/// 停止播放语音
 - (void)stopPlayingVoice;
 
 @end

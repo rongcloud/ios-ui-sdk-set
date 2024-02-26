@@ -39,10 +39,11 @@
         self.sentStatus = conversation.sentStatus;
         self.receivedTime = conversation.receivedTime;
         self.sentTime = conversation.sentTime;
+        self.operationTime = conversation.operationTime;
         self.draft = conversation.draft;
         self.objectName = conversation.objectName;
         self.senderUserId = conversation.senderUserId;
-        self.receivedStatus = conversation.receivedStatus;
+        self.receivedStatusInfo = conversation.receivedStatusInfo;
         self.lastestMessageId = conversation.lastestMessageId;
         self.lastestMessageDirection = conversation.lastestMessageDirection;
         self.lastestMessage = conversation.lastestMessage;
@@ -79,7 +80,7 @@
     self.targetId = message.targetId;
     self.channelId = message.channelId;
     self.sentStatus = message.sentStatus;
-    self.receivedStatus = message.receivedStatus;
+    self.receivedStatusInfo = message.receivedStatusInfo;
     self.receivedTime = message.receivedTime;
     self.sentTime = message.sentTime;
     self.objectName = message.objectName;
@@ -88,8 +89,8 @@
     self.lastestMessageDirection = message.messageDirection;
     self.lastestMessage = message.content;
     self.conversationType = message.conversationType;
-    if (message.messageDirection == MessageDirection_RECEIVE && message.receivedStatus != ReceivedStatus_READ &&
-        message.receivedStatus != ReceivedStatus_LISTENED) {
+    if (message.messageDirection == MessageDirection_RECEIVE && NO == message.receivedStatusInfo.isRead &&
+        NO == message.receivedStatusInfo.isListened) {
         if (([[message.content class] persistentFlag] & MessagePersistent_ISCOUNTED) == MessagePersistent_ISCOUNTED) {
             self.unreadMessageCount += 1;
         }
@@ -124,4 +125,24 @@
     }
     return NO;
 }
+
+#pragma mark - setter & getter
+
+- (void)setReceivedStatus:(RCReceivedStatus)receivedStatus {
+    self.receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:receivedStatus];
+}
+
+- (RCReceivedStatus)receivedStatus {
+    RCConversation *conversation = [[RCConversation alloc] init];
+    conversation.receivedStatusInfo = self.receivedStatusInfo;
+    return conversation.receivedStatus;
+}
+
+- (RCReceivedStatusInfo *)receivedStatusInfo {
+    if (!_receivedStatusInfo) {
+        _receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
+    }
+    return _receivedStatusInfo;
+}
+
 @end

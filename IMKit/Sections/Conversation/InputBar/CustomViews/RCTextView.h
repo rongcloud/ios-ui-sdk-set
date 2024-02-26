@@ -17,15 +17,13 @@
 
 @end
 
-/*!
- 文本输入框的View
- */
+/// 文本输入框的View
 @interface RCTextView : UITextView
 
 /*!
  是否关闭菜单
 
- @discussion 默认值为NO。
+  默认值为NO。
  */
 @property (nonatomic, assign) BOOL disableActionMenu;
 

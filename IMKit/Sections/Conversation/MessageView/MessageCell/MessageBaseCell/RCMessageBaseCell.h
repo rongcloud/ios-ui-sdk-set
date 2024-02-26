@@ -27,7 +27,7 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
 /*!
  消息Cell基类
 
- @discussion 消息Cell基类包含了所有消息Cell的必要信息。
+  消息Cell基类包含了所有消息Cell的必要信息。
  消息Cell基类针对用户头像是否显示，主要可以分为两类的：
  一是提醒类的Cell，不显示用户信息，如：RCTipMessageCell和RCUnknownMessageCell；
  二是展示类的Cell，显示用户信息和内容，如：RCMessageCell以及RCMessageCell的子类。
@@ -39,13 +39,13 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
 /*!
  自定义消息Cell的Size
 
- @param model               要显示的消息model
- @param collectionViewWidth cell所在的collectionView的宽度
- @param extraHeight         cell内容区域之外的高度
+ - Parameter model:               要显示的消息model
+ - Parameter collectionViewWidth: cell所在的collectionView的宽度
+ - Parameter extraHeight:         cell内容区域之外的高度
 
- @return 自定义消息Cell的Size
+ - Returns: 自定义消息Cell的Size
 
- @discussion 当应用自定义消息时，必须实现该方法来返回cell的Size。
+  当应用自定义消息时，必须实现该方法来返回cell的Size。
  其中，extraHeight是Cell根据界面上下文，需要额外显示的高度（比如时间、用户名的高度等）。
  一般而言，Cell的高度应该是内容显示的高度再加上extraHeight的高度。
  */
@@ -96,22 +96,22 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
 /*!
  初始化消息Cell
 
- @param frame 显示的Frame
- @return 消息Cell基类对象
+ - Parameter frame: 显示的Frame
+ - Returns: 消息Cell基类对象
  */
 - (instancetype)initWithFrame:(CGRect)frame;
 
 /*!
  设置当前消息Cell的数据模型
 
- @param model 消息Cell的数据模型
+ - Parameter model: 消息Cell的数据模型
  */
 - (void)setDataModel:(RCMessageModel *)model;
 
 /*!
  消息发送状态更新的监听回调
 
- @param notification 消息发送状态更新的Notification
+ - Parameter notification: 消息发送状态更新的Notification
  */
 - (void)messageCellUpdateSendingStatusEvent:(NSNotification *)notification;
 

@@ -19,7 +19,7 @@
 #import "RongSightAdaptiveHeader.h"
 #import "RCSightExtensionModule.h"
 #import "RCToastView.h"
-
+#import "RCSightPlayerOverlay.h"
 #define ActionBtnSize 120
 #define BottomSpace 10
 #define OKBtnSize 74
@@ -74,6 +74,8 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 }
 
 - (void)dealloc {
+    [self.actionButton quit];
+    
     [RCSightExtensionModule sharedInstance].isSightCameraHolding = NO;
     [self.motionManager stopAccelerometerUpdates];
     [[NSNotificationCenter defaultCenter] removeObserver:self
@@ -206,6 +208,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         _playerController.overlayHidden = YES;
         _playerController.delegate = self;
         _playerController.isLoopPlayback = YES;
+        [_playerController.overlay.centerPlayBtn removeFromSuperview];
     }
     return _playerController;
 }

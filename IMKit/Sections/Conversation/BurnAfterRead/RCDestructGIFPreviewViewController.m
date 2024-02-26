@@ -190,7 +190,7 @@
 
 - (UIButton *)rightTopButton {
     if (!_rightTopButton) {
-        _rightTopButton = [[RCDestructCountDownButton alloc] initWithFrame:CGRectMake(12, [RCKitUtility getWindowSafeAreaInsets].top + 12, 20, 20)];
+        _rightTopButton = [[RCDestructCountDownButton alloc] initWithFrame:CGRectMake(12, 12, 20, 20)];
     }
     return _rightTopButton;
 }

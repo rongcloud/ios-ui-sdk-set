@@ -17,7 +17,10 @@
 @property (nonatomic, strong) RCBaseScrollView *scrollView;
 @property (nonatomic, strong) RCloudImageView *previewImageView;
 @property (nonatomic, strong) RCImageMessageProgressView *progressView;
+@property(nonatomic, strong) UILabel *labFailed;
+@property(nonatomic, strong) UIImageView *imgFailed;
 @end
+
 @implementation RCImagePreviewCell
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -38,6 +41,8 @@
 #pragma mark - Public Methods
 
 - (void)configPreviewCellWithItem:(RCMessageModel *)model {
+    self.labFailed.text = nil;
+    self.imgFailed.image = nil;
     self.messageModel = model;
     [self.scrollView setZoomScale:1.0];
     [self.progressView setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
@@ -128,37 +133,51 @@
     }
 }
 
+- (UILabel *)labFailed {
+    if (!_labFailed) {
+        UILabel *failLabel = [[UILabel alloc] init];
+        failLabel.textAlignment = NSTextAlignmentCenter;
+        failLabel.textColor = HEXCOLOR(0x999999);
+        _labFailed = failLabel;
+    }
+    return _labFailed;
+}
+
+- (UIImageView *)imgFailed {
+    if (!_imgFailed) {
+        _imgFailed = [UIImageView new];
+    }
+    return _imgFailed;
+}
+
 - (void)action:(NSTimer *)scheduledTimer {
+    self.previewImageView.image = nil;
     RCImageMessage *message = (RCImageMessage *)self.messageModel.content;
-    NSString *imageUrl = message.remoteUrl;
+    NSString *imageUrl = message.imageUrl;
     if (!self.progressView.hidden) {
         [self.progressView stopAnimating];
         [self.progressView setHidden:YES];
     }
     if ([imageUrl hasPrefix:@"http"]) {
-        self.previewImageView.image = RCResourceImage(@"broken");
-        self.previewImageView.frame = CGRectMake(0, 0, 81, 60);
-        self.previewImageView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
-        UILabel *failLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 44, 150, 30)];
-        failLabel.text = RCLocalizedString(@"ImageLoadFailed");
-        failLabel.textAlignment = NSTextAlignmentCenter;
-        failLabel.textColor = HEXCOLOR(0x999999);
-        [self.contentView addSubview:failLabel];
+        self.imgFailed.image = RCResourceImage(@"broken");
+        self.imgFailed.frame = CGRectMake(0, 0, 81, 60);
+        self.imgFailed.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
+        self.labFailed.frame = CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 44, 150, 30);
+        self.labFailed.text = RCLocalizedString(@"ImageLoadFailed");
     } else {
-        self.previewImageView.image = RCResourceImage(@"exclamation");
-        self.previewImageView.frame = CGRectMake(0, 0, 71, 71);
-        self.previewImageView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
-        UILabel *failLabel =
-        [[UILabel alloc] initWithFrame:CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 49.5, 150, 30)];
-        failLabel.text = RCLocalizedString(@"ImageHasBeenDeleted");
-        failLabel.textAlignment = NSTextAlignmentCenter;
-        failLabel.textColor = HEXCOLOR(0x999999);
-        [self.contentView addSubview:failLabel];
+        self.imgFailed.image = RCResourceImage(@"exclamation");
+        self.imgFailed.frame = CGRectMake(0, 0, 71, 71);
+        self.imgFailed.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
+        self.labFailed.frame = CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 49.5, 150, 30);
+        self.labFailed.text = RCLocalizedString(@"ImageHasBeenDeleted");
     }
 }
 
 #pragma mark - layout
 - (void)creatPreviewCollectionCell {
+    [self.contentView addSubview:self.labFailed];
+    [self.contentView addSubview:self.imgFailed];
+    
     [self.contentView addSubview:self.scrollView];
     [self.scrollView addSubview:self.previewImageView];
 

@@ -55,6 +55,11 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     return self;
 }
 
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    [self.contentAyncLab clean];
+}
+
 #pragma mark - Super Methods
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
@@ -71,15 +76,6 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 }
 
 #pragma mark - 阅后即焚
-
-- (void)beginDestructing {
-    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
-    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0) {
-        [[RCCoreClient sharedCoreClient]
-            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
-    }
-}
-
 - (void)setDestructViewLayout {
     [super setDestructViewLayout];
     if (self.model.content.destructDuration > 0) {
@@ -121,7 +117,6 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     [self setCSEvaUILayout:bubbleWidth bubbleHeight:bubbleHeight];
 
     self.messageContentView.contentSize = CGSizeMake(bubbleWidth, bubbleHeight);
-    
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
         if ([RCKitUtility isRTL] && !self.destructTextImage.hidden) {
             self.contentAyncLab.frame =  CGRectMake(DESTRUCT_TEXT_ICON_WIDTH / 2 + DESTRUCT_TEXT_ICON_WIDTH + TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
@@ -131,7 +126,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     } else {
         self.contentAyncLab.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
-    
+
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
     self.destructTextImage.hidden = YES;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:self.model.messageUId];

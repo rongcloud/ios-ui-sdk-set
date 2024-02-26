@@ -41,6 +41,13 @@
     // do update
     [self.layer setNeedsDisplay];
 }
+
+
+- (void)clean {
+  _text = @"";
+  self.layer.contents = nil;
+}
+
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:CGRectZero];
     if (!self) return nil;

@@ -68,11 +68,10 @@ static long s_messageId = 0;
         [self.voiceUnreadTagView removeFromSuperview];
         self.voiceUnreadTagView = nil;
     }
-    //    if (self.model.receivedStatus != ReceivedStatus_LISTENED) {
+    [self.model.receivedStatusInfo markAsListened];
     [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
-                                             receivedStatus:ReceivedStatus_LISTENED];
-    //    }
-    self.model.receivedStatus = ReceivedStatus_LISTENED;
+                                           receivedStatusInfo:self.model.receivedStatusInfo
+                                                   completion:nil];
     [self disablePreviousAnimationTimer];
 
     if (self.model.messageId == s_messageId) {
@@ -169,7 +168,7 @@ static long s_messageId = 0;
     [self.voiceUnreadTagView setHidden:YES];
     if (MessageDirection_RECEIVE == self.model.messageDirection) {
         CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
-        if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
+        if (NO == self.model.receivedStatusInfo.isListened) {
             self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (Voice_Height-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             [self.voiceUnreadTagView setHidden:NO];
             [self.baseContentView addSubview:self.voiceUnreadTagView];

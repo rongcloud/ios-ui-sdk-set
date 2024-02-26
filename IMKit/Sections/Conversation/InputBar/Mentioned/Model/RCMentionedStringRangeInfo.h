@@ -10,19 +10,13 @@
 
 @interface RCMentionedStringRangeInfo : NSObject <NSCoding>
 
-/*!
- @用户Id
- */
+/// @用户Id
 @property (nonatomic, strong) NSString *userId;
 
-/*!
- 文本消息的内容
- */
+/// 文本消息的内容
 @property (nonatomic, strong) NSString *content;
 
-/*!
- 文本消息的range
- */
+/// 文本消息的range
 @property (nonatomic, assign) NSRange range;
 
 - (NSString *)encodeToString;
