@@ -27,7 +27,7 @@
         self.messageId = rcMessage.messageId;
         self.messageDirection = rcMessage.messageDirection;
         self.senderUserId = rcMessage.senderUserId;
-        self.receivedStatusInfo = rcMessage.receivedStatusInfo;
+        self.receivedStatus = rcMessage.receivedStatus;
         self.sentStatus = rcMessage.sentStatus;
         self.sentTime = rcMessage.sentTime;
         self.objectName = rcMessage.objectName;
@@ -62,25 +62,6 @@
         return YES;
     }
     return NO;
-}
-
-#pragma mark - setter & getter
-
-- (void)setReceivedStatus:(RCReceivedStatus)receivedStatus {
-    self.receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:receivedStatus];
-}
-
-- (RCReceivedStatus)receivedStatus {
-    RCMessage *msg = [[RCMessage alloc] init];
-    msg.receivedStatusInfo = self.receivedStatusInfo;
-    return msg.receivedStatus;
-}
-
-- (RCReceivedStatusInfo *)receivedStatusInfo {
-    if (!_receivedStatusInfo) {
-        _receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
-    }
-    return _receivedStatusInfo;
 }
 
 @end

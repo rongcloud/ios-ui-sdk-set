@@ -105,13 +105,6 @@
     [_safeLock unlock];
 }
 
-- (id)copy {
-    [_safeLock lock];
-    NSDictionary *dict = [((__bridge NSMutableDictionary*)_dictionary) copy];
-    [_safeLock unlock];
-    return dict;
-}
-
 #pragma mark Optional
 
 - (void)removeAllObjects {

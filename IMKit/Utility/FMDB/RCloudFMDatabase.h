@@ -144,7 +144,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param inPath Path of database file
 
- - Returns: `RCloudFMDatabase` object if successful; `nil` if failure.
+ @return `RCloudFMDatabase` object if successful; `nil` if failure.
 
  */
 
@@ -175,7 +175,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param inPath Path of database file
 
- - Returns: `RCloudFMDatabase` object if successful; `nil` if failure.
+ @return `RCloudFMDatabase` object if successful; `nil` if failure.
 
  */
 
@@ -189,7 +189,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  The database is opened for reading and writing, and is created if it does not already exist.
 
- - Returns: `YES` if successful, `NO` on error.
+ @return `YES` if successful, `NO` on error.
 
  @see [sqlite3_open()](http://sqlite.org/c3ref/open.html)
  @see openWithFlags:
@@ -217,7 +217,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  The database is opened for reading and writing, and is created if it does not already exist. This is the behavior that
  is always used for `open` method.
 
- - Returns: `YES` if successful, `NO` on error.
+ @return `YES` if successful, `NO` on error.
 
  @see [sqlite3_open_v2()](http://sqlite.org/c3ref/open.html)
  @see open
@@ -247,7 +247,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param vfsName   If vfs is given the value is passed to the vfs parameter of sqlite3_open_v2.
 
- - Returns: `YES` if successful, `NO` on error.
+ @return `YES` if successful, `NO` on error.
 
  @see [sqlite3_open_v2()](http://sqlite.org/c3ref/open.html)
  @see open
@@ -258,7 +258,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Closing a database connection
 
- - Returns: `YES` if success, `NO` on error.
+ @return `YES` if success, `NO` on error.
 
  @see [sqlite3_close()](http://sqlite.org/c3ref/close.html)
  @see open
@@ -274,7 +274,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  - is database open
  - if open, it will try a simple SELECT statement and confirm that it succeeds.
 
- - Returns: `YES` if everything succeeds, `NO` on failure.
+ @return `YES` if everything succeeds, `NO` on failure.
  */
 
 - (BOOL)goodConnection;
@@ -303,7 +303,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param ... Optional parameters to bind to `?` placeholders in the SQL statement. These should be Objective-C objects
  (e.g. `NSString`, `NSNumber`, etc.), not fundamental C data types (e.g. `int`, `char *`, etc.).
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see lastError
@@ -340,7 +340,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param ... Optional parameters to bind to `?` placeholders in the SQL statement. These should be Objective-C objects
  (e.g. `NSString`, `NSNumber`, etc.), not fundamental C data types (e.g. `int`, `char *`, etc.).
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see lastError
@@ -373,7 +373,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param ... Optional parameters to bind to use in conjunction with the `printf`-style escape sequences in the SQL
  statement.
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see executeUpdate:
@@ -417,7 +417,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param arguments A `NSArray` of objects to be used when binding values to the `?` placeholders in the SQL statement.
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see executeUpdate:values:error:
@@ -453,7 +453,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param error A `NSError` object to receive any error object (if any).
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see lastError
@@ -481,7 +481,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param arguments A `NSDictionary` of objects keyed by column names that will be used when binding values to the `?`
  placeholders in the SQL statement.
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see lastError
@@ -507,7 +507,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param args A `va_list` of arguments.
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see lastError
@@ -525,7 +525,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param  sql  The SQL to be performed
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return      `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see executeStatements:withResultBlock:
@@ -548,7 +548,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  statement returns values, the block will be called with the results from the query in NSDictionary *resultsDictionary.
                   This may be `nil` if you don't care to receive any results.
 
- - Returns: `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`,
+ @return          `YES` upon success; `NO` upon failure. If failed, you can call `<lastError>`,
                   `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see executeStatements:
@@ -569,7 +569,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  the first argument. As of SQLite version 3.7.7, this routines records the last insert rowid of both ordinary tables and
  virtual tables. If no successful `INSERT`s have ever occurred on that database connection, zero is returned.
 
- - Returns: The rowid of the last inserted row.
+ @return The rowid of the last inserted row.
 
  @see [sqlite3_last_insert_rowid()](http://sqlite.org/c3ref/last_insert_rowid.html)
 
@@ -583,7 +583,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  completed SQL statement on the database connection specified by the first parameter. Only changes that are directly
  specified by the INSERT, UPDATE, or DELETE statement are counted.
 
- - Returns: The number of rows changed by prior SQL statement.
+ @return The number of rows changed by prior SQL statement.
 
  @see [sqlite3_changes()](http://sqlite.org/c3ref/changes.html)
 
@@ -615,7 +615,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param ... Optional parameters to bind to `?` placeholders in the SQL statement. These should be Objective-C objects
  (e.g. `NSString`, `NSNumber`, etc.), not fundamental C data types (e.g. `int`, `char *`, etc.).
 
- - Returns: A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
+ @return A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
  `<lastError>`, `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see RCloudFMResultSet
@@ -643,7 +643,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param ... Optional parameters to bind to use in conjunction with the `printf`-style escape sequences in the SQL
  statement.
 
- - Returns: A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
+ @return A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
  `<lastError>`, `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see executeQuery:
@@ -684,7 +684,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param arguments A `NSArray` of objects to be used when binding values to the `?` placeholders in the SQL statement.
 
- - Returns: A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
+ @return A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
  `<lastError>`, `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see -executeQuery:values:error:
@@ -716,7 +716,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param error A `NSError` object to receive any error object (if any).
 
- - Returns: A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
+ @return A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
  `<lastError>`, `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see RCloudFMResultSet
@@ -742,7 +742,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param arguments A `NSDictionary` of objects keyed by column names that will be used when binding values to the `?`
  placeholders in the SQL statement.
 
- - Returns: A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
+ @return A `<RCloudFMResultSet>` for the result set upon success; `nil` upon failure. If failed, you can call
  `<lastError>`, `<lastErrorCode>`, or `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see RCloudFMResultSet
@@ -760,7 +760,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Begin a transaction
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see commit
@@ -773,7 +773,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Begin a deferred transaction
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see commit
@@ -788,7 +788,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  Commit a transaction that was initiated with either `<beginTransaction>` or with `<beginDeferredTransaction>`.
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see beginTransaction
@@ -803,7 +803,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  Rollback a transaction that was initiated with either `<beginTransaction>` or with `<beginDeferredTransaction>`.
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see beginTransaction
@@ -816,7 +816,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Identify whether currently in a transaction or not
 
- - Returns: `YES` if currently within transaction; `NO` if not.
+ @return `YES` if currently within transaction; `NO` if not.
 
  @see beginTransaction
  @see beginDeferredTransaction
@@ -840,14 +840,14 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Whether database has any open result sets
 
- - Returns: `YES` if there are open result sets; `NO` if not.
+ @return `YES` if there are open result sets; `NO` if not.
  */
 
 - (BOOL)hasOpenResultSets;
 
 /** Return whether should cache statements or not
 
- - Returns: `YES` if should cache statements; `NO` if not.
+ @return `YES` if should cache statements; `NO` if not.
  */
 
 - (BOOL)shouldCacheStatements;
@@ -867,7 +867,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param key The key to be used.
 
- - Returns: `YES` if success, `NO` on error.
+ @return `YES` if success, `NO` on error.
 
  @see https://www.zetetic.net/sqlcipher/
 
@@ -880,7 +880,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param key The key to be used.
 
- - Returns: `YES` if success, `NO` on error.
+ @return `YES` if success, `NO` on error.
 
  @see https://www.zetetic.net/sqlcipher/
 
@@ -893,7 +893,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param keyData The `NSData` to be used.
 
- - Returns: `YES` if success, `NO` on error.
+ @return `YES` if success, `NO` on error.
 
  @see https://www.zetetic.net/sqlcipher/
 
@@ -906,7 +906,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param keyData The `NSData` to be used.
 
- - Returns: `YES` if success, `NO` on error.
+ @return `YES` if success, `NO` on error.
 
  @see https://www.zetetic.net/sqlcipher/
 
@@ -921,7 +921,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** The path of the database file
 
- - Returns: path of database.
+ @return path of database.
 
  */
 
@@ -929,7 +929,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** The underlying SQLite handle
 
- - Returns: The `sqlite3` pointer.
+ @return The `sqlite3` pointer.
 
  */
 
@@ -944,7 +944,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  Returns the English-language text that describes the most recent failed SQLite API call associated with a database
  connection. If a prior API call failed but the most recent API call succeeded, this return value is undefined.
 
- - Returns: `NSString` of the last error message.
+ @return `NSString` of the last error message.
 
  @see [sqlite3_errmsg()](http://sqlite.org/c3ref/errcode.html)
  @see lastErrorCode
@@ -959,7 +959,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  Returns the numeric result code or extended result code for the most recent failed SQLite API call associated with a
  database connection. If a prior API call failed but the most recent API call succeeded, this return value is undefined.
 
- - Returns: Integer value of the last error code.
+ @return Integer value of the last error code.
 
  @see [sqlite3_errcode()](http://sqlite.org/c3ref/errcode.html)
  @see lastErrorMessage
@@ -971,7 +971,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Had error
 
- - Returns: `YES` if there was an error, `NO` if no error.
+ @return `YES` if there was an error, `NO` if no error.
 
  @see lastError
  @see lastErrorCode
@@ -983,7 +983,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Last error
 
- - Returns: `NSError` representing the last error.
+ @return `NSError` representing the last error.
 
  @see lastErrorCode
  @see lastErrorMessage
@@ -1006,7 +1006,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param outErr A `NSError` object to receive any error object (if any).
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see releaseSavePointWithName:error:
@@ -1021,7 +1021,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param outErr A `NSError` object to receive any error object (if any).
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see startSavePointWithName:error:
@@ -1036,7 +1036,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
  @param name Name of save point.
  @param outErr A `NSError` object to receive any error object (if any).
 
- - Returns: `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
+ @return `YES` on success; `NO` on failure. If failed, you can call `<lastError>`, `<lastErrorCode>`, or
  `<lastErrorMessage>` for diagnostic information regarding the failure.
 
  @see startSavePointWithName:error:
@@ -1050,7 +1050,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param block Block of code to perform from within save point.
 
- - Returns: The NSError corresponding to the error, if any. If no error, returns `nil`.
+ @return The NSError corresponding to the error, if any. If no error, returns `nil`.
 
  @see startSavePointWithName:error:
  @see releaseSavePointWithName:error:
@@ -1066,7 +1066,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Test to see if the library is threadsafe
 
- - Returns: `NO` if and only if SQLite was compiled with mutexing code omitted due to the SQLITE_THREADSAFE compile-time
+ @return `NO` if and only if SQLite was compiled with mutexing code omitted due to the SQLITE_THREADSAFE compile-time
  option being set to 0.
 
  @see [sqlite3_threadsafe()](http://sqlite.org/c3ref/threadsafe.html)
@@ -1076,7 +1076,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Run-time library version numbers
 
- - Returns: The sqlite library version string.
+ @return The sqlite library version string.
 
  @see [sqlite3_libversion()](http://sqlite.org/c3ref/libversion.html)
  */
@@ -1153,7 +1153,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param format A valid NSDateFormatter format string.
 
- - Returns: A `NSDateFormatter` that can be used for converting dates to strings and vice versa.
+ @return A `NSDateFormatter` that can be used for converting dates to strings and vice versa.
 
  @see hasDateFormatter
  @see setDateFormat:
@@ -1170,7 +1170,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
 /** Test whether the database has a date formatter assigned.
 
- - Returns: `YES` if there is a date formatter; `NO` if not.
+ @return `YES` if there is a date formatter; `NO` if not.
 
  @see hasDateFormatter
  @see setDateFormat:
@@ -1202,7 +1202,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param s `NSString` to convert to `NSDate`.
 
- - Returns: The `NSDate` object; or `nil` if no formatter is set.
+ @return The `NSDate` object; or `nil` if no formatter is set.
 
  @see hasDateFormatter
  @see setDateFormat:
@@ -1217,7 +1217,7 @@ typedef int (^RCloudFMDBExecuteStatementsCallbackBlock)(NSDictionary *resultsDic
 
  @param date `NSDate` of date to convert to `NSString`.
 
- - Returns: The `NSString` representation of the date; `nil` if no formatter is set.
+ @return The `NSString` representation of the date; `nil` if no formatter is set.
 
  @see hasDateFormatter
  @see setDateFormat:

@@ -81,21 +81,14 @@
                                                 targetId:(NSString *)targetId {
 
     NSMutableArray *tabSources = [[NSMutableArray alloc] init];
-    NSArray *allPackages = [[RCStickerDataManager sharedManager] getAllPackages];
     int categoryCount = [[RCStickerDataManager sharedManager] getCategoryPackageCount:RCStickerCategoryTypeRecommend];
-    if (allPackages.count >0) {// 如果存在其他动态表情
-        if (categoryCount > 0) { // 推荐表情有数据才加载
-            RCStickerCategoryTabSource *categoryTabSource = [[RCStickerCategoryTabSource alloc] init];
-            categoryTabSource.categoryType = RCStickerCategoryTypeRecommend;
-            [tabSources addObject:categoryTabSource];
-        }
-    } else { // 没有其他动态表情, 直接添加推荐
+    if (categoryCount > 0) {
         RCStickerCategoryTabSource *categoryTabSource = [[RCStickerCategoryTabSource alloc] init];
         categoryTabSource.categoryType = RCStickerCategoryTypeRecommend;
         [tabSources addObject:categoryTabSource];
     }
-   
-    for (RCStickerPackage *package in allPackages) {
+
+    for (RCStickerPackage *package in [[RCStickerDataManager sharedManager] getAllPackages]) {
         RCStickerPackageTabSource *packageTabSource = [[RCStickerPackageTabSource alloc] init];
         packageTabSource.packageId = package.packageId;
         [tabSources addObject:packageTabSource];

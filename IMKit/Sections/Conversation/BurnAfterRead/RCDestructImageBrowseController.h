@@ -13,7 +13,9 @@
 
 @interface RCDestructImageBrowseController : RCBaseViewController
 
-/// 当前图片消息的数据模型
+/*!
+ 当前图片消息的数据模型
+ */
 @property (nonatomic, strong) RCMessageModel *messageModel;
 
 @end

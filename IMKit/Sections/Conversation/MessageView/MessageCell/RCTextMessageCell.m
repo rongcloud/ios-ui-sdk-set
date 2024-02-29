@@ -106,6 +106,14 @@
 
 #pragma mark - 阅后即焚
 
+- (void)beginDestructing {
+    RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
+    if (self.model.messageDirection == MessageDirection_RECEIVE && textMessage.destructDuration > 0) {
+        [[RCCoreClient sharedCoreClient]
+            messageBeginDestruct:[[RCCoreClient sharedCoreClient] getMessage:self.model.messageId]];
+    }
+}
+
 - (void)setDestructViewLayout {
     [super setDestructViewLayout];
     if (self.model.content.destructDuration > 0) {

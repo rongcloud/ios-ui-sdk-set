@@ -17,18 +17,18 @@
 + (instancetype)sharedInstance;
 
 /// 添加翻译代理
-/// - Parameter delegate: 代理
+/// @param delegate 代理
 - (void)addTranslationDelegate:(id)delegate;
 
 /// 移除翻译代理
-/// - Parameter delegate: 代理
+/// @param delegate 代理
 - (void)removeTranslationDelegate:(id)delegate;
 
 /// 翻译
-/// - Parameter messageId: 消息ID
-/// - Parameter text: 文本
-/// - Parameter srcLanguage: 源语言类型
-/// - Parameter targetLanguage: 目标语言类型
+/// @param messageId 消息ID
+/// @param text 文本
+/// @param srcLanguage 源语言类型
+/// @param targetLanguage 目标语言类型
 
 - (void)translate:(NSInteger)messageId
              text:(NSString *)text

@@ -9,7 +9,6 @@
 #import "RCStickerDownloader.h"
 #import "RCStickerUtility.h"
 #import "RongStickerAdaptiveHeader.h"
-
 /**
  Async download queue
 
@@ -118,6 +117,7 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
                  downloadTask:(NSURLSessionDownloadTask *)downloadTask
     didFinishDownloadingToURL:(NSURL *)location {
     NSString *sessionIdentifier = session.sessionDescription;
+
     if (sessionIdentifier.length == 0) {
         RCLogD(@"sticker download finish, sessionIdentifier is nil");
         return;

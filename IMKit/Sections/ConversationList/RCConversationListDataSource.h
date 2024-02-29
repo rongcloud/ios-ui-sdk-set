@@ -39,22 +39,22 @@
 @property (nonatomic, weak) id<RCConversationListDataSourceDelegate> delegate;
 
 /// 强制获取会话列表数据，一般在 viewWillApper 调用
-/// - Parameter completion: 会话列表数据
-///  回调在 UI 线程
+/// @param completion 会话列表数据
+/// @discussion 回调在 UI 线程
 - (void)forceLoadConversationModelList:(void (^)(NSMutableArray<RCConversationModel *> *modelList))completion;
 
 /// 加载更多绘画猎豹数据，一般是 上拉操作调用
-/// - Parameter completion: 上拉新增的会话列表数据
-///  回调在 UI 线程
+/// @param completion 上拉新增的会话列表数据
+/// @discussion 回调在 UI 线程
 - (void)loadMoreConversations:(void (^)(NSMutableArray<RCConversationModel *> *modelList))completion;
 
 /// 刷新单个会话
-/// - Parameter conversationModel: 需要刷新的会话
+/// @param conversationModel 需要刷新的会话
 - (void)refreshConversationModel:(RCConversationModel *)conversationModel;
 
 /// 收到消息的通知，原则上不应该由会话列表监听该通知透传到该类
 /// 但是会话列表对外接口已经声明了 didReceiveMessageNotification: 为了接口兼容，做了这样的处理
-/// - Parameter notification: 携带消息的通知
+/// @param notification 携带消息的通知
 - (void)didReceiveMessageNotification:(NSNotification *)notification;
 @end
 
@@ -69,6 +69,4 @@
 - (void)refreshConversationTableViewIfNeededInDataSource:(RCConversationListDataSource *)datasource;
 
 - (void)notifyUpdateUnreadMessageCountInDataSource;
-
-- (BOOL)showConversationOnTopPriority;
 @end

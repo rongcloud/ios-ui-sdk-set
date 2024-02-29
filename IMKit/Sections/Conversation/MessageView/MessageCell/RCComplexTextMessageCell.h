@@ -12,16 +12,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const RCComplexTextMessageCellIdentifier;
 
-/// 复杂文本异步显示cell
+/**
+ *  复杂文本异步显示cell
+ */
+
 @interface RCComplexTextMessageCell : RCMessageCell
 
-/// attributeDictionary
+/**
+ *  attributeDictionary
+ */
 @property (nonatomic, strong) NSDictionary *attributeDictionary;
 
 /*!
  设置当前消息Cell的数据模型
 
- - Parameter model: 消息Cell的数据模型
+ @param model 消息Cell的数据模型
  */
 - (void)setDataModel:(RCMessageModel *)model;
 

@@ -9,13 +9,19 @@
 #import "RCImageMessageProgressView.h"
 #import "RCMessageCell.h"
 
-/// 图片消息Cell
+/*!
+ 图片消息Cell
+ */
 @interface RCImageMessageCell : RCMessageCell
 
-/// 显示图片缩略图的View
+/*!
+ 显示图片缩略图的View
+ */
 @property (nonatomic, strong) RCBaseImageView *pictureView;
 
-/// 显示发送进度的View
+/*!
+ 显示发送进度的View
+ */
 @property (nonatomic, strong) RCImageMessageProgressView *progressView;
 
 @end

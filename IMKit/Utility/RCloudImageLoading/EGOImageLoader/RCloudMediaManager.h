@@ -24,8 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  降低图片分辨率，同步方法
 
- - Parameter image: 原始图片
- - Returns: 压缩过的图片
+ @param image 原始图片
+ @return 压缩过的图片
  */
 - (UIImage *)downsizeImage:(UIImage *)image;
 

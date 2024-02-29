@@ -119,7 +119,7 @@
     coordinateRegion.center = userLocation.coordinate;
     coordinateRegion.span.latitudeDelta = 0.01;
     coordinateRegion.span.longitudeDelta = 0.01 * self.mapView.frame.size.width / self.mapView.frame.size.height;
-    [self.mapView setRegion:coordinateRegion animated:NO];
+    [self setMapViewCoordinateRegion:coordinateRegion animated:NO];
 }
 
 - (void)userSelectPlaceMark:(id)placeMark {
@@ -136,11 +136,12 @@
     }
 }
 
-// CLLocationManager 定位不准确，直接通过 MKMapView 中对自身定位来获得
 - (void)setMapViewCenter:(CLLocationCoordinate2D)location animated:(BOOL)animated {
+    [self.mapView setCenterCoordinate:location animated:animated];
 }
 
 - (void)setMapViewCoordinateRegion:(MKCoordinateRegion)coordinateRegion animated:(BOOL)animated {
+    [self.mapView setRegion:coordinateRegion animated:animated];
 }
 
 - (void)didUpdateUserLocation {
