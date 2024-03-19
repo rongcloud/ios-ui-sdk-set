@@ -129,13 +129,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     return NO; //隐藏系统默认的菜单项
 }
 
-- (NSInteger)currentCommonPhrasesViewHeight{
-    NSInteger height = 0;
-    if (self.commonPhrasesSource.count > 0 && (self.conversationType == ConversationType_PRIVATE || self.conversationType == ConversationType_GROUP)) {
-        height = RC_CommonPhrasesView_Height;
-    }
-    return height;
-}
 #pragma mark - Public Methods
 - (void)setInputBarType:(RCChatSessionInputBarControlType)type style:(RCChatSessionInputBarControlStyle)style {
     self.currentControlType = type;
@@ -1056,11 +1049,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 }
 
 - (void)commonPhrasesButtonAction:(UIButton *)button {
-    // 如果 commonPhrasesButtonDidTouch 返回 YES，表示拦截内部已有逻辑，客户自行实现逻辑
-    if ([self.delegate respondsToSelector:@selector(commonPhrasesButtonDidTouch)]
-        && [self.delegate commonPhrasesButtonDidTouch]) {
-        return;
-    }
     [self didTouchCommonPhrasesButton:button];
     [self.commonPhrasesListView reloadCommonPhrasesList];
 }

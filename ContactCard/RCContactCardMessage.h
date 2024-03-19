@@ -34,6 +34,11 @@
 @property (nonatomic, copy) NSString *portraitUri;
 
 /**
+ *  个人名片的附加信息
+ */
+@property (nonatomic, copy) NSString *extra;
+
+/**
  *  个人名片消息发送者的id
  */
 @property (nonatomic, copy) NSString *sendUserId;

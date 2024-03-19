@@ -14,7 +14,7 @@
 /**
  *  单例设计
  *
- *  - Returns: 实例
+ *  @return 实例
  */
 + (RCLocalNotification *)defaultCenter;
 

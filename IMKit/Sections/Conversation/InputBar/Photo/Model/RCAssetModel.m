@@ -126,9 +126,6 @@
 }
 
 - (NSTimeInterval)duration {
-    if (0 == _duration) {
-        _duration = ((PHAsset *)self.asset).duration;
-    }
     if (0 == _duration && self.avAsset) {
         _duration = CMTimeGetSeconds(self.avAsset.duration);
     }

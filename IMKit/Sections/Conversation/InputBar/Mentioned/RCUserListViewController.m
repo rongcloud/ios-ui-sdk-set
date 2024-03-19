@@ -12,8 +12,6 @@
 #import "RCKitConfig.h"
 #import "RCloudImageView.h"
 #import "RCBaseTableView.h"
-#import "RCUserInfoCache.h"
-
 @interface RCUserListViewController () <UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate,
                                         UISearchControllerDelegate, UISearchResultsUpdating> {
     NSMutableArray *_tempOtherArr;
@@ -126,11 +124,7 @@
         NSArray *arrayForKey = [allUsers objectForKey:key];
         user = arrayForKey[indexPath.row];
     }
-    if (user.userId) {
-        RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:user.userId];
-        user.alias = tempUserInfo.alias;
-    }
-  
+
     [cell.nameLabel setText:[RCKitUtility getDisplayName:user]];
     cell.headImageView = [self portraitView:[NSURL URLWithString:user.portraitUri]];
 

@@ -95,10 +95,9 @@ static long hq_messageId = 0;
         self.voiceUnreadTagView = nil;
     }
     if (voiceMessage.localPath.length > 0) {
-        [self.model.receivedStatusInfo markAsListened];
         [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
-                                               receivedStatusInfo:self.model.receivedStatusInfo
-                                                       completion:nil];
+                                                 receivedStatus:ReceivedStatus_LISTENED];
+        self.model.receivedStatus = ReceivedStatus_LISTENED;
     }
     [self disablePreviousAnimationTimer];
 
@@ -348,7 +347,7 @@ static long hq_messageId = 0;
         if ([RCKitUtility isRTL]) {
             x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
         }
-        if (NO == self.model.receivedStatusInfo.isListened) {
+        if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
             self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             self.voiceUnreadTagView.accessibilityLabel = @"voiceUnreadTagView";
             if (voiceMessage.localPath.length > 0) {
@@ -373,7 +372,7 @@ static long hq_messageId = 0;
             if ([RCKitUtility isRTL]) {
                 x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
             }
-            if (NO == self.model.receivedStatusInfo.isListened) {
+            if (ReceivedStatus_LISTENED != self.model.receivedStatus) {
                 self.voiceUnreadTagView.frame = CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width);
                 
             }
@@ -453,7 +452,7 @@ static long hq_messageId = 0;
         }
         hq_messageId = self.model.messageId;
     } else {
-        self.model.receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
+        self.model.receivedStatus = ReceivedStatus_UNREAD;
         self.statusContentView.hidden = NO;
         [self indicatorAnimating];
         [[RCIM sharedRCIM] downloadMediaMessage:self.model.messageId

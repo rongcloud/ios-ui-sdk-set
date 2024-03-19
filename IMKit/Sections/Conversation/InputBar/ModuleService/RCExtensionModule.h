@@ -12,10 +12,14 @@
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
 
-/// RongCloud IM扩展模块协议
+/*!
+ RongCloud IM扩展模块协议
+ */
 @protocol RCExtensionModule <NSObject>
 
-/// 生成一个扩展模块。
+/*!
+ 生成一个扩展模块。
+ */
 + (instancetype)loadRongExtensionModule;
 
 @optional
@@ -23,44 +27,48 @@
 /*!
  初始化融云SDK
 
- - Parameter appkey:   应用的融云Appkey
+ @param appkey   应用的融云Appkey
  */
 - (void)initWithAppKey:(NSString *)appkey;
 
 /*!
  连接融云IM服务
 
- - Parameter userId:   用户ID
+ @param userId   用户ID
  */
 - (void)didConnect:(NSString *)userId;
 
-/// 断开融云IM服务
+/*!
+ 断开融云IM服务
+ */
 - (void)didDisconnect;
 
-/// 销毁扩展模块
+/*!
+ 销毁扩展模块
+ */
 - (void)destroyModule;
 
 /*!
  当前登陆的用户信息变化的回调
 
- - Parameter userInfo: 当前登陆的用户信息
+ @param userInfo 当前登陆的用户信息
  */
 - (void)didCurrentUserInfoUpdated:(RCUserInfo *)userInfo;
 
 /*!
  处理收到的消息
 
- - Parameter message:  收到的消息
+ @param message  收到的消息
  */
 - (void)onMessageReceived:(RCMessage *)message;
 
 /*!
  处理收到消息响铃事件
 
- - Parameter message:  收到的消息
+ @param message  收到的消息
 
- - Returns: 扩展模块处理的结果，YES为模块处理，SDK不会响铃。NO为模块未处理，SDK会默认处理。
- 
+ @return         扩展模块处理的结果，YES为模块处理，SDK不会响铃。NO为模块未处理，SDK会默认处理。
+ @discussion
  当应用处在前台时，如果在新来消息的会话内，没有铃声和通知；如果不在该会话内会铃声提示。当应用处在后台时，新来消息会弹出本地通知
  */
 - (BOOL)handleAlertForMessageReceived:(RCMessage *)message;
@@ -68,13 +76,13 @@
 /*!
  处理收到消息通知事件
 
- - Parameter message:   收到的消息
- - Parameter fromName:
+ @param message   收到的消息
+ @param fromName
  来源名字，如果message是单聊消息就是发送者的名字，如果是群组消息就是群组名，如果是讨论组消息就是讨论组名。
- - Parameter userInfo:  LocalNotification userInfo。如果扩展模块要弹本地通知，请一定带上userInfo。
+ @param userInfo  LocalNotification userInfo。如果扩展模块要弹本地通知，请一定带上userInfo。
 
- - Returns: 扩展模块处理的结果，YES为模块处理，SDK不会弹出通知。NO为模块未处理，SDK会默认处理。
- 
+ @return         扩展模块处理的结果，YES为模块处理，SDK不会弹出通知。NO为模块未处理，SDK会默认处理。
+ @discussion
  当应用处在前台时，如果在新来消息的会话内，没有铃声和通知；如果不在该会话内会铃声提示。当应用处在后台时，新来消息会弹出本地通知
  */
 - (BOOL)handleNotificationForMessageReceived:(RCMessage *)message
@@ -85,7 +93,7 @@
 /*!
  设置扩展模块URL scheme。
 
- - Parameter scheme:      URL scheme
+ @param scheme      URL scheme
  */
 - (void)setScheme:(NSString *)scheme;
 
@@ -100,12 +108,12 @@
 /*!
  获取会话页面的plugin board item信息。
 
- - Parameter conversationType:  会话类型
- - Parameter targetId:          targetId
+ @param conversationType  会话类型
+ @param targetId          targetId
 
- - Returns: plugin board item信息列表。
+ @return plugin board item信息列表。
 
-  当进入到会话页面时，SDK需要注册扩展面部区域的item。
+ @discussion 当进入到会话页面时，SDK需要注册扩展面部区域的item。
  */
 - (NSArray<RCExtensionPluginItemInfo *> *)getPluginBoardItemInfoList:(RCConversationType)conversationType
                                                             targetId:(NSString *)targetId;
@@ -113,10 +121,10 @@
 /*!
  获取会话输入区的表情tab页
 
- - Parameter conversationType:  会话类型
- - Parameter targetId:          targetId
+ @param conversationType  会话类型
+ @param targetId          targetId
 
- - Returns: 需要加载的表情tab页列表
+ @return 需要加载的表情tab页列表
  */
 - (NSArray<id<RCEmoticonTabSource>> *)getEmoticonTabList:(RCConversationType)conversationType
                                                 targetId:(NSString *)targetId;
@@ -124,9 +132,9 @@
 /*!
  点击表情面板中的加号按钮的回调
 
- - Parameter emojiView:       表情面板
- - Parameter addButton:       加号按钮
- - Parameter inputBarControl: 表情面板所在的输入工具栏
+ @param emojiView       表情面板
+ @param addButton       加号按钮
+ @param inputBarControl 表情面板所在的输入工具栏
  */
 - (void)emoticonTab:(RCEmojiBoardView *)emojiView
   didTouchAddButton:(UIButton *)addButton
@@ -135,10 +143,10 @@
 /*!
  点击表情面板中的表情包 Icon 按钮的回调
 
- - Parameter emojiView:       表情面板
- - Parameter index:           表情包 Icon 的索引
- - Parameter inputBarControl: 表情面板所在的输入工具栏
- - Parameter block:           是否阻止 SDK 默认的点击处理逻辑
+ @param emojiView       表情面板
+ @param index           表情包 Icon 的索引
+ @param inputBarControl 表情面板所在的输入工具栏
+ @param block           是否阻止 SDK 默认的点击处理逻辑
  */
 
 - (void)emoticonTab:(RCEmojiBoardView *)emojiView
@@ -149,9 +157,9 @@
 /*!
  点击表情面板中的设置按钮的回调
 
- - Parameter emojiView:       表情面板
- - Parameter settingButton:   设置Button
- - Parameter inputBarControl: 表情面板所在的输入工具栏
+ @param emojiView       表情面板
+ @param settingButton   设置Button
+ @param inputBarControl 表情面板所在的输入工具栏
  */
 - (void)emoticonTab:(RCEmojiBoardView *)emojiView
     didTouchSettingButton:(UIButton *)settingButton
@@ -160,16 +168,16 @@
 /*!
  输入框内容发生变化的回调
 
- - Parameter inputTextView:   文本输入框
- - Parameter inputBarControl: 文本输入框所在的输入工具栏
+ @param inputTextView   文本输入框
+ @param inputBarControl 文本输入框所在的输入工具栏
  */
 - (void)inputTextViewDidChange:(UITextView *)inputTextView inInputBar:(RCChatSessionInputBarControl *)inputBarControl;
 
 /*!
  输入工具栏状态发生变化的回调
 
- - Parameter status:           输入工具栏当前状态
- - Parameter inputBarControl:  输入工具栏
+ @param status           输入工具栏当前状态
+ @param inputBarControl  输入工具栏
  */
 
 - (void)inputBarStatusDidChange:(KBottomBarStatus)status inInputBar:(RCChatSessionInputBarControl *)inputBarControl;
@@ -177,20 +185,24 @@
 /*!
  是否需要显示表情加号按钮
 
- - Parameter inputBarControl:  输入工具栏
+ @param inputBarControl  输入工具栏
  */
 - (BOOL)isEmoticonAddButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 
 /*!
  是否需要显示表情设置按钮
 
- - Parameter inputBarControl:  输入工具栏
+ @param inputBarControl  输入工具栏
  */
 - (BOOL)isEmoticonSettingButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 
-/// 是否正在使用声音通道
+/*!
+ 是否正在使用声音通道
+ */
 - (BOOL)isAudioHolding;
 
-/// 是否正在使用摄像头
+/*!
+ 是否正在使用摄像头
+ */
 - (BOOL)isCameraHolding;
 @end

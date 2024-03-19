@@ -18,16 +18,24 @@
 
 @end
 @interface RCReferencedContentView : UIView
-/// 被引用消息显示左边线
+/*!
+ 被引用消息显示左边线
+ */
 @property (nonatomic, strong) UIView *leftLimitLine;
 
-/// 被引用消息发送者名称
+/*!
+ 被引用消息发送者名称
+*/
 @property (nonatomic, strong) RCBaseLabel *nameLabel;
 
-/// 被引用消息内容文本 label
+/*!
+ 被引用消息内容文本 label
+ */
 @property (nonatomic, strong) UILabel *textLabel;
 
-/// 被引用图片消息显示的 View
+/*!
+ 被引用图片消息显示的 View
+*/
 @property (nonatomic, strong) RCBaseImageView *msgImageView;
 
 @property (nonatomic, weak) id<RCReferencedContentViewDelegate> delegate;

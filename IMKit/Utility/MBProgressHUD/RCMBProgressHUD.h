@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param view The view that the HUD will be added to
  * @param animated If set to YES the HUD will appear using the current animationType. If set to NO the HUD will not use
  * animations while appearing.
- * - Returns: A reference to the created HUD.
+ * @return A reference to the created HUD.
  *
  * @see hideHUDForView:animated:
  * @see animationType
@@ -111,7 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param view The view that is going to be searched for a HUD subview.
  * @param animated If set to YES the HUD will disappear using the current animationType. If set to NO the HUD will not
  * use animations while disappearing.
- * - Returns: YES if a HUD was found and removed, NO otherwise.
+ * @return YES if a HUD was found and removed, NO otherwise.
  *
  * @see showHUDAddedTo:animated:
  * @see animationType
@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Finds the top-most HUD subview and returns it.
  *
  * @param view The view that is going to be searched.
- * - Returns: A reference to the last HUD subview discovered.
+ * @return A reference to the last HUD subview discovered.
  */
 + (nullable RCMBProgressHUD *)HUDForView:(UIView *)view;
 

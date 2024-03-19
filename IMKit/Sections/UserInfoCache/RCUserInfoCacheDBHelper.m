@@ -68,7 +68,7 @@ int const RCKitStorageVersion = 5;
                 [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN extra TEXT"];
                 [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_USER_INFO ADD COLUMN alias TEXT"];
             }
-            if (oldVersion > 0 && oldVersion < 5){
+            if (oldVersion < 5){
                 [self.workingDB executeUpdate:@"ALTER TABLE CONVERSATION_INFO ADD COLUMN extra TEXT"];
             }
         }

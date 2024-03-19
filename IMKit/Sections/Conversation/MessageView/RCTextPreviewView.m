@@ -43,9 +43,6 @@
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapCurrentView)];
         [self addGestureRecognizer:tap];
         
-        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
-        [self.label addGestureRecognizer:longPressGesture];
-        
         [self registerNotificationCenter];
     }
     return self;
@@ -103,31 +100,6 @@
 
 - (void)didTapCurrentView{
     [self removeFromSuperview];
-}
-
-- (void)handleLongPress:(UILongPressGestureRecognizer *)gestureRecognizer {
-    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) { // 确保手势是在开始状态下触发的
-        UILabel *label = (UILabel *)gestureRecognizer.view;
-        if (label && [label isKindOfClass:[UILabel class]]) {
-            // 让 label 成为第一响应者
-            [label becomeFirstResponder];
-            
-            // 创建和显示 menu
-            UIMenuItem *copyItem = [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Copy") action:@selector(copyAction)];
-            [[UIMenuController sharedMenuController] setMenuItems:[NSArray arrayWithObject:copyItem]];
-            // 设置frame和添加到的视图
-            [[UIMenuController sharedMenuController] setTargetRect:label.frame inView:self];
-            // 设置弹窗可见
-            [[UIMenuController sharedMenuController] setMenuVisible:YES animated:YES];
-        }
-    }
-}
-
-// copy 按钮点击事件
-- (void)copyAction {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = self.label.text;
-    [self.label resignFirstResponder];
 }
 
 - (UILabel *)label{

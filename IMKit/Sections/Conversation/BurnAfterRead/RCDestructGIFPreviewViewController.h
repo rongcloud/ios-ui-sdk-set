@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCDestructGIFPreviewViewController : RCBaseViewController
 
-/// 消息的数据模型
+/*!
+ 消息的数据模型
+ */
 @property (nonatomic, strong) RCMessageModel *messageModel;
 
 @end

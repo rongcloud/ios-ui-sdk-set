@@ -71,21 +71,21 @@
 /*!
  Cell中显示的头像形状
 
-  默认值为当前IMKit的全局设置值（RCIM中的globalConversationAvatarStyle）。
+ @discussion 默认值为当前IMKit的全局设置值（RCIM中的globalConversationAvatarStyle）。
  */
 @property (nonatomic, assign) RCUserAvatarStyle portraitStyle;
 
 /*!
  是否进行新消息提醒
 
-  此属性默认会根据会话设置的提醒状态进行设置。
+ @discussion 此属性默认会根据会话设置的提醒状态进行设置。
  */
 @property (nonatomic, assign) BOOL enableNotification;
 
 /*!
  会话中有未读消息时，是否在头像右上角的bubbleTipView中显示数字
 
-  默认值为YES。
+ @discussion 默认值为YES。
  您可以在RCConversationListViewController的willDisplayConversationTableCell:atIndexPath:回调中进行设置。
  */
 @property (nonatomic, assign) BOOL isShowNotificationNumber;
@@ -118,16 +118,16 @@
 /*!
  设置Cell中显示的头像形状
 
- - Parameter portraitStyle: 头像形状
+ @param portraitStyle 头像形状
 
-  此设置仅当前会话Cell有效。
+ @discussion 此设置仅当前会话Cell有效。
  */
 - (void)setHeaderImagePortraitStyle:(RCUserAvatarStyle)portraitStyle;
 
 /*!
  设置当前会话Cell的数据模型
 
- - Parameter model: 会话Cell的数据模型
+ @param model 会话Cell的数据模型
  */
 - (void)setDataModel:(RCConversationModel *)model;
 
@@ -141,14 +141,14 @@
 /*!
  点击Cell头像的回调
 
- - Parameter model: 会话Cell的数据模型
+ @param model 会话Cell的数据模型
  */
 - (void)didTapCellPortrait:(RCConversationModel *)model;
 
 /*!
  长按Cell头像的回调
 
- - Parameter model: 会话Cell的数据模型
+ @param model 会话Cell的数据模型
  */
 - (void)didLongPressCellPortrait:(RCConversationModel *)model;
 

@@ -97,6 +97,7 @@
     shapeLayer.frame = self.bounds;
     shapeLayer.fillColor = nil;
     shapeLayer.strokeColor = [UIColor whiteColor].CGColor; // self.progressTintColor.CGColor;
+
     [self.layer addSublayer:shapeLayer];
     self.shapeLayer = shapeLayer;
 }
@@ -104,17 +105,11 @@
 #pragma mark - Accessors
 
 - (void)setProgress:(float)progress animated:(BOOL)animated {
-    if (progress>0 && _progress==0 && self.shapeLayer.strokeEnd == 1) {
-        // 第一次加载进度, 按需重置 strokeEnd
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        self.shapeLayer.strokeEnd = 0;
-        [CATransaction commit];
-    }
     _progress = progress;
 
     if (progress > 0) {
         BOOL startingFromIndeterminateState = [self.shapeLayer animationForKey:@"indeterminateAnimation"] != nil;
+
         [self stopIndeterminateAnimation];
 
         self.shapeLayer.lineWidth = self.shapeLayer.bounds.size.height / 2 - 3;

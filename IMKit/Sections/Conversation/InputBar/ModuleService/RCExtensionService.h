@@ -56,14 +56,14 @@
 /*!
  是否需要显示表情加号按钮
 
- - Parameter inputBarControl:  输入工具栏
+ @param inputBarControl  输入工具栏
  */
 - (BOOL)isEmoticonAddButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 
 /*!
  是否需要显示表情设置按钮
 
- - Parameter inputBarControl:  输入工具栏
+ @param inputBarControl  输入工具栏
  */
 - (BOOL)isEmoticonSettingButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 

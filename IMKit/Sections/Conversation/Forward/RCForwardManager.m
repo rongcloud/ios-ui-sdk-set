@@ -422,24 +422,11 @@
     if (!replaceString || !userInfo || !sentTime || !htmlKey) {
         return [@"" mutableCopy];
     }
-    
-    // <html lang=yyyu> 特殊字符需要转义
-    NSString *encodeReplaceString = [self p_encodeTranslation:replaceString];
     NSMutableString *templateString = [[self.templateJsonDic objectForKey:htmlKey] mutableCopy];
     templateString =
         [self generalTitleStyle:templateString userInfo:userInfo sentTime:sentTime ifSplitPortrait:ifSplitPortrait];
-    RCForwardReplace(templateString, TAG_TEXT, encodeReplaceString ? encodeReplaceString : @"");
+    RCForwardReplace(templateString, TAG_TEXT, replaceString ? replaceString : @"");
     return templateString;
-}
-
-- (NSString *)p_encodeTranslation:(NSString *)sourceString {
-    if (sourceString.length == 0) {
-        return @"";
-    }
-    NSString *encode = [sourceString stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
-    encode = [encode stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
-    encode = [encode stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
-    return encode;
 }
 
 - (NSMutableString *)generalTitleStyle:(NSMutableString *)templateString
