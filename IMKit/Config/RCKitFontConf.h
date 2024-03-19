@@ -7,9 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+
 // IMKit 字体配置
 ///IMKit 内部禁用 UIFont 构建字体，只通过该类构建字体，方便统一管理
 @interface RCKitFontConf : NSObject
+
 /// 一级标题，默认 fontSize 为 18
 @property (nonatomic, assign) CGFloat firstLevel;
 /// 二级标题，默认 fontSize 为 17 (文本消息，引用消息内容，会话列表 title)
@@ -47,6 +49,6 @@
 - (UIFont *)fontOfAssistantLevel;
 
 /// 自定义字体大小
-/// @param size 字体大小
+/// - Parameter size: 字体大小
 - (UIFont *)fontOfSize:(CGFloat)size;
 @end

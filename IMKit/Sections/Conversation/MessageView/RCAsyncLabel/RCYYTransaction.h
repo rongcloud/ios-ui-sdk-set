@@ -21,17 +21,17 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Creates and returns a transaction with a specified target and selector.
  
- @param target    A specified target, the target is retained until runloop end.
- @param selector  A selector for target.
+ - Parameter target:    A specified target, the target is retained until runloop end.
+ - Parameter selector:  A selector for target.
  
- @return A new transaction, or nil if an error occurs.
+ - Returns: A new transaction, or nil if an error occurs.
  */
 + (RCYYTransaction *)transactionWithTarget:(id)target selector:(SEL)selector;
 
 /**
  Commit the trancaction to main runloop.
  
- @discussion It will perform the selector on the target once before main runloop's
+  It will perform the selector on the target once before main runloop's
  current loop sleep. If the same transaction (same target and same selector) has 
  already commit to runloop in this loop, this method do nothing.
  */

@@ -190,7 +190,9 @@
     }
 
     [self.headerView updateBubbleUnreadNumber:(int)model.unreadMessageCount];
-    self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    if (model.sentTime > 0) {
+        self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    }
     [self.statusView updateNotificationStatus:model];
     [self.statusView updateReadStatus:model];
 }
@@ -203,8 +205,8 @@
         if (!isEncrypted) {
             self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
         }
-        [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
     }
+    [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
     [self.detailContentView updateContent:model prefixName:nil];
 }
 
@@ -212,8 +214,8 @@
     RCGroup *groupInfo = [[RCUserInfoCacheManager sharedManager] getGroupInfo:model.targetId];
     if (groupInfo) {
         self.headerView.headerImageView.imageURL = [NSURL URLWithString:groupInfo.portraitUri];
-        [self updateConversationTitle:groupInfo.groupName];
     }
+    [self updateConversationTitle:groupInfo.groupName];
 
     if (self.hideSenderName) {
         [self.detailContentView updateContent:model prefixName:nil];
@@ -272,7 +274,7 @@
         return;
     }
     [self.detailContentView updateContent:model prefixName:nil];
-    [self updateConversationTitle:[NSString stringWithFormat:@"name<%@>", model.targetId]];
+    [self updateConversationTitle:model.targetId];
 }
 
 - (void)p_displayCollection:(RCConversationModel *)model {
@@ -355,6 +357,7 @@
 }
 
 - (void)updateConversationTitle:(NSString *)text {
+    text = (text.length > 0) ? text : self.model.targetId;
     self.model.conversationTitle = text;
     self.conversationTitle.text = self.model.conversationTitle;
 }

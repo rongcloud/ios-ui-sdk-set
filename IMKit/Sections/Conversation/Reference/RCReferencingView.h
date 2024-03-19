@@ -23,36 +23,22 @@
 
 @interface RCReferencingView : RCBaseView
 
-/*!
- 关闭引用 button
-*/
+/// 关闭引用 button
 @property (nonatomic, strong) RCBaseButton *dismissButton;
 
-/*!
- 被引用消息发送者名称
-*/
+/// 被引用消息发送者名称
 @property (nonatomic, strong) RCBaseLabel *nameLabel;
 
-/*!
- 被引用消息内容文本 label
- */
+/// 被引用消息内容文本 label
 @property (nonatomic, strong) RCBaseLabel *textLabel;
 
-/*!
- 被引用消息体
- */
+/// 被引用消息体
 @property (nonatomic, strong) RCMessageModel *referModel;
-/*!
- 引用代理
- */
+/// 引用代理
 @property (nonatomic, weak) id<RCReferencingViewDelegate> delegate;
-/*!
- 初始化引用 View
- */
+/// 初始化引用 View
 - (instancetype)initWithModel:(RCMessageModel *)model inView:(UIView *)view;
 
-/*!
- 当前 view 的 Y 值
-*/
+/// 当前 view 的 Y 值
 - (void)setOffsetY:(CGFloat)offsetY;
 @end

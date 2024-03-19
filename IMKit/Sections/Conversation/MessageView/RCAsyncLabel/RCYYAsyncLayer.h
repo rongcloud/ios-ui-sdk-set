@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The YYAsyncLayer class is a subclass of CALayer used for render contents asynchronously.
  
- @discussion When the layer need update it's contents, it will ask the delegate 
+  When the layer need update it's contents, it will ask the delegate 
  for a async display task to render the contents in a background queue.
  */
 @interface RCYYAsyncLayer : CALayer
@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  This block is called to draw the layer's contents.
  
- @discussion This block may be called on main thread or background thread,
+  This block may be called on main thread or background thread,
  so is should be thread-safe.
  
  block param context:      A new bitmap content created by layer.

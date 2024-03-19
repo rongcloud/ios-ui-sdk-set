@@ -79,7 +79,6 @@
             self.photoImageView.image = thumbnailImage;
         });
     }];
-    
 }
 
 #pragma mark - Private Methods
@@ -123,33 +122,9 @@
                                          }
                                          return;
                                      }
-                                     if ([[self.assetModel.asset valueForKey:@"uniformTypeIdentifier"]
-                                             isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-                                         if (imageData.length >
-                                             [[RCCoreClient sharedCoreClient] getGIFLimitSize] * 1024) {
-                                             UIViewController *rootVC = [UIApplication sharedApplication]
-                                                                            .delegate.window.rootViewController;
-                                             UIAlertController *alertController = [UIAlertController
-                                                 alertControllerWithTitle:RCLocalizedString(
-                                                                              @"GIFAboveMaxSize")
-                                                                  message:nil
-                                                           preferredStyle:UIAlertControllerStyleAlert];
-                                             [alertController
-                                                 addAction:[UIAlertAction
-                                                               actionWithTitle:RCLocalizedString(@"OK")
-                                                                         style:UIAlertActionStyleDefault
-                                                                       handler:nil]];
-                                             [rootVC presentViewController:alertController
-                                                                  animated:YES
-                                                                completion:nil];
-                                         } else {
-                                             [self changeMessageModelState:sender.selected
-                                                                    assetModel:assetModel];
-                                         }
-                                     } else {
-                                         [self changeMessageModelState:sender.selected assetModel:assetModel];
-                                     }
-
+                                     self.assetModel.imageSize = imageData.length;
+                                     [self changeMessageModelState:sender.selected assetModel:assetModel];
+                                     
                                  });
                              }
                     progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
@@ -206,11 +181,11 @@
 
     [_selectbutton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[_selectbutton(28)]-2-|"
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[_selectbutton(44)]-2-|"
                                                                  options:kNilOptions
                                                                  metrics:nil
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];  
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_selectbutton(28)]-2-|"
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_selectbutton(44)]-2-|"
                                                                  options:kNilOptions
                                                                  metrics:nil
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];
@@ -251,9 +226,9 @@
         [_selectbutton setImage:RCResourceImage(@"photopicker_state_selected")
                        forState:UIControlStateSelected];
         if ([RCKitUtility isRTL]) {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(12, 0 , 0, 12);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 0 , 0, 28);
         } else {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(12, 12 , 0, 0);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 28 , 0, 0);
         }
     }
     return _selectbutton;

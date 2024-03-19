@@ -51,24 +51,20 @@
 /*!
  是否需要显示表情加号按钮
 
- @param inputBarControl  输入工具栏
+ - Parameter inputBarControl:  输入工具栏
  */
 - (BOOL)isEmoticonAddButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 
 /*!
  是否需要显示表情设置按钮
 
- @param inputBarControl  输入工具栏
+ - Parameter inputBarControl:  输入工具栏
  */
 - (BOOL)isEmoticonSettingButtonEnabled:(RCChatSessionInputBarControl *)inputBarControl;
 
-/*!
- 是否正在使用声音通道
- */
+/// 是否正在使用声音通道
 - (BOOL)isAudioHolding;
 
-/*!
- 是否正在使用摄像头
- */
+/// 是否正在使用摄像头
 - (BOOL)isCameraHolding;
 @end

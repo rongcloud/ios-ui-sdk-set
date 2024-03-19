@@ -177,8 +177,6 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     [_contentView addSubview:_sendButton];
     
     _arrow = [RCBaseImageView new];
-    UIImage *image = [self imageflippedForRTL:RCResourceImage(@"right_arrow")];
-    [_arrow setImage:image];
     _arrow.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_arrow];
 

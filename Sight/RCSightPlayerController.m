@@ -319,11 +319,17 @@
 
 - (void)playerDidChangeRate{
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self.isPlaying) {
+            return;
+        }
         // rate = 0 ,表示视频播放被打断
-        if (self.isPlaying && self.player.rate == 0){
+        if (self.player.rate == 0) {
             [self.player pause];
             [self makePlayButtonAppear];
             [self setAudioSessionUnActive];
+        } else {
+            self.transport.centerPlayBtn.hidden = YES;
+            self.transport.playBtn.selected = YES;
         }
     });
 }
@@ -466,15 +472,14 @@
         __weak typeof(self) weakSelf = self;
         [[RCDownloadHelper new]
             getDownloadFileToken:MediaType_SIGHT
-                   completeBlock:^(NSString *_Nonnull token) {
+                        queryUrl:[self.rcSightURL absoluteString]
+                   completeBlock:^(NSString *_Nullable token, NSString *_Nullable authInfo) {
                        dispatch_async(dispatch_get_main_queue(), ^{
                            NSMutableURLRequest *urlRequest =
-                               [NSMutableURLRequest requestWithURL:self.rcSightURL
+                               [NSMutableURLRequest requestWithURL:weakSelf.rcSightURL
                                                        cachePolicy:NSURLRequestUseProtocolCachePolicy
                                                    timeoutInterval:30];
-                           if (token) {
-                               [urlRequest setValue:token forHTTPHeaderField:@"authorization"];
-                           }
+                           [RCDownloadHelper handleRequest:urlRequest token:token authInfo:authInfo];
                            weakSelf.session = [NSURLSession
                                sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration]
                                                delegate:weakSelf
@@ -508,7 +513,7 @@
 }
 
 - (void)pause {
-    if(!self.isPlaying) {
+    if (!self.isPlaying) {
         return;
     }
     self.lastPlaybackRate = self.player.rate;
@@ -558,6 +563,7 @@
 }
 
 - (void)cancel {
+    [RCSightExtensionModule sharedInstance].isSightPlayerHolding = NO;
     [_player setRate:0.0f];
     if ([self.delegate respondsToSelector:@selector(closeSightPlayer)]) {
         [self.delegate closeSightPlayer];
@@ -730,6 +736,6 @@
     self.isPlaying = NO;
     self.transport.centerPlayBtn.hidden = NO;
     self.transport.centerPlayBtn.selected = NO;
-    self.transport.playBtn.selected = !self.transport.playBtn.selected;
+    self.transport.playBtn.selected = NO;
 }
 @end

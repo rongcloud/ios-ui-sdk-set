@@ -12,24 +12,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCCombineMessageCell : RCMessageCell
 
-/*!
- 消息的背景 View
- */
+/// 消息的背景 View
 @property (nonatomic, strong) RCBaseView *backView;
 
-/*!
- 展示消息的 title
- */
+/// 展示消息的 title
 @property (nonatomic, strong) RCBaseLabel *titleLabel;
 
-/*!
- 展示消息的缩略内容
- */
+/// 展示消息的缩略内容
 @property (nonatomic, strong) RCBaseLabel *contentLabel;
 
-/*!
- 展示消息的聊天记录字样
- */
+/// 展示消息的聊天记录字样
 @property (nonatomic, strong) RCBaseLabel *historyLabel;
 
 @end

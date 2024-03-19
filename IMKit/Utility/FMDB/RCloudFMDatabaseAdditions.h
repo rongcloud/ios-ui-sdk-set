@@ -27,7 +27,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `int` value.
+ - Returns: `int` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -39,7 +39,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `long` value.
+ - Returns: `long` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -51,7 +51,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `BOOL` value.
+ - Returns: `BOOL` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -63,7 +63,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `double` value.
+ - Returns: `double` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -75,7 +75,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `NSString` value.
+ - Returns: `NSString` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -87,7 +87,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `NSData` value.
+ - Returns: `NSData` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -99,7 +99,7 @@
  @param query The SQL query to be performed.
  @param ... A list of parameters that will be bound to the `?` placeholders in the SQL query.
 
- @return `NSDate` value.
+ - Returns: `NSDate` value.
 
  @note To use this method from Swift, you must include `FMDatabaseAdditionsVariadic.swift` in your project.
  */
@@ -118,7 +118,7 @@
 
  @param tableName The name of the table being looked for.
 
- @return `YES` if table found; `NO` if not found.
+ - Returns: `YES` if table found; `NO` if not found.
  */
 
 - (BOOL)tableExists:(NSString *)tableName;
@@ -134,7 +134,7 @@
  - `rootpage` - The page number of the root b-tree page for tables and indices
  - `sql` - The SQL that created the entity
 
- @return `RCloudFMResultSet` of schema; `nil` on error.
+ - Returns: `RCloudFMResultSet` of schema; `nil` on error.
 
  @see [SQLite File Format](http://www.sqlite.org/fileformat.html)
  */
@@ -158,7 +158,7 @@
 
  @param tableName The name of the table for whom the schema will be returned.
 
- @return `RCloudFMResultSet` of schema; `nil` on error.
+ - Returns: `RCloudFMResultSet` of schema; `nil` on error.
 
  @see [table_info](http://www.sqlite.org/pragma.html#pragma_table_info)
  */
@@ -171,7 +171,7 @@
 
  @param tableName The name of the table.
 
- @return `YES` if column exists in table in question; `NO` otherwise.
+ - Returns: `YES` if column exists in table in question; `NO` otherwise.
  */
 
 - (BOOL)columnExists:(NSString *)columnName inTableWithName:(NSString *)tableName;
@@ -182,7 +182,7 @@
 
  @param tableName The name of the table.
 
- @return `YES` if column exists in table in question; `NO` otherwise.
+ - Returns: `YES` if column exists in table in question; `NO` otherwise.
 
  @see columnExists:inTableWithName:
 
@@ -201,7 +201,7 @@
  @param error This is a pointer to a `NSError` object that will receive the autoreleased `NSError` object if there was
  any error. If this is `nil`, no `NSError` result will be returned.
 
- @return `YES` if validation succeeded without incident; `NO` otherwise.
+ - Returns: `YES` if validation succeeded without incident; `NO` otherwise.
 
  */
 
@@ -213,7 +213,7 @@
 
 /** Retrieve application ID
 
- @return The `uint32_t` numeric value of the application ID.
+ - Returns: The `uint32_t` numeric value of the application ID.
 
  @see setApplicationID:
  */
@@ -232,7 +232,7 @@
 #if TARGET_OS_MAC && !TARGET_OS_IPHONE
 /** Retrieve application ID string
 
- @return The `NSString` value of the application ID.
+ - Returns: The `NSString` value of the application ID.
 
  @see setApplicationIDString:
  */
@@ -256,7 +256,7 @@
 
 /** Retrieve user version
 
- @return The `uint32_t` numeric value of the user version.
+ - Returns: The `uint32_t` numeric value of the user version.
 
  @see setUserVersion:
  */

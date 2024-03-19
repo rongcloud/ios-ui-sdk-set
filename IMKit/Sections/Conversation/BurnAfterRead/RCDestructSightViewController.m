@@ -220,6 +220,26 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 - (void)onMessageDestructing:(NSNotification *)notification {
+    NSDictionary *dataDict = notification.userInfo;
+    RCMessage *message = dataDict[@"message"];
+    NSInteger duration = [dataDict[@"remainDuration"] integerValue];
+    if (![message.messageUId isEqualToString:self.messageModel.messageUId]) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (duration == 0) {
+            [self onMessageDestructDestory:message];
+        }
+    });
+}
+
+- (void)onMessageDestructDestory:(RCMessage *)message {
+    if (![message.messageUId isEqualToString:self.messageModel.messageUId]) {
+        return;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self dismissViewControllerAnimated:YES completion:nil];
+    });
 }
 
 - (void)updateDownloadMediaStatus:(NSNotification *)notify {
