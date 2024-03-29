@@ -72,6 +72,7 @@ static RCloudCache *__instance;
 
 #pragma mark -
 
+
 @implementation RCloudCache
 @synthesize defaultTimeoutInterval;
 
@@ -237,7 +238,7 @@ static RCloudCache *__instance;
 
 - (void)saveCacheDictionary {
     @synchronized(self) {
-        [cacheDictionary writeToFile:cachePathForKey(@"RCloudCache.plist") atomically:YES];
+        [[cacheDictionary copy] writeToFile:cachePathForKey(@"RCloudCache.plist") atomically:YES];
     }
 }
 

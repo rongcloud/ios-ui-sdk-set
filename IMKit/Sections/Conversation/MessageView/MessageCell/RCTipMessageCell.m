@@ -64,11 +64,19 @@
                                     font:[[RCKitConfig defaultConfig].font fontOfFourthLevel]
                          constrainedSize:CGSizeMake([RCTipMessageCell getMaxLabelWidth], MAXFLOAT)];
         CGRect frame = CGRectMake((self.baseContentView.bounds.size.width - labelSize.width - buttonTitleSize.width) / 2.0f - 5, 0, labelSize.width + 10 + buttonTitleSize.width, labelSize.height);
-        self.reeditLabel.frame = CGRectMake(frame.size.width - buttonTitleSize.width - 7, 1, buttonTitleSize.width, 22);
-        self.tipMessageLabel.frame = frame;
-        self.tipMessageLabel.textAlignment = NSTextAlignmentLeft;
-        self.tipMessageLabel.text = [NSString stringWithFormat:@"  %@", self.tipMessageLabel.text];
-        [self.tipMessageLabel addSubview:self.reeditLabel];
+        if ([RCKitUtility isRTL]) {
+            self.reeditLabel.frame = CGRectMake(7, 1, buttonTitleSize.width, 22);
+            self.tipMessageLabel.frame = frame;
+            self.tipMessageLabel.textAlignment = NSTextAlignmentRight;
+            self.tipMessageLabel.text = [NSString stringWithFormat:@"  %@", self.tipMessageLabel.text];
+            [self.tipMessageLabel addSubview:self.reeditLabel];
+        } else {
+            self.reeditLabel.frame = CGRectMake(frame.size.width - buttonTitleSize.width - 7, 1, buttonTitleSize.width, 22);
+            self.tipMessageLabel.frame = frame;
+            self.tipMessageLabel.textAlignment = NSTextAlignmentLeft;
+            self.tipMessageLabel.text = [NSString stringWithFormat:@"  %@", self.tipMessageLabel.text];
+            [self.tipMessageLabel addSubview:self.reeditLabel];
+        }
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(updateRecallStatus:)
                                                      name:RCKitNeedUpdateRecallStatusNotification

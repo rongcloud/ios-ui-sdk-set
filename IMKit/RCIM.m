@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.5.4_opensource";
+static NSString *const RCIMKitVersion = @"5.8.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -409,19 +409,26 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
 
 - (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
     RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
-    if (senderUserInfo.userId) {
-        if (![senderUserInfo.userId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
-            if (senderUserInfo.name.length > 0 || senderUserInfo.portraitUri.length > 0) {
-                if (senderUserInfo.portraitUri == nil || [RCUtilities isLocalPath:senderUserInfo.portraitUri]) {
-                    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager]
-                                            getUserInfoFromCacheOnly:senderUserInfo.userId];
-                    if (userInfo) {
-                        senderUserInfo.portraitUri = [userInfo.portraitUri copy];
-                    }
+    NSString *senderUserId = senderUserInfo.userId;
+    if (senderUserId.length > 0 && ![senderUserId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
+        // senderUserInfo 有效才更新缓存
+        if (senderUserInfo.name.length > 0 || senderUserInfo.portraitUri.length > 0) {
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfoFromCacheOnly:senderUserId];
+            if (userInfo) {
+                if (0 == senderUserInfo.portraitUri.length ||
+                    [RCUtilities isLocalPath:senderUserInfo.portraitUri]) {
+                    senderUserInfo.portraitUri = userInfo.portraitUri;
                 }
-                [[RCUserInfoCacheManager sharedManager] updateUserInfo:senderUserInfo
-                                                             forUserId:senderUserInfo.userId];
+                if (0 == senderUserInfo.alias.length) {
+                    senderUserInfo.alias = userInfo.alias;
+                }
+                if (0 == senderUserInfo.extra.length) {
+                    senderUserInfo.extra = userInfo.extra;
+                }
             }
+            
+            [[RCUserInfoCacheManager sharedManager] updateUserInfo:senderUserInfo
+                                                         forUserId:senderUserId];
         }
     }
     
@@ -767,11 +774,17 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
                   pushData:(NSString *)pushData
                    success:(void (^)(long messageId))successBlock
                      error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock {
-    if (targetId == nil || content == nil) {
+    if (targetId == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER, 0);
+            errorBlock(INVALID_PARAMETER_TARGETID, 0);
         }
-        NSLog(@"Parameters error");
+        return nil;
+    }
+    
+    if (content == nil) {
+        if (errorBlock) {
+            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
+        }
         return nil;
     }
     content = [self beforeSendMessage:content];
@@ -834,9 +847,8 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
                 errorBlock:(void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock {
     if (message.targetId == nil || message.content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER, message);
+            errorBlock(INVALID_PARAMETER_MESSAGE, message);
         }
-        NSLog(@"Parameters error");
         return nil;
     }
     message.content = [self beforeSendMessage:message.content];
@@ -896,13 +908,20 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
                              pushData:(NSString *)pushData
                               success:(void (^)(long messageId))successBlock
                                 error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock {
-    if (targetId == nil || content == nil) {
+    if (targetId == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER, 0);
+            errorBlock(INVALID_PARAMETER_TARGETID, 0);
         }
-        NSLog(@"Parameters error");
         return nil;
     }
+    
+    if (content == nil) {
+        if (errorBlock) {
+            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
+        }
+        return nil;
+    }
+    
     content = [self beforeSendMessage:content];
     if (!content) {
         return nil;
@@ -1051,13 +1070,20 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
                         success:(void (^)(long messageId))successBlock
                           error:(void (^)(RCErrorCode errorCode, long messageId))errorBlock
                          cancel:(void (^)(long messageId))cancelBlock {
-    if (targetId == nil || content == nil) {
+    if (targetId == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER, 0);
+            errorBlock(INVALID_PARAMETER_TARGETID, 0);
         }
-        NSLog(@"Parameters error");
         return nil;
     }
+    
+    if (content == nil) {
+        if (errorBlock) {
+            errorBlock(INVALID_PARAMETER_MESSAGECONTENT, 0);
+        }
+        return nil;
+    }
+    
     content = [self beforeSendMessage:content];
     if (!content) {
         return nil;
@@ -1140,7 +1166,7 @@ static NSString *const RCIMKitVersion = @"5.5.4_opensource";
                          cancel:(void (^)(RCMessage *cancelMessage))cancelBlock {
     if (message.targetId == nil || message.content == nil) {
         if (errorBlock) {
-            errorBlock(INVALID_PARAMETER, message);
+            errorBlock(INVALID_PARAMETER_MESSAGE, message);
         }
         NSLog(@"Parameters error");
         return nil;

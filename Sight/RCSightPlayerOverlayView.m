@@ -176,6 +176,8 @@
         [self constraintCenterYInSuperview:self.slider];
         [self constraintView:self.currentTimeLab toView:self.slider horizontalSpace:8];
         [self constraintView:self.slider toView:self.durationTimeLabel horizontalSpace:8];
+        [self constraintAlignSuperView:self.slider alignSpace:0 AlignMent:CCSightLayoutAlignTop];
+        [self constraintAlignSuperView:self.slider alignSpace:0 AlignMent:CCSightLayoutAlignBottom];
     }
     return _bottomView;
 }

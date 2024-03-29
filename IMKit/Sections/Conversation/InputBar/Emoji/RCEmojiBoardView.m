@@ -101,6 +101,8 @@ static int rc_currentSelectIndexPage;
 }
 
 - (void)dealloc {
+    rc_currentSelectIndexPackage = 0;
+    rc_currentSelectIndexPage = 0;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 

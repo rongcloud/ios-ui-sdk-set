@@ -53,27 +53,46 @@
 - (void)start {
     RCDownloadHelper *downloadHelper = [RCDownloadHelper new];
     [downloadHelper getDownloadFileToken:MediaType_IMAGE
-                           completeBlock:^(NSString *_Nonnull token) {
-                               dispatch_async(dispatch_get_main_queue(), ^{
-                                   [self startDownload:token];
-                               });
-                           }];
+                                queryUrl:[self.imageURL absoluteString]
+                           completeBlock:^(NSString *_Nullable token, NSString *_Nullable authInfo) {
+        [self startDownload:token authInfo:authInfo];
+    }];
 }
 
-- (void)startDownload:(NSString *)token {
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.imageURL
-                                                                cachePolicy:NSURLRequestReturnCacheDataElseLoad
-                                                            timeoutInterval:self.timeoutInterval];
-    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
-    if (token) {
-        [request setValue:token forHTTPHeaderField:@"authorization"];
+- (void)startDownload:(NSString *)token authInfo:(nullable NSString *)authInfo  {
+    
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:self.imageURL cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:self.timeoutInterval];
+    [RCDownloadHelper handleRequest:request token:token authInfo:authInfo];
+    
+    // 有同步拦截 request
+    if ([[RCCoreClient sharedCoreClient].downloadInterceptor respondsToSelector:@selector(onDownloadRequest:)]) {
+        request = [[RCCoreClient sharedCoreClient].downloadInterceptor onDownloadRequest:request];
     }
-    request.timeoutInterval = 10;
+
+    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
     
     NSURLSessionConfiguration *configuration = [self rcSessionConfiguration];
     _session = [NSURLSession sessionWithConfiguration:configuration
                                              delegate:self
                                         delegateQueue:[NSOperationQueue mainQueue]];
+    
+    // 有异步拦截 request
+    if ([[RCCoreClient sharedCoreClient].downloadInterceptor respondsToSelector:@selector(onDownloadRequest:withRequestHandler:)]) {
+        [[RCCoreClient sharedCoreClient].downloadInterceptor onDownloadRequest:request withRequestHandler:^(NSMutableURLRequest * _Nonnull handledRequest) {
+            if (handledRequest) {
+                _dataTask = [_session dataTaskWithRequest:handledRequest];
+            }else {
+                // 返回空，则直接返回错误码
+                RCLogE(@"[RCloudImageLoadConnection onDownloadRequest requestHandler:] callback handledRequest nil");
+                _dataTask = [_session dataTaskWithRequest:request];
+            }
+            [_dataTask resume];
+        }];
+        
+        return;
+    }
+    
+    // 无异步拦截 request
     _dataTask = [_session dataTaskWithRequest:request];
     [_dataTask resume];
 }

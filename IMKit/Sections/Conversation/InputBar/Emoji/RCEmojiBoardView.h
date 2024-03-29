@@ -22,16 +22,16 @@
 /*!
  点击表情的回调
 
- @param emojiView 表情输入的View
- @param string    点击的表情对应的字符串编码
+ - Parameter emojiView: 表情输入的View
+ - Parameter string:    点击的表情对应的字符串编码
  */
 - (void)didTouchEmojiView:(RCEmojiBoardView *)emojiView touchedEmoji:(NSString *)string;
 
 /*!
  点击发送按钮的回调
 
- @param emojiView  表情输入的View
- @param sendButton 发送按钮
+ - Parameter emojiView:  表情输入的View
+ - Parameter sendButton: 发送按钮
  */
 - (void)didSendButtonEvent:(RCEmojiBoardView *)emojiView sendButton:(UIButton *)sendButton;
 
@@ -72,8 +72,8 @@
 /**
  *  init
  *
- *  @param frame            frame
- *  @param delegate         实现RCEmojiViewDelegate的实体
+ *  - Parameter frame:            frame
+ *  - Parameter delegate:         实现RCEmojiViewDelegate的实体
  */
 - (instancetype)initWithFrame:(CGRect)frame delegate:(id<RCEmojiViewDelegate>)delegate;
 /*!
@@ -88,13 +88,13 @@
 /**
  *  添加表情包（普通开发者调用添加表情包）
  *
- *  @param viewDataSource 每页表情的数据源代理，当滑动需要加载表情页时会回调代理的方法，您需要返回表情页的view
+ *  - Parameter viewDataSource: 每页表情的数据源代理，当滑动需要加载表情页时会回调代理的方法，您需要返回表情页的view
  */
 - (void)addEmojiTab:(id<RCEmoticonTabSource>)viewDataSource;
 /**
  *  添加Extention表情包(用于第三方表情厂商添加表情包)
  *
- *  @param viewDataSource 每页表情的数据源代理，当滑动需要加载表情页时会回调代理的方法，您需要返回表情页的view
+ *  - Parameter viewDataSource: 每页表情的数据源代理，当滑动需要加载表情页时会回调代理的方法，您需要返回表情页的view
  */
 - (void)addExtensionEmojiTab:(id<RCEmoticonTabSource>)viewDataSource;
 

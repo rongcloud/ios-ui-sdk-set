@@ -11,15 +11,13 @@
 
 #define RCOldMessageNotificationMessageTypeIdentifier @"RC:OldMsgNtf"
 
-/**
- * 展示历史消息文字
- */
+/// 展示历史消息文字
 @interface RCOldMessageNotificationMessage : RCMessageContent <RCMessageCoding, RCMessagePersistentCompatible>
 
 /**
  *  init
  *
- *  @return return instance
+ *  - Returns: return instance
  */
 - (instancetype)init;
 @end

@@ -24,14 +24,10 @@
 @property (nonatomic, strong) UILabel *moreLabel;
 @property (nonatomic, strong) UIActivityIndicatorView *busyIndicator;
 @property (nonatomic, assign) BOOL hasMore;
-/*!
- 当前会话的会话类型
- */
+/// 当前会话的会话类型
 @property (nonatomic) RCConversationType conversationType;
 
-/*!
- 目标会话ID
- */
+/// 目标会话ID
 @property (nonatomic, copy) NSString *targetId;
 /** 设置UINavigationController的NavigationBar
 
@@ -266,12 +262,12 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
     CLLocation *location = [locations lastObject];
 
-    [(MKMapView *)self.mapView setCenterCoordinate:location.coordinate];
     MKCoordinateRegion coordinateRegion;
     coordinateRegion.center = location.coordinate;
     coordinateRegion.span.latitudeDelta = 0.01;
     coordinateRegion.span.longitudeDelta = 0.01;
     [self.dataSource didUpdateUserLocation];
+    [self.dataSource setMapViewCenter:location.coordinate animated:YES];
     [self.dataSource setMapViewCoordinateRegion:coordinateRegion animated:YES];
 }
 

@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  return a instance
  *
- *  @return return value description
+ *  - Returns: return value description
  */
 + (instancetype)shareAssetHelper;
 
@@ -31,8 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  获取分组的所有图片
  *
- *  @param alGroup 要操作的分组
- *  @param results 结果回传
+ *  - Parameter alGroup: 要操作的分组
+ *  - Parameter results: 结果回传
  */
 - (void)getPhotosOfGroup:(id)alGroup results:(void (^)(NSArray<RCAssetModel *> *photos))results;
 
@@ -43,20 +43,20 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  获取图片缩略图
  *
- *  @param asset 图片资源
+ *  - Parameter asset: 图片资源
  */
 - (void)getThumbnailWithAsset:(id)asset size:(CGSize)size result:(void (^)(UIImage *thumbnailImage))resultBlock;
 /**
  *  获取图片预览图
  *
- *  @param asset 图片资源
+ *  - Parameter asset: 图片资源
  */
 - (void)getPreviewWithAsset:(id)asset result:(void (^)(UIImage *photo, NSDictionary *info))resultBlock;
 
 /**
  *  获取视频
  *
- *  @param asset 照片资源
+ *  - Parameter asset: 照片资源
  */
 - (PHImageRequestID)getOriginVideoWithAsset:(id)asset
                                      result:(void (^)(AVAsset *avAsset, NSDictionary *info, NSString *imageIdentifier))resultBlock
@@ -65,8 +65,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  获取图片原图 data
  *
- *  @param assetModel 图片资源
- *  @discussion 如果本地获取原始图片失败会从 iCloud 下载，如果 iCloud 获取失败，则 photo 为 nil
+ *  - Parameter assetModel: 图片资源
+ *   如果本地获取原始图片失败会从 iCloud 下载，如果 iCloud 获取失败，则 photo 为 nil
  */
 - (PHImageRequestID)
 getOriginImageDataWithAsset:(RCAssetModel *)assetModel
@@ -76,7 +76,7 @@ getOriginImageDataWithAsset:(RCAssetModel *)assetModel
 /**
  *  获取图片大小
  *
- *  @param asset 图片资源
+ *  - Parameter asset: 图片资源
  */
 - (PHImageRequestID)getAssetDataSizeWithAsset:(id)asset result:(void (^)(CGFloat size))resultBlock;
 

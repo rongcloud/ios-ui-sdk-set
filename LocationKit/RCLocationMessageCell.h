@@ -9,19 +9,13 @@
 #import "RongLocationKitAdaptiveHeader.h"
 
 
-/*!
- 位置消息Cell
- */
+/// 位置消息Cell
 @interface RCLocationMessageCell : RCMessageCell
 
-/*!
- 当前位置在地图中的概览图
- */
+/// 当前位置在地图中的概览图
 @property (nonatomic, strong) RCBaseImageView *pictureView;
 
-/*!
- 显示位置名称的Label
- */
+/// 显示位置名称的Label
 @property (nonatomic, strong) UILabel *locationNameLabel;
 
 @end

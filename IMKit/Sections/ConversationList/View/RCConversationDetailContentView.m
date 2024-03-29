@@ -98,7 +98,7 @@
     NSMutableAttributedString *attibuteText = [[NSMutableAttributedString alloc] initWithString:messageContent];
     if (model.draft.length == 0 && model.lastestMessageId > 0 && isVoiceMessage
          &&
-        model.receivedStatus != ReceivedStatus_LISTENED && model.lastestMessageDirection == MessageDirection_RECEIVE) {
+        (NO == model.receivedStatusInfo.isListened) && model.lastestMessageDirection == MessageDirection_RECEIVE) {
         NSRange range;
         if (self.prefixName.length == 0 || messageContent.length == 0) {
             range = NSMakeRange(0, messageContent.length);

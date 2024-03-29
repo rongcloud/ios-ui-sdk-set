@@ -8,9 +8,7 @@
 
 #import "RCLocationPickerViewController.h"
 #import <Foundation/Foundation.h>
-/**
- *  RCLocationPickerMKMapViewDataSource
- */
+/// RCLocationPickerMKMapViewDataSource
 @interface RCLocationPickerMKMapViewDataSource : NSObject <RCLocationPickerViewControllerDataSource, MKMapViewDelegate>
 
 @end
