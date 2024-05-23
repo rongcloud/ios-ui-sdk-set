@@ -120,7 +120,8 @@
 
     if ([text respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
+        // 当使用 boundingRect(with:options:context:) 方法计算富文本的高度时，已经通过传递 .usesLineFragmentOrigin 选项告知文本布局引擎使用换行布局。这意味着文本将根据给定的宽度进行自动换行，而不需要显式设置 lineBreakMode。
+        // paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
         paragraphStyle.lineSpacing = lineSpace;
         NSDictionary *attributes = @{NSFontAttributeName : font, NSParagraphStyleAttributeName : paragraphStyle};
 

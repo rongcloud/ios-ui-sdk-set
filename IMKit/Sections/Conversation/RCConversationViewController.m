@@ -1849,6 +1849,11 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if ([RCVoicePlayer defaultPlayer].isPlaying && [RCVoicePlayer defaultPlayer].messageId == model.messageId) {
         [[RCVoicePlayer defaultPlayer] stopPlayVoice];
     }
+    RCNetworkStatus currentStatus = [[RCCoreClient sharedCoreClient] getCurrentNetworkStatus];
+    if (model.messageUId.length > 0 && currentStatus == RC_NotReachable) {
+        [RCAlertView showAlertController:nil message:RCLocalizedString(@"ConnectionDisconnect") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
+        return;
+    }
     [self deleteMessage:model];
 }
 
@@ -2012,7 +2017,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     long msgId = model.messageId;
     if(!memoryOnly) { // 已读回执的远端和本地都已清理, 无需重复删除
-        if (self.needDeleteRemoteMessage ) {
+        if (self.needDeleteRemoteMessage && model.messageUId.length > 0) {
             // 用户设置需要删除远端消息
             RCMessage *delMsg = [[RCCoreClient sharedCoreClient] getMessage:msgId];
             if (delMsg && delMsg.messageUId.length > 0) {
@@ -2578,6 +2583,20 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 - (void)deleteMessages {
     NSArray *tempArray = [self.selectedMessages mutableCopy];
     self.allowsMessageCellSelection = NO;
+    
+    __block BOOL isAllLocalMessage = YES;
+    [tempArray enumerateObjectsUsingBlock:^(RCMessageModel *msg, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (msg.messageUId.length > 0) {
+            isAllLocalMessage = NO;
+            *stop = YES;
+        }
+    }];
+    RCNetworkStatus currentStatus = [[RCCoreClient sharedCoreClient] getCurrentNetworkStatus];
+    if ((!isAllLocalMessage) && currentStatus == RC_NotReachable) {
+        [RCAlertView showAlertController:nil message:RCLocalizedString(@"ConnectionDisconnect") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
+        return;
+    }
+    
     for (int i = 0; i < tempArray.count; i++) {
         [self deleteMessage:tempArray[i]];
     }

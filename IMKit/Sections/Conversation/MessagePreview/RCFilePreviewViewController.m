@@ -82,13 +82,19 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
+        void (^recallAlertAction)(void) = ^(void) {
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallAlert") actionTitles:nil cancelTitle:RCLocalizedString(@"Confirm") confirmTitle:nil preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:^{
+                [self.navigationController popViewControllerAnimated:YES];
+            } confirmBlock:nil inViewController:self.navigationController];
+        };
+        
         if (recalledMsgId == self.messageModel.messageId) {
             if (self.presentedViewController) {//收到撤回消息时， 先会弹出下载取消的弹框， 因此需要先销毁
                 [self.presentedViewController dismissViewControllerAnimated:NO completion:^{
-                    [RCAlertView showAlertController:nil message:RCLocalizedString(@"MessageRecallAlert") actionTitles:nil cancelTitle:RCLocalizedString(@"Confirm") confirmTitle:nil preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:^{
-                        [self.navigationController popViewControllerAnimated:YES];
-                    } confirmBlock:nil inViewController:self.navigationController];
+                    recallAlertAction();
                 }];
+            } else {
+                recallAlertAction();
             }
         }
     });
@@ -474,6 +480,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCFileMessage *)fileMessage {
     if (!_fileMessage) {
+        [self handleFileLocalPath:self.messageModel];
         if ([self.messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
             RCReferenceMessage *refer = (RCReferenceMessage *)self.messageModel.content;
             return (RCFileMessage *)refer.referMsg;
@@ -481,6 +488,29 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         return (RCFileMessage *)self.messageModel.content;
     }
     return _fileMessage;
+}
+
+- (void)handleFileLocalPath:(RCMessageModel *)model {
+    RCMessageContent *messageContent = model.content;
+    if ([messageContent isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *referContent = (RCReferenceMessage *)messageContent;
+        messageContent = referContent.referMsg;
+    }
+    
+    if (![messageContent isKindOfClass:[RCFileMessage class]]) {
+        return;
+    }
+    
+    RCFileMessage *fileContent = (RCFileMessage *)messageContent;
+    BOOL ret = fileContent.localPath.length > 0 && [RCFileUtility isFileExist:fileContent.localPath];
+    if (ret) {
+        return;
+    }
+    
+    NSString *filePath = [RCFileUtility getFileLocalPath:fileContent.remoteUrl];
+    if ([RCFileUtility isFileExist:filePath]) {
+        fileContent.localPath = filePath;
+    }
 }
 
 @end

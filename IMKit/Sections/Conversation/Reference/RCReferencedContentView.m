@@ -261,7 +261,7 @@
     if (!_textLabel) {
         _textLabel = [[RCBaseLabel alloc] initWithFrame:self.contentView.bounds];
         _textLabel.numberOfLines = 1;
-        [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
+        [_textLabel setLineBreakMode:NSLineBreakByTruncatingMiddle];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
     }
     return _textLabel;

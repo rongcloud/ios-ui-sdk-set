@@ -240,7 +240,8 @@
                [messageModel.objectName isEqualToString:RCVoiceMessageTypeIdentifier]) {
         [summaryContent appendString:RCLocalizedString(@"RC:VcMsg")];
     } else if ([messageModel.objectName isEqualToString:RCFileMessageTypeIdentifier]) {
-        [summaryContent appendString:RCLocalizedString(@"RC:FileMsg")];
+        [summaryContent appendString:RCLocalizedString(RCFileMessageTypeIdentifier)];
+        [summaryContent appendString:((RCFileMessage *)messageModel.content).name];
     } else if ([messageModel.objectName isEqualToString:RCCombineMessageTypeIdentifier]) {
         [summaryContent appendString:RCLocalizedString(RCCombineMessageTypeIdentifier)];
     } else if ([messageModel.objectName isEqualToString:RCSightMessageTypeIdentifier]) {
@@ -249,11 +250,12 @@
         [summaryContent appendString:RCLocalizedString(@"RC:LBSMsg")];
     } else if ([messageModel.objectName isEqualToString:@"RC:CardMsg"]) {
         [summaryContent appendString:RCLocalizedString(@"RC:CardMsg")];
-    } else if ([messageModel.objectName isEqualToString:@"RC:StkMsg"] ||
-               [messageModel.objectName isEqualToString:RCGIFMessageTypeIdentifier]) {
+    } else if ([messageModel.objectName isEqualToString:@"RC:StkMsg"]) {
         [summaryContent appendString:RCLocalizedString(@"RC:StkMsg")];
     } else if ([messageModel.objectName isEqualToString:@"RC:VCSummary"]) {
         [summaryContent appendString:RCLocalizedString(@"RC:VCSummary")];
+    } else if ([messageModel.objectName isEqualToString:RCGIFMessageTypeIdentifier]) {
+        [summaryContent appendString:RCLocalizedString(RCGIFMessageTypeIdentifier)];
     }
     return summaryContent;
 }

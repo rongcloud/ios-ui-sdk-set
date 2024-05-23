@@ -83,9 +83,9 @@
 "Setting"="Settings";
 "Back"="Back";
 "IsDeleteHistoryMsg"="Do you want to clear the chat history?";
-"ConnectionIsNotReachable"="Network unavailable, check network";
+"ConnectionIsNotReachable"="Network unavailable, please check your network";
 "KickedOfflineByOtherClient"="This account has been logged-in on other devices";
-"SendReadReceiptRequestFailed"="Network unavailable, check network";
+"SendReadReceiptRequestFailed"="Network unavailable, please check your network";
 "PreviewFile"="File preview";
 "StartDownloadFile"="Start download";
 "FileIsDownloading"="Downloding...";
@@ -284,3 +284,4 @@
 "ConnectionstatusProxyUnavailable"="The current proxy is not available.";
 "restartApp"="Restart Application";
 "PhotoLibraryBugErrorAlert"="The system album cannot be accessed temporarily. Restart the application or mobile phone and try again";
+"ConnectionDisconnect"="Connection has been disconnected. Please try again later.";

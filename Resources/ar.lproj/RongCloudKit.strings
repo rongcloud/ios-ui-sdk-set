@@ -71,8 +71,8 @@
 "Setting"="الإعدادات";
 "Back"="الرجوع";
 "IsDeleteHistoryMsg"="هل تريد مسح تاريخ المحادثة؟";
-"ConnectionIsNotReachable"="تعذر الإتصال بالإنترنت، يرجى التأكد من الشبكة";
-"SendReadReceiptRequestFailed"="تعذر الإتصال بالإنترنت، يرجى التأكد من الشبكة";
+"ConnectionIsNotReachable"="الشبكة غير متاحه, يرجى التأكد من الشبكة";
+"SendReadReceiptRequestFailed"="الشبكة غير متاحه, يرجى التأكد من الشبكة";
 "PreviewFile"="معاينة الملف";
 "StartDownloadingFile"="بدء التحميل";
 "StartDownloadFile"="تحميل";
@@ -286,3 +286,4 @@
 "ConnectionstatusProxyUnavailable"="الوكيل الحالي غير متوفر";
 "restartApp"="إعادة التشغيل";
 "PhotoLibraryBugErrorAlert"="ولا يمكن الوصول إلى ألبوم الصور في الوقت الراهن، ويمكن إعادة تشغيله أو إعادة تشغيله";
+"ConnectionDisconnect"="الربط قد تم قطعه. يرجى المحاولة مرة أخرى في وقت لاحق";

@@ -284,3 +284,4 @@
 "ConnectionstatusProxyUnavailable"="当前代理不可用";
 "restartApp"="重启应用";
 "PhotoLibraryBugErrorAlert"="暂时无法访问到系统相册，可重启应用或手机后重试";
+"ConnectionDisconnect"="连接已断开，请稍后再试";

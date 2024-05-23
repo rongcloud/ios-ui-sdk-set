@@ -60,8 +60,8 @@
     [self configureNavigationBar];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
     MKCoordinateRegion coordinateRegion;
     coordinateRegion.center = self.location;
     coordinateRegion.span.latitudeDelta = 0.01;
