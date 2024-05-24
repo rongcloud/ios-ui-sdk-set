@@ -1,5 +1,7 @@
 #!/bin/sh
 
+trap exit ERR
+
 Private_Pods_Demo_Git=$1
 
 git reset --hard origin/main
@@ -16,8 +18,6 @@ fi
 
 git tag -a $Version -m $Version
 git push origin $Version
-
-pod repo update
 
 echo "******** 推送私有 pods 仓库开始 ********"
 # 私有 pods 仓库
