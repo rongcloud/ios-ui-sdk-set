@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)getDownloadFileToken:(int)fileType queryUrl:(NSString *)queryUrl completeBlock:(void (^)(NSString *_Nullable token, NSString *_Nullable authInfo))completion;
 
 + (void)handleRequest:(NSMutableURLRequest *)request token:(nullable NSString *)token authInfo:(nullable NSString *)authInfo;
+
++ (NSString *)getMinioOSSAddr;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -72,7 +72,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate> {
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol> {
     int _defaultLocalHistoryMessageCount;
     int _defaultMessageCount;
     int _defaultRemoteHistoryMessageCount;
@@ -158,6 +158,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [[RCMessageSelectionUtility sharedManager] setMultiSelect:NO];
     
     self.dataSource = [[RCConversationDataSource alloc] init:self];
+    self.dataSource.loadDelegate = self;
     self.util = [[RCConversationVCUtil alloc] init:self];
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
     self.enableUnreadMentionedIcon = YES;
@@ -1823,6 +1824,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
     }
 }
+
+#pragma mark - RCMessagesLoadProtocol
+- (void)noMoreMessageToFetch {}
 
 #pragma mark - 单条消息处理
 //复制消息内容

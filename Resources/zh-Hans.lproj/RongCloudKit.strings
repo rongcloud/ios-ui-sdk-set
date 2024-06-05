@@ -242,7 +242,7 @@
 "no_message"="暂无消息";
 "common_phrases" = "常用语";
 "RC:CombineMsg" = "[聊天记录]";
-"RC:CardMsg" = "[名片]";
+"RC:CardMsg" = "[个人名片]";
 "GroupChatHistory" = "群聊的聊天记录";
 "ChatHistoryForXAndY" = "%@和%@的聊天记录";
 "ChatHistoryForX" = "%@的聊天记录";

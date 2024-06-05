@@ -181,19 +181,19 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 - (void)saveDraftIfNeed {
     NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
-    if (draft && [draft length] > 0) {
-        [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+        if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
                 [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
                     
                 }];
             }
-        }];
-    } else {
-        [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-            
-        }];
-    }
+        } else if (draftInDB.length > 0){
+            [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
+                
+            }];
+        }
+    }];
 }
 
 
