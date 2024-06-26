@@ -17,12 +17,12 @@
 	<key>CFBundleShortVersionString</key>
 	<string>5.8.2</string>
 	<key>CFBundleVersion</key>
-	<string>202406051727</string>
+	<string>202406261458</string>
 	<key>RCVersion</key>
-	<string>5.8.2</string>
+	<string>5.8.2.100</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
 	<key>RCCommitId</key>
-	<string>01bac033f</string>
+	<string>c46fae8b2</string>
 </dict>
 </plist>
