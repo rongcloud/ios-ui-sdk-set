@@ -53,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.10.1_opensource";
+static NSString *const RCIMKitVersion = @"5.8.3_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -1029,46 +1029,6 @@ static NSString *const RCIMKitVersion = @"5.10.1_opensource";
                 cancelBlock();
             }
         }];
-}
-
-- (void)downloadMediaFile:(NSString *)fileName mediaUrl:(NSString *)mediaUrl progress:(void (^)(int))progressBlock success:(void (^)(NSString * _Nonnull))successBlock error:(void (^)(RCErrorCode))errorBlock cancel:(void (^)(void))cancelBlock {
-    [[RCCoreClient sharedCoreClient] downloadMediaFile:fileName mediaUrl:mediaUrl
-                                              progress:^(int progress) {
-        NSDictionary *statusDic =
-        @{ @"mediaUrl" : mediaUrl?:@"",
-           @"type" : @"progress",
-           @"progress" : @(progress) };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (progressBlock) {
-            progressBlock(progress);
-        }
-    } success:^(NSString *mediaPath) {
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"success", @"mediaPath" : mediaPath?:@"" };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (successBlock) {
-            successBlock(mediaPath);
-        }
-    } error:^(RCErrorCode errorCode) {
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"error", @"errorCode" : @(errorCode) };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (errorBlock) {
-            errorBlock(errorCode);
-        }
-    } cancel:^{
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"cancel" };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (cancelBlock) {
-            cancelBlock();
-        }
-    }];
 }
 
 - (void)addMeidaMessageId:(NSNumber *)messageId {
