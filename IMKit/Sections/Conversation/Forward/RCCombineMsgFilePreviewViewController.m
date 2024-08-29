@@ -16,10 +16,6 @@
 #import "RCSemanticContext.h"
 #import "RCButton.h"
 #import "RCBaseImageView.h"
-#import "RCAlertView.h"
-
-extern NSString *const RCKitDispatchDownloadMediaNotification;
-
 @interface RCCombineMsgFilePreviewViewController ()
 
 @property (nonatomic, copy) NSString *remoteURL;
@@ -37,7 +33,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) UIProgressView *progressView;
 @property (nonatomic, strong) RCBaseButton *downloadButton;
 @property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
-@property (nonatomic, strong) RCBaseButton *cancelButton;
 
 @property (nonatomic, assign) int extentLayoutForY;
 
@@ -88,9 +83,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 
-    [self registerNotificationCenter];
-    [self setupSubviews];
-    
     if ([self isFileDownloaded] && [self isFileSupported]) {
         [self layoutAndPreviewFile];
     } else {
@@ -98,80 +90,38 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     }
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
 #pragma mark - Private Methods
-
-- (void)registerNotificationCenter {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updateDownloadMediaStatus:)
-                                                 name:RCKitDispatchDownloadMediaNotification
-                                               object:nil];
-}
-
-- (void)updateDownloadMediaStatus:(NSNotification *)notify {
-    NSDictionary *statusDic = notify.userInfo;
-    if (![self.remoteURL isEqualToString:statusDic[@"mediaUrl"]]) {
-        return;
-    }
-    NSString *type = statusDic[@"type"];
-    dispatch_main_async_safe(^{
-        if ([type isEqualToString:@"progress"]) {
-            [self layoutForDownloading];
-            float progress = (float)[statusDic[@"progress"] intValue] / 100.0f;
-            [self downloading:progress];
-        } else if ([type isEqualToString:@"success"]) {
-            self.localPath = statusDic[@"mediaPath"];
+- (void)startFileDownLoad {
+    [self layoutForDownloading];
+    [[RCCoreClient sharedCoreClient] downloadMediaFile:self.fileName mediaUrl:self.remoteURL progress:^(int progress) {
+        dispatch_main_async_safe(^{
+            [self downloading:progress * 0.01];
+        });
+    } success:^(NSString *mediaPath) {
+        dispatch_main_async_safe(^{
+            self.localPath = mediaPath;
             if ([self isFileSupported]) {
                 [self layoutAndPreviewFile];
             } else {
                 [self layoutForShowFileInfo];
             }
-        } else if ([type isEqualToString:@"error"]) {
-            [self layoutForShowFileInfo];
-            if ([statusDic[@"errorCode"] intValue] == RC_NETWORK_UNAVAILABLE) {
-                [self showAlertController:RCLocalizedString(@"ConnectionIsNotReachable")];
-            } else {
-                [self showAlertController:RCLocalizedString(@"FileDownloadFailed")];
-            }
-        } else if ([type isEqualToString:@"cancel"]) {
-            [self layoutForShowFileInfo];
-            [self showAlertController:RCLocalizedString(@"FileDownloadCanceled")];
-        }
-    });
-}
-
-
-- (void)setupSubviews {
-    [self.view addSubview:self.webView];
-    [self.view addSubview:self.typeIconView];
-    [self.view addSubview:self.nameLabel];
-    [self.view addSubview:self.sizeLabel];
-    [self.view addSubview:self.progressLabel];
-    [self.view addSubview:self.progressView];
-    [self.view addSubview:self.downloadButton];
-    [self.view addSubview:self.openInOtherAppButton];
-    [self.view addSubview:self.cancelButton];
-    [self.view bringSubviewToFront:self.cancelButton];
-}
-
-- (void)startFileDownLoad {
-    [self layoutForDownloading];
-    [[RCIM sharedRCIM] downloadMediaFile:self.fileName mediaUrl:self.remoteURL progress:^(int progress) {
-        
-    } success:^(NSString *mediaPath) {
-        
+        });
     } error:^(RCErrorCode errorCode) {
-        
-    } cancel:^{
-        
+        dispatch_main_async_safe(^{
+            [self layoutForShowFileInfo];
+            UIAlertController *alertController = [UIAlertController
+                                                  alertControllerWithTitle:nil
+                                                  message:RCLocalizedString(@"FileDownloadFailed")
+                                                  preferredStyle:UIAlertControllerStyleAlert];
+            [alertController
+             addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"OK")
+                                                style:UIAlertActionStyleDefault
+                                              handler:^(UIAlertAction *_Nonnull action){
+            }]];
+            [self presentViewController:alertController animated:YES completion:nil];
+        });
+    }cancel:^{
     }];
-}
-
-- (void)showAlertController:(NSString *)message {
-    [RCAlertView showAlertController:nil message:message cancelTitle:RCLocalizedString(@"OK") inViewController:self];
 }
 
 - (void)downloading:(float)progress {
@@ -218,7 +168,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.sizeLabel.hidden = NO;
     self.progressView.hidden = YES;
     self.progressLabel.hidden = YES;
-    self.cancelButton.hidden = YES;
     if ([self isFileDownloaded]) {
         self.downloadButton.hidden = YES;
         self.openInOtherAppButton.hidden = NO;
@@ -239,7 +188,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.openInOtherAppButton.hidden = YES;
     self.progressView.hidden = NO;
     self.progressLabel.hidden = NO;
-    self.cancelButton.hidden = NO;
 }
 
 - (void)layoutAndPreviewFile {
@@ -253,7 +201,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.openInOtherAppButton.hidden = YES;
     self.progressView.hidden = YES;
     self.progressLabel.hidden = YES;
-    self.cancelButton.hidden = YES;
 
     [self transformEncodingFromFilePath:self.localPath];
     if (self.localPath) {
@@ -289,14 +236,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         popPresenter.permittedArrowDirections = 0;
     }
     [self presentViewController:activityVC animated:YES completion:nil];
-}
-
-- (void)cancelFileDownload {
-    [[RCCoreClient sharedCoreClient] cancelDownloadMediaUrl:self.remoteURL successBlock:^{
-        
-    } errorBlock:^(RCErrorCode errorCode) {
-        
-    }];
 }
 
 - (void)openCurrentFileInOtherApp {
@@ -336,7 +275,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _webView.scrollView.contentInset = (UIEdgeInsets){8, 8, 8, 8};
         _webView.backgroundColor =
             [UIColor colorWithRed:242.f / 255.f green:242.f / 255.f blue:243.f / 255.f alpha:1.f];
-        
+        [self.view addSubview:_webView];
     }
     return _webView;
 }
@@ -346,6 +285,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _typeIconView = [[RCBaseImageView alloc]
             initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 30 + self.extentLayoutForY, 75, 75)];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileType];
+
+        [self.view addSubview:_typeIconView];
     }
 
     return _typeIconView;
@@ -360,6 +301,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _nameLabel.textAlignment = NSTextAlignmentCenter;
         _nameLabel.textColor = RCDYCOLOR(0x343434, 0x9f9f9f);
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+        [self.view addSubview:_nameLabel];
     }
     return _nameLabel;
 }
@@ -372,6 +314,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _sizeLabel.text = [RCKitUtility getReadableStringForFileSize:self.fileSize];
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
         _sizeLabel.textColor = RCDYCOLOR(0xa8a8a8, 0x666666);
+        [self.view addSubview:_sizeLabel];
     }
     return _sizeLabel;
 }
@@ -383,6 +326,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _progressLabel.textColor = HEXCOLOR(0xa8a8a8);
         _progressLabel.textAlignment = NSTextAlignmentCenter;
         _progressLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
+        [self.view addSubview:_progressLabel];
     }
     return _progressLabel;
 }
@@ -394,6 +338,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _progressView.transform = CGAffineTransformMakeScale(1.0f, 4.0f);
         _progressView.progressViewStyle = UIProgressViewStyleDefault;
         _progressView.progressTintColor = HEXCOLOR(0x0099ff);
+        [self.view addSubview:_progressView];
     }
     return _progressView;
 }
@@ -411,6 +356,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_downloadButton addTarget:self
                             action:@selector(startFileDownLoad)
                   forControlEvents:UIControlEventTouchUpInside];
+        [self.view addSubview:_downloadButton];
     }
     return _downloadButton;
 }
@@ -428,22 +374,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_openInOtherAppButton addTarget:self
                                   action:@selector(openCurrentFileInOtherApp)
                         forControlEvents:UIControlEventTouchUpInside];
+
+        [self.view addSubview:_openInOtherAppButton];
     }
     return _openInOtherAppButton;
 }
 
-- (RCBaseButton *)cancelButton {
-    if (!_cancelButton) {
-        _cancelButton = [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
-        [_cancelButton setTitle:RCLocalizedString(@"Close") forState:(UIControlStateNormal)];
-        [_cancelButton addTarget:self
-                          action:@selector(cancelFileDownload)
-                forControlEvents:UIControlEventTouchUpInside];
-        _cancelButton.backgroundColor = HEXCOLOR(0x0089E5);
-        _cancelButton.layer.cornerRadius = 5.0f;
-        _cancelButton.layer.borderWidth = 0.5f;
-        _cancelButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
-    }
-    return _cancelButton;
-}
 @end

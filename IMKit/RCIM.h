@@ -738,28 +738,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
                        error:(void (^)(RCErrorCode errorCode))errorBlock
                       cancel:(void (^)(void))cancelBlock;
 
-/// 根据文件 URL 地址下载文件内容
-///
-/// - Parameter fileName: 指定的文件名称 需要开发者指定文件后缀 (例如 rongCloud.mov)
-/// - Parameter mediaUrl: 文件的 URL 地址
-/// - Parameter progressBlock: 文件下载进度更新的回调 [progress:当前的下载进度, 0 <= progress <= 100]
-/// - Parameter successBlock: 下载成功的回调[mediaPath:下载成功后本地存放的文件路径 文件路径为文件消息的默认地址]
-/// - Parameter errorBlock: 下载失败的回调[errorCode:下载失败的错误码]
-/// - Parameter cancelBlock: 用户取消了下载的回调
-///
-/// 用来获取媒体原文件时调用。如果本地缓存中包含此文件，则从本地缓存中直接获取，否则将从服务器端下载。
-///
-/// - Warning: 此方法仅仅是文件下载器，不会操作消息体。
-///
-/// - Remark: 多媒体下载
-/// - Since: 5.10.0
-- (void)downloadMediaFile:(NSString *_Nonnull)fileName
-                 mediaUrl:(NSString *_Nonnull)mediaUrl
-                 progress:(nullable void (^)(int progress))progressBlock
-                  success:(nullable void (^)(NSString * _Nonnull mediaPath))successBlock
-                    error:(nullable void (^)(RCErrorCode errorCode))errorBlock
-                   cancel:(nullable void (^)(void))cancelBlock;
-
 /// 取消下载中的媒体信息
 /// 
 /// - Parameter messageId: 媒体消息的messageId

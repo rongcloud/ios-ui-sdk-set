@@ -14,7 +14,7 @@
 #import "RCBaseTableViewCell.h"
 #define Space_Line 6
 @interface RCActionSheetView()
-@property (nonatomic, strong) UIView *maskCoverView; //背景
+@property (nonatomic, strong) UIView *maskView; //背景
 
 @property (nonatomic, strong) RCBaseTableView *tableView; //展示表格
 
@@ -107,14 +107,14 @@
     [self addSubview:self.tableView];
 }
 
-- (UIView *)maskCoverView {
-    if (!_maskCoverView) {
-        _maskCoverView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        _maskCoverView.backgroundColor = [UIColor blackColor];
-        _maskCoverView.alpha = 0.4;
-        _maskCoverView.userInteractionEnabled = YES;
+- (UIView *)maskView {
+    if (!_maskView) {
+        _maskView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        _maskView.backgroundColor = [UIColor blackColor];
+        _maskView.alpha = 0.4;
+        _maskView.userInteractionEnabled = YES;
     }
-    return _maskCoverView;
+    return _maskView;
 }
 
 - (RCBaseTableView *)tableView {

@@ -1214,21 +1214,9 @@ static BOOL msgRoamingServiceAvailable = YES;
             [strongSelf2.chatVC.conversationMessageCollectionView layoutIfNeeded];
 
             [strongSelf2 loadMoreNewerMessageV2:msgArr];
-           
             [strongSelf2 scrollToSpecifiedPosition:YES baseMeassage:firstUnReadMentionedMessagge];
             // message 加载完成后, 再次滚动需要检测是否移除未读消息按钮
-            if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"18.0")) {
-                if (firstUnReadMentionedMessagge.messageId == self.firstUnreadMessage.messageId) {
-                    self.hideUnreadBtnForMentioned = NO;
-                    [self.chatVC.unReadButton removeFromSuperview];
-                    self.chatVC.unReadButton = nil;
-                    self.chatVC.unReadMessage = 0;
-                } else {
-                    strongSelf2.hideUnreadBtnForMentioned = YES;
-                }
-            } else {
-                strongSelf2.hideUnreadBtnForMentioned = YES;
-            }
+            strongSelf2.hideUnreadBtnForMentioned = YES;
 
             //判断是否是最后一条消息,如果是，隐藏底部新消息按钮
             NSArray *latestMessageArray = [[RCCoreClient sharedCoreClient] getLatestMessages:weakSelf.chatVC.conversationType targetId:weakSelf.chatVC.targetId count:1];
