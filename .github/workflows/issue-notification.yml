@@ -1,0 +1,39 @@
+name: Issue Notification
+
+on:
+  issues:
+    types: [opened, edited, reopened, closed]
+  issue_comment:
+    types: [created, edited, deleted]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+
+    - name: Send email notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ secrets.SMTP_SERVER }}
+        server_port: ${{ secrets.SMTP_PORT }}
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: |
+          GitHub Issues Notification: ${{ github.event.issue.title }}
+        body: |
+          ${{ github.event_name == 'issues' && 
+          format('An issue has been {0} on the repository.
+          Issue Title: {1}
+          Issue Link: {2}
+          Action Taken: {0}', github.event.action, github.event.issue.title, github.event.issue.html_url) 
+          || github.event_name == 'issue_comment' &&
+          format('A comment has been {0} on the issue.
+          Issue Title: {1}
+          Issue Link: {2}
+          Comment: {3}
+          Action Taken: {0}', github.event.action, github.event.issue.title, github.event.issue.html_url, github.event.comment.body) }}
+        to: ${{ secrets.EMAIL_RECIPIENTS }}
+        from: ${{ secrets.EMAIL_USERNAME }}
