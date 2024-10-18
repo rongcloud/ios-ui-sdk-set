@@ -26,6 +26,7 @@
 #import "RCKitListenerManager.h"
 #import "RCMessageNotificationHelper.h"
 #import "RCIMNotificationDataContext.h"
+#import "RCInfoProvider.h"
 
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
@@ -53,7 +54,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.10.4_opensource";
+static NSString *const RCIMKitVersion = @"5.12.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -82,7 +83,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
     [[RCCoreClient sharedCoreClient] setCurrentUserInfo:currentUserInfo];
     if (currentUserInfo) {
         [[RCUserInfoCacheManager sharedManager] updateUserInfo:currentUserInfo forUserId:currentUserInfo.userId];
-        [RCUserInfoCacheManager sharedManager].currentUserId = currentUserInfo.userId;
+        [RCInfoProvider sharedManager].currentUserId = currentUserInfo.userId;
     }
 }
 
@@ -93,7 +94,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
 - (void)setGroupUserInfoDataSource:(id<RCIMGroupUserInfoDataSource>)groupUserInfoDataSource {
     _groupUserInfoDataSource = groupUserInfoDataSource;
     if (groupUserInfoDataSource) {
-        [RCUserInfoCacheManager sharedManager].groupUserInfoEnabled = YES;
+        [RCInfoProvider sharedManager].groupUserInfoEnabled = YES;
     }
 }
 
@@ -130,7 +131,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
                                                object:nil];
 
     [self registerMessageType:RCUserInfoUpdateMessage.class];
-    [RCUserInfoCacheManager sharedManager].appKey = appKey;
+    [RCInfoProvider sharedManager].appKey = appKey;
 
     [[RongIMKitExtensionManager sharedManager] initWithAppKey:appKey];
     [[RCCoreClient sharedCoreClient] setRCConversationStatusChangeDelegate:self];
@@ -217,7 +218,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
                  success:(void (^)(NSString *userId))successBlock
                    error:(void (^)(RCConnectErrorCode errorCode))errorBlock {
     [[RCCoreClient sharedCoreClient] connectWithToken:token timeLimit:timeLimit dbOpened:dbOpenedBlock success:^(NSString *userId) {
-            [RCUserInfoCacheManager sharedManager].currentUserId = userId;
+        [RCInfoProvider sharedManager].currentUserId = userId;
             if (successBlock) {
                 successBlock(userId);
             }
@@ -236,7 +237,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
         } error:^(RCConnectErrorCode errorCode) {
             NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
             if (userId) {
-                [RCUserInfoCacheManager sharedManager].currentUserId = userId;
+                [RCInfoProvider sharedManager].currentUserId = userId;
             }
             if (errorBlock != nil)
                 errorBlock(errorCode);
@@ -408,6 +409,9 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
 }
 
 - (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        return NO;
+    }
     RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
     NSString *senderUserId = senderUserInfo.userId;
     if (senderUserId.length > 0 && ![senderUserId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
@@ -726,7 +730,7 @@ static NSString *const RCIMKitVersion = @"5.10.4_opensource";
     _enablePersistentUserInfoCache = enablePersistentUserInfoCache;
     NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
     if (enablePersistentUserInfoCache && userId) {
-        [RCUserInfoCacheManager sharedManager].currentUserId = userId;
+        [RCInfoProvider sharedManager].currentUserId = userId;
     }
 }
 

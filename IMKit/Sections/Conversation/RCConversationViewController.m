@@ -2489,7 +2489,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 RCUserTypingStatus *typingStatus = (RCUserTypingStatus *)userTypingStatusList[0];
                 if ([typingStatus.contentType isEqualToString:[RCTextMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"typing");
-                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]) {
+                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]||[typingStatus.contentType isEqualToString:[RCHQVoiceMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"Speaking");
                 }
             }

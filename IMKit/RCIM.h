@@ -65,7 +65,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConnectionStatusChangedNotificati
 /// ```
 FOUNDATION_EXPORT NSString *const RCKitDispatchMessageReceiptResponseNotification;
 
-
 /// 收到消息已读回执的请求
 /// 
 /// 通知的 object 中携带信息如下：
@@ -98,6 +97,13 @@ FOUNDATION_EXPORT NSString *const RCKitMessageDestructingNotification;
 FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotification;
 
 #pragma mark - 用户信息提供者、群组信息提供者、群名片信息提供者
+
+typedef NS_ENUM(NSUInteger, RCDataSourceType) {
+    /// 信息提供者
+    RCDataSourceTypeInfoProvider = 0,
+    /// 信息托管
+    RCDataSourceTypeInfoManagement,
+};
 
 /// 用户信息提供者
 /// 
@@ -915,7 +921,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 与融云服务器建立连接之后，应该设置当前用户的用户信息，用于SDK显示和发送。
 /// 
 /// - Warning: 如果传入的用户信息中的用户ID与当前登录的用户ID不匹配，则将会忽略。
-@property (nonatomic, strong) RCUserInfo *currentUserInfo;
+@property (nonatomic, strong, nullable) RCUserInfo *currentUserInfo;
 
 /// 是否将用户信息和群组信息在本地持久化存储，默认值为 NO
 /// 
@@ -933,12 +939,15 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// - Warning: 需要先设置当前登录用户的用户信息，参考RCIM的currentUserInfo。
 @property (nonatomic, assign) BOOL enableMessageAttachUserInfo;
 
+/// 用户信息类型， 默认为 RCDataSourceTypeInfoProvider， 表示使用信息提供者
+@property (nonatomic, assign) RCDataSourceType currentDataSourceType;
+
 #pragma mark 用户信息
 
 /// 用户信息提供者
 /// 
 /// SDK需要通过您实现的用户信息提供者，获取用户信息并显示。
-@property (nonatomic, weak) id<RCIMUserInfoDataSource> userInfoDataSource;
+@property (nonatomic, weak, nullable) id<RCIMUserInfoDataSource> userInfoDataSource;
 
 /// 更新SDK中的用户信息缓存
 /// 

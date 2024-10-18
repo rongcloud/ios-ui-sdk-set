@@ -103,7 +103,7 @@
 
 - (void)createUI {
     self.frame = [UIScreen mainScreen].bounds;
-    [self addSubview:self.maskView];
+    [self addSubview:self.maskCoverView];
     [self addSubview:self.tableView];
 }
 
