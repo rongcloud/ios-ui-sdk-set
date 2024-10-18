@@ -9,6 +9,7 @@
 #import "RCProfileCommonTextCell.h"
 #import "RCProfileCommonImageCell.h"
 #import "RCNameEditViewController.h"
+#import "RCKitCommonDefine.h"
 
 #define RCUProfileCommonCellHeight 44
 

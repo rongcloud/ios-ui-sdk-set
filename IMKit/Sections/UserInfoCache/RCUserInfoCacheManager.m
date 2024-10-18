@@ -6,8 +6,6 @@
 //  Copyright © 2016年 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RongIMKit.h>
-
 #import "RCUserInfoCacheManager.h"
 #import "RCInfoProvider.h"
 #import "RCInfoManagement.h"

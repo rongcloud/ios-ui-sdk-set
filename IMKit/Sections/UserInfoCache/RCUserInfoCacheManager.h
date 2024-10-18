@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
-#import <RongIMKit/RongIMKit.h>
 #import "RCInfoNotificationCenter.h"
 NS_ASSUME_NONNULL_BEGIN
 

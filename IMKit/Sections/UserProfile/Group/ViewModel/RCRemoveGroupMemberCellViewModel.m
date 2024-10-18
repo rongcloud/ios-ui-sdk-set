@@ -9,6 +9,8 @@
 #import "RCRemoveGroupMemberCellViewModel.h"
 #import "RCRemoveGroupMemberCell.h"
 #import "RCGroupManager.h"
+#import "RCKitCommonDefine.h"
+
 #define RCSelectUserCellHeight 56
 
 @interface RCRemoveGroupMemberCellViewModel()

@@ -8,7 +8,7 @@
 
 #import "RCGroupCreateViewController.h"
 #import "RCGroupCreateView.h"
-
+#import "RCKitCommonDefine.h"
 @interface RCGroupCreateViewController ()<RCGroupCreateViewDelegate, RCGroupCreateViewModelResponder, UITextFieldDelegate>
 
 @property (nonatomic, strong) RCGroupCreateView *createView;

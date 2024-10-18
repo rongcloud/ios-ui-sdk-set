@@ -8,7 +8,8 @@
 
 #import "RCProfileGenderViewModel.h"
 #import "RCProfileGenderCell.h"
-
+#import "RCAlertView.h"
+#import "RCKitCommonDefine.h"
 @implementation RCProfileGenderViewModel
 @dynamic delegate;
 

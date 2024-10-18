@@ -7,7 +7,9 @@
 //
 
 #import "RCRemoveGroupMembersViewController.h"
-
+#import "RCBaseButton.h"
+#import "RCBaseTableView.h"
+#import "RCKitCommonDefine.h"
 @interface RCRemoveGroupMembersViewController ()<
 UITableViewDelegate,
 UITableViewDataSource,

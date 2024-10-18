@@ -16,7 +16,7 @@
 #import "RCNameEditViewController.h"
 #import "RCProfileFooterViewModel.h"
 #import "RCProfileViewModel+private.h"
-
+#import "RCMyProfileViewModel.h"
 #define RCUUserProfileViewFooterChatTop 100
 #define RCUUserProfileViewFooterLeadingOrTrailing 25
 #define RCUUserProfileViewFooterBtnheight 40

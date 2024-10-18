@@ -7,7 +7,8 @@
 //
 
 #import "RCGroupMemberCell.h"
-
+#import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 NSString  * const RCGroupMemberCellIdentifier = @"RCGroupMemberCellIdentifier";
 
 #define RCGroupMemberCellPortraitLeading 12

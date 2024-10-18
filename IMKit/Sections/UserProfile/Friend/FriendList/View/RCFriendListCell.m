@@ -8,7 +8,7 @@
 
 #import "RCFriendListCell.h"
 #import "RCloudImageView.h"
-
+#import "RCKitCommonDefine.h"
 NSString  * const RCFriendListCellIdentifier = @"RCFriendListCellIdentifier";
 
 @interface RCFriendListCell()

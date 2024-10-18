@@ -9,6 +9,7 @@
 #import "RCGroupMemberCellViewModel.h"
 #import "RCGroupMemberCell.h"
 #import "RCGroupManager.h"
+#import "RCKitCommonDefine.h"
 
 #define RCGroupMemberCellHeight 56
 

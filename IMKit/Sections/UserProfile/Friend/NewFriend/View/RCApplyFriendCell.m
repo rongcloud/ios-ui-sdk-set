@@ -8,9 +8,10 @@
 
 #import "RCApplyFriendCell.h"
 #import "RCloudImageView.h"
-#import <RongIMKit/RongIMKit.h>
 #import <CoreText/CoreText.h>
-
+#import "RCKitUtility.h"
+#import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 NSString  * const RCFriendApplyCellIdentifier = @"RCFriendApplyCellIdentifier";
 NSInteger const RCFriendApplyCellMargin = 15;
 NSInteger const RCFriendApplyCellPortraitWidth = 40;

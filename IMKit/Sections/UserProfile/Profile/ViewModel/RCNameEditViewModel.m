@@ -8,7 +8,8 @@
 
 #import "RCNameEditViewModel.h"
 #import "RCGroupManager.h"
-
+#import "RCKitCommonDefine.h"
+#import "RCAlertView.h"
 #define RCNameOverSize 64
 #define RCRemarkNameOverSize 32
 

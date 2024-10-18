@@ -9,6 +9,9 @@
 #import "RCProfileFooterViewModel.h"
 #import "RCProfileFooterView.h"
 #import "RCApplyFriendAlertView.h"
+#import "RCKitCommonDefine.h"
+#import "RCConversationViewController.h"
+#import "RCAlertView.h"
 @interface RCProfileFooterViewModel ()
 
 @property (nonatomic, weak) UIViewController *responder;

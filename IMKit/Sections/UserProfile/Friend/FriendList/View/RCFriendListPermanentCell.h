@@ -6,7 +6,7 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RongIMKit.h>
+#import <RongIMKit/RCBaseTableViewCell.h>
 
 UIKIT_EXTERN NSString * _Nullable const RCFriendListPermanentCellIdentifier;
 @class RCloudImageView;

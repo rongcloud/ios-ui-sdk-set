@@ -6,7 +6,7 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RongIMKit.h>
+#import <RongIMKit/RCBaseView.h>
 #import "RCPlaceholderTextView.h"
 
 NS_ASSUME_NONNULL_BEGIN

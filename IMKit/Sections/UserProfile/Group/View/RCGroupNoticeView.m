@@ -7,7 +7,7 @@
 //
 
 #import "RCGroupNoticeView.h"
-
+#import "RCKitCommonDefine.h"
 #define RCGroupNoticeViewTipFont 13.5
 #define RCGroupNoticeViewTipBottom 30
 #define RCGroupNoticeViewTextTop 15

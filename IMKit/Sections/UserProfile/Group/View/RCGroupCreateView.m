@@ -7,7 +7,9 @@
 //
 
 #import "RCGroupCreateView.h"
-
+#import "RCKitUtility.h"
+#import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 #define RCGroupCreateViewPortaritBackgroudHeight 125
 #define RCGroupCreateViewPortraitSize 70
 #define RCGroupCreateViewPortraitTop 55

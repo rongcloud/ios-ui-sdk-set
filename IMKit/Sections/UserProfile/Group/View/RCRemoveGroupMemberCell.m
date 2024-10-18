@@ -7,7 +7,7 @@
 //
 
 #import "RCRemoveGroupMemberCell.h"
-
+#import "RCKitCommonDefine.h"
 NSString  * const RCRemoveGroupMemberCellIdentifier = @"RCSelectGroupMemberCellIdentifier";
 
 #define RCSelectUserCellRoleTrailingSpace 16

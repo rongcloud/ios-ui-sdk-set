@@ -8,7 +8,8 @@
 
 #import "RCGroupMemberListViewController.h"
 #import "RCGroupMemberListViewModel.h"
-
+#import "RCKitCommonDefine.h"
+#import "RCBaseTableView.h"
 @interface RCGroupMemberListViewController ()<
 UITableViewDelegate,
 UITableViewDataSource,

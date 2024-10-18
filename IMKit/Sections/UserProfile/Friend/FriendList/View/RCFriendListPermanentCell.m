@@ -8,6 +8,9 @@
 
 #import "RCFriendListPermanentCell.h"
 #import "RCloudImageView.h"
+#import "RCKitUtility.h"
+#import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 NSString  * const RCFriendListPermanentCellIdentifier = @"RCFriendListPermanentCellIdentifier";
 
 @implementation RCFriendListPermanentCell

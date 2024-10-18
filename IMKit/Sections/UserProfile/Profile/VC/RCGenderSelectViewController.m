@@ -9,6 +9,8 @@
 #import "RCGenderSelectViewController.h"
 #import "RCProfileGenderViewModel.h"
 #import "RCBaseTableView.h"
+#import "RCBaseButton.h"
+#import "RCKitCommonDefine.h"
 
 #define RCUGenderSelectViewControllerConfirmWidth 100
 #define RCUGenderSelectViewControllerConfirmHeight 40

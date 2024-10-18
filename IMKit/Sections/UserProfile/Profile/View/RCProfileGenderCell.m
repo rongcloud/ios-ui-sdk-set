@@ -7,6 +7,7 @@
 //
 
 #import "RCProfileGenderCell.h"
+#import "RCKitCommonDefine.h"
 
 NSString  * const RCProfileGenderCellIdentifier = @"RCProfileGenderCellIdentifier";
 

@@ -10,7 +10,10 @@
 #import "RCGroupMemberCellViewModel.h"
 #import "RCGroupMemberCell.h"
 #import "RCGroupManager.h"
-
+#import "RCProfileViewController.h"
+#import "RCUserProfileViewModel.h"
+#import "RCKitCommonDefine.h"
+#import "RCRemoveGroupMemberCellViewModel.h"
 @interface RCGroupMemberListViewModel ()<RCSearchBarViewModelDelegate>
 
 

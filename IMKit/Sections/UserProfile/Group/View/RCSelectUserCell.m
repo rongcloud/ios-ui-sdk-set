@@ -7,7 +7,9 @@
 //
 
 #import "RCSelectUserCell.h"
-
+#import "RCKitUtility.h"
+#import "RCKitCommonDefine.h"
+#import "RCKitConfig.h"
 NSString  * const RCSelectUserCellIdentifier = @"RCSelectUserCellIdentifier";
 
 #define RCSelectUserCellSelectLeading 20

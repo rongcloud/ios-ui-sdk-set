@@ -8,7 +8,8 @@
 
 #import "RCFriendListCellViewModel.h"
 #import "RCFriendListCell.h"
-
+#import "RCProfileViewController.h"
+#import "RCUserProfileViewModel.h"
 @interface RCFriendListCellViewModel()
 @property (nonatomic, weak) UITableView *tableView;
 @property (nonatomic, strong) NSIndexPath *indexPath;

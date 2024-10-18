@@ -11,6 +11,8 @@
 #import "RCKitCommonDefine.h"
 #import "RCUserProfileViewModel.h"
 #import "RCViewModelAdapterCenter.h"
+#import "RCMyProfileViewModel.h"
+#import "RCGroupProfileViewModel.h"
 
 @interface RCProfileViewController ()<
 UITableViewDelegate,

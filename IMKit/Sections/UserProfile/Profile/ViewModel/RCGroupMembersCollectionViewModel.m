@@ -11,6 +11,9 @@
 #import "RCSelectUserViewController.h"
 #import "RCRemoveGroupMembersViewController.h"
 #import "RCGroupManager.h"
+#import "RCProfileViewController.h"
+#import "RCUserProfileViewModel.h"
+#import "RCKitCommonDefine.h"
 @interface RCGroupMembersCollectionViewModel ()
 
 @property (nonatomic, weak) UIViewController *inViewController;

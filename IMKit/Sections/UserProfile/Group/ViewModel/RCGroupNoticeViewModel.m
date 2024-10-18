@@ -7,6 +7,8 @@
 //
 
 #import "RCGroupNoticeViewModel.h"
+#import "RCKitCommonDefine.h"
+#import "RCAlertView.h"
 @interface RCGroupNoticeViewModel ()
 
 @property (nonatomic, strong) RCGroupInfo *group;

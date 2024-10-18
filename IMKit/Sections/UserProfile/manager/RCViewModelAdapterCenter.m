@@ -8,6 +8,7 @@
 
 #import "RCViewModelAdapterCenter.h"
 #import "RCIMThreadLock.h"
+#import "RCBaseViewModel.h"
 @interface RCViewModelAdapterCenter()
 
 @property (nonatomic, strong) NSMapTable *delegates;

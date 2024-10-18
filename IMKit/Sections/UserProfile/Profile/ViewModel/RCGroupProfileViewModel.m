@@ -20,6 +20,8 @@
 #import "RCProfileCommonSwitchCell.h"
 #import "RCProfileSwitchCellViewModel.h"
 #import "RCProfileViewModel+private.h"
+#import "RCKitCommonDefine.h"
+#import "RCAlertView.h"
 
 @interface RCGroupProfileViewModel ()<RCGroupEventDelegate>
 

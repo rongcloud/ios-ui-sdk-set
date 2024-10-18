@@ -8,7 +8,7 @@
 
 #import "RCProfileFooterView.h"
 #import "RCConversationViewController.h"
-
+#import "RCKitCommonDefine.h"
 #define RCProfileFooterViewButtonHeight 40
 #define RCProfileFooterViewButtonLeadingOrTrailing 25
 

@@ -8,7 +8,9 @@
 
 #import "RCGroupNoticeViewController.h"
 #import "RCGroupNoticeView.h"
-
+#import "RCKitCommonDefine.h"
+#import "RCAlertView.h"
+#import "RCBaseButton.h"
 @interface RCGroupNoticeViewController ()<UITextViewDelegate>
 
 @property (nonatomic, strong) RCGroupNoticeViewModel *viewModel;

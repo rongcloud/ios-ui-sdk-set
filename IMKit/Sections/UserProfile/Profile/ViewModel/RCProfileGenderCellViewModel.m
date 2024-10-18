@@ -8,6 +8,7 @@
 
 #import "RCProfileGenderCellViewModel.h"
 #import "RCProfileGenderCell.h"
+#import "RCKitCommonDefine.h"
 
 #define RCProfileGenderCellHeight 44
 
