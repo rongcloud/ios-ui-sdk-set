@@ -7,9 +7,9 @@
 //
 
 #import "RCSelectUserViewController.h"
-#import <RongIMKit/RCBaseButton.h>
-#import <RongIMKit/RCBaseTableView.h>
-#import <RongIMKit/RCKitCommonDefine.h>
+#import "RCBaseButton.h"
+#import "RCBaseTableView.h"
+#import "RCKitCommonDefine.h"
 
 @interface RCSelectUserViewController ()<
 UITableViewDelegate,

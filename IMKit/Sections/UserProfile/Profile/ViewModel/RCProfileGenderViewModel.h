@@ -8,7 +8,7 @@
 
 #import "RCBaseViewModel.h"
 #import "RCProfileGenderCellViewModel.h"
-#import <RongIMKit/RCListViewModelProtocol.h>
+#import "RCListViewModelProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -6,8 +6,8 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCBaseTableViewCell.h>
-#import <RongIMKit/RCBaseImageView.h>
+#import "RCBaseTableViewCell.h"
+#import "RCBaseImageView.h"
 
 UIKIT_EXTERN NSString  * _Nonnull const RCProfileGenderCellIdentifier;
 

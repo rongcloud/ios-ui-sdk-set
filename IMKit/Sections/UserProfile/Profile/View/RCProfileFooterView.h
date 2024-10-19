@@ -6,7 +6,7 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCBaseView.h>
+#import "RCBaseView.h"
 #import "RCButtonItem.h"
 NS_ASSUME_NONNULL_BEGIN
 

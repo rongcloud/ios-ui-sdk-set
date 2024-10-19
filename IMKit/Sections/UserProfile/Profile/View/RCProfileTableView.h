@@ -5,8 +5,8 @@
 //  Created by zgh on 2024/8/19.
 //
 
-#import <RongIMKit/RCBaseTableView.h>
-#import <RongIMKit/RCBaseView.h>
+#import "RCBaseTableView.h"
+#import "RCBaseView.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCProfileTableView : RCBaseTableView

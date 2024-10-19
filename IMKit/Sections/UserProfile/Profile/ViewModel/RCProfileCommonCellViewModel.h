@@ -5,7 +5,7 @@
 //  Created by zgh on 2024/8/16.
 //
 
-#import <RongIMKit/RCProfileCellViewModel.h>
+#import "RCProfileCellViewModel.h"
 #import <UIKit/UIKit.h>
 #import <RongIMLibCore/RongIMLibCore.h>
 NS_ASSUME_NONNULL_BEGIN

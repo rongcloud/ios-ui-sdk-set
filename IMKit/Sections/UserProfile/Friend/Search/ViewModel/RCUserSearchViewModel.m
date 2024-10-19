@@ -8,8 +8,8 @@
 
 #import "RCUserSearchViewModel.h"
 #import "RCSearchUserProfileViewModel.h"
-#import <RongIMKit/RCUserProfileViewModel.h>
-#import <RongIMKit/RCProfileViewController.h>
+#import "RCUserProfileViewModel.h"
+#import "RCProfileViewController.h"
 #import "RCKitCommonDefine.h"
 
 @interface RCUserSearchViewModel()<RCSearchUserProfileViewModelDelegate>

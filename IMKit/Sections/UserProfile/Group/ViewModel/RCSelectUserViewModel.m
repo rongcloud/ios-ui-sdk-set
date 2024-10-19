@@ -10,9 +10,9 @@
 #import "RCUPinYinTools.h"
 #import "RCKitCommonDefine.h"
 #import <RongIMLibCore/RongIMLibCore.h>
-#import <RongIMKit/RCNavigationItemsViewModel.h>
-#import <RongIMKit/RCAlertView.h>
-#import <RongIMKit/RCGroupCreateViewController.h>
+#import "RCNavigationItemsViewModel.h"
+#import "RCAlertView.h"
+#import "RCGroupCreateViewController.h"
 #import "NSMutableArray+safeoperation.h"
 
 static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTag;

@@ -6,10 +6,10 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCBaseViewModel.h>
-#import <RongIMKit/RCSearchBarViewModel.h>
-#import <RongIMKit/RCListViewModelProtocol.h>
-#import <RongIMKit/RCSelectUserCellViewModel.h>
+#import "RCBaseViewModel.h"
+#import "RCSearchBarViewModel.h"
+#import "RCListViewModelProtocol.h"
+#import "RCSelectUserCellViewModel.h"
 
 @class RCSelectUserViewModel;
 typedef NS_ENUM(NSUInteger, RCSelectUserType) {

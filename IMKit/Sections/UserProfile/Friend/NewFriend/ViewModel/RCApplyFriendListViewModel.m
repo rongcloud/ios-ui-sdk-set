@@ -9,7 +9,7 @@
 #import "RCApplyFriendListViewModel.h"
 #import "RCKitCommonDefine.h"
 #import <RongIMLibCore/RongIMLibCore.h>
-#import <RongIMKit/RCApplyNaviItemsViewModel.h>
+#import "RCApplyNaviItemsViewModel.h"
 
 @interface RCApplyFriendSectionItem()
 - (id)itemAtIndex:(NSInteger)index;

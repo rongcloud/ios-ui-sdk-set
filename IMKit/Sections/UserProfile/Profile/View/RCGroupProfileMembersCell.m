@@ -7,7 +7,7 @@
 //
 
 #import "RCGroupProfileMembersCell.h"
-#import <RongIMKit/RCKitCommonDefine.h>
+#import "RCKitCommonDefine.h"
 
 NSString  * const RCGroupProfileMembersCellIdentifier = @"RCGroupProfileMembersCellIdentifier";
 

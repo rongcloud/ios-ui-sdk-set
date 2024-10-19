@@ -6,8 +6,8 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCKitUtility.h>
-#import <RongIMKit/RCKitCommonDefine.h>
+#import "RCKitUtility.h"
+#import "RCKitCommonDefine.h"
 
 #import "RCGroupMembersCollectionView.h"
 @interface RCGroupMembersCollectionView ()<UICollectionViewDataSource, UICollectionViewDelegate, RCCollectionViewModelResponder>

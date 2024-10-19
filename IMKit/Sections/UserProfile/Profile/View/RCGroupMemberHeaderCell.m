@@ -6,8 +6,8 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCKitConfig.h>
-#import <RongIMKit/RCKitCommonDefine.h>
+#import "RCKitConfig.h"
+#import "RCKitCommonDefine.h"
 #import "RCGroupMemberHeaderCell.h"
 
 NSString  * const RCGroupMemberHeaderCellIdentifier = @"RCGroupMemberHeaderCellIdentifier";

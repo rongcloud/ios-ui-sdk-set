@@ -11,9 +11,9 @@
 #import "NSMutableDictionary+safeoperation.h"
 #import "NSMutableArray+safeoperation.h"
 #import "RCIMThreadLock.h"
-#import <RongIMKit/RCUserInfo+RCExtented.h>
-#import <RongIMKit/RCUserInfo+RCGroupMember.h>
-#import <RongIMKit/RCGroup+RCExtented.h>
+#import "RCUserInfo+RCExtented.h"
+#import "RCUserInfo+RCGroupMember.h"
+#import "RCGroup+RCExtented.h"
 #import "RCGroupInfo+Private.h"
 
 #define RCInfoManagementCacheMaxSize 1000

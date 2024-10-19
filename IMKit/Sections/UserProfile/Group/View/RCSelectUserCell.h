@@ -6,9 +6,9 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCBaseTableViewCell.h>
+#import "RCBaseTableViewCell.h"
 #import "RCloudImageView.h"
-#import <RongIMKit/RCUserProfileDefine.h>
+#import "RCUserProfileDefine.h"
 UIKIT_EXTERN NSString  * _Nonnull const RCSelectUserCellIdentifier;
 
 NS_ASSUME_NONNULL_BEGIN

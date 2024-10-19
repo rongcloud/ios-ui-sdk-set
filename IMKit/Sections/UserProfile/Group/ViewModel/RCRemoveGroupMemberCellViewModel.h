@@ -6,8 +6,8 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import <RongIMKit/RCBaseCellViewModel.h>
-#import <RongIMKit/RCUserProfileDefine.h>
+#import "RCBaseCellViewModel.h"
+#import "RCUserProfileDefine.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
