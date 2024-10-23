@@ -26,7 +26,6 @@
 #import "RCKitListenerManager.h"
 #import "RCMessageNotificationHelper.h"
 #import "RCIMNotificationDataContext.h"
-#import "RCInfoProvider.h"
 
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
@@ -54,7 +53,7 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.12.0_opensource";
+static NSString *const RCIMKitVersion = @"5.7.2_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -83,7 +82,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
     [[RCCoreClient sharedCoreClient] setCurrentUserInfo:currentUserInfo];
     if (currentUserInfo) {
         [[RCUserInfoCacheManager sharedManager] updateUserInfo:currentUserInfo forUserId:currentUserInfo.userId];
-        [RCInfoProvider sharedManager].currentUserId = currentUserInfo.userId;
+        [RCUserInfoCacheManager sharedManager].currentUserId = currentUserInfo.userId;
     }
 }
 
@@ -94,7 +93,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
 - (void)setGroupUserInfoDataSource:(id<RCIMGroupUserInfoDataSource>)groupUserInfoDataSource {
     _groupUserInfoDataSource = groupUserInfoDataSource;
     if (groupUserInfoDataSource) {
-        [RCInfoProvider sharedManager].groupUserInfoEnabled = YES;
+        [RCUserInfoCacheManager sharedManager].groupUserInfoEnabled = YES;
     }
 }
 
@@ -131,7 +130,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
                                                object:nil];
 
     [self registerMessageType:RCUserInfoUpdateMessage.class];
-    [RCInfoProvider sharedManager].appKey = appKey;
+    [RCUserInfoCacheManager sharedManager].appKey = appKey;
 
     [[RongIMKitExtensionManager sharedManager] initWithAppKey:appKey];
     [[RCCoreClient sharedCoreClient] setRCConversationStatusChangeDelegate:self];
@@ -218,7 +217,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
                  success:(void (^)(NSString *userId))successBlock
                    error:(void (^)(RCConnectErrorCode errorCode))errorBlock {
     [[RCCoreClient sharedCoreClient] connectWithToken:token timeLimit:timeLimit dbOpened:dbOpenedBlock success:^(NSString *userId) {
-        [RCInfoProvider sharedManager].currentUserId = userId;
+            [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             if (successBlock) {
                 successBlock(userId);
             }
@@ -237,7 +236,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
         } error:^(RCConnectErrorCode errorCode) {
             NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
             if (userId) {
-                [RCInfoProvider sharedManager].currentUserId = userId;
+                [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             }
             if (errorBlock != nil)
                 errorBlock(errorCode);
@@ -409,9 +408,6 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
 }
 
 - (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        return NO;
-    }
     RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
     NSString *senderUserId = senderUserInfo.userId;
     if (senderUserId.length > 0 && ![senderUserId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
@@ -730,7 +726,7 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
     _enablePersistentUserInfoCache = enablePersistentUserInfoCache;
     NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
     if (enablePersistentUserInfoCache && userId) {
-        [RCInfoProvider sharedManager].currentUserId = userId;
+        [RCUserInfoCacheManager sharedManager].currentUserId = userId;
     }
 }
 
@@ -1033,46 +1029,6 @@ static NSString *const RCIMKitVersion = @"5.12.0_opensource";
                 cancelBlock();
             }
         }];
-}
-
-- (void)downloadMediaFile:(NSString *)fileName mediaUrl:(NSString *)mediaUrl progress:(void (^)(int))progressBlock success:(void (^)(NSString * _Nonnull))successBlock error:(void (^)(RCErrorCode))errorBlock cancel:(void (^)(void))cancelBlock {
-    [[RCCoreClient sharedCoreClient] downloadMediaFile:fileName mediaUrl:mediaUrl
-                                              progress:^(int progress) {
-        NSDictionary *statusDic =
-        @{ @"mediaUrl" : mediaUrl?:@"",
-           @"type" : @"progress",
-           @"progress" : @(progress) };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (progressBlock) {
-            progressBlock(progress);
-        }
-    } success:^(NSString *mediaPath) {
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"success", @"mediaPath" : mediaPath?:@"" };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (successBlock) {
-            successBlock(mediaPath);
-        }
-    } error:^(RCErrorCode errorCode) {
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"error", @"errorCode" : @(errorCode) };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (errorBlock) {
-            errorBlock(errorCode);
-        }
-    } cancel:^{
-        NSDictionary *statusDic = @{ @"mediaUrl" : mediaUrl?:@"", @"type" : @"cancel" };
-        [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchDownloadMediaNotification
-                                                            object:nil
-                                                          userInfo:statusDic];
-        if (cancelBlock) {
-            cancelBlock();
-        }
-    }];
 }
 
 - (void)addMeidaMessageId:(NSNumber *)messageId {

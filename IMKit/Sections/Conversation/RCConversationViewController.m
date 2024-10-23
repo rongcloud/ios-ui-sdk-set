@@ -72,7 +72,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol> {
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate> {
     int _defaultLocalHistoryMessageCount;
     int _defaultMessageCount;
     int _defaultRemoteHistoryMessageCount;
@@ -158,7 +158,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [[RCMessageSelectionUtility sharedManager] setMultiSelect:NO];
     
     self.dataSource = [[RCConversationDataSource alloc] init:self];
-    self.dataSource.loadDelegate = self;
     self.util = [[RCConversationVCUtil alloc] init:self];
     self.csUtil = [[RCConversationCSUtil alloc] init:self];
     self.enableUnreadMentionedIcon = YES;
@@ -1825,9 +1824,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
-#pragma mark - RCMessagesLoadProtocol
-- (void)noMoreMessageToFetch {}
-
 #pragma mark - 单条消息处理
 //复制消息内容
 - (void)onCopyMessage:(id)sender {
@@ -2489,7 +2485,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 RCUserTypingStatus *typingStatus = (RCUserTypingStatus *)userTypingStatusList[0];
                 if ([typingStatus.contentType isEqualToString:[RCTextMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"typing");
-                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]||[typingStatus.contentType isEqualToString:[RCHQVoiceMessage getObjectName]]) {
+                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"Speaking");
                 }
             }
