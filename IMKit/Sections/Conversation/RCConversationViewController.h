@@ -392,6 +392,10 @@ typedef enum : NSUInteger {
 /// - Returns: 是否继续执行取消选择操作，默认是YES
 - (BOOL)willCancelSelectMessage:(RCMessageModel *)model;
 
+/// 拉取消息结束，没有更多消息可以拉取的回调
+/// - Since: 5.8.2
+- (void)noMoreMessageToFetch;
+
 #pragma mark - 自定义消息
 
 /// 用户注册自定义消息的入口

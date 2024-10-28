@@ -192,6 +192,8 @@
     [self.headerView updateBubbleUnreadNumber:(int)model.unreadMessageCount];
     if (model.sentTime > 0) {
         self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    } else if (model.operationTime > 0) {
+        self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.operationTime / 1000];
     }
     [self.statusView updateNotificationStatus:model];
     [self.statusView updateReadStatus:model];
@@ -200,14 +202,18 @@
 - (void)p_displaySimaple:(RCConversationModel *)model {
     BOOL isEncrypted = model.conversationType == ConversationType_Encrypted;
     NSString *targetId = isEncrypted ? [[model.targetId componentsSeparatedByString:@";;;"] lastObject] : model.targetId;
-    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:targetId];
-    if (userInfo) {
-        if (!isEncrypted) {
-            self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement &&   model.lastestMessage.senderUserInfo.userId.length > 0) {
+        [self updateConversationTitle:[RCKitUtility getDisplayName:model.lastestMessage.senderUserInfo]];
+    } else {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:targetId];
+        if (userInfo) {
+            if (!isEncrypted) {
+                self.headerView.headerImageView.imageURL = [NSURL URLWithString:userInfo.portraitUri];
+            }
         }
+        [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
+        [self.detailContentView updateContent:model prefixName:nil];
     }
-    [self updateConversationTitle:[RCKitUtility getDisplayName:userInfo]];
-    [self.detailContentView updateContent:model prefixName:nil];
 }
 
 - (void)p_displayGroup:(RCConversationModel *)model {
@@ -222,13 +228,19 @@
         return;
     }
     
-    RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-    RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
-    NSString *displayName = userInfo.name;
-    if (userInfo.alias.length > 0) {
-        displayName = userInfo.alias;
-    } else if (memberInfo.name.length > 0) {
-        displayName = memberInfo.name;
+    NSString *displayName;
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement &&   model.lastestMessage.senderUserInfo.userId.length > 0) {
+        displayName = [RCKitUtility getDisplayName:model.lastestMessage.senderUserInfo];
+    } else {
+        RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+        displayName = userInfo.name;
+        RCUserInfo *senderUserInfo;
+        if (userInfo.alias.length > 0) {
+            displayName = userInfo.alias;
+        } else if (memberInfo.name.length > 0) {
+            displayName = memberInfo.name;
+        }
     }
     [self.detailContentView updateContent:model prefixName:displayName];
 }
@@ -381,7 +393,7 @@
             [self.detailContentView updateContent:self.model prefixName:nil];
         } else if (self.model.conversationType == ConversationType_GROUP || self.model.conversationType == ConversationType_DISCUSSION) {
             RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-            RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
             NSString *displayName = userInfo.name;
             if (userInfo.alias.length > 0) {
                 displayName = userInfo.alias;
@@ -395,6 +407,9 @@
 
 #pragma mark - Notification selector
 - (void)onUserInfoUpdate:(NSNotification *)notification {
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && self.model.lastestMessage.senderUserInfo.userId.length > 0) {
+        return;
+    }
     NSDictionary *userInfoDic = notification.object;
     RCUserInfo *updateUserInfo = userInfoDic[@"userInfo"];
     if ([self isSameUserInfo:self.currentDisplayedUserInfo other:updateUserInfo]) {
@@ -451,6 +466,9 @@
 }
 
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && self.model.lastestMessage.senderUserInfo.userId.length > 0) {
+        return;
+    }
     NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
     NSString *groupId = groupUserInfoDic[@"inGroupId"];
     NSString *userId = groupUserInfoDic[@"userId"];
@@ -461,7 +479,7 @@
             [self.model.senderUserId isEqualToString:userId]) {
             if (!self.hideSenderName) {
                 RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-                RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
+                RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
                 NSString *displayName = userInfo.name;
                 if (userInfo.alias.length > 0) {
                     displayName = userInfo.alias;

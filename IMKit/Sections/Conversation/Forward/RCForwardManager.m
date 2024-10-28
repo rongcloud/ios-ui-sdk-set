@@ -15,6 +15,8 @@
 #import "RCKitCommonDefine.h"
 #import "RCLocationMessage+imkit.h"
 #import "RCForwardKeyItem.h"
+#import "RCDownloadHelper.h"
+#import "RCIM.h"
 
 #define BASE_HEAD @"baseHead"
 #define BASE_BOTTOM @"baseBottom"
@@ -22,6 +24,9 @@
 #define BASE_COMBINEMSGBODY @"CombineMsgBody"
 #define TAG_TEXT @"{%text%}"
 #define TAG_FILEURL @"{%fileUrl%}"
+#define TAG_GIFCONTENT @"{%gifContent%}"
+#define TAG_GIFDISPLAY @"{%gifDisplay%}"
+#define TAG_GIFCONTENTDISPLAY @"{%gifContentDisplay%}"
 #define TAG_TITLE @"{%title%}"
 #define TAG_FOOT @"{%foot%}"
 #define TAG_COMBINEBODY @"{%combineBody%}"
@@ -289,6 +294,16 @@
         if ([model.objectName isEqualToString:RCGIFMessageTypeIdentifier]) {
             RCGIFMessage *message = (RCGIFMessage *)model.content;
             RCForwardReplace(templateString, TAG_FILEURL, message.remoteUrl ? message.remoteUrl : @"");
+            if ([[RCDownloadHelper getMinioOSSAddr] length] > 0) {
+                RCForwardReplace(templateString, TAG_GIFCONTENT, RCLocalizedString(RCGIFMessageTypeIdentifier));
+                // gif 图展示为 [图片]
+                RCForwardReplace(templateString, TAG_GIFCONTENTDISPLAY, @"inline");
+                RCForwardReplace(templateString, TAG_GIFDISPLAY, @"none");
+            } else {
+                // 直接展示 gif 图
+                RCForwardReplace(templateString, TAG_GIFCONTENTDISPLAY, @"none");
+                RCForwardReplace(templateString, TAG_GIFDISPLAY, @"inline");
+            }
         }
     }
     NSLog(@"[W] [%@] - 0: %@", model.objectName, templateString);
