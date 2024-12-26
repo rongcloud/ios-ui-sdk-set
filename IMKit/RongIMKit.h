@@ -325,7 +325,7 @@
 //2024-11-14
 #import "RCGroupNotificationViewModel.h"
 #import "RCGroupNotificationViewController.h"
-#import "RCGroupNotificationCell.h>
+#import "RCGroupNotificationCell.h"
 #import "RCGroupNotificationCellViewModel.h"
 #import "RCMyGroupsViewController.h"
 #import "RCMyGroupsViewModel.h"
