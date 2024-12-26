@@ -36,13 +36,23 @@ NSString  * const RCGroupMemberCellIdentifier = @"RCGroupMemberCellIdentifier";
     [super layoutSubviews];
     self.portraitImageView.frame = CGRectMake(RCGroupMemberCellPortraitLeading, (self.frame.size.height - RCGroupMemberCellPortraitSize)/2, RCGroupMemberCellPortraitSize, RCGroupMemberCellPortraitSize);
     
-    self.arrowView.frame = CGRectMake(RCGroupMemberCellArrowLeading, (self.frame.size.height - RCGroupMemberCellArrowHeight)/2, RCGroupMemberCellArrowWidth, RCGroupMemberCellArrowHeight);
-    
-    [self.roleLabel sizeToFit];
-    self.roleLabel.center = CGPointMake(CGRectGetMinX(self.arrowView.frame) - RCGroupMemberCellRoleTrailingSpace - self.roleLabel.frame.size.width / 2, self.portraitImageView.center.y);
+    if (self.arrowView.hidden) {
+        [self.roleLabel sizeToFit];
+        self.roleLabel.center = CGPointMake(self.contentView.frame.size.width - RCGroupMemberCellArrowTrailing - self.roleLabel.frame.size.width / 2, self.portraitImageView.center.y);
+    } else {
+        self.arrowView.frame = CGRectMake(RCGroupMemberCellArrowLeading, (self.frame.size.height - RCGroupMemberCellArrowHeight)/2, RCGroupMemberCellArrowWidth, RCGroupMemberCellArrowHeight);
+        [self.roleLabel sizeToFit];
+        self.roleLabel.center = CGPointMake(CGRectGetMinX(self.arrowView.frame) - RCGroupMemberCellRoleTrailingSpace - self.roleLabel.frame.size.width / 2, self.portraitImageView.center.y);
+    }
     
     CGFloat x = RCGroupMemberCellNameLeadingSpace + CGRectGetMaxX(self.portraitImageView.frame);
     self.nameLabel.frame = CGRectMake(x, 0, self.roleLabel.frame.origin.x - x, self.contentView.frame.size.height); CGPointMake(CGRectGetMaxX(self.portraitImageView.frame)+RCGroupMemberCellNameLeadingSpace+self.nameLabel.frame.size.width/2, self.portraitImageView.center.y);
+}
+
+- (void)hiddenArrow:(BOOL)hiddenArrow {
+    self.arrowView.hidden = hiddenArrow;
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
 }
 
 #pragma mark - getter

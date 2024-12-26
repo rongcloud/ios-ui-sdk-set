@@ -15,6 +15,7 @@ typedef NS_ENUM(NSUInteger, RCNameEditType) {
     RCNameEditTypeRemark,
     RCNameEditTypeGroupName,
     RCNameEditTypeGroupMemberNickname,
+    RCNameEditTypeGroupRemark,
 };
 
 @protocol RCNameEditViewModelDelegate <NSObject>

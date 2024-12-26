@@ -10,6 +10,11 @@
 #import "RCGroupManager.h"
 #import "RCKitCommonDefine.h"
 #import "RCAlertView.h"
+#import "RCInfoManagement.h"
+#import "RCGroup+RCExtented.h"
+#import "RCGroupInfo+Private.h"
+#import "RCUserInfo+RCGroupMember.h"
+#import "RCIM.h"
 #define RCNameOverSize 64
 #define RCRemarkNameOverSize 32
 
@@ -98,6 +103,21 @@
             }
         }
             break;
+        case RCNameEditTypeGroupRemark: {
+            if (self.groupId) {
+                [[RCCoreClient sharedCoreClient] getGroupsInfo:@[self.groupId] success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
+                    NSString *name = @"";
+                    if (groupInfos.count) {
+                        RCGroupInfo *info = [groupInfos firstObject];
+                        name = info.remark;
+                    }
+                    block(name);
+                } error:^(RCErrorCode errorCode) {
+                    block(@"");
+                }];
+            }
+        }
+            break;
         default:
             break;
     }
@@ -115,6 +135,9 @@
             break;
         case RCNameEditTypeGroupName:
             [self updateGroupName:name];
+            break;
+        case RCNameEditTypeGroupRemark:
+            [self updateGroupRemark:name];
             break;
         default:
             break;
@@ -135,6 +158,9 @@
                 break;
             case RCNameEditTypeGroupName:
                 _title = RCLocalizedString(@"GroupNameEditTitle");
+                break;
+            case RCNameEditTypeGroupRemark:
+                _title = RCLocalizedString(@"GroupRemarkEditTitle");
                 break;
             default:
                 break;
@@ -169,6 +195,9 @@
             case RCNameEditTypeGroupName:
                 _content = RCLocalizedString(@"GroupName");
                 break;
+            case RCNameEditTypeGroupRemark:
+                _content = RCLocalizedString(@"GroupRemarkEditContent");
+                break;
             default:
                 break;
         }
@@ -189,6 +218,9 @@
             case RCNameEditTypeGroupMemberNickname:
                 _placeHolder = RCLocalizedString(@"InputNickNamePlaceholder");
                 break;
+            case RCNameEditTypeGroupRemark:
+                _placeHolder = RCLocalizedString(@"InputGroupRemarkPlaceholder");
+                break;
             default:
                 break;
         }
@@ -202,12 +234,8 @@
     RCUserProfile *profile = [RCUserProfile new];
     profile.userId = self.userId;
     profile.name = name;
-    [[RCCoreClient sharedCoreClient] updateMyUserProfile:profile success:^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.delegate respondsToSelector:@selector(nameUpdateDidSuccess)]) {
-                [self.delegate nameUpdateDidSuccess];
-            }
-        });
+    [[RCIM sharedRCIM] updateMyUserProfile:profile success:^{
+        [self updateDidComplete:name];
     } error:^(RCErrorCode errorCode, NSString * _Nullable errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
@@ -218,12 +246,8 @@
 }
 
 - (void)updateRemark:(NSString *)name {
-    [[RCCoreClient sharedCoreClient] setFriendInfo:self.userId remark:name extProfile:nil success:^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.delegate respondsToSelector:@selector(nameUpdateDidSuccess)]) {
-                [self.delegate nameUpdateDidSuccess];
-            }
-        });
+    [[RCIM sharedRCIM] setFriendInfo:self.userId remark:name extProfile:nil success:^{
+        [self updateDidComplete:name];
     } error:^(RCErrorCode errorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
@@ -234,12 +258,8 @@
 }
 
 - (void)updateGroupMemberNickname:(NSString *)name {
-    [[RCCoreClient sharedCoreClient] setGroupMemberInfo:self.groupId userId:self.userId nickname:name extra:nil success:^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.delegate respondsToSelector:@selector(nameUpdateDidSuccess)]) {
-                [self.delegate nameUpdateDidSuccess];
-            }
-        });
+    [[RCIM sharedRCIM] setGroupMemberInfo:self.groupId userId:self.userId nickname:name extra:nil success:^{
+        [self updateDidComplete:name];
     } error:^(RCErrorCode errorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
@@ -258,13 +278,9 @@
     RCGroupInfo *info = [RCGroupInfo new];
     info.groupId = self.groupId;
     info.groupName = name;
-    [[RCCoreClient sharedCoreClient] updateGroupInfo:info
+    [[RCIM sharedRCIM] updateGroupInfo:info
                                              success:^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.delegate respondsToSelector:@selector(nameUpdateDidSuccess)]) {
-                [self.delegate nameUpdateDidSuccess];
-            }
-        });
+        [self updateDidComplete:name];
     } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
@@ -272,5 +288,25 @@
             }
         });
     }];
+}
+
+- (void)updateGroupRemark:(NSString *)name {
+    [[RCIM sharedRCIM] setGroupRemark:self.groupId remark:name success:^{
+        [self updateDidComplete:name];
+    } error:^(RCErrorCode errorCode) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
+                [self.delegate nameUpdateDidError:RCLocalizedString(@"SetFailed")];
+            }
+        });
+    }];
+}
+
+- (void)updateDidComplete:(NSString *)name {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.delegate respondsToSelector:@selector(nameUpdateDidSuccess)]) {
+            [self.delegate nameUpdateDidSuccess];
+        }
+    });
 }
 @end

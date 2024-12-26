@@ -33,8 +33,10 @@
 
 #pragma mark -- RCProfileCommonSwitchCellDelegate
 
-- (void)switchValueChanged:(nonnull UISwitch *)switchView { 
-    self.switchValueChanged(switchView.on);
+- (void)switchValueChanged:(nonnull UISwitch *)switchView {
+    if(self.switchValueChanged) {
+        self.switchValueChanged(switchView.on);
+    }
 }
 
 @end

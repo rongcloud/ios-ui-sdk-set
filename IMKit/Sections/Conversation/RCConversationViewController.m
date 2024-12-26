@@ -690,7 +690,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     if (ctype.intValue == (int)self.conversationType && [targetId isEqualToString:self.targetId]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            for (RCMessageModel *model in self.conversationDataRepository) {
+            NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+            for (RCMessageModel *model in conversationDataRepository) {
                 if (model.messageDirection == MessageDirection_SEND && model.sentTime <= time.longLongValue &&
                     model.sentStatus == SentStatus_SENT) {
                     model.sentStatus = SentStatus_READ;
@@ -2666,7 +2667,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     dispatch_async(dispatch_get_main_queue(), ^{
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
-        for (RCMessageModel *model in self.conversationDataRepository) {
+        NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+        for (RCMessageModel *model in conversationDataRepository) {
             if (model.messageId == messageId) {
                 model.sentStatus = SentStatus_SENT;
                 if (model.messageId > 0) {
@@ -3326,6 +3328,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 [__cell setDataModel:rcMsg];
                 [__cell playVoice];
             } else {
+                if (@available(iOS 18.0, *)){
+                    return;
+                }
                 if ([rcMsg.content isKindOfClass:RCVoiceMessage.class]) {
                     __cell = (RCVoiceMessageCell *)[self.conversationMessageCollectionView
                         dequeueReusableCellWithReuseIdentifier:[[RCVoiceMessage class] getObjectName]

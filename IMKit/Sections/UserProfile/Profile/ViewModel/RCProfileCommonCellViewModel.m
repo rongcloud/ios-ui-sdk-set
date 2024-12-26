@@ -15,6 +15,11 @@
 
 @implementation RCProfileCommonCellViewModel
 
++ (void)registerCellForTableView:(UITableView *)tableView {
+    [tableView registerClass:RCProfileCommonTextCell.class forCellReuseIdentifier:RCUProfileTextCellIdentifier];
+    [tableView registerClass:RCProfileCommonImageCell.class forCellReuseIdentifier:RCUProfileImageCellIdentifier];
+}
+
 - (instancetype)initWithCellType:(RCUProfileCellType)type title:(NSString *)title detail:(NSString *)detail {
     self = [super init];
     if (self) {

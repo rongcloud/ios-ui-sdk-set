@@ -28,6 +28,12 @@
 
 @property (nonatomic, assign) BOOL isFriend;
 
+@property (nonatomic, copy) NSString *groupId;
+
+@property (nonatomic, strong) RCGroupInfo *group;
+
+@property (nonatomic, strong) RCGroupMemberInfo *member;
+
 @end
 
 @implementation RCUserProfileViewModel
@@ -55,6 +61,16 @@
       forCellReuseIdentifier:RCUUserProfileHeaderCellIdentifier];
 }
 
+- (void)showGroupMemberInfo:(NSString *)groupId {
+    if (groupId.length == 0 || self.userId.length == 0) {
+        return;
+    }
+    if ([self.userId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
+        return;
+    }
+    self.groupId = groupId;
+}
+
 #pragma mark -- RCListViewModelProtocol
 
 - (void)viewController:(UIViewController *)viewController tableView:(UITableView *)tableView didSelectRow:(NSIndexPath *)indexPath {
@@ -75,6 +91,11 @@
         RCNameEditViewModel *viewModel = [RCNameEditViewModel viewModelWithUserId:self.userId groupId:nil type:RCNameEditTypeRemark];
         RCNameEditViewController *nameEditVC = [[RCNameEditViewController alloc] initWithViewModel:viewModel];
         [viewController.navigationController pushViewController:nameEditVC animated:YES];
+    } else if ([commonCellViewModel.title isEqualToString:RCLocalizedString(@"GroupMemberNickname")] && [self canEditGroupMemberNickname]) {
+        RCNameEditViewModel *viewModel = [RCNameEditViewModel viewModelWithUserId:self.userId groupId:self.group.groupId type:RCNameEditTypeGroupMemberNickname];
+        viewModel.title = RCLocalizedString(@"GroupMemberNickname");
+        RCNameEditViewController *nameEditVC = [[RCNameEditViewController alloc] initWithViewModel:viewModel];
+        [viewController.navigationController pushViewController:nameEditVC animated:YES];
     }
 }
 
@@ -82,6 +103,7 @@
     if (self.userId.length == 0) {
         return;
     }
+    [self updateGroupMemberInfo];
     if (self.verifyFriend) {
         [[RCCoreClient sharedCoreClient] checkFriends:@[self.userId] directionType:(RCDirectionTypeBoth) success:^(NSArray<RCFriendRelationInfo *> * _Nonnull friendRelations) {
             RCFriendRelationInfo *relationInfo = friendRelations.firstObject;
@@ -137,14 +159,22 @@
 #pragma mark - private
 
 - (NSArray<NSArray<RCProfileCellViewModel *> *> *)reloadFriendDataSource:(RCFriendInfo *)friendInfo {
+    
+    NSMutableArray *profileList = [NSMutableArray array];
+    
     RCUserProfileHeaderCellViewModel *headerVM = [[RCUserProfileHeaderCellViewModel alloc] initWithPortrait:friendInfo.portraitUri name:friendInfo.name remark:friendInfo.remark];
     
     RCProfileCommonCellViewModel *setRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"SetRemark") detail:nil];
-    NSArray *array = @[
-        @[headerVM],
-        @[setRemarkVM]
-    ];
-    return array;
+    
+    [profileList addObject:@[headerVM]];
+    [profileList addObject:@[setRemarkVM]];
+
+    if (self.member) {
+        RCProfileCommonCellViewModel *memberNicknameVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupMemberNickname") detail:self.member.nickname];
+        memberNicknameVM.hiddenArrow = ![self canEditGroupMemberNickname];
+        [profileList addObject:@[memberNicknameVM]];
+    }
+    return profileList;
 }
 
 - (NSArray<NSArray<RCProfileCellViewModel *> *> *)reloadDataSource:(RCUserProfile *)userProfile {
@@ -152,20 +182,51 @@
         userProfile = [[RCUserProfile alloc] init];
         userProfile.userId = self.userId;
     }
-    NSMutableArray *otherList = [NSMutableArray array];
+    NSMutableArray *profileList = [NSMutableArray array];
     
     RCUserProfileHeaderCellViewModel *headerVM = [[RCUserProfileHeaderCellViewModel alloc] initWithPortrait:userProfile.portraitUri name:userProfile.name remark:userProfile.email];
-    
+    [profileList addObject:@[headerVM]];
     if (self.verifyFriend && self.isFriend) {
         RCProfileCommonCellViewModel *setRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"SetRemark") detail:nil];
-        [otherList addObject:setRemarkVM];
-        return @[
-            @[headerVM],
-            otherList];
+        [profileList addObject:@[setRemarkVM]];
     }
-    return @[
-        @[headerVM]];
     
+    if (self.member) {
+        RCProfileCommonCellViewModel *memberNicknameVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupMemberNickname") detail:self.member.nickname];
+        memberNicknameVM.hiddenArrow = ![self canEditGroupMemberNickname];
+        [profileList addObject:@[memberNicknameVM]];
+    }
+    return profileList;
+}
+
+- (void)updateGroupMemberInfo {
+    if (self.groupId.length == 0) {
+        return;
+    }
+    [[RCCoreClient sharedCoreClient] getGroupsInfo:@[self.groupId] success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
+        self.group = groupInfos.firstObject;
+        [[RCCoreClient sharedCoreClient] getGroupMembers:self.groupId userIds:@[self.userId] success:^(NSArray<RCGroupMemberInfo *> * _Nonnull groupMembers) {
+            self.member = groupMembers.firstObject;
+        } error:^(RCErrorCode errorCode) {
+            
+        }];
+    } error:^(RCErrorCode errorCode) {
+        
+    }];
+}
+
+- (BOOL)canEditGroupMemberNickname {
+    if ([self.member.userId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
+        return YES;
+    }
+    if (self.group.memberInfoEditPermission == RCGroupMemberInfoEditPermissionOwnerOrManagerOrSelf && (self.group.role == RCGroupMemberRoleOwner || self.group.role == RCGroupMemberRoleManager)) {
+        return YES;
+    }
+    if (self.group.memberInfoEditPermission == RCGroupMemberInfoEditPermissionOwnerOrSelf &&
+        (self.group.role == RCGroupMemberRoleOwner)) {
+        return YES;
+    }
+    return NO;
 }
 
 @end

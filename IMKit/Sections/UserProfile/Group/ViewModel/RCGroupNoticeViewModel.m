@@ -9,6 +9,7 @@
 #import "RCGroupNoticeViewModel.h"
 #import "RCKitCommonDefine.h"
 #import "RCAlertView.h"
+#import "RCIM.h"
 @interface RCGroupNoticeViewModel ()
 
 @property (nonatomic, strong) RCGroupInfo *group;
@@ -22,11 +23,11 @@
 @implementation RCGroupNoticeViewModel
 @dynamic delegate;
 
-- (instancetype)initWithGroup:(RCGroupInfo *)group canEdit:(BOOL)canEdit {
+- (instancetype)initWithGroup:(RCGroupInfo *)group {
     self = [super init];
     if (self) {
         self.group = group;
-        self.canEdit = canEdit;
+        self.canEdit = [self canEditProfile];
         self.limit = 1024;
     }
     return self;
@@ -36,16 +37,16 @@
     RCGroupInfo *group = [[RCGroupInfo alloc] init];
     group.groupId = self.group.groupId;
     group.notice = notice;
-    [[RCCoreClient sharedCoreClient] updateGroupInfo:group success:^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [viewController.navigationController popViewControllerAnimated:YES];
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"GroupNoticeSuccess") hiddenAfterDelay:2];
-        });
-    } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetFailed") hiddenAfterDelay:2];
-        });
-    }];
+    if ([self.delegate respondsToSelector:@selector(groupNoticeWillUpdate:viewModel:inViewController:)]) {
+        BOOL intercept = [self.delegate groupNoticeWillUpdate:group viewModel:self inViewController:viewController];
+        if (intercept) {
+            return;
+        }
+    }
+    [RCAlertView showAlertController:nil message:RCLocalizedString(@"GroupNoticeUpdateAlert") actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"Confirm") preferredStyle:(UIAlertControllerStyleAlert) actionsBlock:nil cancelBlock:nil confirmBlock:^{
+        [self updateGroup:group inViewController:viewController];
+    } inViewController:viewController];
+    
 }
 
 - (NSString *)tip {
@@ -61,4 +62,37 @@
     return nil;
 }
 
+#pragma mark -- private
+
+- (BOOL)canEditProfile {
+    if (self.group.groupInfoEditPermission == RCGroupOperationPermissionOwner && self.group.role == RCGroupMemberRoleOwner) {
+        return YES;
+    }
+    if (self.group.groupInfoEditPermission == RCGroupOperationPermissionOwnerOrManager && (self.group.role == RCGroupMemberRoleOwner || self.group.role == RCGroupMemberRoleManager)) {
+        return YES;
+    }
+    if (self.group.groupInfoEditPermission == RCGroupOperationPermissionEveryone) {
+        return YES;
+    }
+    return NO;
+}
+
+- (void)updateGroup:(RCGroupInfo *)group inViewController:(nonnull UIViewController *)viewController {
+    [[RCIM sharedRCIM] updateGroupInfo:group success:^{
+        if ([self.delegate respondsToSelector:@selector(groupNoticeDidUpdate:viewModel:inViewController:)]) {
+            BOOL intercept = [self.delegate groupNoticeDidUpdate:group viewModel:self inViewController:viewController];
+            if (intercept) {
+                return;
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [viewController.navigationController popViewControllerAnimated:YES];
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"GroupNoticeSuccess") hiddenAfterDelay:2];
+        });
+    } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetFailed") hiddenAfterDelay:2];
+        });
+    }];
+}
 @end

@@ -21,6 +21,10 @@
 
 @implementation RCGroupMemberCellViewModel
 
++ (void)registerCellForTableView:(UITableView *)tableView {
+    [tableView registerClass:RCGroupMemberCell.class forCellReuseIdentifier:RCGroupMemberCellIdentifier];
+}
+
 - (instancetype)initWithMember:(RCGroupMemberInfo *)memberInfo {
     self = [super init];
     if (self) {
@@ -41,6 +45,7 @@
         cell.nameLabel.text = self.memberInfo.name;
     }
     cell.roleLabel.text = [self getRoleString:self.memberInfo.role];
+    [cell hiddenArrow:self.hiddenArrow];
     return cell;
 }
 

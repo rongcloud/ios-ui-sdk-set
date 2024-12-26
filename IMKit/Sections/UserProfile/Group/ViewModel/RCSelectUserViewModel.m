@@ -131,13 +131,6 @@ static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTa
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = nil;
-    if ([self.searchBarVM isCurrentFirstResponder]) {// 搜索状态
-        NSString *key = [self.indexTitles objectAtIndex:indexPath.section];
-        NSArray *array = [self.dicInfo objectForKey:key];
-        RCSelectUserCellViewModel *vm = [array objectAtIndex:indexPath.row];
-        cell = [vm tableView:tableView cellForRowAtIndexPath:indexPath];
-        return cell;
-    }
     
     NSString *key = [self.indexTitles objectAtIndex:indexPath.section];
     NSArray *array = [self.dicInfo objectForKey:key];
@@ -261,9 +254,11 @@ static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTa
             return;
         }
     }
-    if (self.type == RCSelectUserTypeInviteJoinGroup) {
-        [self inviteJoinGroup];
-    } else if (self.type == RCSelectUserTypeCreateGroup){
+    
+    if (self.selectionDidCompelteBlock) {
+        self.selectionDidCompelteBlock(self.selectUserIds, [self.responder currentViewController]);
+    }
+    if (self.type == RCSelectUserTypeCreateGroup){
         [self showCreateGroupVC];
     }
 }
@@ -281,25 +276,6 @@ static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTa
 }
 
 #pragma mark - Private
-
-- (void)inviteJoinGroup {
-    [[RCCoreClient sharedCoreClient] inviteUsersToGroup:self.groupId userIds:self.selectUserIds success:^(RCErrorCode processCode) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[self.responder currentViewController].navigationController popViewControllerAnimated:YES];
-            if (processCode == RC_GROUP_JOIN_GROUP_NEED_MANAGER_ACCEPT) {
-                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupNeedOwnerOrManagerAcceptTip") hiddenAfterDelay:2];
-            } else if (processCode == RC_GROUP_NEED_INVITEE_ACCEPT) {
-                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupNeedInviteeAcceptTip") hiddenAfterDelay:2];
-            } else {
-                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupSuccess") hiddenAfterDelay:2];
-            }
-        });
-    } error:^(RCErrorCode errorCode) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupError") hiddenAfterDelay:2];
-        });
-    }];
-}
 
 - (void)showCreateGroupVC {
     RCGroupCreateViewModel *viewModel = [RCGroupCreateViewModel viewModelWithInviteeUserIds:self.selectUserIds];

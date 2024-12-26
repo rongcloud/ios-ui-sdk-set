@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 //仅从 cache 取
 - (nullable RCUserInfo *)getUserInfoFromCacheOnly:(NSString *)userId;
 
-- (void)getUserInfo:(NSString *)userId complete:(void (^)(RCUserInfo *))complete;
+- (void)getUserInfo:(NSString *)userId complete:(nullable void (^)(RCUserInfo *user))complete;
 
 - (void)refreshUserInfo:(RCUserInfo *)userInfo;
 
@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 //从cache现取，没有值直接返回nil，并调用信息托管接口
 - (nullable RCUserInfo *)getGroupMember:(NSString *)userId withGroupId:(NSString *)groupId;
 
-- (void)getGroupMember:(NSString *)userId withGroupId:(NSString *)groupId complete:(void (^)( RCUserInfo *_Nullable user))complete;
+- (void)getGroupMember:(NSString *)userId withGroupId:(NSString *)groupId complete:(nullable void (^)( RCUserInfo *_Nullable user))complete;
 
 - (void)refreshGroupMember:(RCUserInfo *)userInfo withGroupId:(NSString *)groupId;
 
@@ -55,13 +55,40 @@ NS_ASSUME_NONNULL_BEGIN
 //仅从 cache 取
 - (nullable RCGroup *)getGroupInfoFromCacheOnly:(NSString *)groupId;
 
-- (void)getGroupInfo:(NSString *)groupId complete:(void (^)(RCGroup * _Nullable))complete;
+- (void)getGroupInfo:(NSString *)groupId complete:(nullable void (^)(RCGroup * _Nullable group))complete;
 
 - (void)refreshGroupInfo:(RCGroup *)groupInfo;
 
 - (void)clearGroupInfo:(NSString *)groupId;
 
 - (void)clearAllGroupInfo;
+
+- (void)updateMyUserProfile:(RCUserProfile *)profile
+                    success:(void (^)(void))successBlock
+                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock;
+
+- (void)setFriendInfo:(NSString *)userId
+               remark:(nullable NSString *)remark
+           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
+              success:(void (^)(void))successBlock
+                error:(void (^)(RCErrorCode errorCode))errorBlock;
+
+- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
+                success:(void (^)(void))successBlock
+                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock;
+
+- (void)setGroupRemark:(NSString *)groupId
+                remark:(nullable NSString *)remark
+               success:(void (^)(void))successBlock
+                 error:(void (^)(RCErrorCode errorCode))errorBlock;
+
+- (void)setGroupMemberInfo:(NSString *)groupId
+                    userId:(NSString *)userId
+                  nickname:(nullable NSString *)nickname
+                     extra:(nullable NSString *)extra
+                   success:(void (^)(void))successBlock
+                     error:(void (^)(RCErrorCode errorCode))errorBlock;
+
 
 @end
 

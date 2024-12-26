@@ -137,6 +137,9 @@ static RCLocalNotification *__rc__LocalNotification = nil;
             content.sound = [UNNotificationSound defaultSound];
         }
         NSString *requestWithIdentifier = message.messageUId;
+        if (requestWithIdentifier == nil) {
+            return;
+        }
         if (pushConfig) {
             if (pushConfig.iOSConfig && pushConfig.iOSConfig.apnsCollapseId && pushConfig.iOSConfig.apnsCollapseId.length > 0) {
                 requestWithIdentifier = pushConfig.iOSConfig.apnsCollapseId;

@@ -13,6 +13,11 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCInfoManagementCache.h"
 #import "RCInfoNotificationCenter.h"
+
+static NSUInteger const RC_KIT_FETCH_INFO_UINT_3 = 3;
+static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
+
+
 @interface RCInfoManagement ()<RCGroupEventDelegate, RCFriendEventDelegate, RCConnectionStatusChangeDelegate>
 
 @property (nonatomic, strong) RCInfoManagementCache *cache;
@@ -51,7 +56,7 @@
         return nil;
     }
     RCUserInfo *user = [self.cache getGroupMemberCache:userId groupId:groupId];
-    return user;
+    return [self p_getMemberCache:user];
 }
 
 - (nullable RCGroup *)getGroupInfoFromCacheOnly:(NSString *)groupId {
@@ -94,7 +99,9 @@
 - (void)getUserInfo:(NSString *)userId complete:(void (^)(RCUserInfo * _Nonnull))complete {
     [self p_getUserInfo:userId complete:^(RCUserInfo *user) {
         [self.cache cacheUser:user];
-        complete(user);
+        if (complete) {
+            complete(user);
+        }
     }];
 }
 
@@ -112,7 +119,7 @@
     }
     RCUserInfo *user = [self.cache getGroupMemberCache:userId groupId:groupId];
     if (user) {
-        return user;
+        return [self p_getMemberCache:user];
     }
     [self p_getGroupMember:userId withGroupId:groupId complete:^(RCUserInfo * _Nullable user) {
         if (user) {
@@ -126,7 +133,9 @@
 - (void)getGroupMember:(NSString *)userId withGroupId:(NSString *)groupId complete:(void (^)(RCUserInfo * _Nullable))complete {
     [self p_getGroupMember:userId withGroupId:groupId complete:^(RCUserInfo * _Nullable user) {
         [self.cache cacheGroupMember:user groupId:groupId];
-        complete(user);
+        if (complete) {
+            complete(user);
+        }
     }];
 }
 
@@ -170,7 +179,9 @@
 - (void)getGroupInfo:(NSString *)groupId complete:(void (^)(RCGroup * _Nullable))complete {
     [self p_getGroupInfo:groupId complete:^(RCGroup * _Nullable groupInfo) {
         [self.cache cacheGroup:groupInfo];
-        complete(groupInfo);
+        if (complete) {
+            complete(groupInfo);
+        }
     }];
 }
 
@@ -193,6 +204,65 @@
 - (void)clearAllGroupInfo {
     [self.cache removeAllGroupCache];
 }
+
+- (void)updateMyUserProfile:(RCUserProfile *)profile
+                    success:(void (^)(void))successBlock
+                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock {
+    [[RCCoreClient sharedCoreClient] updateMyUserProfile:profile success:^{
+        [self getUserInfo:profile.userId complete:nil];
+        if (successBlock) {
+            successBlock();
+        }
+    } error:errorBlock];
+}
+
+- (void)setFriendInfo:(NSString *)userId
+               remark:(nullable NSString *)remark
+           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
+              success:(void (^)(void))successBlock
+                error:(void (^)(RCErrorCode errorCode))errorBlock {
+    [[RCCoreClient sharedCoreClient] setFriendInfo:userId remark:remark extProfile:extProfile success:^{
+        [self getUserInfo:userId complete:nil];
+        if (successBlock) {
+            successBlock();
+        }
+    } error:errorBlock];
+}
+
+- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
+                success:(void (^)(void))successBlock
+                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock {
+    [[RCCoreClient sharedCoreClient] updateGroupInfo:groupInfo success:^{
+        [self getGroupInfo:groupInfo.groupId complete:nil];
+        if (successBlock) {
+            successBlock();
+        }
+    } error:errorBlock];
+}
+
+- (void)setGroupRemark:(NSString *)groupId remark:(NSString *)remark success:(void (^)(void))successBlock error:(void (^)(RCErrorCode))errorBlock {
+    [[RCCoreClient sharedCoreClient] setGroupRemark:groupId remark:remark success:^{
+        [self getGroupInfo:groupId complete:nil];
+        if (successBlock) {
+            successBlock();
+        }
+    } error:errorBlock];
+}
+
+- (void)setGroupMemberInfo:(NSString *)groupId
+                    userId:(NSString *)userId
+                  nickname:(nullable NSString *)nickname
+                     extra:(nullable NSString *)extra
+                   success:(void (^)(void))successBlock
+                     error:(void (^)(RCErrorCode errorCode))errorBlock {
+    [[RCCoreClient sharedCoreClient] setGroupMemberInfo:groupId userId:userId nickname:nickname extra:extra success:^{
+        [self getGroupMember:userId withGroupId:groupId complete:nil];
+        if (successBlock) {
+            successBlock();
+        }
+    } error:errorBlock];
+}
+
 
 #pragma mark -- private async
 
@@ -219,33 +289,14 @@
         return complete(nil);
     }
     if ([[RCCoreClient sharedCoreClient].currentUserInfo.userId isEqualToString:userId]) {
-        [[RCCoreClient sharedCoreClient] getMyUserProfile:^(RCUserProfile * _Nonnull userProfile) {
-            if (userProfile) {
-                RCUserInfo *user = [RCUserInfo new];
-                user.rc_profile = userProfile;
+        [self p_getMyProflieByRetry:RC_KIT_FETCH_INFO_UINT_3 complete:complete];
+    } else {
+        [self p_getFriendsInfoByRetry:userId retryCount:RC_KIT_FETCH_INFO_UINT_3 complete:^(RCUserInfo * _Nullable user) {
+            if (user) {
                 complete(user);
             } else {
-                complete(nil);
+                [self p_getUserProfileByRetry:userId retryCount:RC_KIT_FETCH_INFO_UINT_3 complete:complete];
             }
-        } error:^(RCErrorCode errorCode) {
-            complete(nil);
-        }];
-    } else {
-        [[RCCoreClient sharedCoreClient] getUserProfiles:@[userId] success:^(NSArray<RCUserProfile *> * _Nonnull userProfiles) {
-            if (userProfiles.firstObject) {
-                RCUserInfo *user = [RCUserInfo new];
-                user.rc_profile = userProfiles.firstObject;
-                [[RCCoreClient sharedCoreClient] getFriendsInfo:@[userId] success:^(NSArray<RCFriendInfo *> * _Nonnull friendInfos) {
-                    user.rc_friendInfo = friendInfos.firstObject;
-                    complete(user);
-                } error:^(RCErrorCode errorCode) {
-                    complete(user);
-                }];
-            } else {
-                complete(nil);
-            }
-        } error:^(RCErrorCode errorCode) {
-            complete(nil);
         }];
     }
 }
@@ -262,6 +313,74 @@
     if (userId == nil || groupId == nil) {
         return complete(nil);
     }
+    [self p_getGroupMemberByRetry:userId withGroupId:groupId retryCount:RC_KIT_FETCH_INFO_UINT_3 complete:complete];
+}
+
+- (void)p_getGroupInfo:(NSString *)groupId complete:(void (^)(RCGroup * _Nullable))complete {
+    if (groupId == nil) {
+        return complete(nil);
+    }
+    [self p_getGroupInfoByRetry:groupId retryCount:RC_KIT_FETCH_INFO_UINT_3 complete:complete];
+}
+
+- (void)p_getMyProflieByRetry:(int)retryCount complete:(void (^)( RCUserInfo *_Nullable user))complete {
+    [[RCCoreClient sharedCoreClient] getMyUserProfile:^(RCUserProfile * _Nonnull userProfile) {
+        RCUserInfo *user = [RCUserInfo new];
+        user.rc_profile = userProfile;
+        complete(user);
+    } error:^(RCErrorCode errorCode) {
+        if (errorCode == NET_DATA_IS_SYNCHRONIZING && retryCount > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(RC_KIT_FETCH_INFO_DELAY_TIME * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self p_getMyProflieByRetry:retryCount-1 complete:complete];
+            });
+        } else {
+            complete(nil);
+        }
+    }];
+}
+
+- (void)p_getFriendsInfoByRetry:(NSString *)userId retryCount:(int)retryCount complete:(void (^)( RCUserInfo *_Nullable user))complete {
+    [[RCCoreClient sharedCoreClient] getFriendsInfo:@[userId] success:^(NSArray<RCFriendInfo *> * _Nonnull friendInfos) {
+        if (friendInfos.firstObject) {
+            RCUserInfo *user = [RCUserInfo new];
+            user.rc_friendInfo = friendInfos.firstObject;
+            complete(user);
+        } else {
+            complete(nil);
+        }
+    } error:^(RCErrorCode errorCode) {
+        if (errorCode == NET_DATA_IS_SYNCHRONIZING && retryCount > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(RC_KIT_FETCH_INFO_DELAY_TIME * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self p_getFriendsInfoByRetry:userId retryCount:retryCount-1 complete:complete];
+            });
+        } else {
+            complete(nil);
+        }
+    }];
+}
+
+- (void)p_getUserProfileByRetry:(NSString *)userId retryCount:(int)retryCount complete:(void (^)( RCUserInfo *_Nullable user))complete {
+    [[RCCoreClient sharedCoreClient] getUserProfiles:@[userId] success:^(NSArray<RCUserProfile *> * _Nonnull userProfiles) {
+        if (userProfiles.firstObject) {
+            RCUserInfo *user = [RCUserInfo new];
+            user.rc_profile = userProfiles.firstObject;
+            complete(user);
+        } else {
+            complete(nil);
+        }
+    } error:^(RCErrorCode errorCode) {
+        if (errorCode == NET_DATA_IS_SYNCHRONIZING && retryCount > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(RC_KIT_FETCH_INFO_DELAY_TIME * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self p_getUserProfileByRetry:userId retryCount:retryCount-1 complete:complete];
+            });
+        } else {
+            complete(nil);
+        }
+    }];
+}
+
+
+- (void)p_getGroupMemberByRetry:(NSString *)userId withGroupId:(NSString *)groupId retryCount:(int)retryCount complete:(void (^)( RCUserInfo *_Nullable user))complete {
     [[RCCoreClient sharedCoreClient] getGroupMembers:groupId userIds:@[userId] success:^(NSArray<RCGroupMemberInfo *> * _Nonnull groupMembers) {
         if (groupMembers.firstObject) {
             RCUserInfo *user = [RCUserInfo new];
@@ -271,14 +390,17 @@
             complete(nil);
         }
     } error:^(RCErrorCode errorCode) {
-        complete(nil);
+        if (errorCode == NET_DATA_IS_SYNCHRONIZING && retryCount > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(RC_KIT_FETCH_INFO_DELAY_TIME * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self p_getGroupMemberByRetry:userId withGroupId:groupId retryCount:retryCount-1 complete:complete];
+            });
+        } else {
+            complete(nil);
+        }
     }];
 }
 
-- (void)p_getGroupInfo:(NSString *)groupId complete:(void (^)(RCGroup * _Nullable))complete {
-    if (groupId == nil) {
-        return complete(nil);
-    }
+- (void)p_getGroupInfoByRetry:(NSString *)groupId retryCount:(int)retryCount complete:(void (^)(RCGroup * _Nullable))complete {
     [[RCCoreClient sharedCoreClient] getGroupsInfo:@[groupId] success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
         if (groupInfos.firstObject) {
             RCGroup *group = [RCGroup new];
@@ -288,7 +410,13 @@
             complete(nil);
         }
     } error:^(RCErrorCode errorCode) {
-        complete(nil);
+        if (errorCode == NET_DATA_IS_SYNCHRONIZING && retryCount > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(RC_KIT_FETCH_INFO_DELAY_TIME * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self p_getGroupInfoByRetry:groupId retryCount:retryCount-1 complete:complete];
+            });
+        } else {
+            complete(nil);
+        }
     }];
 }
 
@@ -300,7 +428,24 @@
     }];
 }
 
-#pragma mark --
+- (RCUserInfo *)p_getMemberCache:(RCUserInfo *)member {
+    if (!member) {
+        return member;
+    }
+    RCUserInfo *tempUser = [self.cache getUserCache:member.userId];
+    if (!tempUser) {
+        return member;
+    }
+    // 群成员信息除群成员昵称外以用户信息缓存为主
+    if (member.rc_member.nickname.length == 0) {
+        member.name = tempUser.name;
+    }
+    member.portraitUri = tempUser.portraitUri;
+    member.extra = tempUser.extra;
+    return member;
+}
+
+#pragma mark -- RCGroupEventDelegate
 
 /// 群组资料变更回调
 /// - Parameter operatorInfo: 操作者信息
@@ -311,9 +456,7 @@
                  groupInfo:(RCGroupInfo *)groupInfo
                 updateKeys:(NSArray<RCGroupInfoKeys> *)updateKeys
              operationTime:(long long)operationTime {
-    RCGroup *group = [RCGroup new];
-    group.rc_group = groupInfo;
-    [self.cache cacheGroup:group];
+    [self getGroupInfo:groupInfo.groupId complete:nil];
 }
 
 /// 群成员资料变更回调
@@ -325,9 +468,11 @@
                     operatorInfo:(RCGroupMemberInfo *)operatorInfo
                       memberInfo:(RCGroupMemberInfo *)memberInfo
                    operationTime:(long long)operationTime {
-    RCUserInfo *user = [RCUserInfo new];
-    user.rc_member = memberInfo;
-    [self.cache cacheGroupMember:user groupId:groupId];
+    [self getGroupMember:memberInfo.userId withGroupId:groupId complete:nil];
+}
+
+- (void)onGroupRemarkChangedSync:(NSString *)groupId operationType:(RCGroupOperationType)operationType groupRemark:(NSString *)groupRemark operationTime:(long long)operationTime {
+    [self getGroupInfo:groupId complete:nil];
 }
 
 #pragma mark -- RCFriendEventDelegate
@@ -343,14 +488,7 @@
 }
 
 - (void)onFriendInfoChangedSync:(nonnull NSString *)userId remark:(nullable NSString *)remark extProfile:(nullable NSDictionary<NSString *,NSString *> *)extProfile operationTime:(long long)operationTime {
-    RCUserInfo *user = [self.cache getUserCache:userId];
-    if (user && user.rc_friendInfo) {
-        RCFriendInfo *friendInfo = user.rc_friendInfo;
-        friendInfo.remark = remark;
-        friendInfo.extProfile = extProfile;
-        user.rc_friendInfo = friendInfo;
-        [self.cache cacheUser:user];
-    }
+    [self getUserInfo:userId complete:nil];
 }
 
 #pragma mark -- getter

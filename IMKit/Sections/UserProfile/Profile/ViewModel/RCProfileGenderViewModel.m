@@ -10,6 +10,7 @@
 #import "RCProfileGenderCell.h"
 #import "RCAlertView.h"
 #import "RCKitCommonDefine.h"
+#import "RCIM.h"
 @implementation RCProfileGenderViewModel
 @dynamic delegate;
 
@@ -45,7 +46,7 @@
         }
     }
     self.profle.gender = gender;
-    [[RCCoreClient sharedCoreClient] updateMyUserProfile:self.profle success:^{
+    [[RCIM sharedRCIM] updateMyUserProfile:self.profle success:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             [viewController.navigationController popViewControllerAnimated:YES];
             [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetSuccess") hiddenAfterDelay:1];

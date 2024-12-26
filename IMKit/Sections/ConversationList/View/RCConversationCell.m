@@ -235,7 +235,6 @@
         RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
         displayName = userInfo.name;
-        RCUserInfo *senderUserInfo;
         if (userInfo.alias.length > 0) {
             displayName = userInfo.alias;
         } else if (memberInfo.name.length > 0) {

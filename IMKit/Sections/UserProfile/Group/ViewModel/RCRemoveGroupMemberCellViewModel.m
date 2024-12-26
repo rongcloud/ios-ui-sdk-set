@@ -51,6 +51,7 @@
     RCRemoveGroupMemberCell *cell = [tableView dequeueReusableCellWithIdentifier:RCRemoveGroupMemberCellIdentifier];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.portraitImageView.imageURL = [NSURL URLWithString:self.member.portraitUri];
+    cell.roleLabel.hidden = self.hiddenRole;
     cell.roleLabel.text = [self getRoleString:self.member.role];
     if (self.remark.length > 0) {
         cell.nameLabel.text = self.remark;

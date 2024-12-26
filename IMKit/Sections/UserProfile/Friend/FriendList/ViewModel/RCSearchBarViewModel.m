@@ -15,6 +15,7 @@
 }
 @property (nonatomic, weak) UIViewController *responder;
 @property (nonatomic, assign) BOOL inSearching;
+@property (nonatomic, copy) NSString *keyword;
 @end
 
 
@@ -48,11 +49,16 @@
     [self.searchBar resignFirstResponder];
     self.searchBar.text = nil;
     self.searchBar.showsCancelButton = NO;
+    self.keyword = nil;
 }
 
 #pragma mark - UISearchBarDelegate
 //  执行 delegate 搜索好友
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    if ([self.keyword isEqualToString:searchText]) {
+        return;
+    }
+    self.keyword = searchText;
     if ([self.delegate respondsToSelector:@selector(searchBar:textDidChange:)]) {
         return [self.delegate searchBar:searchBar textDidChange:searchText];
     }
@@ -63,6 +69,7 @@
     self.inSearching = NO;
     self.searchBar.showsCancelButton = NO;
     [self.searchBar resignFirstResponder];
+    self.keyword = nil;
 }
 
 - (BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar {

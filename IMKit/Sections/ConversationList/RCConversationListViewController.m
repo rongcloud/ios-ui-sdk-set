@@ -137,7 +137,10 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    RCConversationModel *model = self.dataSource.dataList[indexPath.row];
+    RCConversationModel *model = nil;
+    if (indexPath.row < self.dataSource.dataList.count) {
+        model = self.dataSource.dataList[indexPath.row];
+    }
 
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
         RCConversationBaseCell *userCustomCell =

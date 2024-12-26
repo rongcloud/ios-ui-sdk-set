@@ -48,7 +48,7 @@
     }
     group.groupName = groupName;
     group.portraitUri = self.portraitUrl;
-    
+    group.joinPermission = RCGroupJoinPermissionFree;
     [[RCCoreClient sharedCoreClient] createGroup:group inviteeUserIds:self.inviteeUserIds success:^(RCErrorCode processCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(groupCreateDidSuccess:processCode:inViewController:)]) {

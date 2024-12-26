@@ -10,12 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, RCNameEditViewControllerType) {
-    RCNameEditViewControllerTypeRemark,
-    RCNameEditViewControllerTypeName,
-    RCNameEditViewControllerTypeGroupNickName
-};
-
 @interface RCNameEditViewController : RCBaseViewController
 
 - (instancetype)initWithViewModel:(RCNameEditViewModel *)viewModel;

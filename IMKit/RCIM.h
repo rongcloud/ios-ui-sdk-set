@@ -972,6 +972,32 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// 如果您想立即刷新，您可以在会话列表或者会话页面reload强制刷新。
 - (void)clearUserInfoCache;
 
+/// 修改自己的用户信息
+///
+/// - Parameter profile: 用户信息
+/// - Parameter successBlock: 成功的回调
+/// - Parameter errorBlock: 失败的回调
+///
+/// - Since: 5.12.2
+- (void)updateMyUserProfile:(RCUserProfile *)profile
+                    success:(void (^)(void))successBlock
+                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock;
+
+
+/// 好友信息设置
+/// - Parameter userId: 用户ID
+/// - Parameter remark: 好友备注，最多为 64 个字符，不传或为空时清除备注名。
+/// - Parameter extProfile: 扩展信息
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.12.2
+- (void)setFriendInfo:(NSString *)userId
+               remark:(nullable NSString *)remark
+           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
+              success:(void (^)(void))successBlock
+                error:(void (^)(RCErrorCode errorCode))errorBlock;
+
 #pragma mark 群组信息
 
 /// 群组信息提供者
@@ -1001,6 +1027,45 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// 但是处于性能和使用场景权衡，SDK不会在当前View立即自动刷新（会在切换到其他View的时候再刷新所显示的群组信息）。
 /// 如果您想立即刷新，您可以在会话列表或者会话页面reload强制刷新。
 - (void)clearGroupInfoCache;
+
+/// 更新群组信息
+/// - Parameter groupInfo: 群组信息，groupId 必填，否则更新失败
+/// - Parameter success: 成功回调
+/// - Parameter error: 失败回调
+///
+/// - Since: 5.12.2
+- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
+                success:(void (^)(void))successBlock
+                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock NS_SWIFT_NAME(updateGroupInfo(_:success:error:));
+
+/// 设置群组备注名
+/// - Parameter groupId: 群组ID
+/// - Parameter remark: 群备注，字符串长度不超过 64 个字符。传 nil 或 空字符串 表示移除群备注
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.12.2
+- (void)setGroupRemark:(NSString *)groupId
+                remark:(nullable NSString *)remark
+               success:(void (^)(void))successBlock
+                 error:(void (^)(RCErrorCode errorCode))errorBlock;
+
+
+/// 设置群成员资料
+/// - Parameter groupId: 群组ID
+/// - Parameter userId: 用户ID， 必填项，支持传入当前登录用户 ID
+/// - Parameter nickname: 用户昵称，非必填项，长度不超过 64 个字符，传 nil 或 空字符串表示移除用户昵称
+/// - Parameter extra: 附加信息，非必填项，长度不超过 128 个字符
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.12.2
+- (void)setGroupMemberInfo:(NSString *)groupId
+                    userId:(NSString *)userId
+                  nickname:(nullable NSString *)nickname
+                     extra:(nullable NSString *)extra
+                   success:(void (^)(void))successBlock
+                     error:(void (^)(RCErrorCode errorCode))errorBlock;
 
 #pragma mark 群名片信息（可选）
 

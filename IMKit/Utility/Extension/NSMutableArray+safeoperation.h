@@ -22,4 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface NSArray (safejson)
+
++ (nullable NSArray *)rclib_arrayFromJsonString:(NSString *)jsonString;
++ (nullable NSArray *)rclib_arrayFromJsonData:(NSData *)jsonData;
+
+@end
+
 NS_ASSUME_NONNULL_END

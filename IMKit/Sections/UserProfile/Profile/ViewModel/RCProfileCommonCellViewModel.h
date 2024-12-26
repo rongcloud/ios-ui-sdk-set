@@ -39,6 +39,9 @@ typedef NS_ENUM(NSUInteger, RCUProfileCellType) {
 /// cell 类型
 @property (nonatomic, assign) RCUProfileCellType type;
 
+/// 注册 cell
++ (void)registerCellForTableView:(UITableView *)tableView;
+
 /// 实例化 RCProfileCommonCellViewModel
 ///
 /// - Parameters type: cell 类型

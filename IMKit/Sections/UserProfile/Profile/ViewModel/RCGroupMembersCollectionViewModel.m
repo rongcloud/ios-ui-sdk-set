@@ -14,6 +14,7 @@
 #import "RCProfileViewController.h"
 #import "RCUserProfileViewModel.h"
 #import "RCKitCommonDefine.h"
+#import "RCAlertView.h"
 @interface RCGroupMembersCollectionViewModel ()
 
 @property (nonatomic, weak) UIViewController *inViewController;
@@ -131,6 +132,9 @@
         }
     }
     RCProfileViewModel *viewModel = [RCUserProfileViewModel viewModelWithUserId:member.userId];
+    if ([viewModel isKindOfClass:RCUserProfileViewModel.class]) {
+        [((RCUserProfileViewModel *)viewModel) showGroupMemberInfo:self.groupId];
+    }
     RCProfileViewController *viewController = [[RCProfileViewController alloc] initWithViewModel:viewModel];
     [self.inViewController.navigationController pushViewController:viewController animated:YES];
 }
@@ -143,8 +147,37 @@
         }
     }
     RCSelectUserViewModel *vm = [RCSelectUserViewModel viewModelWithType:RCSelectUserTypeInviteJoinGroup groupId:self.groupId];
+    __weak typeof(self) weakSelf = self;
+    vm.selectionDidCompelteBlock = ^(NSArray<NSString *> * _Nonnull selectUserIds, UIViewController * _Nonnull selectVC) {
+        [weakSelf inviteJoinGroup:selectUserIds viewController:selectVC];
+    };
     RCSelectUserViewController *vc = [[RCSelectUserViewController alloc] initWithViewModel:vm];
     [self.inViewController.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)inviteJoinGroup:(NSArray *)selectUserIds viewController:(UIViewController *)viewController {
+    [[RCCoreClient sharedCoreClient] inviteUsersToGroup:self.groupId userIds:selectUserIds success:^(RCErrorCode processCode) {
+        if ([self.delegate respondsToSelector:@selector(groupMembersCollectionViewModel:didInviteUsers:processCode:viewController:)]) {
+            BOOL intercept = [self.delegate groupMembersCollectionViewModel:self didInviteUsers:selectUserIds processCode:processCode viewController:viewController];
+            if (intercept) {
+                return;
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [viewController.navigationController popViewControllerAnimated:YES];
+            if (processCode == RC_GROUP_JOIN_GROUP_NEED_MANAGER_ACCEPT) {
+                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupNeedOwnerOrManagerAcceptTip") hiddenAfterDelay:2];
+            } else if (processCode == RC_GROUP_NEED_INVITEE_ACCEPT) {
+                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupNeedInviteeAcceptTip") hiddenAfterDelay:2];
+            } else {
+                [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupSuccess") hiddenAfterDelay:2];
+            }
+        });
+    } error:^(RCErrorCode errorCode) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupError") hiddenAfterDelay:2];
+        });
+    }];
 }
 
 - (void)removeGroupMember {

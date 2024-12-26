@@ -23,6 +23,8 @@ UIKIT_EXTERN NSString  * _Nonnull const RCGroupMemberCellIdentifier;
 
 @property (nonatomic, strong) RCBaseImageView *arrowView;
 
+- (void)hiddenArrow:(BOOL)hiddenArrow;
+
 @end
 
 NS_ASSUME_NONNULL_END

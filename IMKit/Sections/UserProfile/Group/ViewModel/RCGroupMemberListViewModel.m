@@ -114,8 +114,11 @@
         }
     }
     RCProfileViewModel *viewModel = [RCUserProfileViewModel viewModelWithUserId:cellViewModel.memberInfo.userId];
-    RCProfileViewController *vc = [[RCProfileViewController alloc] initWithViewModel:viewModel]; [viewController.navigationController pushViewController:vc
-                                                                                                                                                animated:YES];
+    if ([viewModel isKindOfClass:RCUserProfileViewModel.class]) {
+        [((RCUserProfileViewModel *)viewModel) showGroupMemberInfo:self.groupId];
+    }
+    RCProfileViewController *vc = [[RCProfileViewController alloc] initWithViewModel:viewModel];
+    [viewController.navigationController pushViewController:vc animated:YES];
 }
 
 #pragma mark -- private

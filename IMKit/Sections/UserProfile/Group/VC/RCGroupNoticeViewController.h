@@ -9,9 +9,13 @@
 #import "RCBaseViewController.h"
 #import "RCGroupNoticeViewModel.h"
 NS_ASSUME_NONNULL_BEGIN
-
+/// 群公告页面
+/// - Since: 5.12.0
 @interface RCGroupNoticeViewController : RCBaseViewController
 
+/// 实例化 RCGroupNoticeViewController
+///
+/// - Parameters viewModel: viewModel
 - (instancetype)initWithViewModel:(RCGroupNoticeViewModel *)viewModel;
 
 @end

@@ -10,6 +10,7 @@
 #import "RCKitCommonDefine.h"
 
 #define RCProfileCommonSwitchTrailing 15
+#define RCProfileCommonSwitchTopSpace 50
 
 NSString  * const RCProfileCommonSwitchCellIdentifier = @"RCProfileCommonSwitchCellIdentifier";
 
@@ -23,6 +24,9 @@ NSString  * const RCProfileCommonSwitchCellIdentifier = @"RCProfileCommonSwitchC
 - (void)layoutSubviews {
     [super layoutSubviews];
     self.switchView.center = CGPointMake(self.contentView.frame.size.width - self.switchView.frame.size.width/2 - RCProfileCommonSwitchTrailing, self.contentView.center.y);
+    CGRect frame = self.titleLabel.frame;
+    frame.size.width = self.switchView.frame.origin.x - frame.origin.x - RCProfileCommonSwitchTopSpace;
+    self.titleLabel.frame = frame;
 }
 
 - (void)switchValueChanged:(UISwitch *)sender {

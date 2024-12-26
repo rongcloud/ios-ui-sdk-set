@@ -22,14 +22,19 @@
 #import "RCProfileViewModel+private.h"
 #import "RCKitCommonDefine.h"
 #import "RCAlertView.h"
-
-@interface RCGroupProfileViewModel ()<RCGroupEventDelegate>
+#import "RCGroupFollowsViewController.h"
+#import "RCGroupManagementViewController.h"
+#import "RCInfoManagement.h"
+#import "RCGroup+RCExtented.h"
+@interface RCGroupProfileViewModel ()<RCGroupEventDelegate, RCConversationStatusChangeDelegate>
 
 @property (nonatomic, copy) NSString *groupId;
 
 @property (nonatomic, strong) RCGroupProfileMembersCellViewModel *membersViewModel;
 
 @property (nonatomic, strong) RCGroupInfo *group;
+
+@property (nonatomic, assign) BOOL showGroupFollowsCell;
 
 @end
 
@@ -45,8 +50,13 @@
     if (self) {
         self.displayMaxMemberCount = 30;
         [[RCCoreClient sharedCoreClient] addGroupEventDelegate:self];
+        [[RCCoreClient sharedCoreClient] setRCConversationStatusChangeDelegate:self];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[RCCoreClient sharedCoreClient] removeGroupEventDelegate:self];
 }
 
 - (void)updateProfile {
@@ -99,18 +109,38 @@
         RCGroupMemberListViewController *membersVC = [[RCGroupMemberListViewController alloc] initWithViewModel:viewModel];
         membersVC.title = commonCellViewModel.title;
         [viewController.navigationController pushViewController:membersVC animated:YES];
-    } else if ([commonCellViewModel.title hasPrefix:RCLocalizedString(@"GroupNotice")]) {
-        if (!self.group) {
-            return;
-        }
-        RCGroupNoticeViewModel *viewModel = [[RCGroupNoticeViewModel alloc] initWithGroup:self.group canEdit:[self canEditProfile]];
+    } else if ([commonCellViewModel.title isEqualToString:RCLocalizedString(@"GroupNotice")]) {
+        RCGroupNoticeViewModel *viewModel = [[RCGroupNoticeViewModel alloc] initWithGroup:self.group];
         RCGroupNoticeViewController *membersVC = [[RCGroupNoticeViewController alloc] initWithViewModel:viewModel];
         membersVC.title = commonCellViewModel.title;
         [viewController.navigationController pushViewController:membersVC animated:YES];
+    } else if ([commonCellViewModel.title hasSuffix:RCLocalizedString(@"GroupFollowsCellTitle")]) {
+        RCGroupFollowsViewModel *viewModel = [RCGroupFollowsViewModel viewModelWithGroupId:self.groupId];
+        RCGroupFollowsViewController *vc = [[RCGroupFollowsViewController alloc] initWithViewModel:viewModel];
+        [viewController.navigationController pushViewController:vc animated:YES];
+    } else if ([commonCellViewModel.title isEqualToString:RCLocalizedString(@"GroupRemark")]) {
+        RCNameEditViewModel *viewModel = [RCNameEditViewModel viewModelWithUserId:[RCCoreClient sharedCoreClient].currentUserInfo.userId groupId:self.groupId type:RCNameEditTypeGroupRemark];
+        RCNameEditViewController *nameEditVC = [[RCNameEditViewController alloc] initWithViewModel:viewModel];
+        [viewController.navigationController pushViewController:nameEditVC animated:YES];
+    } else if ([commonCellViewModel.title isEqualToString:RCLocalizedString(@"GroupManagement")]) {
+        RCGroupManagementViewModel *viewModel = [RCGroupManagementViewModel viewModelWithGroupId:self.groupId];
+        RCGroupManagementViewController *vc = [[RCGroupManagementViewController alloc] initWithViewModel:viewModel];
+        [viewController.navigationController pushViewController:vc animated:YES];
     }
 }
 
+#pragma mark -- RCConversationStatusChangeDelegate
+
+- (void)conversationStatusDidChange:(NSArray<RCConversationStatusInfo *> *)conversationStatusInfos {
+    [self updateProfile];
+}
+
 #pragma mark -- RCGroupEventDelegate
+- (void)onGroupInfoChanged:(RCGroupMemberInfo *)operatorInfo groupInfo:(RCGroupInfo *)groupInfo updateKeys:(NSArray<RCGroupInfoKeys> *)updateKeys operationTime:(long long)operationTime {
+    if ([groupInfo.groupId isEqualToString:self.groupId]) {
+        [self updateProfile];
+    }
+}
 
 - (void)onGroupOperation:(NSString *)groupId operatorInfo:(RCGroupMemberInfo *)operatorInfo groupInfo:(RCGroupInfo *)groupInfo operation:(RCGroupOperation)operation memberInfos:(NSArray<RCGroupMemberInfo *> *)memberInfos operationTime:(long long)operationTime {
     if ([groupId isEqualToString:self.groupId]) {
@@ -122,10 +152,9 @@
 
 - (void)fetchGroupInfo {
     [[RCCoreClient sharedCoreClient] getGroupsInfo:@[self.groupId] success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
-        RCGroupInfo *group = groupInfos.firstObject;
-        self.group = group;
-        [self reloadDataSource:group];
-        [self fetchMembers:group];
+        self.group = groupInfos.firstObject;
+        [self reloadDataSource:self.group];
+        [self fetchMembers:self.group];
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.responder updateTitle:[NSString stringWithFormat: RCLocalizedString(@"GroupProfileTitle%@"),@(self.group.membersCount)]];
         });
@@ -155,7 +184,7 @@
     if (group.groupId.length == 0) {
         group.groupId = self.groupId;
     }
-        
+    
     RCProfileCommonCellViewModel *memberVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:[NSString stringWithFormat: RCLocalizedString(@"GroupMembersWithCount"), @(group.membersCount)] detail:nil];
     memberVM.hiddenSeparatorLine = YES;
     
@@ -168,15 +197,34 @@
     RCProfileCommonCellViewModel *noticeVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupNotice") detail:nil];
     RCProfileCommonCellViewModel *memberNameVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupForMyName") detail:nil];
     [self showMyNameInGroup:memberNameVM];
+    RCProfileCommonCellViewModel *groupRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupRemark") detail:group.remark];
     
-//    RCProfileSwitchCellViewModel *disturbVM = [self disturbVM];
-//    
-//    RCProfileSwitchCellViewModel *topVM = [self topVM];
+    RCProfileSwitchCellViewModel *disturbVM = [self disturbVM];
+    RCProfileSwitchCellViewModel *topVM = [self topVM];
+    
+    NSMutableArray *switchVMList = [NSMutableArray array];
+    [switchVMList addObject:disturbVM];
+    if (self.showGroupFollowsCell) {
+        RCProfileCommonCellViewModel *followsVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:[NSString stringWithFormat:@"    %@", RCLocalizedString(@"GroupFollowsCellTitle")] detail:nil];
+        [switchVMList addObject:followsVM];
+    }
+    [switchVMList addObject:topVM];
     
     NSArray *list = @[
     @[memberVM, self.membersViewModel],
-    @[portraitVM, nameVM, noticeVM, memberNameVM]
+    @[portraitVM, nameVM, noticeVM, memberNameVM, groupRemarkVM],
+    switchVMList
     ];
+    
+    if (group.role == RCGroupMemberRoleOwner || group.role == RCGroupMemberRoleManager) {
+        RCProfileCommonCellViewModel *managementVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"GroupManagement") detail:nil];
+        list = @[
+        @[memberVM, self.membersViewModel],
+        @[portraitVM, nameVM, noticeVM, memberNameVM, groupRemarkVM],
+        @[managementVM],
+        switchVMList
+        ];
+    }
     
     RCProfileFooterViewType type = RCProfileFooterViewTypeGroupMember;
     if ([group.ownerId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
@@ -201,48 +249,59 @@
 
     }];
 }
-//
-//- (RCProfileSwitchCellViewModel *)topVM {
-//    RCProfileSwitchCellViewModel *topVM = [RCProfileSwitchCellViewModel new];
-//    topVM.title = RCLocalizedString(@"SetTop");
-//    RCConversationIdentifier * con = [[RCConversationIdentifier alloc] initWithConversationIdentifier:ConversationType_GROUP targetId:self.groupId];
-//    [[RCCoreClient sharedCoreClient] getConversationTopStatus:con completion:^(BOOL ret) {
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            topVM.switchOn = ret;
-//            [self.responder reloadData:NO];
-//        });
-//    }];
-//    __weak typeof(self) weakSelf = self;
-//    topVM.switchValueChanged = ^(BOOL on) {
-//        [[RCCoreClient sharedCoreClient] setConversationToTop:ConversationType_GROUP targetId:weakSelf.groupId isTop:on completion:^(BOOL ret) {
-//            
-//        }];
-//    };
-//    return topVM;
-//}
-//
-//- (RCProfileSwitchCellViewModel *)disturbVM {
-//    RCProfileSwitchCellViewModel *disturbVM = [RCProfileSwitchCellViewModel new];
-//    disturbVM.title = RCLocalizedString(@"SetNotDisturb");
-//    [[RCCoreClient sharedCoreClient] getConversationNotificationStatus:ConversationType_GROUP targetId:self.groupId success:^(RCConversationNotificationStatus nStatus) {
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            disturbVM.switchOn = !nStatus;
-//            [self.responder reloadData:NO];
-//        });
-//    }  error:^(RCErrorCode status){
-//        
-//    }];
-//    __weak typeof(self) weakSelf = self;
-//    disturbVM.switchValueChanged = ^(BOOL on) {
-//        [[RCChannelClient sharedChannelManager] setConversationChannelNotificationLevel:ConversationType_GROUP targetId:weakSelf.groupId channelId:nil level:(on ? RCPushNotificationLevelBlocked : RCPushNotificationLevelAllMessage) success:^{
-//        } error:^(RCErrorCode status) {
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                [weakSelf.responder reloadData:NO];
-//            });
-//        }];
-//    };
-//    return disturbVM;
-//}
+
+- (RCProfileSwitchCellViewModel *)topVM {
+    RCProfileSwitchCellViewModel *topVM = [RCProfileSwitchCellViewModel new];
+    topVM.title = RCLocalizedString(@"SetTop");
+    RCConversationIdentifier * con = [[RCConversationIdentifier alloc] initWithConversationIdentifier:ConversationType_GROUP targetId:self.groupId];
+    [[RCCoreClient sharedCoreClient] getConversationTopStatus:con completion:^(BOOL ret) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            topVM.switchOn = ret;
+            [self.responder reloadData:NO];
+        });
+    }];
+    __weak typeof(self) weakSelf = self;
+    topVM.switchValueChanged = ^(BOOL on) {
+        [[RCCoreClient sharedCoreClient] setConversationToTop:ConversationType_GROUP targetId:weakSelf.groupId isTop:on completion:^(BOOL ret) {
+            
+        }];
+    };
+    return topVM;
+}
+
+- (RCProfileSwitchCellViewModel *)disturbVM {
+    RCProfileSwitchCellViewModel *disturbVM = [RCProfileSwitchCellViewModel new];
+    disturbVM.title = RCLocalizedString(@"SetNotDisturb");
+    [[RCCoreClient sharedCoreClient] getConversationNotificationStatus:ConversationType_GROUP targetId:self.groupId success:^(RCConversationNotificationStatus nStatus) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            disturbVM.switchOn = !nStatus;
+            [self showGroupFollows:disturbVM.switchOn];
+            [self.responder reloadData:NO];
+        });
+    }  error:^(RCErrorCode status){
+        
+    }];
+    __weak typeof(self) weakSelf = self;
+    disturbVM.switchValueChanged = ^(BOOL on) {
+        [[RCChannelClient sharedChannelManager] setConversationChannelNotificationLevel:ConversationType_GROUP targetId:weakSelf.groupId channelId:nil level:(on ? RCPushNotificationLevelBlocked : RCPushNotificationLevelAllMessage) success:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf showGroupFollows:on];
+            });
+        } error:^(RCErrorCode status) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf.responder reloadData:NO];
+            });
+        }];
+    };
+    return disturbVM;
+}
+
+- (void)showGroupFollows:(BOOL)show {
+    if (self.showGroupFollowsCell != show) {
+        self.showGroupFollowsCell = show;
+        [self reloadDataSource:self.group];
+    }
+}
 
 - (NSInteger)showItemCount:(RCGroupInfo *)group {
     NSInteger count = (group.membersCount <= self.displayMaxMemberCount ? group.membersCount : self.displayMaxMemberCount);
@@ -275,11 +334,11 @@
         return YES;
     }
     
-    if (group.invitePermission == RCGroupOperationPermissionOwnerOrManager && (group.role == RCGroupMemberRoleOwner || group.role ==  RCGroupMemberRoleManager)) {
+    if (group.removeMemberPermission == RCGroupOperationPermissionOwnerOrManager && (group.role == RCGroupMemberRoleOwner || group.role ==  RCGroupMemberRoleManager)) {
         return YES;
     }
     
-    if (group.invitePermission == RCGroupOperationPermissionEveryone) {
+    if (group.removeMemberPermission == RCGroupOperationPermissionEveryone) {
         return YES;
     }
     return NO;

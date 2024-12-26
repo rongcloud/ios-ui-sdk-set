@@ -98,6 +98,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// 单次最多可选择数量，默认 30, 0 < maxSelectCount <= 100
 @property (nonatomic, assign, setter=setMaxSelectCount:) NSInteger maxSelectCount;
 
+@property (nonatomic, copy) void (^selectionDidCompelteBlock)(NSArray <NSString *>*selectUserIds, UIViewController *selectVC);
+
 /// 配置 searchBar
 - (UISearchBar *)configureSearchBarForViewController:(UIViewController *)viewController;
 

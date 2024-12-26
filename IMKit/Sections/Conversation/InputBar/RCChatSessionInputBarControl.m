@@ -914,6 +914,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                 if (range.length == 1 && (mentionedRange.location + mentionedRange.length == range.location + 1)) {
                     shouldUseDefaultChangeText = NO;
                     [self.inputTextView.textStorage deleteCharactersInRange:mentionedRange];
+                    // 修改 textStorage 不会触发 inputTextViewDidChange, 需要手动调用
+                    [self inputTextViewDidChange:self.inputTextView];
                     range.location = range.location - mentionedRange.length + 1;
                     range.length = 0;
                     self.inputTextView.selectedRange = NSMakeRange(mentionedRange.location, 0);
@@ -1023,6 +1025,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                        value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
                        range:NSMakeRange(0, insertContent.length)];
         [self.inputTextView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
+        // 修改 textStorage 不会触发 inputTextViewDidChange, 需要手动调用
+        [self inputTextViewDidChange:self.inputTextView];
         self.inputTextView.selectedRange = NSMakeRange(cursorPosition + insertContent.length, 0);
         [self updateAllMentionedRangeInfo:cursorPosition length:insertContent.length];
 

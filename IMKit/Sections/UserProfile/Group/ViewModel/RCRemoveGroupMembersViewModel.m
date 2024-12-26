@@ -50,7 +50,6 @@
     if (self) {
         self.pageCount = 100;
         self.maxSelectCount = 30;
-        self.maxSelectCount = 5;
     }
     return self;
 }
