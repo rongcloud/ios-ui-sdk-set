@@ -81,3 +81,14 @@ git add .
 git commit -m "Release RongCloud SourceCode Version ${Version}"
 git push origin main -v
 
+##  打 tag
+TAGS=`git tag`
+
+if [[ "${TAGS[*]}" =~ $Version ]]; then
+    git tag -d $Version
+    git push origin --delete tag $Version
+fi
+
+git tag -a $Version -m $Version
+git push origin $Version
+
