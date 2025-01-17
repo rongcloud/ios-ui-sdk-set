@@ -68,6 +68,8 @@
 
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
+NSString *const RCKitReferencedMessageUId = @"referenceMessageUId";
+
 @interface RCConversationViewController () <
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
@@ -690,7 +692,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     if (ctype.intValue == (int)self.conversationType && [targetId isEqualToString:self.targetId]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            for (RCMessageModel *model in self.conversationDataRepository) {
+            NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+            for (RCMessageModel *model in conversationDataRepository) {
                 if (model.messageDirection == MessageDirection_SEND && model.sentTime <= time.longLongValue &&
                     model.sentStatus == SentStatus_SENT) {
                     model.sentStatus = SentStatus_READ;
@@ -1825,6 +1828,38 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
+- (NSDictionary *)getDraftExtraInfo {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    if (self.referencingView.referModel) {
+        NSString *messageUId = [self.referencingView.referModel.messageUId copy];
+        if (messageUId.length) dict[RCKitReferencedMessageUId] = messageUId;
+    }
+    return dict.copy;
+}
+
+- (void)didSetDraft:(NSDictionary *)info {
+    NSString *referencedMessageUId = info[RCKitReferencedMessageUId];
+    if (referencedMessageUId.length) {
+        [RCCoreClient.sharedCoreClient getMessageByUId:referencedMessageUId completion:^(RCMessage * _Nullable message) {
+            if (message.messageId == 0 || [message.content isKindOfClass:[RCRecallNotificationMessage class]]) {
+                return;
+            }
+            for (RCMessageModel *model in self.conversationDataRepository) {
+                if ([model.messageUId isEqualToString:referencedMessageUId]) {
+                    self.currentSelectedModel = model;
+                    break;
+                }
+            }
+            if (!self.currentSelectedModel) {
+                self.currentSelectedModel = [RCMessageModel modelWithMessage:message];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self onReferenceMessageCellAndEditing:NO];
+            });
+        }];
+    }
+}
+
 #pragma mark - RCMessagesLoadProtocol
 - (void)noMoreMessageToFetch {}
 
@@ -2048,6 +2083,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         if ([[RCMessageSelectionUtility sharedManager] isContainMessage:model]) {
             [[RCMessageSelectionUtility sharedManager] removeMessageModel:model];
         }
+    }
+    // 消息删除后，清理引用消息
+    if (self.referencingView && self.referencingView.referModel.messageId == model.messageId) {
+        [self dismissReferencingView:self.referencingView];
     }
 }
 
@@ -2403,7 +2442,15 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)didTapPhoneNumberInMessageCell:(NSString *)phoneNumber model:(RCMessageModel *)model {
     NSString *phoneStr = [phoneNumber stringByReplacingOccurrencesOfString:@" " withString:@""];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]];
+  if (@available(iOS 10.0, *)) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]
+                                           options:@{}
+                                 completionHandler:^(BOOL success) {
+            
+        }];
+    } else {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]];
+    }
 }
 
 //点击头像
@@ -2489,7 +2536,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 RCUserTypingStatus *typingStatus = (RCUserTypingStatus *)userTypingStatusList[0];
                 if ([typingStatus.contentType isEqualToString:[RCTextMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"typing");
-                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]) {
+                } else if ([typingStatus.contentType isEqualToString:[RCVoiceMessage getObjectName]]||[typingStatus.contentType isEqualToString:[RCHQVoiceMessage getObjectName]]) {
                     self.navigationItem.title = RCLocalizedString(@"Speaking");
                 }
             }
@@ -2666,7 +2713,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     dispatch_async(dispatch_get_main_queue(), ^{
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
-        for (RCMessageModel *model in self.conversationDataRepository) {
+        NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+        for (RCMessageModel *model in conversationDataRepository) {
             if (model.messageId == messageId) {
                 model.sentStatus = SentStatus_SENT;
                 if (model.messageId > 0) {
@@ -3080,13 +3128,19 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 #pragma mark - Reference
 - (void)onReferenceMessageCell:(id)sender {
+    [self onReferenceMessageCellAndEditing:YES];
+}
+
+- (void)onReferenceMessageCellAndEditing:(BOOL)editing {
     [self removeReferencingView];
     self.referencingView = [[RCReferencingView alloc] initWithModel:self.currentSelectedModel inView:self.view];
     self.referencingView.delegate = self;
     [self.view addSubview:self.referencingView];
     [self.referencingView
         setOffsetY:CGRectGetMinY(self.chatSessionInputBarControl.frame) - self.referencingView.frame.size.height];
-    [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
+    if (editing) {
+        [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
+    }
     [self updateReferenceViewFrame];
 }
 
@@ -3326,6 +3380,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 [__cell setDataModel:rcMsg];
                 [__cell playVoice];
             } else {
+                if (@available(iOS 18.0, *)){
+                    return;
+                }
                 if ([rcMsg.content isKindOfClass:RCVoiceMessage.class]) {
                     __cell = (RCVoiceMessageCell *)[self.conversationMessageCollectionView
                         dequeueReusableCellWithReuseIdentifier:[[RCVoiceMessage class] getObjectName]

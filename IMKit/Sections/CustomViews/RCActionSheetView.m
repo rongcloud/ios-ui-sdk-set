@@ -14,7 +14,7 @@
 #import "RCBaseTableViewCell.h"
 #define Space_Line 6
 @interface RCActionSheetView()
-@property (nonatomic, strong) UIView *maskView; //背景
+@property (nonatomic, strong) UIView *maskCoverView; //背景
 
 @property (nonatomic, strong) RCBaseTableView *tableView; //展示表格
 
@@ -103,18 +103,18 @@
 
 - (void)createUI {
     self.frame = [UIScreen mainScreen].bounds;
-    [self addSubview:self.maskView];
+    [self addSubview:self.maskCoverView];
     [self addSubview:self.tableView];
 }
 
-- (UIView *)maskView {
-    if (!_maskView) {
-        _maskView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        _maskView.backgroundColor = [UIColor blackColor];
-        _maskView.alpha = 0.4;
-        _maskView.userInteractionEnabled = YES;
+- (UIView *)maskCoverView {
+    if (!_maskCoverView) {
+        _maskCoverView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        _maskCoverView.backgroundColor = [UIColor blackColor];
+        _maskCoverView.alpha = 0.4;
+        _maskCoverView.userInteractionEnabled = YES;
     }
-    return _maskView;
+    return _maskCoverView;
 }
 
 - (RCBaseTableView *)tableView {
@@ -130,6 +130,7 @@
         _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x2f2f2f);
         _tableView.rowHeight = 56.0;
         _tableView.bounces = NO;
+        _tableView.scrollEnabled = NO;
         [_tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"OneCell"];
     }
     return _tableView;
@@ -148,12 +149,13 @@
     RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OneCell"];
     if (indexPath.section == 0) {
         cell.textLabel.text = _cellArray[indexPath.row];
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     } else {
         cell.textLabel.text = _cancelTitle;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
     cell.contentView.backgroundColor = RCDYCOLOR(0xffffff, 0x1d1d1d);
     cell.textLabel.textAlignment = NSTextAlignmentCenter;
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:17];
     cell.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x333333) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
     return cell;

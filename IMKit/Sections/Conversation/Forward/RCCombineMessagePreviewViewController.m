@@ -193,13 +193,29 @@
         } else if ([templateType isEqualToString:@"phone"]) {
             NSString *phoneNum = [dict objectForKey:@"phoneNum"];
             if (phoneNum) {
-                [[UIApplication sharedApplication]
-                    openURL:[NSURL URLWithString:[NSString stringWithFormat:@"tel://%@", phoneNum]]];
+                NSString *phoneStr = [NSString stringWithFormat:@"tel://%@", phoneNum];
+                if (@available(iOS 10.0, *)) {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]
+                                                         options:@{}
+                                               completionHandler:^(BOOL success) {
+                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]];
+                  }
             }
         } else if ([templateType isEqualToString:@"link"]) {
             NSString *url = [dict objectForKey:@"link"];
             if (url) {
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                if (@available(iOS 10.0, *)) {
+                    [RCKitUtility openURLInSafariViewOrWebView:url base:self];
+                    // 无法打开 a@126.com, 改为程序内加载
+//                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]
+//                                                         options:@{}
+//                                               completionHandler:^(BOOL success) {
+//                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                  }
             }
         } else if ([templateType isEqualToString:RCGIFMessageTypeIdentifier]) {
             [self presentGIFPreviewViewController:dict];
@@ -408,7 +424,7 @@
 
     RCSightSlideViewController *svc = [[RCSightSlideViewController alloc] init];
     svc.messageModel = model;
-//    svc.topRightBtnHidden = YES;
+    svc.topRightBtnHidden = YES;
     svc.onlyPreviewCurrentMessage = YES;
     RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:svc];
     navc.modalPresentationStyle = UIModalPresentationFullScreen;

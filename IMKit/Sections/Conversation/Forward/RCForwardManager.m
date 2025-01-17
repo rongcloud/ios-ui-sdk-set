@@ -16,6 +16,7 @@
 #import "RCLocationMessage+imkit.h"
 #import "RCForwardKeyItem.h"
 #import "RCDownloadHelper.h"
+#import "RCIM.h"
 
 #define BASE_HEAD @"baseHead"
 #define BASE_BOTTOM @"baseBottom"
