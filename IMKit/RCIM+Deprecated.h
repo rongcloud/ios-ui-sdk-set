@@ -13,19 +13,6 @@
 
 /// RCIM 的废弃接口，配置已被移动到 RCKitConfig 类中
 @interface RCIM (Deprecated)
-
-#pragma mark -- 初始化
-/// 初始化融云SDK
-///
-/// - Parameter appKey:  从融云开发者平台创建应用后获取到的App Key
-///
-/// 您在使用融云SDK所有功能（包括显示SDK中或者继承于SDK的View）之前，您必须先调用此方法初始化SDK。
-/// 在App整个生命周期中，您只需要执行一次初始化。
-///
-/// - Warning: 如果您使用IMKit，请使用此方法初始化SDK；
-/// 如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
-- (void)initWithAppKey:(NSString *)appKey __deprecated_msg("Use [RCIM initWithAppKey:option:] instead");
-
 #pragma mark - Config
 
 #pragma mark 消息通知提醒

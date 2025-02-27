@@ -10,14 +10,6 @@
 #import "RCKitConfig.h"
 
 @implementation RCIM (Deprecated)
-
-#pragma mark -- 初始化
-
-- (void)initWithAppKey:(NSString *)appKey {
-    [self initWithAppKey:appKey option:nil];
-}
-
-
 #pragma mark - config 接口兼容
 
 - (BOOL)disableMessageNotificaiton {
