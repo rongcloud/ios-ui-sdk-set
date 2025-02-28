@@ -8,7 +8,7 @@
 
 #import "RCUserInfoCache.h"
 #import "RCThreadSafeMutableDictionary.h"
-#import "RCUserInfoCacheManager.h"
+#import "RCInfoProvider.h"
 #import "RCloudImageLoader.h"
 #import "RongIMKitExtensionManager.h"
 
@@ -98,6 +98,10 @@
 //    }
     __weak typeof(self) weakSelf = self;
     dispatch_async(rcUserInfoDBQueue, ^{
+        RCUserInfo *dbUserInfo = [rcUserInfoWriteDBHelper selectUserInfoFromDB:userId];
+        if (!dbUserInfo) {
+            return;
+        }
         [rcUserInfoWriteDBHelper deleteUserInfoFromDB:userId];
         RCUserInfo *userInfo = [[RCUserInfo alloc] init];
         userInfo.userId = userId;

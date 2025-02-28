@@ -12,6 +12,7 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
+#import "RCIM.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -133,12 +134,17 @@
 
 - (void)setUserDisplayName {
     NSString *name;
-    if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
-        RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
+    if (![self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        return;
+    }
+    RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
+    if ([content.referMsg.senderUserInfo.userId isEqualToString:content.referMsgUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        name = [RCKitUtility getDisplayName:content.referMsg.senderUserInfo];
+    } else {
         NSString *referUserId = content.referMsgUserId;
         if (ConversationType_GROUP == self.referModel.conversationType) {
             RCUserInfo *userInfo =
-                [[RCUserInfoCacheManager sharedManager] getUserInfo:referUserId inGroupId:self.referModel.targetId];
+            [[RCUserInfoCacheManager sharedManager] getUserInfo:referUserId inGroupId:self.referModel.targetId];
             self.referModel.userInfo = userInfo;
             if (userInfo) {
                 name = userInfo.name;
@@ -150,16 +156,16 @@
                 name = userInfo.name;
             }
         }
-        __weak typeof(self) weakSelf = self;
-        dispatch_main_async_safe(^{
-            if([RCKitUtility isRTL]) {
-                weakSelf.nameLabel.text = [@":" stringByAppendingString:name ?: @""];
-            } else {
-                weakSelf.nameLabel.text = [name stringByAppendingString:@":"];
-            }
-            
-        });
     }
+    __weak typeof(self) weakSelf = self;
+    dispatch_main_async_safe(^{
+        if([RCKitUtility isRTL]) {
+            weakSelf.nameLabel.text = [@":" stringByAppendingString:name ?: @""];
+        } else {
+            weakSelf.nameLabel.text = [name stringByAppendingString:@":"];
+        }
+        
+    });
 }
 
 - (NSDictionary *)attributeDictionary {

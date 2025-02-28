@@ -562,7 +562,6 @@
 
 - (void)scrubbingDidStart {
     self.lastPlaybackRate = self.player.rate;
-    [self.player pause];
     if (self.timeObserver) {
         [self.player removeTimeObserver:self.timeObserver];
         _timeObserver = nil;
@@ -583,7 +582,6 @@
     [self addPlayerItemTimeObserver];
     if (self.lastPlaybackRate > 0.0f) {
         self.isPlaying = YES;
-        [self.player play];
     }
 }
 

@@ -11,6 +11,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCUserInfoCacheManager.h"
 #import "RCKitConfig.h"
+#import "RCIM.h"
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;
 @end
@@ -105,6 +106,9 @@
 }
 
 - (NSString *)getUserDisplayName {
+    if ([self.referModel.content.senderUserInfo.userId isEqualToString:self.referModel.senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        return [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
+    }
     NSString *name;
     if (ConversationType_GROUP == self.referModel.conversationType) {
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId

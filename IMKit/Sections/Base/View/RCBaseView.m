@@ -13,14 +13,7 @@
     self = [super initWithFrame:frame];
     if (self) {
         [self updateRTLUI];
-    }
-    return self;
-}
-
-- (instancetype)init{
-    self = [super init];
-    if(self){
-        [self updateRTLUI];
+        [self setupView];
     }
     return self;
 }
@@ -29,6 +22,7 @@
     self = [super initWithCoder:coder];
     if(self){
         [self updateRTLUI];
+        [self setupView];
     }
     return self;
 }
@@ -39,5 +33,9 @@
     }else{
         self.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
     }
+}
+
+- (void)setupView {
+    
 }
 @end
