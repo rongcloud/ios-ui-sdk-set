@@ -24,6 +24,7 @@
 #import <RongChatRoom/RongChatRoom.h>
 #import "RCConversationViewController+internal.h"
 #import "RCAlertView.h"
+#import "RCStreamMessageCell.h"
 typedef enum : NSUInteger {
     RCConversationLoadMessageVersion1,//消息先加载本地，本地加载完之后加载远端
     RCConversationLoadMessageVersion2,//使用消息断档方法异步加载
@@ -80,6 +81,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         self.appendMessageQueue.name = @"cn.rongcloud.appendMessageQueue";
         self.unreadMentionedMessages = [[NSMutableArray alloc] init];
         self.loadMessageVersion = RCConversationLoadMessageVersion2;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(streamMessageCellDidUpdate:) name:RCStreamMessageCellUpdateEndNotification object:nil];
     }
     return self;
 }
@@ -1321,7 +1323,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             }else{
                 self.chatVC.unReadMentionedButton.hidden = NO;
                 NSString *unReadMentionedMessagesCount = [NSString stringWithFormat:@"%ld", (long)self.unreadMentionedMessages.count];
-                NSString *stringUnReadMentioned = [NSString stringWithFormat:NSLocalizedStringFromTable(@"HaveMentionedMeCount", @"RongCloudKit", nil), unReadMentionedMessagesCount];
+                NSString *stringUnReadMentioned = [NSString stringWithFormat:RCLocalizedString(@"HaveMentionedMeCount"), unReadMentionedMessagesCount];
                 
                 self.chatVC.unReadMentionedLabel.text = stringUnReadMentioned;
                 [self.chatVC.util adaptUnreadButtonSize:self.chatVC.unReadMentionedLabel];
@@ -1460,5 +1462,11 @@ static BOOL msgRoamingServiceAvailable = YES;
         return NO;
     }
     return _isLoadingHistoryMessage;
+}
+
+- (void)streamMessageCellDidUpdate:(NSNotification *)notifi {
+    if (self.isShowingLastestMessage || [self isAtTheBottomOfTableView]) {
+        [self.chatVC scrollToBottomAnimated:YES];
+    }
 }
 @end

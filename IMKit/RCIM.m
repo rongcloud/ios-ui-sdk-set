@@ -57,7 +57,7 @@ NSString *const RCKitDispatchConversationDraftUpdateNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.14.0_opensource";
+static NSString *const RCIMKitVersion = @"5.16.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -770,23 +770,29 @@ static NSString *const RCIMKitVersion = @"5.14.0_opensource";
 }
 
 - (void)updateMyUserProfile:(RCUserProfile *)profile
-                    success:(void (^)(void))successBlock
-                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock {
-    [[RCInfoManagement sharedInstance] updateMyUserProfile:profile success:successBlock error:errorBlock];
+               successBlock:(void (^)(void))successBlock
+                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock {
+    [[RCInfoManagement sharedInstance] updateMyUserProfile:profile successBlock:successBlock errorBlock:errorBlock];
 }
 
 - (void)setFriendInfo:(NSString *)userId
                remark:(nullable NSString *)remark
            extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
-              success:(void (^)(void))successBlock
-                error:(void (^)(RCErrorCode errorCode))errorBlock {
-    [[RCInfoManagement sharedInstance] setFriendInfo:userId remark:remark extProfile:extProfile success:successBlock error:errorBlock];
+         successBlock:(void (^)(void))successBlock
+           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
+    [[RCInfoManagement sharedInstance] setFriendInfo:userId
+                                              remark:remark
+                                          extProfile:extProfile
+                                        successBlock:successBlock
+                                          errorBlock:errorBlock];
 }
 
 - (void)updateGroupInfo:(RCGroupInfo *)groupInfo
-                success:(void (^)(void))successBlock
-                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock {
-    [[RCInfoManagement sharedInstance] updateGroupInfo:groupInfo success:successBlock error:errorBlock];
+           successBlock:(void (^)(void))successBlock
+             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
+    [[RCInfoManagement sharedInstance] updateGroupInfo:groupInfo
+                                          successBlock:successBlock
+                                            errorBlock:errorBlock];
 }
 
 - (void)setGroupRemark:(NSString *)groupId remark:(NSString *)remark success:(void (^)(void))successBlock error:(void (^)(RCErrorCode))errorBlock {
@@ -797,9 +803,15 @@ static NSString *const RCIMKitVersion = @"5.14.0_opensource";
                     userId:(NSString *)userId
                   nickname:(nullable NSString *)nickname
                      extra:(nullable NSString *)extra
-                   success:(void (^)(void))successBlock
-                     error:(void (^)(RCErrorCode errorCode))errorBlock {
-    [[RCInfoManagement sharedInstance] setGroupMemberInfo:groupId userId:userId nickname:nickname extra:extra success:successBlock error:errorBlock];
+              successBlock:(void (^)(void))successBlock
+                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
+    [[RCInfoManagement sharedInstance] setGroupMemberInfo:groupId
+                                                   userId:userId
+                                                 nickname:nickname
+                                                    extra:extra
+                                             successBlock:successBlock
+                                               errorBlock:errorBlock];
+
 }
 
 - (RCMessage *)sendMessage:(RCConversationType)conversationType

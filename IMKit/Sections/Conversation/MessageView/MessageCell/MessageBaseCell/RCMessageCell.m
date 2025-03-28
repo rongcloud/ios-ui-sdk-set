@@ -18,6 +18,7 @@
 #import "RCCoreClient+Destructing.h"
 #import <RongPublicService/RongPublicService.h>
 #import "RCIM.h"
+#import "RCMessageModel+StreamCellVM.h"
 // 头像
 #define PortraitImageViewTop 0
 // 气泡

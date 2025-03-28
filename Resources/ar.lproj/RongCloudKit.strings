@@ -202,6 +202,7 @@
 "ImageHasBeenDeleted"="تم حذف الصورة";
 "HaveMentioned"="[تم ذكرك]";
 "HaveMentionedForNotification"="تمت الإشارة إليك";
+"HaveMentionedMeCount" = "@(%@)";
 "chatDate"="yyyy/M/d";
 "chatListDate"="yyyy/M/d";
 "SameYearDate"="M/d";
@@ -462,3 +463,6 @@
 "MyGroupNotifications"="إشعار المجموعة";
 "MyGroups"="مجموعتي";
 "GroupListFailed"="فشل تحميل قائمة المجموعات";
+
+"Saving"="توفير...";
+"Content_Contains_Sensitive"="فشلت العملية، المحتوى يحتوي على معلومات حساسة";

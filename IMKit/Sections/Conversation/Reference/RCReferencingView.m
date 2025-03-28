@@ -12,6 +12,8 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCKitConfig.h"
 #import "RCIM.h"
+#import "RCStreamUtilities.h"
+#import "RCStreamMessage+Internal.h"
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;
 @end
@@ -76,7 +78,18 @@
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
-    } else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
+    } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
+        RCStreamMessage *msg = (RCStreamMessage *)self.referModel.content;
+        if (msg.isSync) {
+            messageInfo = msg.content;
+        } else {
+            RCStreamSummaryModel *summary = [RCStreamUtilities parserStreamSummary:self.referModel];
+            if (summary.isComplete) {
+                messageInfo = summary.summary;
+                msg.content = summary.summary;
+            }
+        }
+    }  else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
         messageInfo = [RCKitUtility formatMessage:self.referModel.content
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
