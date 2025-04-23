@@ -180,28 +180,17 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)saveDraftIfNeed {
-    RCConversationType type = self.chatVC.conversationType;
-    NSString *targetId = self.chatVC.targetId?:@"";
-    NSString *channelId = self.chatVC.channelId?:@"";
-    NSString *draft = self.chatVC.chatSessionInputBarControl.draft?:@"";
-    NSDictionary *userInfo = @{
-        @"conversationType": @(type),
-        @"targetId": targetId,
-        @"channelId": channelId,
-        @"draft": draft,
-    };
-    [[RCChannelClient sharedChannelManager] getTextMessageDraft:type targetId:targetId channelId:channelId completion:^(NSString * _Nullable draftInDB) {
+    NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
         if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
-                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:type targetId:targetId channelId:channelId content:draft completion:^(BOOL result) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
-                                                                        object:nil userInfo:userInfo];
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
+                    
                 }];
             }
         } else if (draftInDB.length > 0){
             [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
-                                                                    object:nil userInfo:userInfo];
+                
             }];
         }
     }];
