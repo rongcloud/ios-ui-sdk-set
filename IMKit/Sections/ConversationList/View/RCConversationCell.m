@@ -192,6 +192,8 @@
     [self.headerView updateBubbleUnreadNumber:(int)model.unreadMessageCount];
     if (model.sentTime > 0) {
         self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.sentTime / 1000];
+    } else if (model.operationTime > 0) {
+        self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.operationTime / 1000];
     }
     [self.statusView updateNotificationStatus:model];
     [self.statusView updateReadStatus:model];
@@ -200,6 +202,7 @@
 - (void)p_displaySimaple:(RCConversationModel *)model {
     BOOL isEncrypted = model.conversationType == ConversationType_Encrypted;
     NSString *targetId = isEncrypted ? [[model.targetId componentsSeparatedByString:@";;;"] lastObject] : model.targetId;
+   
     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:targetId];
     if (userInfo) {
         if (!isEncrypted) {
@@ -221,9 +224,12 @@
         [self.detailContentView updateContent:model prefixName:nil];
         return;
     }
+    if ([self updateMessagePrefixNameWithSenderUser]) {
+        return;
+    }
     
     RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-    RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+    RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
     NSString *displayName = userInfo.name;
     if (userInfo.alias.length > 0) {
         displayName = userInfo.alias;
@@ -252,6 +258,9 @@
 #pragma clang diagnostic pop
     if (self.hideSenderName) {
         [self.detailContentView updateContent:model prefixName:nil];
+        return;
+    }
+    if ([self updateMessagePrefixNameWithSenderUser]) {
         return;
     }
     RCUserInfo *userInfo =
@@ -373,23 +382,26 @@
 }
 
 - (void)setHideSenderName:(BOOL)hideSenderName {
-    BOOL updateSenderName = (hideSenderName != _hideSenderName);
+    if (hideSenderName == _hideSenderName) {
+        return;
+    }
     _hideSenderName = hideSenderName;
 
-    if (updateSenderName) {
-        if (_hideSenderName) {
-            [self.detailContentView updateContent:self.model prefixName:nil];
-        } else if (self.model.conversationType == ConversationType_GROUP || self.model.conversationType == ConversationType_DISCUSSION) {
-            RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-            RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
-            NSString *displayName = userInfo.name;
-            if (userInfo.alias.length > 0) {
-                displayName = userInfo.alias;
-            } else if (memberInfo.name.length > 0) {
-                displayName = memberInfo.name;
-            }
-            [self.detailContentView updateContent:self.model prefixName:displayName];
+    if (_hideSenderName) {
+        [self.detailContentView updateContent:self.model prefixName:nil];
+    } else if (self.model.conversationType == ConversationType_GROUP || self.model.conversationType == ConversationType_DISCUSSION) {
+        if ([self updateMessagePrefixNameWithSenderUser]) {
+            return;
         }
+        RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
+        NSString *displayName = userInfo.name;
+        if (userInfo.alias.length > 0) {
+            displayName = userInfo.alias;
+        } else if (memberInfo.name.length > 0) {
+            displayName = memberInfo.name;
+        }
+        [self.detailContentView updateContent:self.model prefixName:displayName];
     }
 }
 
@@ -422,6 +434,9 @@
                        self.model.conversationType == ConversationType_GROUP) {
                 if (!self.hideSenderName ||
                     [self.model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]]) {
+                    if ([self updateMessagePrefixNameWithSenderUser]) {
+                        return;
+                    }
                     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId
                                                                                      inGroupId:self.model.targetId];
                     NSString *name = updateUserInfo.name;
@@ -436,14 +451,21 @@
                        self.model.conversationType == ConversationType_DISCUSSION) {
                 if (!self.hideSenderName ||
                     [self.model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]]) {
+                    if ([self updateMessagePrefixNameWithSenderUser]) {
+                        return;
+                    }
                     [self.detailContentView updateContent:self.model prefixName:displayName];
                 }
             }
         } else if (self.model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
-            if ([updateUserId isEqualToString:self.model.targetId] &&
+            if (!self.hideSenderName &&
+                [updateUserId isEqualToString:self.model.targetId] &&
                 (self.model.conversationType == ConversationType_PRIVATE ||
                  self.model.conversationType == ConversationType_CUSTOMERSERVICE ||
                  self.model.conversationType == ConversationType_SYSTEM)) {
+                if ([self updateMessagePrefixNameWithSenderUser]) {
+                    return;
+                }
                 [self.detailContentView updateContent:self.model prefixName:displayName];
             }
         }
@@ -459,17 +481,21 @@
         if (self.model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL &&
             self.model.conversationType == ConversationType_GROUP && [self.model.targetId isEqualToString:groupId] &&
             [self.model.senderUserId isEqualToString:userId]) {
-            if (!self.hideSenderName) {
-                RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-                RCUserInfo *userInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
-                NSString *displayName = userInfo.name;
-                if (userInfo.alias.length > 0) {
-                    displayName = userInfo.alias;
-                } else if (memberInfo.name.length > 0) {
-                    displayName = memberInfo.name;
-                }
-                [self.detailContentView updateContent:self.model prefixName:displayName];
+            if (self.hideSenderName) {
+                return;
             }
+            if ([self updateMessagePrefixNameWithSenderUser]) {
+                return;
+            }
+            RCUserInfo *memberInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
+            NSString *displayName = userInfo.name;
+            if (userInfo.alias.length > 0) {
+                displayName = userInfo.alias;
+            } else if (memberInfo.name.length > 0) {
+                displayName = memberInfo.name;
+            }
+            [self.detailContentView updateContent:self.model prefixName:displayName];
         }
     });
 }
@@ -613,6 +639,17 @@
     }
     return YES;
 }
+
+- (BOOL)updateMessagePrefixNameWithSenderUser {
+    if (!self.hideSenderName &&
+        [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement &&
+        [self.model.lastestMessage.senderUserInfo.userId isEqualToString:self.model.senderUserId]) {
+        [self.detailContentView updateContent:self.model prefixName:[RCKitUtility getDisplayName:self.model.lastestMessage.senderUserInfo]];
+        return YES;
+    }
+    return NO;
+}
+
 #pragma mark - 向后兼容
 - (void)setHeaderImageViewBackgroundView:(UIView *)headerImageViewBackgroundView {
     self.headerView.backgroundView = headerImageViewBackgroundView;

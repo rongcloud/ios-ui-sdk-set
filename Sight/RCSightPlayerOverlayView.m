@@ -537,7 +537,7 @@ typedef NS_ENUM(NSInteger, CCSightLayoutAlignMent) {
         duration = 0;
     }
     NSInteger currentSeconds = round(time);
-    NSInteger durationSeconds = round(duration);
+    NSInteger durationSeconds = floor(duration);
     self.durationTimeLabel.text = [self formatSeconds:durationSeconds];
     self.currentTimeLab.text = [self formatSeconds:currentSeconds];
     self.slider.minimumValue = 0.0f;
