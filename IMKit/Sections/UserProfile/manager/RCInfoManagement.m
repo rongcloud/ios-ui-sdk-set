@@ -18,7 +18,7 @@ static NSUInteger const RC_KIT_FETCH_INFO_UINT_3 = 3;
 static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
 
 
-@interface RCInfoManagement ()<RCGroupEventDelegate, RCFriendEventDelegate, RCConnectionStatusChangeDelegate, RCSubscribeEventDelegate>
+@interface RCInfoManagement ()<RCGroupEventDelegate, RCFriendEventDelegate, RCConnectionStatusChangeDelegate>
 
 @property (nonatomic, strong) RCInfoManagementCache *cache;
 
@@ -37,7 +37,6 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
         [[RCCoreClient sharedCoreClient] addGroupEventDelegate:instance];
         [[RCCoreClient sharedCoreClient] addFriendEventDelegate:instance];
         [[RCCoreClient sharedCoreClient] addConnectionStatusChangeDelegate:instance];
-        [[RCCoreClient sharedCoreClient] addSubscribeEventDelegate:instance];
     });
     return instance;
 }
@@ -217,18 +216,6 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
     } error:errorBlock];
 }
 
-- (void)updateMyUserProfile:(RCUserProfile *)profile
-               successBlock:(void (^)(void))successBlock
-                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCCoreClient sharedCoreClient] updateMyUserProfile:profile successBlock:^{
-        [self getUserInfo:profile.userId complete:nil];
-        if (successBlock) {
-            successBlock();
-        }
-    } errorBlock:errorBlock];
-}
-
-
 - (void)setFriendInfo:(NSString *)userId
                remark:(nullable NSString *)remark
            extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
@@ -242,19 +229,6 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
     } error:errorBlock];
 }
 
-- (void)setFriendInfo:(NSString *)userId
-               remark:(nullable NSString *)remark
-           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
-         successBlock:(void (^)(void))successBlock
-           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCCoreClient sharedCoreClient] setFriendInfo:userId remark:remark extProfile:extProfile successBlock:^{
-        [self getUserInfo:userId complete:nil];
-        if (successBlock) {
-            successBlock();
-        }
-    } errorBlock:errorBlock];
-}
-
 - (void)updateGroupInfo:(RCGroupInfo *)groupInfo
                 success:(void (^)(void))successBlock
                   error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock {
@@ -264,18 +238,6 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
             successBlock();
         }
     } error:errorBlock];
-}
-
-- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
-           successBlock:(void (^)(void))successBlock
-             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCCoreClient sharedCoreClient] updateGroupInfo:groupInfo
-                                        successBlock:^{
-        [self getGroupInfo:groupInfo.groupId complete:nil];
-        if (successBlock) {
-            successBlock();
-        }
-    } errorBlock:errorBlock];
 }
 
 - (void)setGroupRemark:(NSString *)groupId remark:(NSString *)remark success:(void (^)(void))successBlock error:(void (^)(RCErrorCode))errorBlock {
@@ -301,37 +263,20 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
     } error:errorBlock];
 }
 
-- (void)setGroupMemberInfo:(NSString *)groupId
-                    userId:(NSString *)userId
-                  nickname:(nullable NSString *)nickname
-                     extra:(nullable NSString *)extra
-              successBlock:(void (^)(void))successBlock
-                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCCoreClient sharedCoreClient] setGroupMemberInfo:groupId
-                                                 userId:userId
-                                               nickname:nickname
-                                                  extra:extra
-                                           successBlock:^{
-        [self getGroupMember:userId withGroupId:groupId complete:nil];
-        if (successBlock) {
-            successBlock();
-        }
-    }
-                                             errorBlock:errorBlock];
-}
+
 #pragma mark -- private async
 
 - (void)refreshUserInfo:(RCUserInfo *)userInfo complete:(void (^)(BOOL))complete {
     if ([userInfo.userId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
-        [[RCCoreClient sharedCoreClient] updateMyUserProfile:userInfo.rc_profile successBlock:^{
+        [[RCCoreClient sharedCoreClient] updateMyUserProfile:userInfo.rc_profile success:^{
             complete(YES);
-        } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+        } error:^(RCErrorCode errorCode, NSString * _Nullable errorKey) {
             complete(NO);
         }];
     } else if (userInfo.rc_friendInfo){
-        [[RCCoreClient sharedCoreClient] setFriendInfo:userInfo.userId remark:userInfo.rc_friendInfo.remark extProfile:userInfo.rc_friendInfo.extProfile successBlock:^{
+        [[RCCoreClient sharedCoreClient] setFriendInfo:userInfo.userId remark:userInfo.rc_friendInfo.remark extProfile:userInfo.rc_friendInfo.extProfile success:^{
             complete(YES);
-        } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+        } error:^(RCErrorCode errorCode) {
             complete(NO);
         }];
     } else {
@@ -357,10 +302,9 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
 }
 
 - (void)refreshGroupMember:(RCUserInfo *)userInfo withGroupId:(NSString *)groupId complete:(void (^)(BOOL))complete {
-    [[RCCoreClient sharedCoreClient] setGroupMemberInfo:groupId userId:userInfo.rc_member.userId nickname:userInfo.rc_member.nickname extra:userInfo.rc_member.extra
-                                           successBlock:^{
+    [[RCCoreClient sharedCoreClient] setGroupMemberInfo:groupId userId:userInfo.rc_member.userId nickname:userInfo.rc_member.nickname extra:userInfo.rc_member.extra success:^{
         complete(YES);
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+    } error:^(RCErrorCode errorCode) {
         complete(NO);
     }];
 }
@@ -477,10 +421,9 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
 }
 
 - (void)refreshGroupInfo:(RCGroup *)groupInfo complete:(void (^)(BOOL))complete {
-    [[RCCoreClient sharedCoreClient] updateGroupInfo:groupInfo.rc_group
-                                        successBlock:^{
+    [[RCCoreClient sharedCoreClient] updateGroupInfo:groupInfo.rc_group success:^{
         complete(YES);
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+    } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
         complete(NO);
     }];
 }
@@ -546,16 +489,6 @@ static float const RC_KIT_FETCH_INFO_DELAY_TIME = 0.5;
 
 - (void)onFriendInfoChangedSync:(nonnull NSString *)userId remark:(nullable NSString *)remark extProfile:(nullable NSDictionary<NSString *,NSString *> *)extProfile operationTime:(long long)operationTime {
     [self getUserInfo:userId complete:nil];
-}
-
-#pragma mark -- RCSubscribeEventDelegate
-- (void)onEventChange:(NSArray<RCSubscribeInfoEvent *> *)subscribeEvents {
-    for (RCSubscribeInfoEvent *event in subscribeEvents) {
-        if (event.subscribeType == RCSubscribeTypeUserProfile ||
-            event.subscribeType == RCSubscribeTypeFriendUserProfile) {
-            [self.cache removeUserCache:event.userId];
-        }
-    }
 }
 
 #pragma mark -- getter

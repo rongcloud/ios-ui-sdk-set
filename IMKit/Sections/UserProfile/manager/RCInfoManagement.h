@@ -67,29 +67,15 @@ NS_ASSUME_NONNULL_BEGIN
                     success:(void (^)(void))successBlock
                       error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock;
 
-- (void)updateMyUserProfile:(RCUserProfile *)profile
-               successBlock:(void (^)(void))successBlock
-                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock;
-
 - (void)setFriendInfo:(NSString *)userId
                remark:(nullable NSString *)remark
            extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
               success:(void (^)(void))successBlock
                 error:(void (^)(RCErrorCode errorCode))errorBlock;
 
-- (void)setFriendInfo:(NSString *)userId
-               remark:(nullable NSString *)remark
-           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
-         successBlock:(void (^)(void))successBlock
-           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
-
 - (void)updateGroupInfo:(RCGroupInfo *)groupInfo
                 success:(void (^)(void))successBlock
                   error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock;
-
-- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
-           successBlock:(void (^)(void))successBlock
-             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
 
 - (void)setGroupRemark:(NSString *)groupId
                 remark:(nullable NSString *)remark
@@ -103,12 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
                    success:(void (^)(void))successBlock
                      error:(void (^)(RCErrorCode errorCode))errorBlock;
 
-- (void)setGroupMemberInfo:(NSString *)groupId
-                    userId:(NSString *)userId
-                  nickname:(nullable NSString *)nickname
-                     extra:(nullable NSString *)extra
-              successBlock:(void (^)(void))successBlock
-                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+
 @end
 
 NS_ASSUME_NONNULL_END

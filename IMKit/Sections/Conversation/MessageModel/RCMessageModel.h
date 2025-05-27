@@ -137,10 +137,7 @@ NS_ASSUME_NONNULL_BEGIN
   扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
 */
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> *expansionDic;
-/*!
- 媒体消息上传进度
-*/
-@property (nonatomic, assign) NSInteger uploadProgress;
+
 /*!
  初始化消息Cell的数据模型
 

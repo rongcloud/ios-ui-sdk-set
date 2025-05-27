@@ -579,10 +579,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
-            // -1 无需发送已读回执
-            if (self.lastReadReceiptTime == -1) {
-                return;
-            }
             [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }

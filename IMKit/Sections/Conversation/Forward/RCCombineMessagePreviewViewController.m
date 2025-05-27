@@ -53,8 +53,6 @@
 @property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
-//显示撤回消息对话框
-@property (nonatomic, assign) BOOL displayRecallDialog;
 
 @end
 
@@ -105,14 +103,6 @@
     [self registerObserver];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    if (self.displayRecallDialog) {
-        self.displayRecallDialog = NO;
-        [self showRecallDialog];
-    }
-}
-
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [self.combineMsgWebView.configuration.userContentController removeScriptMessageHandlerForName:FUNCTIONNAME];
@@ -138,30 +128,22 @@
                                                object:nil];
 }
 
-- (void)showRecallDialog {
-    UIAlertController *alertController = [UIAlertController
-        alertControllerWithTitle:nil
-                         message:RCLocalizedString(@"MessageRecallAlert")
-                  preferredStyle:UIAlertControllerStyleAlert];
-    [alertController
-        addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                           style:UIAlertActionStyleDefault
-                                         handler:^(UIAlertAction *_Nonnull action) {
-                                             [self.navigationController popViewControllerAnimated:YES];
-                                         }]];
-    [self.navigationController presentViewController:alertController animated:YES completion:nil];
-}
-
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            if ([self isViewLoaded] && self.view.window != nil) {
-                [self showRecallDialog];
-            } else {
-                self.displayRecallDialog = YES;
-            }
+            UIAlertController *alertController = [UIAlertController
+                alertControllerWithTitle:nil
+                                 message:RCLocalizedString(@"MessageRecallAlert")
+                          preferredStyle:UIAlertControllerStyleAlert];
+            [alertController
+                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                                   style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *_Nonnull action) {
+                                                     [self.navigationController popViewControllerAnimated:YES];
+                                                 }]];
+            [self.navigationController presentViewController:alertController animated:YES completion:nil];
         }
     });
 }

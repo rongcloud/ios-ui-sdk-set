@@ -18,7 +18,6 @@
 #import "RCCoreClient+Destructing.h"
 #import <RongPublicService/RongPublicService.h>
 #import "RCIM.h"
-#import "RCMessageModel+StreamCellVM.h"
 // 头像
 #define PortraitImageViewTop 0
 // 气泡
@@ -691,7 +690,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             userId = model.content.senderUserInfo.userId;
         }
         
-        if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [model.content.senderUserInfo.userId isEqualToString:model.senderUserId]) {
+        if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && model.content.senderUserInfo.userId.length > 0) {
             if (model.conversationType != ConversationType_Encrypted) {
                 [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
             }
@@ -768,7 +767,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)p_setGroupInfo:(RCMessageModel *)model{
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [model.content.senderUserInfo.userId isEqualToString:model.senderUserId]) {
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && model.content.senderUserInfo.userId.length > 0) {
         if (model.conversationType != ConversationType_Encrypted) {
             [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
         }
@@ -777,15 +776,11 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     }
     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
     RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+    userInfo.alias = tempUserInfo.alias;
+    model.userInfo = userInfo;
     if (userInfo) {
-        userInfo.alias = tempUserInfo.alias.length > 0 ? tempUserInfo.alias : userInfo.alias;
-        model.userInfo = userInfo;
-    } else {
-        model.userInfo = tempUserInfo;
-    }
-    if (model.userInfo) {
-        [self.portraitImageView setImageURL:[NSURL URLWithString:model.userInfo.portraitUri]];
-        [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.userInfo]];
+        [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
     } else {
         [self.portraitImageView setImageURL:nil];
         [self.nicknameLabel setText:nil];
@@ -794,7 +789,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 #pragma mark - UserInfo Update
 - (void)onUserInfoUpdate:(NSNotification *)notification {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [self.model.content.senderUserInfo.userId isEqualToString:self.model.senderUserId]) {
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && self.model.content.senderUserInfo.userId.length > 0) {
         return;
     }
     NSDictionary *userInfoDic = notification.object;
@@ -820,7 +815,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [self.model.content.senderUserInfo.userId isEqualToString:self.model.senderUserId]) {
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && self.model.content.senderUserInfo.userId.length > 0) {
         return;
     }
     if (self.model.conversationType == ConversationType_GROUP) {

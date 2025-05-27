@@ -12,7 +12,6 @@
 #import "RCAlertView.h"
 #import "RCKitCommonDefine.h"
 #import "RCGroupManager.h"
-
 @interface RCGroupCreateViewModel ()
 
 @property (nonatomic, strong) NSArray <NSString *>*inviteeUserIds;
@@ -50,10 +49,8 @@
     group.groupName = groupName;
     group.portraitUri = self.portraitUrl;
     group.joinPermission = RCGroupJoinPermissionFree;
-    [self loadingWithTip:RCLocalizedString(@"Saving")];
-    [[RCCoreClient sharedCoreClient] createGroup:group inviteeUserIds:self.inviteeUserIds successBlock:^(RCErrorCode processCode) {
+    [[RCCoreClient sharedCoreClient] createGroup:group inviteeUserIds:self.inviteeUserIds success:^(RCErrorCode processCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self stopLoading];
             if ([self.delegate respondsToSelector:@selector(groupCreateDidSuccess:processCode:inViewController:)]) {
                 BOOL intercept = [self.delegate groupCreateDidSuccess:group processCode:processCode inViewController:viewController];
                 if (intercept) {
@@ -67,14 +64,9 @@
                 [RCAlertView showAlertController:nil message:RCLocalizedString(@"CreateSuccessAndNeedInviteeAcceptTip") hiddenAfterDelay:2];
             }
         });
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+    } error:^(RCErrorCode errorCode, NSString * _Nullable errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self stopLoading];
-            NSString *tips = RCLocalizedString(@"GroupCreateError");
-            if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                tips = RCLocalizedString(@"Content_Contains_Sensitive");
-            }
-            [RCAlertView showAlertController:nil message:tips hiddenAfterDelay:2];
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"GroupCreateError") hiddenAfterDelay:2];
         });
     }];
 }

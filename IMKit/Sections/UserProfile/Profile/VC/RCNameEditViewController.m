@@ -72,10 +72,6 @@ UITextFieldDelegate
     }
 }
 
-- (UIViewController *)currentViewController {
-    return self;
-}
-
 #pragma mark -- UITextFieldDelegate
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {

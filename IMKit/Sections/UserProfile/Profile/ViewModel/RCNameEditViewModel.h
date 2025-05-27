@@ -19,7 +19,6 @@ typedef NS_ENUM(NSUInteger, RCNameEditType) {
 };
 
 @protocol RCNameEditViewModelDelegate <NSObject>
-- (UIViewController *)currentViewController;
 
 - (void)nameUpdateDidSuccess;
 

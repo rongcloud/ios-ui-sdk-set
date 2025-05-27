@@ -46,22 +46,14 @@
         }
     }
     self.profle.gender = gender;
-    [self loadingWithTip:RCLocalizedString(@"Saving")];
-
-    [[RCIM sharedRCIM] updateMyUserProfile:self.profle successBlock:^{
-        [self stopLoading];
+    [[RCIM sharedRCIM] updateMyUserProfile:self.profle success:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             [viewController.navigationController popViewControllerAnimated:YES];
             [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetSuccess") hiddenAfterDelay:1];
         });
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
-        [self stopLoading];
+    } error:^(RCErrorCode errorCode, NSString * _Nullable errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *tips = RCLocalizedString(@"SetFailed");
-            if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                tips = RCLocalizedString(@"Content_Contains_Sensitive");
-            }
-            [RCAlertView showAlertController:nil message:tips hiddenAfterDelay:1];
+            [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetFailed") hiddenAfterDelay:1];
         });
     }];
 }

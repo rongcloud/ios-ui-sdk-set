@@ -49,7 +49,6 @@
 #import <RongIMKit/RCMessageCellTool.h>
 #import <RongIMKit/RCHQVoiceMessageCell.h>
 #import <RongIMKit/RCComplexTextMessageCell.h>
-#import <RongIMKit/RCStreamMessageCell.h>
 
 /// 工具类
 #import <RongIMKit/RCKitUtility.h>
@@ -217,7 +216,6 @@
 #import "RCMessageCellTool.h"
 #import "RCHQVoiceMessageCell.h"
 #import "RCComplexTextMessageCell.h"
-#import "RCStreamMessageCell.h"
 
 
 /// 工具类

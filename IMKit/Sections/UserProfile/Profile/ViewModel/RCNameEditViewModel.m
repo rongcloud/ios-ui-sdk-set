@@ -234,70 +234,36 @@
     RCUserProfile *profile = [RCUserProfile new];
     profile.userId = self.userId;
     profile.name = name;
-    UIViewController *viewController = nil;
-    if ([self.delegate respondsToSelector:@selector(currentViewController)]) {
-        viewController = [self.delegate currentViewController];
-    }
-    [self loadingWithTip:RCLocalizedString(@"Saving")];
-    [[RCIM sharedRCIM] updateMyUserProfile:profile successBlock:^{
-        [self stopLoading];
+    [[RCIM sharedRCIM] updateMyUserProfile:profile success:^{
         [self updateDidComplete:name];
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
-        [self stopLoading];
+    } error:^(RCErrorCode errorCode, NSString * _Nullable errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
-                NSString *tips = RCLocalizedString(@"SetFailed");
-                if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                    tips = RCLocalizedString(@"Content_Contains_Sensitive");
-                }
-                [self.delegate nameUpdateDidError:tips];
+                [self.delegate nameUpdateDidError:RCLocalizedString(@"SetFailed")];
             }
         });
     }];
 }
 
 - (void)updateRemark:(NSString *)name {
-    UIViewController *viewController = nil;
-    if ([self.delegate respondsToSelector:@selector(currentViewController)]) {
-        viewController = [self.delegate currentViewController];
-    }
-    [self loadingWithTip:RCLocalizedString(@"Saving")];
-    [[RCIM sharedRCIM] setFriendInfo:self.userId remark:name extProfile:nil successBlock:^{
-        [self stopLoading];
+    [[RCIM sharedRCIM] setFriendInfo:self.userId remark:name extProfile:nil success:^{
         [self updateDidComplete:name];
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
-        [self stopLoading];
+    } error:^(RCErrorCode errorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
-                NSString *tips = RCLocalizedString(@"SetFailed");
-                if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                    tips = RCLocalizedString(@"Content_Contains_Sensitive");
-                }
-                [self.delegate nameUpdateDidError:tips];
+                [self.delegate nameUpdateDidError:RCLocalizedString(@"SetFailed")];
             }
         });
     }];
 }
 
 - (void)updateGroupMemberNickname:(NSString *)name {
-    UIViewController *viewController = nil;
-    if ([self.delegate respondsToSelector:@selector(currentViewController)]) {
-        viewController = [self.delegate currentViewController];
-    }
-    [self loadingWithTip:RCLocalizedString(@"Saving")];
-    [[RCIM sharedRCIM] setGroupMemberInfo:self.groupId userId:self.userId nickname:name extra:nil
-                             successBlock:^{
-        [self stopLoading];
+    [[RCIM sharedRCIM] setGroupMemberInfo:self.groupId userId:self.userId nickname:name extra:nil success:^{
         [self updateDidComplete:name];
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+    } error:^(RCErrorCode errorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self stopLoading];
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
-                NSString *tips = RCLocalizedString(@"SetFailed");
-                    if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                        tips = RCLocalizedString(@"Content_Contains_Sensitive");
-                    }
-                [self.delegate nameUpdateDidError:tips];
+                [self.delegate nameUpdateDidError:RCLocalizedString(@"SetFailed")];
             }
         });
     }];
@@ -312,25 +278,13 @@
     RCGroupInfo *info = [RCGroupInfo new];
     info.groupId = self.groupId;
     info.groupName = name;
- 
-    UIViewController *viewController = nil;
-    if ([self.delegate respondsToSelector:@selector(currentViewController)]) {
-        viewController = [self.delegate currentViewController];
-    }
-   [self loadingWithTip:RCLocalizedString(@"Saving")];
     [[RCIM sharedRCIM] updateGroupInfo:info
-                          successBlock:^{
-        [self stopLoading];
+                                             success:^{
         [self updateDidComplete:name];
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
-        [self stopLoading];
+    } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([self.delegate respondsToSelector:@selector(nameUpdateDidError:)]) {
-                NSString *tips = RCLocalizedString(@"SetFailed");
-                if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
-                    tips = RCLocalizedString(@"Content_Contains_Sensitive");
-                }
-                [self.delegate nameUpdateDidError:tips];
+                [self.delegate nameUpdateDidError:RCLocalizedString(@"SetFailed")];
             }
         });
     }];

@@ -978,10 +978,11 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// - Parameter successBlock: 成功的回调
 /// - Parameter errorBlock: 失败的回调
 ///
-/// - Since: 5.16.0
+/// - Since: 5.12.2
 - (void)updateMyUserProfile:(RCUserProfile *)profile
-               successBlock:(void (^)(void))successBlock
-                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+                    success:(void (^)(void))successBlock
+                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock;
+
 
 /// 好友信息设置
 /// - Parameter userId: 用户ID
@@ -990,13 +991,12 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// - Parameter successBlock: 成功回调
 /// - Parameter errorBlock: 失败回调
 ///
-/// - Since: 5.16.0
+/// - Since: 5.12.2
 - (void)setFriendInfo:(NSString *)userId
                remark:(nullable NSString *)remark
            extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
-         successBlock:(void (^)(void))successBlock
-           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
-
+              success:(void (^)(void))successBlock
+                error:(void (^)(RCErrorCode errorCode))errorBlock;
 
 #pragma mark 群组信息
 
@@ -1030,15 +1030,13 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 
 /// 更新群组信息
 /// - Parameter groupInfo: 群组信息，groupId 必填，否则更新失败
-/// - Parameter successBlock: 成功回调
-/// - Parameter errorBlock: 失败回调
+/// - Parameter success: 成功回调
+/// - Parameter error: 失败回调
 ///
-/// - Since: 5.16.0
-
+/// - Since: 5.12.2
 - (void)updateGroupInfo:(RCGroupInfo *)groupInfo
-           successBlock:(void (^)(void))successBlock
-             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock NS_SWIFT_NAME(updateGroupInfo(_:successBlock:errorBlock:));
-
+                success:(void (^)(void))successBlock
+                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock NS_SWIFT_NAME(updateGroupInfo(_:success:error:));
 
 /// 设置群组备注名
 /// - Parameter groupId: 群组ID
@@ -1052,6 +1050,7 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
                success:(void (^)(void))successBlock
                  error:(void (^)(RCErrorCode errorCode))errorBlock;
 
+
 /// 设置群成员资料
 /// - Parameter groupId: 群组ID
 /// - Parameter userId: 用户ID， 必填项，支持传入当前登录用户 ID
@@ -1060,13 +1059,13 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// - Parameter successBlock: 成功回调
 /// - Parameter errorBlock: 失败回调
 ///
-/// - Since: 5.16.0
+/// - Since: 5.12.2
 - (void)setGroupMemberInfo:(NSString *)groupId
                     userId:(NSString *)userId
                   nickname:(nullable NSString *)nickname
                      extra:(nullable NSString *)extra
-              successBlock:(void (^)(void))successBlock
-                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+                   success:(void (^)(void))successBlock
+                     error:(void (^)(RCErrorCode errorCode))errorBlock;
 
 #pragma mark 群名片信息（可选）
 
