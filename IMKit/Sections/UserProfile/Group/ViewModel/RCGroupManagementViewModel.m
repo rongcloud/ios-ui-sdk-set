@@ -225,17 +225,29 @@
 }
 
 - (void)updateGroupInfo:(RCGroupInfo *)group reloadWithFailed:(BOOL)reloadWithFailed{
-    [[RCIM sharedRCIM] updateGroupInfo:group success:^{
+    UIViewController *viewController = nil;
+    if ([self.responder respondsToSelector:@selector(currentViewController)]) {
+        viewController = [self.responder currentViewController];
+    }
+    [self loadingWithTip:RCLocalizedString(@"Saving")];
+    [[RCIM sharedRCIM] updateGroupInfo:group
+                          successBlock:^{
+        [self stopLoading];
         [self fetchDataSources];
         dispatch_async(dispatch_get_main_queue(), ^{
             [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetSuccess") hiddenAfterDelay:1];
         });
-    } error:^(RCErrorCode errorCode, NSString * _Nonnull errorKey) {
+    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+        [self stopLoading];
         if (reloadWithFailed) {
             [self fetchDataSources];
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"SetFailed") hiddenAfterDelay:1];
+            NSString *tips = RCLocalizedString(@"SetFailed");
+            if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
+                tips = RCLocalizedString(@"Content_Contains_Sensitive");
+            }
+            [RCAlertView showAlertController:nil message:tips hiddenAfterDelay:1];
         });
     }];
 }

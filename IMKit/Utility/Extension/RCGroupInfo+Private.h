@@ -33,11 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// 我的群身份
 @property (nonatomic, assign) RCGroupMemberRole role;
 
-/// 获取用户有修改的属性值， 不包含 groupId
+/// 获取用户有修改的属性值，不包含 groupId
 - (NSDictionary<NSString *, NSString *> *)getUserModifiedParams;
 
 /// 不解析 groupId 和 readonly 属性
-- (void)decodeBaseData:(NSDictionary <NSString *, NSString *> *)data;
+- (void)decodeBaseData:(NSDictionary<NSString *, NSString *> *)data;
 
 @end
 

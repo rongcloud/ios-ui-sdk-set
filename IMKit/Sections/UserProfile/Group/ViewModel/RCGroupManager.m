@@ -7,7 +7,7 @@
 //
 
 #import "RCGroupManager.h"
-#import "NSMutableArray+safeoperation.h"
+#import "NSMutableArray+RCOperation.h"
 
 @interface RCPagingQueryResult<T> ()
 

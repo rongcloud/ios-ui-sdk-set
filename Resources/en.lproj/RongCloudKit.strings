@@ -246,8 +246,8 @@
 "GroupChatHistory" = "Group Chat History";
 "ChatHistoryForXAndY" = "Chat History for %@ and %@";
 "ChatHistoryForX" = "Chat History for %@";
-"OneByOneForwardingNotSupported" = "Failed to send, burn, audio and video message, cannot be forwarded";
-"CombineForwardingNotSupported" = "Failed to send, burn, quote message, cannot be forwarded";
+"OneByOneForwardingNotSupported" = "Failed to send, burn, audio, video and stream message, cannot be forwarded";
+"CombineForwardingNotSupported" = "Failed to send, burn, quote and stream message, cannot be forwarded";
 "CombineAndForward" = "Combine and Forward";
 "OneByOneForward" = "One-by-One Forward";
 "ChatHistory" = "Chat History";
@@ -453,3 +453,6 @@
 "MyGroupNotifications"="Group Notification";
 "MyGroups"="My Group";
 "GroupListFailed"="Group list loading failed";
+
+"Saving"="Saving";
+"Content_Contains_Sensitive"="Setup failed, Content contains sensitive information";

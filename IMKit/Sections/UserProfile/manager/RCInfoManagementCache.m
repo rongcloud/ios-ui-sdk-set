@@ -8,8 +8,8 @@
 
 #import "RCInfoManagementCache.h"
 #import "RCThreadSafeMutableDictionary.h"
-#import "NSMutableDictionary+safeoperation.h"
-#import "NSMutableArray+safeoperation.h"
+#import "NSMutableDictionary+RCOperation.h"
+#import "NSMutableArray+RCOperation.h"
 #import "RCIMThreadLock.h"
 #import "RCUserInfo+RCExtented.h"
 #import "RCUserInfo+RCGroupMember.h"

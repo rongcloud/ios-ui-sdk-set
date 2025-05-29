@@ -71,8 +71,8 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        NSString *templateFilePath = [[[NSBundle mainBundle] pathForResource:@"RongCloud" ofType:@"bundle"]
-            stringByAppendingPathComponent:@"template.json"];
+        NSString *bundlePath = [RCKitUtility bundlePathWithName:@"RongCloud"];
+        NSString *templateFilePath = [bundlePath stringByAppendingPathComponent:@"template.json"];
         NSData *templateJsonData = [NSData dataWithContentsOfFile:templateFilePath];
         _templateJsonDic = [NSJSONSerialization JSONObjectWithData:templateJsonData options:1 error:nil];
         _rcForwardQueue = dispatch_queue_create("com.rongcloud.forwardQueue", DISPATCH_QUEUE_SERIAL);

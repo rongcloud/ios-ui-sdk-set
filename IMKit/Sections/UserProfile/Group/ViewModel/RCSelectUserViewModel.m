@@ -13,7 +13,7 @@
 #import "RCNavigationItemsViewModel.h"
 #import "RCAlertView.h"
 #import "RCGroupCreateViewController.h"
-#import "NSMutableArray+safeoperation.h"
+#import "NSMutableArray+RCOperation.h"
 
 static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTag;
 

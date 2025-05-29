@@ -691,7 +691,7 @@
                 CGPoint playBtnCenter = self.transport.centerPlayBtn.center;
                 self.errorTipsLabel.center =
                     CGPointMake(playBtnCenter.x, CGRectGetMaxY(self.transport.centerPlayBtn.frame) + 16);
-                self.errorTipsLabel.text = NSLocalizedStringFromTable(@"VideoExpired", @"RongCloudKit", nil);
+                self.errorTipsLabel.text = RCLocalizedString(@"VideoExpired");
                 [self.view addSubview:self.errorTipsLabel];
                 self.transport.centerPlayBtn.hidden = YES;
             });

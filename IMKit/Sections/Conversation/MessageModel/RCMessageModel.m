@@ -9,6 +9,12 @@
 #import "RCMessageModel.h"
 #import "RCCustomerServiceMessageModel.h"
 
+@interface RCMessageModel ()
+
+@property (nonatomic, strong) id cellViewModel;
+
+@end
+
 @implementation RCMessageModel
 
 + (instancetype)modelWithMessage:(RCMessage *)rcMessage {

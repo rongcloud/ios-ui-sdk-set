@@ -1071,9 +1071,14 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (float)getBoardViewBottomOriginY {
     float gap = (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) ? 64 : 0;
-    gap += [self getSafeAreaExtraBottomHeight];
-    return IS_HOTSPOT_CONNECTED ? [UIScreen mainScreen].bounds.size.height - gap - 20
-                                : [UIScreen mainScreen].bounds.size.height - gap;
+    float bottom = [self getSafeAreaExtraBottomHeight];
+    gap += bottom;
+    if (bottom > 0) {// 刘海屏的热点栏不影响statusBar高度
+        return [UIScreen mainScreen].bounds.size.height - gap;
+    } else {
+        return IS_HOTSPOT_CONNECTED ? [UIScreen mainScreen].bounds.size.height - gap - 20
+        : [UIScreen mainScreen].bounds.size.height - gap;
+    }
 }
 
 - (float)getSafeAreaExtraBottomHeight {

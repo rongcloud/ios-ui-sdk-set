@@ -1,5 +1,5 @@
 //
-//  NSMutableArray+safeoperation.h
+//  NSMutableArray+RCOperation.h
 //  RongIMLibCore
 //
 //  Created by chinaspx on 2022/11/29.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSMutableArray (safeoperation)
+@interface NSMutableArray (RCOperation)
 
 - (void)rclib_addObject:(id)anObject;
 
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface NSArray (safejson)
+@interface NSArray (RCJson)
 
 + (nullable NSArray *)rclib_arrayFromJsonString:(NSString *)jsonString;
 + (nullable NSArray *)rclib_arrayFromJsonData:(NSData *)jsonData;
