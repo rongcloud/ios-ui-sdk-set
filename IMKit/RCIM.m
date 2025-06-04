@@ -57,7 +57,7 @@ NSString *const RCKitDispatchConversationDraftUpdateNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.20.0_opensource";
+static NSString *const RCIMKitVersion = @"5.20.1_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -842,7 +842,7 @@ static NSString *const RCIMKitVersion = @"5.20.0_opensource";
     [self attachCurrentUserInfo:content];
 
     RCMessage *message = [[RCMessage alloc] initWithType:conversationType targetId:targetId direction:MessageDirection_SEND content:content];
-    
+    message.needReceipt = YES;
     // 查看是否拦截发送
     if ([self beforeInterceptSendMessage:message]) {
         return nil;

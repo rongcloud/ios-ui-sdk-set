@@ -18,6 +18,7 @@
 #import "RCConversationListDataSource.h"
 #import "RCKitConfig.h"
 #import "RCConversationViewController.h"
+#import "RCConversationListViewController+RRS.h"
 
 @interface RCConversationListViewController () <UITableViewDataSource, UITableViewDelegate, RCConversationCellDelegate,RCConversationListDataSourceDelegate>
 
@@ -258,6 +259,14 @@
     return RCLocalizedString(@"Delete");
 }
 
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    [self rrs_scrollViewDidEndDragging:scrollView willDecelerate:decelerate];
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    [self rrs_scrollViewDidEndDecelerating:scrollView];
+}
+
 #pragma mark - Target action
 - (void)deleteAndReloadConversationCell:(RCConversationModel *)model{
     [self didDeleteConversationCell:model];
@@ -279,6 +288,8 @@
     [self.dataSource loadMoreConversations:^(NSMutableArray<RCConversationModel *> *modelList) {
         if(modelList.count > 0) {
             [ws.conversationListTableView reloadData];
+            [self rrs_fetchReadReceiptInfoV5ForVisibleModel];
+
             [ws updateEmptyConversationView];
         }
         [ws.footer endRefreshing];
@@ -291,11 +302,14 @@
     }
     self.conversationListTableView.frame = self.view.bounds;
     [self.conversationListTableView reloadData];
+    [self rrs_fetchReadReceiptInfoV5ForVisibleModel];
+
 }
 
 - (void)refreshConversationTableViewIfNeeded {
     [self.dataSource forceLoadConversationModelList:^(NSMutableArray *modelList) {
         [self.conversationListTableView reloadData];
+        [self rrs_fetchReadReceiptInfoV5ForVisibleModel];
         [self updateEmptyConversationView];
     }];
 }
@@ -376,6 +390,8 @@
 
     if (needReloadTableView) {
         [self.conversationListTableView reloadData];
+        [self rrs_fetchReadReceiptInfoV5ForVisibleModel];
+
     }
 }
 
@@ -786,6 +802,8 @@
         }
         if (self.dataSource.isConverstaionListAppear) {
             [self.conversationListTableView reloadData];
+            [self rrs_fetchReadReceiptInfoV5ForVisibleModel];
+
         }
     }
 }

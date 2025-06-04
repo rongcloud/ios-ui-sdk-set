@@ -329,6 +329,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
     RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
+    message.needReceipt = YES;
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
         [[RCIM sharedRCIM] sendMediaMessage:message
                                 pushContent:pushContent
@@ -631,9 +632,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)enabledReadReceiptMessage:(RCMessageModel *)model {
-    if ([self.enabledReadReceiptMessageTypeList containsObject:model.objectName]) {
-        return YES;
-    }
-    return NO;
+    return model.needReceipt;
 }
 @end
