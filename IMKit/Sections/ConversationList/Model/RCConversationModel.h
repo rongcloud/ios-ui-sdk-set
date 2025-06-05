@@ -166,12 +166,6 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @property (nonatomic, assign) int mentionedCount;
 
-/*!
- 已读人数
-
- */
-@property (nonatomic, assign) NSInteger readReceiptCount;
-
 
 /*!
  免打扰级别

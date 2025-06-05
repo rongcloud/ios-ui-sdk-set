@@ -13,11 +13,9 @@
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
-#import "RCConversationListDataSource+RRS.h"
-
 #define PagingCount 100
 
-@interface RCConversationListDataSource ()<RCReadReceiptV5Delegate>
+@interface RCConversationListDataSource ()
 @property (nonatomic, strong) dispatch_queue_t updateEventQueue;
 @property (nonatomic, assign) NSInteger currentCount;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, RCConversationModel *> *collectedModelDict;
@@ -136,6 +134,7 @@
             modelList = [self.delegate dataSource:self willReloadTableData:modelList];
         }
         modelList = [self collectConversation:modelList collectionTypes:self.collectionConversationTypeArray];
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataList = modelList;
             if (completion) {
@@ -487,7 +486,6 @@
                                              selector:@selector(didReceiveRecallMessageNotification:)
                                                  name:RCKitDispatchRecallMessageNotification
                                                object:nil];
-    [[RCCoreClient sharedCoreClient] addReadReceiptV5Delegate:self];
 }
 
 #pragma mark - helper
@@ -534,10 +532,5 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-#pragma mark - 已读回执v5
-- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
-    [self rrs_didReceiveMessageReadReceiptResponses:responses];
 }
 @end
