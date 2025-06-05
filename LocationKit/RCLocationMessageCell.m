@@ -9,6 +9,13 @@
 #import "RCLocationMessageCell.h"
 #import <RongLocation/RongLocation.h>
 
+@interface RCLocalConfiguration : NSObject
++ (instancetype)sharedInstance;
+@property (nonatomic, readonly) float locationImageQuality;
+@property (nonatomic, readonly) float locationImageWidth;
+@property (nonatomic, readonly) float locationImageHeight;
+@end
+
 @interface RCLocationMessageCell ()
 @property (nonatomic, strong) RCBaseImageView *maskView;
 @property (nonatomic, strong) RCBaseImageView *shadowMaskView;
