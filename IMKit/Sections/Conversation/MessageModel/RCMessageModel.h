@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
 
-NS_ASSUME_NONNULL_BEGIN
 /*!
  消息Cell的数据模型类
  */
@@ -28,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  用户信息
  */
-@property (nonatomic, strong, nullable) RCUserInfo *userInfo;
+@property (nonatomic, strong) RCUserInfo *userInfo;
 
 /*!
  会话类型
@@ -61,7 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
 
 /// 消息的接收状态类(针对接收的消息生效)
-@property (nonatomic, strong, nullable) RCReceivedStatusInfo *receivedStatusInfo;
+@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
 
 /*!
  消息的发送状态
@@ -91,12 +90,12 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  阅读回执状态
  */
-@property (nonatomic, strong, nullable) RCReadReceiptInfo *readReceiptInfo;
+@property (nonatomic, strong) RCReadReceiptInfo *readReceiptInfo;
 
 /*!
  消息的附加字段
  */
-@property (nonatomic, copy, nullable) NSString *extra;
+@property (nonatomic, copy) NSString *extra;
 
 /*!
  消息展示时的Cell高度
@@ -109,7 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   服务器消息唯一ID（在同一个Appkey下全局唯一）
  */
-@property (nonatomic, copy, nullable) NSString *messageUId;
+@property (nonatomic, copy) NSString *messageUId;
 
 /*!
  消息是否可以发送请求回执
@@ -136,21 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
  
   扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
 */
-@property (nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> *expansionDic;
-/*!
- 媒体消息上传进度
-*/
-@property (nonatomic, assign) NSInteger uploadProgress;
-
-/// 消息已读回执操作标识。
-///
-/// - Since: 5.20.0
-@property (nonatomic, assign) BOOL needReceipt;
-
-/// 已读回执是否已发送。
-///
-/// - Since: 5.20.0
-@property (nonatomic, assign) BOOL sentReceipt;
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *expansionDic;
 
 /*!
  初始化消息Cell的数据模型
@@ -168,4 +153,3 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (instancetype)initWithMessage:(RCMessage *)rcMessage;
 @end
-NS_ASSUME_NONNULL_END

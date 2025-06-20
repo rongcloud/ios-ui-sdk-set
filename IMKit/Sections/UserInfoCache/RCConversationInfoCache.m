@@ -8,7 +8,7 @@
 
 #import "RCConversationInfoCache.h"
 #import "RCThreadSafeMutableDictionary.h"
-#import "RCInfoProvider.h"
+#import "RCUserInfoCacheManager.h"
 #import "RCloudImageLoader.h"
 
 @interface RCConversationInfoCache ()

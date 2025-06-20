@@ -152,9 +152,7 @@
     if ([RCKitUtility isUnkownMessage:model.lastestMessageId content:model.lastestMessage] &&
         RCKitConfigCenter.message.showUnkownMessage) {
         return RCLocalizedString(@"unknown_message_cell_tip");
-    } else if ([model.lastestMessage isKindOfClass:[RCStreamMessage class]]) {
-        return [RCKitUtility formatStreamDigest:[[RCCoreClient sharedCoreClient] getMessage:model.lastestMessageId]];
-    }  else {
+    } else {
         return [RCKitUtility formatMessage:model.lastestMessage
                                   targetId:model.targetId
                           conversationType:model.conversationType];
