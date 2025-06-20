@@ -39,11 +39,6 @@
 
 - (void)didConnect:(NSString *)userId {
     self.userId = userId;
-    [[RCIM sharedRCIM]
-            .userInfoDataSource getUserInfoWithUserId:[RCStickerModule sharedModule].userId
-                                           completion:^(RCUserInfo *userInfo) {
-                                               self.userInfo = userInfo;
-                                           }];
     [[RCStickerDataManager sharedManager] managerInitialize];
 }
 
