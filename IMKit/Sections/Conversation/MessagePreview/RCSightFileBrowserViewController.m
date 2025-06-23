@@ -14,6 +14,8 @@
 #import "RCSemanticContext.h"
 #import "RCBaseTableViewCell.h"
 #import "RCBaseNavigationController.h"
+#import "RCUserInfoCacheManager.h"
+
 @interface RCSightFileBrowserViewController ()
 
 @property (nonatomic, strong) RCMessage *messageModel;
@@ -108,14 +110,17 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                                : [NSString stringWithFormat:@"%0.1fKB", sightMessage.size / 1024.0f];
     RCUserInfo *userInfo;
     if (self.messageModel.conversationType == ConversationType_GROUP) {
-        userInfo = [[RCIM sharedRCIM] getGroupUserInfoCache:model.senderUserId withGroupId:self.messageModel.targetId];
+        userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
+        RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+        if (userInfo) {
+            userInfo.alias = tempUserInfo.alias.length > 0 ? tempUserInfo.alias : userInfo.alias;
+        } else {
+            userInfo = tempUserInfo;
+        }
     } else {
         userInfo = [[RCIM sharedRCIM] getUserInfoCache:model.senderUserId];
     }
-    NSString *displayName = userInfo.name;
-    if (userInfo.alias.length > 0) {
-        displayName = userInfo.alias;
-    }
+    NSString *displayName = [RCKitUtility getDisplayName:userInfo];
     NSString *userName = displayName.length > 20
                              ? [NSString stringWithFormat:@"%@...", [displayName substringToIndex:20]]
                              : displayName;
