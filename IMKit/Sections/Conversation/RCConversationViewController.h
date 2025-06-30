@@ -442,6 +442,19 @@ typedef enum : NSUInteger {
 /// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
 - (void)didTapMessageCell:(RCMessageModel *)model;
 
+
+/// 长按Cell中的语音转文本内容的回调
+/// - Parameters:
+/// - Parameter model: 消息Cell的数据模型
+/// - Parameter view:  长按区域的View
+- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view;
+
+/// 获取长按Cell中的语音转文本时的菜单
+/// - Parameter model: 消息Cell的数据模型
+/// SDK在此长按事件中，会展示此方法返回的菜单。
+/// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
+- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model;
+
 /// 长按Cell中的消息内容的回调
 /// - Parameter model: 消息Cell的数据模型
 /// - Parameter view:  长按区域的View

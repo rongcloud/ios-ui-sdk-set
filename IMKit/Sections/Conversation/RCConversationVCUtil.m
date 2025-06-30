@@ -329,7 +329,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
     RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
-    message.needReceipt = YES;
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
         [[RCIM sharedRCIM] sendMediaMessage:message
                                 pushContent:pushContent
@@ -423,7 +422,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                                                    attributes:nil
                                                         error:nil];
     }
-    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.m4a", @(currentTime)];
+    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.aac", @(currentTime)];
     path = [path stringByAppendingPathComponent:fileName];
     return path;
 }
@@ -528,7 +527,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         return;
     }
     //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
-    if (self.chatVC.conversationType == ConversationType_PRIVATE ||
+    if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
+         ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
         self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
         self.chatVC.conversationType == ConversationType_SYSTEM) {
@@ -597,8 +597,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)canSendReadReceipt {
-    // 屏蔽已读回执V1
-    return NO;
     if((self.chatVC.conversationType == ConversationType_PRIVATE || self.chatVC.conversationType == ConversationType_Encrypted) &&
        [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         return YES;
@@ -612,8 +610,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
  *  @param array 需要回执响应的消息的列表
  */
 - (void)sendReadReceiptResponseForMessages:(NSArray *)array {
-    // 屏蔽已读回执v1
-    return;
     if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         NSMutableArray *readReceiptarray = [NSMutableArray array];
         for (int i = 0; i < array.count; i++) {
@@ -635,6 +631,9 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)enabledReadReceiptMessage:(RCMessageModel *)model {
-    return model.needReceipt;
+    if ([self.enabledReadReceiptMessageTypeList containsObject:model.objectName]) {
+        return YES;
+    }
+    return NO;
 }
 @end

@@ -13,11 +13,9 @@
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
-#import "RCConversationListDataSource+RRS.h"
-
 #define PagingCount 100
 
-@interface RCConversationListDataSource ()<RCReadReceiptV5Delegate>
+@interface RCConversationListDataSource ()
 @property (nonatomic, strong) dispatch_queue_t updateEventQueue;
 @property (nonatomic, assign) NSInteger currentCount;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, RCConversationModel *> *collectedModelDict;
@@ -85,7 +83,6 @@
                 }
                 modelList = [ws collectConversation:modelList collectionTypes:ws.collectionConversationTypeArray];
             }
-            [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(modelList.count > 0) {
                     [ws.dataList addObjectsFromArray:modelList.copy];
@@ -137,7 +134,7 @@
             modelList = [self.delegate dataSource:self willReloadTableData:modelList];
         }
         modelList = [self collectConversation:modelList collectionTypes:self.collectionConversationTypeArray];
-        [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataList = modelList;
             if (completion) {
@@ -231,9 +228,6 @@
                     [self.dataList insertObject:newModel atIndex:newIndex];
                     if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willInsertAtIndexPaths:)]) {
                         [self.delegate dataSource:self willInsertAtIndexPaths:@[ [NSIndexPath indexPathForRow:newIndex inSection:0] ]];
-                    }
-                    if (newModel) {
-                        [self rrs_refreshCachedAndFetchReceiptInfo:@[newModel]];
                     }
                 });
             }];
@@ -492,7 +486,6 @@
                                              selector:@selector(didReceiveRecallMessageNotification:)
                                                  name:RCKitDispatchRecallMessageNotification
                                                object:nil];
-    [[RCCoreClient sharedCoreClient] addReadReceiptV5Delegate:self];
 }
 
 #pragma mark - helper
@@ -539,15 +532,5 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-#pragma mark - 已读回执v5
-- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
-    if (!self.isConverstaionListAppear) {// 列表页不显示时无需处理
-        return;
-    }
-    dispatch_async(self.updateEventQueue, ^{
-        [self rrs_didReceiveMessageReadReceiptResponses:responses];
-    });
 }
 @end

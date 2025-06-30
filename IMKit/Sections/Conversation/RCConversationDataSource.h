@@ -81,8 +81,4 @@
 - (void)didReceiveMessageNotification:(RCMessage *)rcMessage leftDic:(NSDictionary *)leftDic;
 
 - (BOOL)isAtTheBottomOfTableView;
-
-/// 修改发送上下文中的 消息
-/// - Parameter message: 消息
-- (BOOL)updateForMessageSendSuccess:(RCMessage *)message;
 @end

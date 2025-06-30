@@ -50,8 +50,6 @@
         }
         self.canIncludeExpansion = rcMessage.canIncludeExpansion;
         self.expansionDic = rcMessage.expansionDic;
-        self.needReceipt = rcMessage.needReceipt;
-        self.sentReceipt = rcMessage.sentReceipt;
     }
 
     return self;

@@ -456,3 +456,10 @@
 
 "Saving"="Saving";
 "Content_Contains_Sensitive"="Setup failed, Content contains sensitive information";
+
+// STT
+"STTOperationFailed"="Voice to Text Conversion Failed";
+"STTMenuItemDo"="Convert to Text";
+"STTMenuItemUndo"="Cancel Transcription";
+"STTConvertFailureTips"="Unable to transcribe. Please check your network connection and try again";
+"STTConvertFailedByContentTips"="We can't transcribe this voice message because of its format";

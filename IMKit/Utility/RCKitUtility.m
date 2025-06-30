@@ -191,7 +191,12 @@
     } else if ([self isCommonMessage:messageContent]) {
         if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
             NSString *key = [messageContent performSelector:@selector(conversationDigest)];
-            return RCLocalizedString(key);
+            if ([messageContent isMemberOfClass:[RCFileMessage class]]) {
+                RCFileMessage* fileMsg = (RCFileMessage *)messageContent;
+                return [NSString stringWithFormat:@"%@ %@", RCLocalizedString(key), fileMsg.name.length == 0 ? @"" : fileMsg.name];
+            } else {
+                return RCLocalizedString(key);
+            }  
         }
         return @"";
     } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
@@ -259,7 +264,12 @@
     } else if ([self isCommonMessage:messageContent]) {
         if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
             NSString *key = [messageContent performSelector:@selector(conversationDigest)];
-            return RCLocalizedString(key);
+            if ([messageContent isMemberOfClass:[RCFileMessage class]]) {
+                RCFileMessage* fileMsg = (RCFileMessage *)messageContent;
+                return [NSString stringWithFormat:@"%@ %@", RCLocalizedString(key), fileMsg.name.length == 0 ? @"" : fileMsg.name];
+            } else {
+                return RCLocalizedString(key);
+            }
         }
         return @"";
     } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
@@ -308,16 +318,20 @@
 }
 
 + (BOOL)isVisibleMessage:(RCMessage *)message {
-    if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
+    BOOL isUnkownMessage = [self isUnkownMessage:message.messageId content:message.content];
+    if (isUnkownMessage && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
-    } else if (!message.content && message.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
+    } else  if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
         return YES;
     }
     return NO;
 }
 
 + (BOOL)isUnkownMessage:(long)messageId content:(RCMessageContent *)content {
-    if (!content && messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
+    if([content isKindOfClass:[RCUnknownMessage class]]) {
+        return YES;
+    }
+    if (!content && messageId > 0) {
         return YES;
     }
     return NO;

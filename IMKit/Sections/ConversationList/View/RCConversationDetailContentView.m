@@ -83,7 +83,8 @@
         if (self.prefixName.length == 0 || model.lastestMessageDirection == MessageDirection_SEND ||
             [model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]] ||
             [model.lastestMessage isKindOfClass:[RCInformationNotificationMessage class]] ||
-            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
+            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]] ||
+            [model.lastestMessage isKindOfClass:[RCUnknownMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
             messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];

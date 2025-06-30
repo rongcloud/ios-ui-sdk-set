@@ -65,7 +65,8 @@
 #import "RCIMThreadLock.h"
 #import "RCStreamMessageCell.h"
 #import "RCStreamUtilities.h"
-#import "RCConversationViewController+RRS.h"
+
+#import "RCConversationViewController+STT.h"
 
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
@@ -80,7 +81,7 @@ NSUInteger const RCStreamMessageTextLimit = 10000;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol, RCReadReceiptV5Delegate> {
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol> {
     int _defaultLocalHistoryMessageCount;
     int _defaultMessageCount;
     int _defaultRemoteHistoryMessageCount;
@@ -191,7 +192,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self registerNotification];
 
     [RCMessageSelectionUtility sharedManager].delegate = self;
-    [self rrs_observeReadReceiptV5];
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_10_3
     if (@available(iOS 11.0, *)) {
@@ -1019,7 +1019,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         }
         [cell setDataModel:model];
         [cell setDelegate:self];
-    } else if (!messageContent && RCKitConfigCenter.message.showUnkownMessage) {
+    } else if ((!messageContent || [messageContent isKindOfClass:[RCUnknownMessage class]]) && RCKitConfigCenter.message.showUnkownMessage) {
         cell = [self rcUnkownConversationCollectionView:collectionView cellForItemAtIndexPath:indexPath];
         [cell setDataModel:model];
         [cell setDelegate:self];
@@ -1105,7 +1105,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         }
     }
 
-    if (!messageContent && RCKitConfigCenter.message.showUnkownMessage) {
+    if ((!messageContent || [messageContent isKindOfClass:[RCUnknownMessage class]])&& RCKitConfigCenter.message.showUnkownMessage) {
         CGSize _size = [self rcUnkownConversationCollectionView:collectionView
                                                          layout:collectionViewLayout
                                          sizeForItemAtIndexPath:indexPath];
@@ -2354,6 +2354,15 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
+// 长按语音转文本内容
+- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view {
+    [self stt_didLongTouchSTTInfo:model inView:view];
+}
+
+- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model {
+    return [self stt_getLongTouchSTTInfoMenuList:model];
+}
+
 //长按消息内容
 - (void)didLongTouchMessageCell:(RCMessageModel *)model inView:(UIView *)view {
     //长按消息需要停止播放语音消息
@@ -2408,6 +2417,11 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         if ([model.content isMemberOfClass:[RCTextMessage class]] ||
             [model.content isMemberOfClass:[RCReferenceMessage class]]) {
             [items addObject:copyItem];
+        }
+        // 语音转文本
+        UIMenuItem *sttItem = [self stt_menuItemForModel:model];
+        if (sttItem) {
+            [items addObject:sttItem];
         }
         [items addObject:deleteItem];
         if ([self.util canRecallMessageOfModel:model]) {
@@ -2753,43 +2767,35 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     long messageId = message.messageId;
     RCMessageContent *content = message.content;
     DebugLog(@"message<%ld> send succeeded ", messageId);
-
     [self.csUtil startNotSendMessageAlertTimer];
 
     dispatch_async(dispatch_get_main_queue(), ^{
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
-        BOOL updated = [self.dataSource updateForMessageSendSuccess:message];
-        if (!updated) {
-            NSArray *conversationDataRepository = self.conversationDataRepository.copy;
-            for (RCMessageModel *model in conversationDataRepository) {
-                if (model.messageId == messageId) {
-                    model.sentStatus = SentStatus_SENT;
-                    if (model.messageId > 0) {
-                        if (message) {
-                            model.sentTime = message.sentTime;
-                            model.messageUId = message.messageUId;
-                            model.content = message.content;
-                            updated= YES;
-                        }
+        NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+        for (RCMessageModel *model in conversationDataRepository) {
+            if (model.messageId == messageId) {
+                model.sentStatus = SentStatus_SENT;
+                if (model.messageId > 0) {
+                    if (message) {
+                        model.sentTime = message.sentTime;
+                        model.messageUId = message.messageUId;
+                        model.content = message.content;
                     }
-                    break;
                 }
+                break;
             }
         }
-        if (!updated) {
-            for(RCMessageModel *model in self.dataSource.cachedReloadMessages){
-                if (model.messageId == messageId) {
-                    model.sentStatus = SentStatus_SENT;
-                    if (model.messageId > 0) {
-                        if (message) {
-                            model.sentTime = message.sentTime;
-                            model.messageUId = message.messageUId;
-                            model.content = message.content;
-                            updated= YES;
-                        }
+        for(RCMessageModel *model in self.dataSource.cachedReloadMessages){
+            if (model.messageId == messageId) {
+                model.sentStatus = SentStatus_SENT;
+                if (model.messageId > 0) {
+                    if (message) {
+                        model.sentTime = message.sentTime;
+                        model.messageUId = message.messageUId;
+                        model.content = message.content;
                     }
-                    break;
                 }
+                break;
             }
         }
         [self.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_SUCCESS messageId:messageId progress:0];
@@ -3459,6 +3465,28 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     return [super canPerformAction:action withSender:sender];
 }
 
+- (BOOL)resignFirstResponder {
+    // 🎯 当RCConversationViewController丧失第一响应者身份时，清空UIMenuController的菜单项
+    // 这样可以避免消息cell的菜单项残留，影响输入框的菜单显示
+    UIMenuController *menu = [UIMenuController sharedMenuController];
+    
+    // 只有当菜单项不为空时才进行清空操作，避免不必要的UI更新
+    if (menu.menuItems.count > 0) {
+        // iOS 13+ 和之前版本的兼容性处理
+        if (@available(iOS 13.0, *)) {
+            // iOS 13+ 使用新的API，需要同时隐藏菜单和清空菜单项
+            [menu hideMenuFromView:self.view];
+            [menu setMenuItems:nil];
+        } else {
+            // iOS 13以下使用传统方式
+            [menu setMenuItems:nil];
+            [menu setMenuVisible:NO animated:NO];
+        }
+    }
+    
+    return [super resignFirstResponder];
+}
+
 - (float)getSafeAreaExtraBottomHeight {
     return [RCKitUtility getWindowSafeAreaInsets].bottom;
 }
@@ -3826,9 +3854,5 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         }];
     }
     // phoneNumber
-}
-#pragma mark - 已读回执V5
-- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
-    [self rrs_didReceiveMessageReadReceiptResponses:responses];
 }
 @end

@@ -57,7 +57,7 @@ NSString *const RCKitDispatchConversationDraftUpdateNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.20.0.102_opensource";
+static NSString *const RCIMKitVersion = @"5.22.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -462,17 +462,14 @@ static NSString *const RCIMKitVersion = @"5.20.0.102_opensource";
         return YES;
     }
     
-    BOOL isCustomMessageAlert = YES;
     // 不入库的不响铃，不本地通知提醒 此处不要return
     if (!([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
-        isCustomMessageAlert = NO;
-    }
-    // 不识别消息的综合判断
-    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.messageId > 0 && !message.content) {
-        isCustomMessageAlert = YES;
+        return YES;
     }
     
-    if (!isCustomMessageAlert) {
+    BOOL isUnkownMessage = [RCKitUtility isUnkownMessage:message.messageId content:message.content];
+    // 未知消息不展示通知时，不提醒
+    if (!RCKitConfigCenter.message.showUnkownMessageNotificaiton && isUnkownMessage) {
         return YES;
     }
     
@@ -842,7 +839,7 @@ static NSString *const RCIMKitVersion = @"5.20.0.102_opensource";
     [self attachCurrentUserInfo:content];
 
     RCMessage *message = [[RCMessage alloc] initWithType:conversationType targetId:targetId direction:MessageDirection_SEND content:content];
-    message.needReceipt = YES;
+    
     // 查看是否拦截发送
     if ([self beforeInterceptSendMessage:message]) {
         return nil;

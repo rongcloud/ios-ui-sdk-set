@@ -179,7 +179,8 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                      result:(void (^)(NSString *senderName, NSString *pushContent))resultBlock
                  errorBlock:(void (^)(NSString *errorDescription))errorBlock {
     __block NSString *showMessage = nil;
-    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.objectName && !message.content) {
+    BOOL isUnknown = (!message.content || [message.content isKindOfClass:[RCUnknownMessage class]]);
+    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.objectName && isUnknown) {
         showMessage = RCLocalizedString(@"unknown_message_notification_tip");
     } else if (message.content.mentionedInfo.isMentionedMe) {
         if (!message.content.mentionedInfo.mentionedContent) {

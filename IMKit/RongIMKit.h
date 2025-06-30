@@ -177,6 +177,8 @@
 #import <RongIMKit/RCSearchGroupsViewController.h>
 #import <RongIMKit/RCMyGroupsView.h>
 
+// STT
+#import <RongIMKit/RCSTTContentViewModel.h>
 #else
 /// IMKit核心类
 #import "RCIM.h"
@@ -350,4 +352,6 @@
 #import "RCSearchGroupsViewController.h"
 #import "RCMyGroupsView.h"
 
+// STT
+#import "RCSTTContentViewModel.h"
 #endif
