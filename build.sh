@@ -73,7 +73,14 @@ rsync -a Sticker/Resource/* $res_path/ && rm -rf Sticker/Resource/
 rsync -a iFlyKit/Resource/* $res_path/ && rm -rf iFlyKit/Resource/
 rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
 
-sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
+#sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
+
+# 第一个替换：修复s.version行
+sed -i '' -E "/s\.version.*=/s/\"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?\"/\"$Version\"/g" RongCloudOpenSource.podspec
+
+# 第二个替换：修复kit.dependency行中的版本号
+sed -i '' -E "/kit\.dependency.*RongCloudIM\/IMLib/s/'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?'/'$Version'/g" RongCloudOpenSource.podspec
+
 
 ## 5. 提交代码
 git status
