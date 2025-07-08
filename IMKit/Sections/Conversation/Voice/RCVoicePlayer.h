@@ -8,13 +8,9 @@
 
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
-#import "RCMessageModel.h"
-
-/// 语音消息播放停止的Notification
-UIKIT_EXTERN NSString *const kNotificationVoiceWillPlayNotification;
-UIKIT_EXTERN NSString *const kRCContinuousPlayNotification;
 
 @protocol RCVoicePlayerObserver;
+
 @interface RCVoicePlayer : NSObject
 
 @property (nonatomic, readonly) BOOL isPlaying;
@@ -23,13 +19,11 @@ UIKIT_EXTERN NSString *const kRCContinuousPlayNotification;
 @property (nonatomic, copy) NSString *targetId;
 
 + (RCVoicePlayer *)defaultPlayer;
-
-- (void)playAudio:(RCMessageModel *)model;
-
 //- (BOOL)playVoice:(NSString *)messageId voiceData:(NSData *)data observer:(id<RCVoicePlayerObserver>)observer;
 - (BOOL)playVoice:(RCConversationType)conversationType
          targetId:(NSString *)targetId
         messageId:(long)messageId
+        direction:(RCMessageDirection)messageDirection
         voiceData:(NSData *)data
          observer:(id<RCVoicePlayerObserver>)observer;
 
