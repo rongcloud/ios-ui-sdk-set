@@ -43,7 +43,10 @@
 
 - (void)startCallId:(NSString *)callId userId:(NSString *)userId {
     NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:callId];
-    self.currentUUID = uuid;
+    self.currentUUID = uuid ?: [NSUUID UUID];
+    if (!self.currentUUID) {
+        return;
+    }
     //RCCallKit_Delete_end
 }
 

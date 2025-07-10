@@ -13,9 +13,9 @@
 
 #ifdef DEBUG
 //#define URLHost @"https://rcx-api-emoticon.rongcloud.net/"
-#define URLHost @"https://stickerservice.ronghub.com/"
+#define URLHost @"https://dualstack-emoticon.rong-edge.com/"
 #else
-#define URLHost @"https://stickerservice.ronghub.com/"
+#define URLHost @"https://dualstack-emoticon.rong-edge.com/"
 #endif
 #define PackageConfigPrefix @"emoticonservice/emopkgs"
 #define PackageZipPrefix @"emoticonservice/emopkgs/%@"

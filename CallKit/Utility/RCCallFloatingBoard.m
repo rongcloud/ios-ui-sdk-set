@@ -92,7 +92,7 @@ static NSString *RCVoipFloatingBoardPosY = @"RCVoipFloatingBoardPosY";
         if (!self.callSession.connectedTime) {
             return;
         }
-        long sec = [[NSDate date] timeIntervalSince1970] - self.callSession.connectedTime / 1000;
+        long sec = [[NSDate date] timeIntervalSince1970] - [[RCIMClient sharedRCIMClient] getDeltaTime] - self.callSession.connectedTime / 1000;
         [self.floatingButton setTitle:[RCCallKitUtility getReadableStringForTime:sec] forState:UIControlStateNormal];
         [self layoutTextUnderImageButton:self.floatingButton];
     }

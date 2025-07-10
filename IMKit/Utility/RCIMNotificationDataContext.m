@@ -199,10 +199,10 @@ static dispatch_once_t onceToken;
     } else {
         RCDLog(@"全局查询结束->没有缓存, 开始查询数据库");
         
-        [self queryGlobalNotificationLevelInDB:^(NSString *startTime, int spanMins, RCPushNotificationQuietHoursLevel level) {
+        [self queryGlobalNotificationLevelInDB:^(RCNotificationQuietHoursSetting *setting) {
             RCDLog(@"全局查询结束->没有缓存, 查询数据库成功, level: %ld", (long)level);
             
-            [self updateGlobalNotificationLevelWith:startTime duration:spanMins level:level];
+            [self updateGlobalNotificationLevelWith:setting];
             if (completion) {
                 completion(level);
             }
@@ -354,15 +354,17 @@ static dispatch_once_t onceToken;
 /// @param timeString 时间戳
 /// @param duration 时长
 /// @param level 等级
-+ (void)updateGlobalNotificationLevelWith:(NSString *__nullable)timeString
-                                 duration:(NSTimeInterval)duration
-                                    level:(RCPushNotificationQuietHoursLevel)level {
++ (void)updateGlobalNotificationLevelWith:(RCNotificationQuietHoursSetting *)setting {
     RCIMNotificationDataContext *context = [self currentDataContext];
-    NSString *dateString = [self fullDateStringBy:timeString];
+    NSString *dateString = [self fullDateStringBy:setting.startTime];
+    NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:setting.timezone];
+    if (timeZone) {
+        [context.formatter setTimeZone:timeZone];
+    }
     NSDate *dateBegin = [context.formatter dateFromString:dateString];
-    NSDate *dateEnd = [dateBegin dateByAddingTimeInterval:duration*60];
-    RCDLog(@"更新全局设置: begin: %@, end: %@, %f, %ld", [dateBegin description],[dateEnd description], duration, (long)level)
-    [self updateGlobalNotificationLevelWith:dateBegin dateEnd:dateEnd level:level];
+    NSDate *dateEnd = [dateBegin dateByAddingTimeInterval:setting.spanMins*60];
+    RCDLog(@"更新全局设置:timezone: %@, begin: %@, end: %@, %d, %ld", [timeZone description], [dateBegin description],[dateEnd description], setting.spanMins, (long)setting.level)
+    [self updateGlobalNotificationLevelWith:dateBegin dateEnd:dateEnd level:setting.level];
 }
 
 /// 更新全局通知
@@ -381,10 +383,8 @@ static dispatch_once_t onceToken;
 
 
 + (void)refreshGlobalNotificationLevel {
-    [self queryGlobalNotificationLevelInDB:^(NSString *startTime, int spanMins, RCPushNotificationQuietHoursLevel level) {
-        [self updateGlobalNotificationLevelWith:startTime
-                                       duration:spanMins
-                                          level:level];
+    [self queryGlobalNotificationLevelInDB:^(RCNotificationQuietHoursSetting *setting) {
+        [self updateGlobalNotificationLevelWith:setting];
     } error:^(RCErrorCode status) {
         
     }];
@@ -439,9 +439,13 @@ static dispatch_once_t onceToken;
     [self removeObservers];
 }
 
-+ (void)queryGlobalNotificationLevelInDB:(void(^)(NSString *startTime, int spanMins, RCPushNotificationQuietHoursLevel level))successBlock
++ (void)queryGlobalNotificationLevelInDB:(void(^)(RCNotificationQuietHoursSetting *setting))successBlock
                                    error:(void (^)(RCErrorCode status))errorBlock {
-    [[RCChannelClient sharedChannelManager] getNotificationQuietHoursLevel:successBlock error:errorBlock];
+    [[RCChannelClient sharedChannelManager] getNotificationQuietHoursSetting:^(RCNotificationQuietHoursSetting * _Nonnull setting) {
+        if (successBlock) {
+            successBlock(setting);
+        }
+    } error:errorBlock];
 }
 
 /// 从数据库中重新获取

@@ -180,17 +180,28 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)saveDraftIfNeed {
-    NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
-    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+    RCConversationType type = self.chatVC.conversationType;
+    NSString *targetId = self.chatVC.targetId?:@"";
+    NSString *channelId = self.chatVC.channelId?:@"";
+    NSString *draft = self.chatVC.chatSessionInputBarControl.draft?:@"";
+    NSDictionary *userInfo = @{
+        @"conversationType": @(type),
+        @"targetId": targetId,
+        @"channelId": channelId,
+        @"draft": draft,
+    };
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:type targetId:targetId channelId:channelId completion:^(NSString * _Nullable draftInDB) {
         if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
-                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
-                    
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:type targetId:targetId channelId:channelId content:draft completion:^(BOOL result) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                        object:nil userInfo:userInfo];
                 }];
             }
         } else if (draftInDB.length > 0){
             [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-                
+                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                    object:nil userInfo:userInfo];
             }];
         }
     }];
@@ -318,6 +329,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
     RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
+    message.needReceipt = YES;
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
         [[RCIM sharedRCIM] sendMediaMessage:message
                                 pushContent:pushContent
@@ -516,8 +528,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         return;
     }
     //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
-    if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
-         ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
+    if (self.chatVC.conversationType == ConversationType_PRIVATE ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
         self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
         self.chatVC.conversationType == ConversationType_SYSTEM) {
@@ -568,6 +579,10 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
+            // -1 无需发送已读回执
+            if (self.lastReadReceiptTime == -1) {
+                return;
+            }
             [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }
@@ -582,6 +597,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)canSendReadReceipt {
+    // 屏蔽已读回执V1
+    return NO;
     if((self.chatVC.conversationType == ConversationType_PRIVATE || self.chatVC.conversationType == ConversationType_Encrypted) &&
        [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         return YES;
@@ -595,6 +612,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
  *  @param array 需要回执响应的消息的列表
  */
 - (void)sendReadReceiptResponseForMessages:(NSArray *)array {
+    // 屏蔽已读回执v1
+    return;
     if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         NSMutableArray *readReceiptarray = [NSMutableArray array];
         for (int i = 0; i < array.count; i++) {
@@ -616,9 +635,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)enabledReadReceiptMessage:(RCMessageModel *)model {
-    if ([self.enabledReadReceiptMessageTypeList containsObject:model.objectName]) {
-        return YES;
-    }
-    return NO;
+    return model.needReceipt;
 }
 @end

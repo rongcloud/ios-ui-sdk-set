@@ -240,6 +240,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 
 - (void)dealloc {
     [self stopPlayRing];
+    [self stopActiveTimer];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -516,7 +517,7 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 
 - (void)updateActiveTimer {
     if (hangupButtonClick) return;
-    long sec = ([[NSDate date] timeIntervalSince1970] * 1000 - self.callSession.connectedTime) / 1000;
+    long sec = ([[NSDate date] timeIntervalSince1970] * 1000 - [[RCIMClient sharedRCIMClient] getDeltaTime] - self.callSession.connectedTime) / 1000;
     self.timeLabel.text = [RCCallKitUtility getReadableStringForTime:sec];
 
     if (sec >= 3600 && self.timeLabel.frame.size.width != 80) {
