@@ -17,10 +17,6 @@
 #import "RCResendManager.h"
 #import "RCCoreClient+Destructing.h"
 #import <RongPublicService/RongPublicService.h>
-#import "RCIM.h"
-#import "RCMessageModel+StreamCellVM.h"
-#import "RCMessageModel+RRS.h"
-
 // 头像
 #define PortraitImageViewTop 0
 // 气泡
@@ -174,7 +170,14 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             [self.messageActivityIndicatorView stopAnimating];
         }
     }
-    [self refreshReadReceiptStatusVisibility];
+    if (model.isCanSendReadReceipt) {
+        self.receiptView.hidden = NO;
+        self.receiptView.userInteractionEnabled = YES;
+        self.receiptStatusLabel.hidden = YES;
+    } else {
+        self.receiptView.hidden = YES;
+        self.receiptStatusLabel.hidden = NO;
+    }
 }
 
 - (void)updateStatusContentViewForRead:(RCMessageModel *)model {
@@ -535,7 +538,25 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)onReceiptStatusUpdate:(NSNotification *)notification {
-    // V5 无需处理
+    // 更新消息状态
+    NSDictionary *statusDic = notification.object;
+    NSUInteger conversationType = [statusDic[@"conversationType"] integerValue];
+    NSString *targetId = statusDic[@"targetId"];
+    long messageId = [statusDic[@"messageId"] longValue];
+    if (self.model.conversationType == conversationType && [self.model.targetId isEqualToString:targetId]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (messageId == self.model.messageId) {
+                self.receiptView.hidden = NO;
+                self.receiptView.userInteractionEnabled = YES;
+                self.receiptStatusLabel.hidden = YES;
+                self.model.isCanSendReadReceipt = YES;
+            } else {
+                self.receiptView.hidden = YES;
+                self.receiptStatusLabel.hidden = NO;
+                self.model.isCanSendReadReceipt = NO;
+            }
+        });
+    }
 }
 
 - (void)messageCellUpdateSendingStatusEvent:(NSNotification *)notification {
@@ -570,8 +591,12 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             self.model.sentStatus = SentStatus_READ;
             [self updateStatusContentView:self.model];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_READCOUNT] &&
-                   [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] ) {
-            [self refreshReadReceiptStatusVisibility];
+                   [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] &&
+                   (self.model.conversationType == ConversationType_GROUP ||
+                    self.model.conversationType == ConversationType_DISCUSSION)) {
+            self.receiptView.hidden = YES;
+            self.receiptStatusLabel.hidden = NO;
+            self.receiptStatusLabel.userInteractionEnabled = YES;
             self.receiptStatusLabel.text = [NSString
                 stringWithFormat:RCLocalizedString(@"readNum"), notifyModel.progress];
             [self updateStatusContentView:self.model];
@@ -580,7 +605,37 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)sendMessageReadReceiptRequest:(NSString *)messageUId {
-    // v5 无需发送请求
+    RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
+    if (message) {
+        if (!messageUId || [messageUId isEqualToString:@""]) {
+            return;
+        }
+        [[RCCoreClient sharedCoreClient] sendReadReceiptRequest:message success:^{
+            self.model.isCanSendReadReceipt = NO;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.receiptView.hidden = YES;
+                self.receiptView.userInteractionEnabled = NO;
+                self.receiptStatusLabel.hidden = NO;
+                self.receiptStatusLabel.userInteractionEnabled = YES;
+                self.receiptStatusLabel.text =
+                [NSString stringWithFormat:RCLocalizedString(@"readNum"), 0];
+                if (!self.model.readReceiptInfo) {
+                    self.model.readReceiptInfo = [[RCReadReceiptInfo alloc] init];
+                }
+                self.model.readReceiptInfo.isReceiptRequestMessage = YES;
+                if ([self.delegate respondsToSelector:@selector(didTapNeedReceiptView:)]) {
+                    [self.delegate didTapNeedReceiptView:self.model];
+                }
+            });
+        }error:^(RCErrorCode nErrorCode) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSString *tip = RCLocalizedString(@"SendReadReceiptRequestFailed");
+                if (tip.length > 0 && ![tip isEqualToString:@"SendReadReceiptRequestFailed"]) {
+                    [RCAlertView showAlertController:nil message:RCLocalizedString(@"SendReadReceiptRequestFailed") hiddenAfterDelay:1];
+                }
+            });
+        }];
+    }
 }
 
 - (void)p_showBubbleBackgroundView{
@@ -589,25 +644,30 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     }
 }
 
-- (void)refreshReadReceiptStatusVisibility {
-    self.receiptStatusLabel.hidden = YES;
-    self.receiptView.hidden = YES;
-    if (self.model.conversationType == ConversationType_PRIVATE) {//单聊仅显示标识
-        if ([self.model rrs_couldFetchReadReceiptV5] && self.model.readReceiptCount > 0 ) {
-            self.receiptView.hidden = NO;
-        }
-
-    } else if (self.model.conversationType == ConversationType_GROUP) {
-        if ([self.model rrs_couldFetchReadReceiptV5]) { // 需要显示已读回执时 显示人数
-            self.receiptStatusLabel.hidden = NO;
-            
-        }
-    }
-}
 - (void)p_setReadStatus{
-    [self refreshReadReceiptStatusVisibility];
-    self.receiptStatusLabel.text = [NSString
-        stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
+    if (self.model.readReceiptInfo.isReceiptRequestMessage && self.model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)]) {
+        self.receiptStatusLabel.hidden = NO;
+        self.receiptStatusLabel.userInteractionEnabled = YES;
+        self.receiptStatusLabel.text = [NSString
+            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
+    } else {
+        self.receiptStatusLabel.hidden = YES;
+        self.receiptStatusLabel.userInteractionEnabled = NO;
+        self.receiptStatusLabel.text = nil;
+    }
+
+    if (self.model.messageDirection == MessageDirection_SEND && self.model.sentStatus == SentStatus_SENT) {
+        if (self.model.isCanSendReadReceipt) {
+            self.receiptView.hidden = NO;
+            self.receiptView.userInteractionEnabled = YES;
+            self.receiptStatusLabel.hidden = YES;
+        } else {
+            self.receiptView.hidden = YES;
+            self.receiptStatusLabel.hidden = NO;
+        }
+    }else{
+        self.receiptView.hidden = YES;
+    }
 }
 
 - (void)p_setUserInfo{
@@ -628,25 +688,16 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         if (userId.length <= 0) {
             userId = model.content.senderUserInfo.userId;
         }
-        
-        if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [model.content.senderUserInfo.userId isEqualToString:model.senderUserId]) {
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+        model.userInfo = userInfo;
+        if (userInfo) {
             if (model.conversationType != ConversationType_Encrypted) {
-                [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
+                [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
             }
-            [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
-
+            [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
         } else {
-            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
-            model.userInfo = userInfo;
-            if (userInfo) {
-                if (model.conversationType != ConversationType_Encrypted) {
-                    [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                }
-                [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
-            } else {
-                [self.portraitImageView setImageURL:nil];
-                [self.nicknameLabel setText:nil];
-            }
+            [self.portraitImageView setImageURL:nil];
+            [self.nicknameLabel setText:nil];
         }
     }
 }
@@ -706,24 +757,13 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)p_setGroupInfo:(RCMessageModel *)model{
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [model.content.senderUserInfo.userId isEqualToString:model.senderUserId]) {
-        if (model.conversationType != ConversationType_Encrypted) {
-            [self.portraitImageView setImageURL:[NSURL URLWithString:model.content.senderUserInfo.portraitUri]];
-        }
-        [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.content.senderUserInfo]];
-        return;
-    }
     RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:self.model.targetId];
-    RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
+    RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:model.senderUserId];
+    userInfo.alias = tempUserInfo.alias;
+    model.userInfo = userInfo;
     if (userInfo) {
-        userInfo.alias = tempUserInfo.alias.length > 0 ? tempUserInfo.alias : userInfo.alias;
-        model.userInfo = userInfo;
-    } else {
-        model.userInfo = tempUserInfo;
-    }
-    if (model.userInfo) {
-        [self.portraitImageView setImageURL:[NSURL URLWithString:model.userInfo.portraitUri]];
-        [self.nicknameLabel setText:[RCKitUtility getDisplayName:model.userInfo]];
+        [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
     } else {
         [self.portraitImageView setImageURL:nil];
         [self.nicknameLabel setText:nil];
@@ -732,16 +772,13 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 #pragma mark - UserInfo Update
 - (void)onUserInfoUpdate:(NSNotification *)notification {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [self.model.content.senderUserInfo.userId isEqualToString:self.model.senderUserId]) {
-        return;
-    }
     NSDictionary *userInfoDic = notification.object;
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([self.model.senderUserId isEqualToString:userInfoDic[@"userId"]]) {
             if (self.model.conversationType == ConversationType_GROUP) {
                 //重新取一下混合的用户信息
                 RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-                RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
+                RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
                 userInfo.alias = tempUserInfo.alias;
                 [self updateUserInfoUI:userInfo];
             } else if (self.model.messageDirection == MessageDirection_SEND) {
@@ -758,16 +795,13 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement && [self.model.content.senderUserInfo.userId isEqualToString:self.model.senderUserId]) {
-        return;
-    }
     if (self.model.conversationType == ConversationType_GROUP) {
         NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
         if ([self.model.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
             [self.model.senderUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
             //重新取一下混合的用户信息
             RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-            RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
+            RCUserInfo *tempUserInfo = [[RCUserInfoCache sharedCache] getUserInfo:self.model.senderUserId];
             userInfo.alias = tempUserInfo.alias;
             [self updateUserInfoUI:userInfo];
         }

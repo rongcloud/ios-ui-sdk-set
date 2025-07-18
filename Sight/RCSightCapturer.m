@@ -295,6 +295,7 @@
             [[AVAudioSession sharedInstance] setActive:NO error:nil];
             [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
             [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            weakSelf.captureSession.automaticallyConfiguresApplicationAudioSession = NO;
             [weakSelf.captureSession startRunning];
         });
     }

@@ -562,6 +562,7 @@
 
 - (void)scrubbingDidStart {
     self.lastPlaybackRate = self.player.rate;
+    [self.player pause];
     if (self.timeObserver) {
         [self.player removeTimeObserver:self.timeObserver];
         _timeObserver = nil;
@@ -582,6 +583,7 @@
     [self addPlayerItemTimeObserver];
     if (self.lastPlaybackRate > 0.0f) {
         self.isPlaying = YES;
+        [self.player play];
     }
 }
 
@@ -691,7 +693,7 @@
                 CGPoint playBtnCenter = self.transport.centerPlayBtn.center;
                 self.errorTipsLabel.center =
                     CGPointMake(playBtnCenter.x, CGRectGetMaxY(self.transport.centerPlayBtn.frame) + 16);
-                self.errorTipsLabel.text = RCLocalizedString(@"VideoExpired");
+                self.errorTipsLabel.text = NSLocalizedStringFromTable(@"VideoExpired", @"RongCloudKit", nil);
                 [self.view addSubview:self.errorTipsLabel];
                 self.transport.centerPlayBtn.hidden = YES;
             });

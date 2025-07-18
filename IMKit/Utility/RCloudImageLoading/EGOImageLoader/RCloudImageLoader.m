@@ -305,8 +305,6 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
             errDomain = NSURLErrorDomain;
         }
         NSError *error = [NSError errorWithDomain:errDomain code:406 userInfo:nil];
-        RCLogE(@"image load error, imageUrl:%@, image type is illegal",connection.imageURL);
-        
 #if __EGOIL_USE_NOTIF
         NSNotification *notification =
             [NSNotification notificationWithName:kImageNotificationLoadFailed(connection.imageURL)
@@ -364,8 +362,6 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
     self.currentConnections = [currentConnections copy];
     [connectionsLock unlock];
 
-    RCLogE(@"image load error, imageUrl:%@,error:%@",connection.imageURL, error);
-    
 #if __EGOIL_USE_NOTIF
     NSNotification *notification =
         [NSNotification notificationWithName:kImageNotificationLoadFailed(connection.imageURL)

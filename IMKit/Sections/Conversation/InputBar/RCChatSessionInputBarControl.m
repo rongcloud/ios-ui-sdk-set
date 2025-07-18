@@ -1459,9 +1459,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                         [self.mentionedRangeInfoList addObject:mentionedInfo];
                     }
                 }
-                if ([self.delegate respondsToSelector:@selector(didSetDraft:)]) {
-                    [self.delegate didSetDraft:draftDict];
-                }
             }
         }
 
@@ -1474,13 +1471,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (draft.length > 0) {
         NSMutableDictionary *dataDict = [NSMutableDictionary new];
         [dataDict setObject:draft forKey:@"draftContent"];
-
-        if ([self.dataSource respondsToSelector:@selector(getDraftExtraInfo)]) {
-            NSDictionary *dict = [self.dataSource getDraftExtraInfo];
-            if ([dict isKindOfClass:[NSDictionary class]]) {
-                [dataDict addEntriesFromDictionary:dict];
-            }
-        }
 
         NSMutableArray *mentionedRangeInfoList = [NSMutableArray new];
         for (RCMentionedStringRangeInfo *mentionedInfo in self.mentionedRangeInfoList) {
