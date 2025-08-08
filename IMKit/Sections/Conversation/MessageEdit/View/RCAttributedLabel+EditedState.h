@@ -2,7 +2,7 @@
 //  RCAttributedLabel+EditedState.h
 //  RongIMKit
 //
-//  Created by Assistant on 2024/01/XX.
+//  Created by RongCloud on 2025/07/28.
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
@@ -21,11 +21,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// 设置带已编辑状态的文本内容
 /// @param text 原始文本内容
 /// @param isEdited 是否已编辑状态
-- (void)setTextWithEditedState:(NSString *)text isEdited:(BOOL)isEdited;
+- (void)edit_setTextWithEditedState:(NSString *)text isEdited:(BOOL)isEdited;
 
 /// 手动应用已编辑文本样式（异步调用）
 /// @param originalTextLength 原始文本长度，用于定位"已编辑"部分
-- (void)applyEditedTextStyleWithOriginalTextLength:(NSUInteger)originalTextLength;
+- (void)edit_applyEditedTextStyleWithOriginalTextLength:(NSUInteger)originalTextLength;
 
 @end
 
