@@ -124,5 +124,8 @@
 
 @property (nonatomic, strong) RCKitTranslationConfig *translationConfig;
 
+/// 是否开启消息编辑功能，默认为 NO
+@property (nonatomic, assign) BOOL enableEditMessage;
+
 @end
 

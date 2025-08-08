@@ -15,14 +15,14 @@
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.24.1</string>
+	<string>5.20.0</string>
 	<key>CFBundleVersion</key>
-	<string>202508041351</string>
+	<string>202508081826</string>
 	<key>RCVersion</key>
-	<string>5.24.1</string>
+	<string>5.20.0.104</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
 	<key>RCCommitId</key>
-	<string>31169dd23</string>
+	<string>fd07d18df</string>
 </dict>
 </plist>

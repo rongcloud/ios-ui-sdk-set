@@ -13,6 +13,7 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCIM.h"
+#import "RCAttributedLabel+EditedState.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -22,6 +23,7 @@
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) RCMessageContent *referedContent;
 @property (nonatomic, copy) NSString *referedSenderId;
+@property (nonatomic, assign) RCReferenceMessageStatus referMsgStatus;
 @end
 @implementation RCReferencedContentView
 - (instancetype)init {
@@ -51,6 +53,7 @@
         RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
         self.referedContent = content.referMsg;
         self.referedSenderId = content.referMsgUserId;
+        self.referMsgStatus = content.referMsgStatus;
         return YES;
     } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
         RCStreamMessage *content = (RCStreamMessage *)self.referModel.content;
@@ -62,6 +65,16 @@
 }
 
 - (void)setContentInfo {
+    if (self.referMsgStatus == RCReferenceMessageStatusDeleted) {
+        self.textLabel.text = RCLocalizedString(@"ReferencedMessageDeleted");
+    }else if (self.referMsgStatus == RCReferenceMessageStatusRecalled) {
+        self.textLabel.text = RCLocalizedString(@"ReferencedMessageRecalled");
+    }
+    if (self.referMsgStatus == RCReferenceMessageStatusDeleted
+        || self.referMsgStatus == RCReferenceMessageStatusRecalled) {
+        self.textLabel.textColor = [RCEditedStateUtil editedTextColor];
+        return;
+    }
     NSString *messageInfo = @"";
     if ([self.referedContent isKindOfClass:[RCFileMessage class]]) {
         RCFileMessage *msg = (RCFileMessage *)self.referedContent;
@@ -125,13 +138,20 @@
         }
     }
     
+    if (self.textLabel.text.length > 0 &&
+        self.referMsgStatus == RCReferenceMessageStatusModified) {
+        [self.textLabel edit_setTextWithEditedState:self.textLabel.text isEdited:YES];
+    }
 }
 
 - (void)setupSubviews {
     [self addSubview:self.leftLimitLine];
     [self addSubview:self.nameLabel];
     [self addSubview:self.contentView];
-    if ([self.referedContent isKindOfClass:[RCImageMessage class]]) {
+    BOOL isDeletedOrRecalled = (self.referMsgStatus == RCReferenceMessageStatusRecalled
+                                || self.referMsgStatus == RCReferenceMessageStatusDeleted);
+    // 删除撤回的图片显示 textLabel
+    if ([self.referedContent isKindOfClass:[RCImageMessage class]] && !isDeletedOrRecalled) {
         [self.contentView addSubview:self.msgImageView];
     } else if ([self.referedContent isKindOfClass:[RCRichContentMessage class]] ||
                [self.referedContent isKindOfClass:[RCFileMessage class]]) {
@@ -278,9 +298,9 @@
     return _contentView;
 }
 
-- (RCBaseLabel *)textLabel {
+- (RCAttributedLabel *)textLabel {
     if (!_textLabel) {
-        _textLabel = [[RCBaseLabel alloc] initWithFrame:self.contentView.bounds];
+        _textLabel = [[RCAttributedLabel alloc] initWithFrame:self.contentView.bounds];
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingMiddle];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];

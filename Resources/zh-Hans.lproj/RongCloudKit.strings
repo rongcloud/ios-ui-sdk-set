@@ -464,9 +464,18 @@
 "StreamFailedWithAutoRequest"="抱歉，消息未能完整加载请检查网络连接或稍后重试。";
 "StreamFailedWithRequesting"="消息加载不完整。可能由于网络问题，部分内容未能显示。请检查网络连接或稍后重试。";
 
-// STT
-"STTOperationFailed"="语音转换失败";
-"STTMenuItemDo"="转文字";
-"STTMenuItemUndo"="取消转文字";
-"STTConvertFailureTips"="当前网络不可用，无法转文字，请检查网络设置后再试";
-"STTConvertFailedByContentTips"="此语音消息格式不支持转文字功能";
+"Tip"="提示";
+"MessageEdit"="编辑";
+"MessageEditingAlert"="正在编辑另一条消息，确定编辑当前消息后，则之前编辑的消息内容将丢失。";
+"MessageEditDeletedAlert"="消息已删除，无法保存";
+"MessageEditRecalledAlert"="消息已撤回，无法保存";
+"MessageEditExpired"="编辑已过期";
+"MessageEditUpdating"="更新中...";
+"MessageEditFailed"="更新失败，点击重试";
+"MessageEditRetryFailed"="重试失败，请稍后再试！";
+"MessageEdited"="已编辑";
+"ReferencedMessageDeleted"="此消息已删除";
+"ReferencedMessageRecalled"="此消息已撤回";
+"MessageEditNotExist"="云端消息不存在，无法编辑";
+"MessageEditContentSensitive"="编辑内容含有敏感信息，更新失败";
+"MessageEditExpiredToast"="超过有效编辑时间，无法编辑";

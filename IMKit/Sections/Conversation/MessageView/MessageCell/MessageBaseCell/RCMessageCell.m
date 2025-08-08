@@ -7,6 +7,7 @@
 //
 
 #import "RCMessageCell.h"
+#import "RCMessageCell+EditStatus.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCUserInfoCacheManager.h"
@@ -19,6 +20,9 @@
 #import <RongPublicService/RongPublicService.h>
 #import "RCIM.h"
 #import "RCMessageModel+StreamCellVM.h"
+#import "RCMessageModel+RRS.h"
+#import "RCMessageCell+EditStatus.h"
+
 // 头像
 #define PortraitImageViewTop 0
 // 气泡
@@ -39,7 +43,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 //IMSDK-2705
 @property (nonatomic, strong) RCUserInfo *currentDisplayedUserInfo;
 
-@property (nonatomic, weak, readwrite) UICollectionView *hostCollectionView;
+/// 消息编辑状态
+@property (nonatomic, assign) RCMessageModifyStatus editStatus;
 
 @end
 @implementation RCMessageCell
@@ -93,24 +98,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     [self p_setUserInfo];
     [self setCellAutoLayout];
     [self messageDestructing];
+    [self edit_showEditStatusIfNeeded];
 }
 
-- (UICollectionView *)hostCollectionView {
-    if (!_hostCollectionView) {
-        _hostCollectionView = [self parentCollectionView];
-    }
-    return _hostCollectionView;
-}
-- (UICollectionView *)parentCollectionView {
-    UIView *view = self.superview;
-    while (view) {
-        if ([view isKindOfClass:[UICollectionView class]]) {
-            return (UICollectionView *)view;
-        }
-        view = view.superview;
-    }
-    return nil;
-}
 #pragma mark - Public Methods
 
 - (void)updateStatusContentView:(RCMessageModel *)model {
@@ -191,14 +181,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             [self.messageActivityIndicatorView stopAnimating];
         }
     }
-    if (model.isCanSendReadReceipt) {
-        self.receiptView.hidden = NO;
-        self.receiptView.userInteractionEnabled = YES;
-        self.receiptStatusLabel.hidden = YES;
-    } else {
-        self.receiptView.hidden = YES;
-        self.receiptStatusLabel.hidden = NO;
-    }
+    [self refreshReadReceiptStatusVisibility];
 }
 
 - (void)updateStatusContentViewForRead:(RCMessageModel *)model {
@@ -252,8 +235,12 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     self.messageActivityIndicatorView.hidden = YES;
     [self.statusContentView addSubview:self.receiptStatusLabel];
     [self.statusContentView addSubview:self.receiptView];
-
-
+    
+    [self.baseContentView addSubview:self.editStatusContentView];
+    [self.editStatusContentView addSubview:self.editStatusLabel];
+    [self.editStatusContentView addSubview:self.editRetryButton];
+    [self.editStatusContentView addSubview:self.editCircularLoadingView];
+    
     [self setPortraitStyle:RCKitConfigCenter.ui.globalMessageAvatarStyle];
 }
 
@@ -322,6 +309,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                     strongSelf.messageActivityIndicatorView.frame = strongSelf.messageFailedStatusView.frame;
                 }
             }
+            
             if (strongSelf.showBubbleBackgroundView) {
                 strongSelf.bubbleBackgroundView.frame = strongSelf.messageContentView.bounds;
             }
@@ -559,25 +547,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)onReceiptStatusUpdate:(NSNotification *)notification {
-    // 更新消息状态
-    NSDictionary *statusDic = notification.object;
-    NSUInteger conversationType = [statusDic[@"conversationType"] integerValue];
-    NSString *targetId = statusDic[@"targetId"];
-    long messageId = [statusDic[@"messageId"] longValue];
-    if (self.model.conversationType == conversationType && [self.model.targetId isEqualToString:targetId]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (messageId == self.model.messageId) {
-                self.receiptView.hidden = NO;
-                self.receiptView.userInteractionEnabled = YES;
-                self.receiptStatusLabel.hidden = YES;
-                self.model.isCanSendReadReceipt = YES;
-            } else {
-                self.receiptView.hidden = YES;
-                self.receiptStatusLabel.hidden = NO;
-                self.model.isCanSendReadReceipt = NO;
-            }
-        });
-    }
+    // V5 无需处理
 }
 
 - (void)messageCellUpdateSendingStatusEvent:(NSNotification *)notification {
@@ -612,12 +582,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             self.model.sentStatus = SentStatus_READ;
             [self updateStatusContentView:self.model];
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_READCOUNT] &&
-                   [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] &&
-                   (self.model.conversationType == ConversationType_GROUP ||
-                    self.model.conversationType == ConversationType_DISCUSSION)) {
-            self.receiptView.hidden = YES;
-            self.receiptStatusLabel.hidden = NO;
-            self.receiptStatusLabel.userInteractionEnabled = YES;
+                   [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)] ) {
+            [self refreshReadReceiptStatusVisibility];
             self.receiptStatusLabel.text = [NSString
                 stringWithFormat:RCLocalizedString(@"readNum"), notifyModel.progress];
             [self updateStatusContentView:self.model];
@@ -626,37 +592,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 }
 
 - (void)sendMessageReadReceiptRequest:(NSString *)messageUId {
-    RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:self.model.messageId];
-    if (message) {
-        if (!messageUId || [messageUId isEqualToString:@""]) {
-            return;
-        }
-        [[RCCoreClient sharedCoreClient] sendReadReceiptRequest:message success:^{
-            self.model.isCanSendReadReceipt = NO;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.receiptView.hidden = YES;
-                self.receiptView.userInteractionEnabled = NO;
-                self.receiptStatusLabel.hidden = NO;
-                self.receiptStatusLabel.userInteractionEnabled = YES;
-                self.receiptStatusLabel.text =
-                [NSString stringWithFormat:RCLocalizedString(@"readNum"), 0];
-                if (!self.model.readReceiptInfo) {
-                    self.model.readReceiptInfo = [[RCReadReceiptInfo alloc] init];
-                }
-                self.model.readReceiptInfo.isReceiptRequestMessage = YES;
-                if ([self.delegate respondsToSelector:@selector(didTapNeedReceiptView:)]) {
-                    [self.delegate didTapNeedReceiptView:self.model];
-                }
-            });
-        }error:^(RCErrorCode nErrorCode) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSString *tip = RCLocalizedString(@"SendReadReceiptRequestFailed");
-                if (tip.length > 0 && ![tip isEqualToString:@"SendReadReceiptRequestFailed"]) {
-                    [RCAlertView showAlertController:nil message:RCLocalizedString(@"SendReadReceiptRequestFailed") hiddenAfterDelay:1];
-                }
-            });
-        }];
-    }
+    // v5 无需发送请求
 }
 
 - (void)p_showBubbleBackgroundView{
@@ -665,30 +601,25 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     }
 }
 
-- (void)p_setReadStatus{
-    if (self.model.readReceiptInfo.isReceiptRequestMessage && self.model.messageDirection == MessageDirection_SEND && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.model.conversationType)]) {
-        self.receiptStatusLabel.hidden = NO;
-        self.receiptStatusLabel.userInteractionEnabled = YES;
-        self.receiptStatusLabel.text = [NSString
-            stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
-    } else {
-        self.receiptStatusLabel.hidden = YES;
-        self.receiptStatusLabel.userInteractionEnabled = NO;
-        self.receiptStatusLabel.text = nil;
-    }
-
-    if (self.model.messageDirection == MessageDirection_SEND && self.model.sentStatus == SentStatus_SENT) {
-        if (self.model.isCanSendReadReceipt) {
+- (void)refreshReadReceiptStatusVisibility {
+    self.receiptStatusLabel.hidden = YES;
+    self.receiptView.hidden = YES;
+    if (self.model.conversationType == ConversationType_PRIVATE) {//单聊仅显示标识
+        if ([self.model rrs_couldFetchReadReceiptV5] && self.model.readReceiptCount > 0 ) {
             self.receiptView.hidden = NO;
-            self.receiptView.userInteractionEnabled = YES;
-            self.receiptStatusLabel.hidden = YES;
-        } else {
-            self.receiptView.hidden = YES;
-            self.receiptStatusLabel.hidden = NO;
         }
-    }else{
-        self.receiptView.hidden = YES;
+
+    } else if (self.model.conversationType == ConversationType_GROUP) {
+        if ([self.model rrs_couldFetchReadReceiptV5]) { // 需要显示已读回执时 显示人数
+            self.receiptStatusLabel.hidden = NO;
+            
+        }
     }
+}
+- (void)p_setReadStatus{
+    [self refreshReadReceiptStatusVisibility];
+    self.receiptStatusLabel.text = [NSString
+        stringWithFormat:RCLocalizedString(@"readNum"), self.model.readReceiptCount];
 }
 
 - (void)p_setUserInfo{
@@ -843,17 +774,15 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         return;
     }
     if (self.model.conversationType == ConversationType_GROUP) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
-            if ([self.model.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
-                [self.model.senderUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
-                //重新取一下混合的用户信息
-                RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
-                RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
-                userInfo.alias = tempUserInfo.alias;
-                [self updateUserInfoUI:userInfo];
-            }
-        });
+        NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
+        if ([self.model.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
+            [self.model.senderUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
+            //重新取一下混合的用户信息
+            RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId inGroupId:self.model.targetId];
+            RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.model.senderUserId];
+            userInfo.alias = tempUserInfo.alias;
+            [self updateUserInfoUI:userInfo];
+        }
     }
 }
 
@@ -864,10 +793,12 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     self.currentDisplayedUserInfo = userInfo;
     
     self.model.userInfo = userInfo;
-    if (userInfo.portraitUri.length > 0) {
-        [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-    }
-    [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (userInfo.portraitUri.length > 0) {
+            [self.portraitImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+        }
+        [self.nicknameLabel setText:[RCKitUtility getDisplayName:userInfo]];
+    });
 }
 
 - (BOOL)isSameUserInfo:(RCUserInfo *)currentUserInfo other:(RCUserInfo *)other {
@@ -1089,6 +1020,65 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         [self.messageContentView addSubview:self.bubbleBackgroundView];
     }
     return _bubbleBackgroundView;
+}
+
+#pragma mark - Edit
+
+- (UIView *)editStatusContentView {
+    if (!_editStatusContentView) {
+        _editStatusContentView = [[UIView alloc] init];
+        _editStatusContentView.hidden = YES;
+    }
+    return _editStatusContentView;
+}
+
+//- (UIActivityIndicatorView *)editActivityIndicatorView {
+//    if (!_editActivityIndicatorView) {
+//        if (@available(iOS 13.0, *)) {
+//            _editActivityIndicatorView =
+//            [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
+//        } else {
+//            _editActivityIndicatorView =
+//            [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+//        }
+//        _editActivityIndicatorView.hidden = YES;
+//    }
+//    return _editActivityIndicatorView;
+//}
+
+- (RCCircularLoadingView *)editCircularLoadingView {
+    if (!_editCircularLoadingView) {
+        _editCircularLoadingView = [[RCCircularLoadingView alloc] init];
+        _editCircularLoadingView.hidden = YES;
+    }
+    return _editCircularLoadingView;
+}
+
+- (UILabel *)editStatusLabel {
+    if (!_editStatusLabel) {
+        _editStatusLabel = [[UILabel alloc] init];
+        _editStatusLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
+        _editStatusLabel.textColor = RCDYCOLOR(0x007AFF, 0x007AFF);
+        _editStatusLabel.textAlignment = NSTextAlignmentRight;
+        _editStatusLabel.hidden = YES;
+        _editStatusLabel.numberOfLines = 1;
+        _editStatusLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+    }
+    return _editStatusLabel;
+}
+
+- (UIButton *)editRetryButton {
+    if (!_editRetryButton) {
+        NSString *title = [NSString stringWithFormat:@" %@", RCLocalizedString(@"MessageEditFailed")];
+        _editRetryButton = [[UIButton alloc] init];
+        [_editRetryButton setImage:RCResourceImage(@"edit_retry") forState:UIControlStateNormal];
+        [_editRetryButton setTitle:title forState:UIControlStateNormal];
+        [_editRetryButton setTitleColor:RCDYCOLOR(0xFF5A50, 0xFF5A50) forState:UIControlStateNormal];
+        _editRetryButton.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
+        [_editRetryButton addTarget:self action:@selector(edit_didTapEditRetryButton:) forControlEvents:UIControlEventTouchUpInside];
+        _editRetryButton.hidden = YES;
+    }
+    return _editRetryButton;
 }
 
 @end

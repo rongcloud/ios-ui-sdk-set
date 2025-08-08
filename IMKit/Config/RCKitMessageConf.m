@@ -36,6 +36,7 @@
         self.enableMessageReference = YES;
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
+        self.enableEditMessage = NO;
     }
     return self;
 }

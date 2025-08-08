@@ -10,6 +10,7 @@
 #import "RCMessageModel.h"
 #import "RCBaseImageView.h"
 #import "RCBaseLabel.h"
+#import "RCAttributedLabel.h"
 #define name_and_image_view_space 5
 @protocol RCReferencedContentViewDelegate <NSObject>
 @optional
@@ -25,7 +26,7 @@
 @property (nonatomic, strong) RCBaseLabel *nameLabel;
 
 /// 被引用消息内容文本 label
-@property (nonatomic, strong) UILabel *textLabel;
+@property (nonatomic, strong) RCAttributedLabel *textLabel;
 
 /// 被引用图片消息显示的 View
 @property (nonatomic, strong) RCBaseImageView *msgImageView;

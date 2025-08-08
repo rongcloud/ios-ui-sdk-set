@@ -258,6 +258,7 @@
     return RCLocalizedString(@"Delete");
 }
 
+
 #pragma mark - Target action
 - (void)deleteAndReloadConversationCell:(RCConversationModel *)model{
     [self didDeleteConversationCell:model];
