@@ -72,12 +72,7 @@ typedef NS_ENUM(NSInteger, RCChatSessionInputBarControlType) {
     /*!
      客服机器人
      */
-    RCChatSessionInputBarControlNoAvailableType = 3,
-    
-    /*!
-     编辑模式
-     */
-    RCChatSessionInputBarControlEditType = 4
+    RCChatSessionInputBarControlNoAvailableType = 3
 };
 
 /*!

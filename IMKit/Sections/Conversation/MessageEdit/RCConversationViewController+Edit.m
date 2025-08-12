@@ -81,6 +81,16 @@
     [self.editInputBarControl hideBottomPanels];
 }
 
+- (BOOL)edit_markEditIsExpired:(RCEditInputBarControl *)inputBar {
+    if (!self.editingInputBarConfig
+        || ![self.util isEditTimeValid:self.editingInputBarConfig.sentTime]) {
+
+        [inputBar markEditAsExpired];
+        return YES;
+    }
+    return NO;
+}
+
 #pragma mark - 编辑逻辑
 
 // 点击更多按钮会触发的逻辑
@@ -130,6 +140,7 @@
     
     if (self.editingInputBarConfig) {
         [RCAlertView showAlertController:RCLocalizedString(@"Tip") message:RCLocalizedString(@"MessageEditingAlert") actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"Confirm") preferredStyle:(UIAlertControllerStyleAlert) actionsBlock:nil cancelBlock:nil confirmBlock:^{
+            self.editingInputBarConfig = nil;
             [self edit_enterEditWithModel:self.currentSelectedModel];
         } inViewController:self];
         return;
@@ -186,21 +197,31 @@
     config.referencedContent = referencedContent;
     config.mentionedInfo = mentionedInfo;
     // 进入编辑
-    [self edit_showEditBarWithConfig:config];
+    [self edit_showEditBarWithConfig:config becomeFirstResponder:YES];
 }
 
-- (void)edit_showEditBarWithConfig:(RCEditInputBarConfig *)config {
+- (void)edit_showEditBarWithConfig:(RCEditInputBarConfig *)config
+              becomeFirstResponder:(BOOL)becomeFirstResponder {
     // 进入编辑时清除已有缓存
     [self edit_clearSavedEditState];
     
-    self.editingInputBarConfig = config;
+    // 只有退出编辑或第一次编辑时，才需重新保存 editingInputBarConfig，避免从全屏页面返回时被重置
+    if (!self.editingInputBarConfig) {
+        self.editingInputBarConfig = config;
+    }
     
     void (^showEditBlock)(void) = ^{
-        [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
-        self.chatSessionInputBarControl.hidden = YES;
-
+        if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
+            [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
+        }
+        if (!self.chatSessionInputBarControl.hidden) {
+            self.chatSessionInputBarControl.hidden = YES;
+        }
         [self.editInputBarControl showWithConfig:config];
-        [self.editInputBarControl restoreFocus];
+        [self edit_markEditIsExpired:self.editInputBarControl];
+        if (becomeFirstResponder) {
+            [self.editInputBarControl restoreFocus];
+        }
     };
     
     if (![NSThread isMainThread]) {
@@ -216,9 +237,9 @@
     } inViewController:self];
 }
 
-- (void)checkConfirmData:(RCEditInputBarControl *)editInputBarControl
-                        text:(NSString *)text
-                  completion:(void (^)(RCMessageModel * _Nullable message))completion {
+- (void)edit_checkConfirmData:(RCEditInputBarControl *)editInputBarControl
+                         text:(NSString *)text
+                   completion:(void (^)(RCMessageModel * _Nullable message))completion {
     
     void (^safeCompletion)(RCMessageModel * _Nullable model) = ^(RCMessageModel * _Nullable model){
         if (completion) {
@@ -236,8 +257,7 @@
         safeCompletion(nil);
         return;
     }
-    if (![self.util isEditTimeValid:self.editingInputBarConfig.sentTime]) {
-        [editInputBarControl markEditAsExpired];
+    if ([self edit_markEditIsExpired:editInputBarControl]) {
         safeCompletion(nil);
         return;
     }
@@ -292,27 +312,18 @@
     modifyParams.messageUId = model.messageUId;
     modifyParams.messageContent = newContent;
     
-    void (^completeBlock)(RCMessage *, RCErrorCode) = ^(RCMessage * _Nonnull message, RCErrorCode code){
+    void (^completeBlock)(RCMessage *, RCErrorCode) = ^(RCMessage * _Nonnull editedMessage, RCErrorCode code){
         [self edit_showEditErrorAlert:code isRetry:isRetry];
         
-        if (!message || message.messageId <= 0) {
+        if (!editedMessage) {
+            if (model.modifyInfo) {
+                model.modifyInfo.status = RCMessageModifyStatusSuccess;
+            }
+            [self edit_refreshEditedMessageByMessageModel:model];
             return;
         }
-        
-        if ([message.content isKindOfClass:[RCReferenceMessage class]]) {
-            // 如果是引用消息，需要查询被引用消息的最新状态
-            [self.dataSource edit_refreshReferenceMessage:@[message] complete:^(NSArray<RCMessage *> * _Nonnull messages) {
-                for (RCMessage *newMsg in messages) {
-                    if ([newMsg.messageUId isEqualToString:message.messageUId]) {
-                        RCMessageModel *editedModel = [RCMessageModel modelWithMessage:newMsg];
-                        [self edit_refreshEditedMessageByMessageModel:editedModel];
-                    }
-                }
-            }];
-        } else {
-            RCMessageModel *editedModel = [RCMessageModel modelWithMessage:message];
-            [self edit_refreshEditedMessageByMessageModel:editedModel];
-        }
+        RCMessageModel *editedModel = [RCMessageModel modelWithMessage:editedMessage];
+        [self edit_refreshEditedMessageByMessageModel:editedModel];
     };
     
     [[RCCoreClient sharedCoreClient] modifyMessageWithParams:modifyParams completionHandler:^(RCMessage * _Nonnull message, RCErrorCode code) {
@@ -385,7 +396,6 @@
 
 - (void)edit_saveNormalInputDraftIfNeed {
     [self.util saveDraftIfNeed];
-    [self.chatSessionInputBarControl clearInputData];
 }
 
 - (void)edit_restoreNoramlInputDarftIfNeed {
@@ -410,23 +420,23 @@
     if (!editConfig || editConfig.cachedStateData.count == 0) {
         return;
     }
-    [self edit_showEditBarWithConfig:editConfig];
+    [self edit_showEditBarWithConfig:editConfig becomeFirstResponder:YES];
 
     return;
 }
 
 - (void)edit_saveCurrentEditStateIfNeeded {
-    if ([self edit_shouldSaveCurrentState]) {
-        NSDictionary *stateData = [self.editInputBarControl stateData];
-        self.editingInputBarConfig.cachedStateData = stateData;
-        [self.util saveEditingStateWithEditConfig:self.editingInputBarConfig];
+    if (![self edit_isMessageEditing]) {
+        return;
     }
-}
-
-- (BOOL)edit_shouldSaveCurrentState {
-    // hasContent 有编辑内容
-    return ([self edit_isMessageEditing]
-            && [self.editInputBarControl hasContent]);
+    RCEditInputBarControl *editInputBar = [self edit_currentActiveEditInputBarControl];
+    if ([editInputBar hasContent]) {
+        self.editingInputBarConfig.cachedStateData = editInputBar.stateData;
+        [self.util saveEditingStateWithEditConfig:self.editingInputBarConfig];
+    } else {
+        // 如果编辑输入框没有内容，需要清空缓存的数据
+        [self.util clearEditingState];
+    }
 }
 
 - (void)edit_clearSavedEditState {
@@ -455,7 +465,8 @@
     // 退出并清空编辑状态
     [self.editInputBarControl exitWithAnimation:animated completion:^{
         self.editingInputBarConfig = nil;
-        [self.util clearEditingState];
+        [self.editInputBarControl resetEditInputBar];
+        [self edit_clearSavedEditState];
         if (completion) {
             completion();
         }
@@ -471,11 +482,18 @@
     }
 }
 
+- (RCEditInputBarControl *)edit_currentActiveEditInputBarControl {
+    // 全屏编辑因为在界面上会覆盖普通编辑，所以优先返回全屏编辑
+    return self.fullScreenEditView ?
+    self.fullScreenEditView.editInputBarControl :
+    self.editInputBarControl;
+}
+
 #pragma mark - 编辑 Delegate 实现方法
 
 - (void)edit_editInputBarControl:(RCEditInputBarControl *)editInputBarControl didConfirmWithText:(NSString *)text {
     if (self.editingInputBarConfig) {
-        [self checkConfirmData:editInputBarControl text:text completion:^(RCMessageModel *model) {
+        [self edit_checkConfirmData:editInputBarControl text:text completion:^(RCMessageModel *model) {
             if (model) {
                 [self edit_didUpdateMessageWithText:text mentionedInfo:editInputBarControl.mentionedInfo messageModel:model];
                 // 退出编辑模式
@@ -591,10 +609,7 @@
         
         [self.fullScreenEditView showWithConfig:config animation:YES];
         
-        // 如果编辑时间已过期，修改编辑状态
-        if (![self.util isEditTimeValid:self.editingInputBarConfig.sentTime]) {
-            [self.fullScreenEditView.editInputBarControl markEditAsExpired];
-        }
+        [self edit_markEditIsExpired:self.fullScreenEditView.editInputBarControl];
     }];
 }
 
@@ -603,11 +618,8 @@
 - (void)edit_fullScreenEditViewCollapse:(RCFullScreenEditView *)fullScreenEditView {
     RCEditInputBarConfig *config = [[RCEditInputBarConfig alloc] init];
     config.cachedStateData = fullScreenEditView.editInputBarControl.stateData;
-    [self.editInputBarControl showWithConfig:config];
-    // 如果编辑时间已过期，修改编辑状态
-    if (![self.util isEditTimeValid:self.editingInputBarConfig.sentTime]) {
-        [self.editInputBarControl markEditAsExpired];
-    }
+    [self edit_showEditBarWithConfig:config becomeFirstResponder:NO];
+    
     [self edit_exitFullScreenEditView:^{
         [self.editInputBarControl restoreFocus];
     }];
@@ -629,7 +641,7 @@
 }
 
 - (void)edit_fullScreenEditView:(RCFullScreenEditView *)fullScreenEditView didConfirmWithText:(NSString *)text {
-    [self checkConfirmData:fullScreenEditView.editInputBarControl text:text completion:^(RCMessageModel *model) {
+    [self edit_checkConfirmData:fullScreenEditView.editInputBarControl text:text completion:^(RCMessageModel *model) {
         if (model) {
             [self edit_exitFullScreenEditView:^{
                 [self edit_didUpdateMessageWithText:text

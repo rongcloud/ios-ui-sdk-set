@@ -13,7 +13,7 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCIM.h"
-#import "RCAttributedLabel+EditedState.h"
+#import "RCEditedStateUtil.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -138,9 +138,32 @@
         }
     }
     
-    if (self.textLabel.text.length > 0 &&
-        self.referMsgStatus == RCReferenceMessageStatusModified) {
-        [self.textLabel edit_setTextWithEditedState:self.textLabel.text isEdited:YES];
+    if (([self.referedContent isKindOfClass:[RCTextMessage class]]
+         || [self.referedContent isKindOfClass:[RCReferenceMessage class]])
+        && self.textLabel.text.length > 0
+        && self.referMsgStatus == RCReferenceMessageStatusModified) {
+        NSString *originalText = self.textLabel.text;
+        UIColor *originalColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:HEXCOLOR(0x999999)];
+        UIColor *editedTextColor = [RCEditedStateUtil editedTextColor];
+        UIFont *font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
+        NSString *displayText = [RCEditedStateUtil displayTextForOriginalText:originalText isEdited:YES];
+        
+        if (displayText.length > originalText.length) {
+            
+            NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:displayText
+                                                                                               attributes:@{
+                NSFontAttributeName: font,
+                NSForegroundColorAttributeName: originalColor
+            }];
+            
+            NSRange originalRange = NSMakeRange(0, originalText.length);
+            NSRange editedRange = NSMakeRange(originalText.length, displayText.length - originalText.length);
+        
+            [attributedText addAttribute:NSForegroundColorAttributeName
+                                       value:[RCEditedStateUtil editedTextColor]
+                                       range:editedRange];
+            self.textLabel.attributedText = attributedText;
+        }
     }
 }
 
@@ -298,9 +321,9 @@
     return _contentView;
 }
 
-- (RCAttributedLabel *)textLabel {
+- (RCBaseLabel *)textLabel {
     if (!_textLabel) {
-        _textLabel = [[RCAttributedLabel alloc] initWithFrame:self.contentView.bounds];
+        _textLabel = [[RCBaseLabel alloc] initWithFrame:self.contentView.bounds];
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingMiddle];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];

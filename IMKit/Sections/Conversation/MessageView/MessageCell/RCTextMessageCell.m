@@ -171,7 +171,8 @@
     }
     
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && !numDuration) {
-        self.textLabel.text = RCLocalizedString(@"ClickToView");
+        // 统一调用 edit_setTextWithEditedState 设置文本，防止重复出现问题
+        [self.textLabel edit_setTextWithEditedState:RCLocalizedString(@"ClickToView") isEdited:NO];
     } else if (textMessage){
         [self.textLabel edit_setTextWithEditedState:textMessage.content isEdited:self.model.hasChanged];
     } else {

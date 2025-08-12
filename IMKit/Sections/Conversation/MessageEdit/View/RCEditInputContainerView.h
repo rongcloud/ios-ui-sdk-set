@@ -41,9 +41,6 @@ typedef NS_ENUM(NSInteger, RCEditHeightMode) {
 /// 输入框编辑状态（用于键盘弹起判断）
 @property (nonatomic, assign, readonly) BOOL textViewBeginEditing;
 
-/// 当前底部栏状态
-@property (nonatomic, assign) KBottomBarStatus currentBottomBarStatus;
-
 #pragma mark - 编辑模式按钮
 
 /// 展开/收起按钮

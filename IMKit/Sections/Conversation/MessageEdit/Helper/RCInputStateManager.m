@@ -220,7 +220,7 @@
                 // 位置仍然有效，更新Range
                 mentionedInfo.range = NSMakeRange(newLocation, mentionedInfo.range.length);
             } else {
-                // 位置变成负数，说明@信息已被删除操作影响，移除无效数据
+                // 位置变成负数，说明 @ 信息已被删除操作影响，移除无效数据
                 [self.mentionedRangeInfoList removeObject:mentionedInfo];
             }
         }
@@ -272,14 +272,7 @@
 - (BOOL)hasContent {
     // 检查文本内容
     BOOL hasText = (self.textView.text.length > 0);
-    
-    // 检查'@'信息
-    BOOL hasMentionedUsers = (self.mentionedRangeInfoList.count > 0);
-    
-    // ✅ 检查引用消息信息（新增）
-    BOOL hasReferenceInfo = self.hasReferenceInfo;
-    
-    return hasText || hasMentionedUsers || hasReferenceInfo;
+    return hasText;
 }
 
 - (NSDictionary *)stateData {
@@ -292,7 +285,7 @@
     NSMutableDictionary *stateData = [NSMutableDictionary dictionary];
     [stateData setObject:textContent forKey:@"textContent"];
     
-    // 保存'@'信息列表
+    // 保存 @ 信息列表
     if (self.mentionedRangeInfoList.count > 0) {
         NSMutableArray *mentionedRangeInfoList = [NSMutableArray array];
         for (RCMentionedStringRangeInfo *info in self.mentionedRangeInfoList) {
@@ -304,7 +297,7 @@
         [stateData setObject:mentionedRangeInfoList forKey:@"mentionedRangeInfoList"];
     }
     
-    // ✅ 引用消息信息（新增）
+    // 引用消息信息
     if (self.hasReferenceInfo) {
         NSMutableDictionary *referenceInfo = [NSMutableDictionary dictionary];
         if (self.referencedSenderName) referenceInfo[@"senderName"] = self.referencedSenderName;

@@ -158,6 +158,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param hidden 是否隐藏
 - (void)hideEditInputBar:(BOOL)hidden;
 
+/// 重置编辑控件，清空编辑内容
+- (void)resetEditInputBar;
+
 #pragma mark - 状态保存和恢复
 
 /// 获取当前编辑状态数据（用于保存编辑状态）

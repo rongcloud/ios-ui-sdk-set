@@ -7,6 +7,7 @@
 //
 
 #import "RCAttributedLabel.h"
+#import "RCEditedStateUtil.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,45 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param text 原始文本内容
 /// @param isEdited 是否已编辑状态
 - (void)edit_setTextWithEditedState:(NSString *)text isEdited:(BOOL)isEdited;
-
-/// 手动应用已编辑文本样式（异步调用）
-/// @param originalTextLength 原始文本长度，用于定位"已编辑"部分
-- (void)edit_applyEditedTextStyleWithOriginalTextLength:(NSUInteger)originalTextLength;
-
-@end
-
-#pragma mark - 工具方法
-
-/**
- * 已编辑状态工具类
- * 提供已编辑状态相关的实用方法
- */
-@interface RCEditedStateUtil : NSObject
-
-/// 获取显示用的文本（包含已编辑标识）
-/// @param originalText 原始文本
-/// @param isEdited 是否已编辑
-/// @return 显示用的文本
-+ (NSString *)displayTextForOriginalText:(NSString *)originalText isEdited:(BOOL)isEdited;
-
-/// 获取已编辑文本的颜色配置
-/// @return 已编辑文本颜色
-+ (UIColor *)editedTextColor;
-
-/// 获取已编辑标识文本
-/// @return 已编辑标识（"（已编辑）"）
-+ (NSString *)editedSuffix;
-
-/// 计算包含已编辑状态的文本尺寸
-/// @param originalText 原始文本
-/// @param isEdited 是否已编辑
-/// @param font 字体
-/// @param constrainedSize 约束尺寸
-/// @return 文本尺寸
-+ (CGSize)sizeForText:(NSString *)originalText 
-             isEdited:(BOOL)isEdited 
-                 font:(UIFont *)font 
-      constrainedSize:(CGSize)constrainedSize;
 
 @end
 

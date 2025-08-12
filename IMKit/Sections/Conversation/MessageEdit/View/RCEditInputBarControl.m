@@ -179,6 +179,13 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     // 通知外部frame变化
     [self notifyFrameChange:targetFrame];
 }
+    
+- (void)resetEditInputBar {
+    self.editInputContainer.inputTextView.text = @"";
+    [self.editInputContainer clearReferencedMessage];
+    [self restoreEditStatus];
+    [self.inputStateManager clearAllStates];
+}
 
 /// 计算目标frame
 /// @param hidden 是否隐藏
@@ -193,13 +200,6 @@ extern NSString *const RCKitKeyboardWillShowNotification;
         // 显示时：恢复到保存的frame
         return self.savedFrame;
     }
-}
-
-/// 完成隐藏状态设置
-/// @param hidden 是否隐藏
-/// @param frame 目标frame
-- (void)completeHiddenState:(BOOL)hidden withFrame:(CGRect)frame {
-    
 }
 
 /// 通知代理frame变化

@@ -733,18 +733,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     [userDefaults synchronize];
 }
 
-//- (void)getEditingState:(void (^)(RCEditInputBarConfig *editConfig))completion {
-//    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-//    NSDictionary *stateData = [userDefaults objectForKey:[self editingStateDataKey]];
-//    if (stateData && stateData.count > 0 && completion) {
-//        RCEditInputBarConfig *editConfig = [[RCEditInputBarConfig alloc] init];
-//        editConfig.messageUId = [stateData objectForKey:@"messageUId"];
-//        editConfig.sentTime = [[stateData objectForKey:@"sentTime"] longLongValue];
-//        editConfig.cachedStateData = [stateData objectForKey:@"stateData"];
-//        completion(editConfig);
-//    }
-//}
-
 - (RCEditInputBarConfig *)getCacheEditConfig {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *stateData = [userDefaults objectForKey:[self editingStateDataKey]];

@@ -26,7 +26,7 @@
 @property (nonatomic, strong) RCBaseLabel *nameLabel;
 
 /// 被引用消息内容文本 label
-@property (nonatomic, strong) RCAttributedLabel *textLabel;
+@property (nonatomic, strong) UILabel *textLabel;
 
 /// 被引用图片消息显示的 View
 @property (nonatomic, strong) RCBaseImageView *msgImageView;

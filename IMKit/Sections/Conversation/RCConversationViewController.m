@@ -52,7 +52,6 @@
 #import "RCConversationVCUtil.h"
 #import "RCConversationCSUtil.h"
 #import "RCKitConfig.h"
-#import "RCTextPreviewView.h"
 #import <RongPublicService/RongPublicService.h>
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongCustomerService/RongCustomerService.h>
@@ -72,6 +71,8 @@
 #import "RCConversationViewController+RRS.h"
 #import "RCUserListViewController.h"
 #import "RCConversationDataSource+Edit.h"
+#import "RCMessageModel+Edit.h"
+#import "RCTextPreviewView+EditedState.h"
 
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
@@ -1641,20 +1642,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self p_sendTypingStatusIfNeedWithText:inputTextView.text];
 }
 
-// 更新消息在 UI 中的显示
-- (void)updateMessageInUI:(RCMessage *)message {
-    // 找到对应的消息模型
-//    NSIndexPath *indexPath = [self.util findDataIndexFromMessageList:message.messageId];
-//    if (indexPath) {
-//        // 更新数据源
-//        RCMessageModel *model = self.dataSource.conversationDataRepository[indexPath.row];
-//        model.content = message.content;
-//        
-//        // 更新 UI
-//        [self.conversationMessageCollectionView reloadItemsAtIndexPaths:@[indexPath]];
-//    }
-}
-
 - (void)p_sendTypingStatusIfNeedWithText:(NSString *)text {
     if (RCKitConfigCenter.message.enableTypingStatus && ![text isEqualToString:@"\n"]) {
         [[RCCoreClient sharedCoreClient] sendTypingStatus:self.conversationType
@@ -2863,6 +2850,13 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     dispatch_async(dispatch_get_main_queue(), ^{
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
+        if ([message.content isKindOfClass:[RCReferenceMessage class]]) {
+            RCReferenceMessage *refMessage = (RCReferenceMessage *)message.content;
+            RCMessageModel *uiMessageModel = [self.util modelByMessageUId:refMessage.referMsgUid];
+            if (uiMessageModel && uiMessageModel.hasChanged) {
+                refMessage.referMsgStatus = RCReferenceMessageStatusModified;
+            }
+        }
         BOOL updated = [self.dataSource updateForMessageSendSuccess:message];
         if (!updated) {
             NSArray *conversationDataRepository = self.conversationDataRepository.copy;
@@ -3381,7 +3375,12 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
             [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
         }
-        [RCTextPreviewView showText:[RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES] messageId:messageModel.messageId  delegate:self];
+        BOOL isEdited = NO;
+        if ([messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
+            isEdited = ((RCReferenceMessage *)messageModel.content).referMsgStatus == RCReferenceMessageStatusModified;
+        }
+        NSString *showText = [RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES];
+        [RCTextPreviewView edit_showText:showText messageId:messageModel.messageId edited:isEdited delegate:self];
     } else if ([msgContent isKindOfClass:[RCStreamMessage class]]){
          if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
              [self.chatSessionInputBarControl.inputTextView resignFirstResponder];

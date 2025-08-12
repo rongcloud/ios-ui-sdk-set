@@ -168,8 +168,11 @@
     RCMessageModel *matchingNewModel = newMessageDict[oldModel.messageUId];
     if (matchingNewModel && [matchingNewModel.content isKindOfClass:[RCReferenceMessage class]]) {
         RCReferenceMessage *newRefMsg = (RCReferenceMessage *)matchingNewModel.content;
-        // 只修改引用消息的文本内容，被引用的消息不在这里修改
-        refMsg.content = newRefMsg.content;
+        if (refMsg.referMsgStatus > newRefMsg.referMsgStatus) {
+            // 编辑状态只可递增，不可回滚
+            newRefMsg.referMsgStatus = refMsg.referMsgStatus;
+        }
+        oldModel.content = newRefMsg;
         oldModel.modifyInfo = matchingNewModel.modifyInfo;
         oldModel.hasChanged = matchingNewModel.hasChanged;
         needUpdate = YES;
@@ -178,9 +181,22 @@
     // 2. 检查被引用的消息是否被编辑
     if (refMsg.referMsgUid.length > 0) {
         RCMessageModel *newReferencedModel = newMessageDict[refMsg.referMsgUid];
-        if (newReferencedModel && refMsg.referMsgStatus != RCReferenceMessageStatusModified) {
-            refMsg.referMsgStatus = RCReferenceMessageStatusModified;
-            refMsg.referMsg = newReferencedModel.content;
+        if (newReferencedModel) {
+            if (newReferencedModel.hasChanged) {
+                refMsg.referMsgStatus = RCReferenceMessageStatusModified;
+            }
+            if ([newReferencedModel.content isKindOfClass:[RCTextMessage class]]
+                && [refMsg.referMsg isKindOfClass:[RCTextMessage class]]) {
+                
+                NSString *newContent = ((RCTextMessage *)newReferencedModel.content).content;
+                ((RCTextMessage *)refMsg.referMsg).content = newContent;
+                
+            } else if ([newReferencedModel.content isKindOfClass:[RCReferenceMessage class]]
+                       && [refMsg.referMsg isKindOfClass:[RCReferenceMessage class]]){
+                
+                NSString *newContent = ((RCReferenceMessage *)newReferencedModel.content).content;
+                ((RCReferenceMessage *)refMsg.referMsg).content = newContent;
+            }
             needUpdate = YES;
         }
     }
