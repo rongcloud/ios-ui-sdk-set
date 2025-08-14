@@ -457,18 +457,9 @@
 "Saving"="Saving";
 "Content_Contains_Sensitive"="Setup failed, Content contains sensitive information";
 
-"Tip"="Tip";
-"MessageEdit"="Edit";
-"MessageEditingAlert"="Another message is being edited. If you confirm to edit the current message, the previously edited message will be lost.";
-"MessageEditDeletedAlert"="The message has been deleted and cannot be saved.";
-"MessageEditRecalledAlert"="The message has been withdrawn and cannot be saved.";
-"MessageEditExpired"="Edit Expired";
-"MessageEditUpdating"="Updating...";
-"MessageEditFailed"="Update failed. Click to retry";
-"MessageEditRetryFailed"="Retry failed. Please try again later.";
-"MessageEdited"="Edited";
-"ReferencedMessageDeleted"="This message was deleted.";
-"ReferencedMessageRecalled"="This message was recalled.";
-"MessageEditNotExist"="The cloud message does not exist and cannot be edited.";
-"MessageEditContentSensitive"="The edited content contains sensitive information, and the update faile.";
-"MessageEditExpiredToast"="Exceeded the effective editing time and cannot be edited.";
+// STT
+"STTOperationFailed"="Voice to Text Conversion Failed";
+"STTMenuItemDo"="Convert to Text";
+"STTMenuItemUndo"="Cancel Transcription";
+"STTConvertFailureTips"="Unable to transcribe. Please check your network connection and try again";
+"STTConvertFailedByContentTips"="We can't transcribe this voice message because of its format";

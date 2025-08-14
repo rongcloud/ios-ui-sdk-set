@@ -7,10 +7,6 @@
 //
 
 #import "RCConversationViewController.h"
-#import "RCConversationViewController+Edit.h"
-#import "RCEditInputBarControl.h"
-#import "RCUserListViewController.h"
-#import "RCBaseNavigationController.h"
 #import "RCCSPullLeaveMessageCell.h"
 #import "RCConversationCollectionViewHeader.h"
 #import "RCFilePreviewViewController.h"
@@ -52,6 +48,7 @@
 #import "RCConversationVCUtil.h"
 #import "RCConversationCSUtil.h"
 #import "RCKitConfig.h"
+#import "RCTextPreviewView.h"
 #import <RongPublicService/RongPublicService.h>
 #import <RongDiscussion/RongDiscussion.h>
 #import <RongCustomerService/RongCustomerService.h>
@@ -68,11 +65,8 @@
 #import "RCIMThreadLock.h"
 #import "RCStreamMessageCell.h"
 #import "RCStreamUtilities.h"
-#import "RCConversationViewController+RRS.h"
-#import "RCUserListViewController.h"
-#import "RCConversationDataSource+Edit.h"
-#import "RCMessageModel+Edit.h"
-#import "RCTextPreviewView+EditedState.h"
+
+#import "RCConversationViewController+STT.h"
 
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
@@ -87,7 +81,7 @@ NSUInteger const RCStreamMessageTextLimit = 10000;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol, RCReadReceiptV5Delegate, RCEditInputBarControlDataSource, RCEditInputBarControlDelegate, RCSelectingUserDataSource, RCFullScreenEditViewDelegate> {
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol> {
     int _defaultLocalHistoryMessageCount;
     int _defaultMessageCount;
     int _defaultRemoteHistoryMessageCount;
@@ -110,8 +104,7 @@ RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCRefer
 @property (nonatomic, strong) NSMutableDictionary *cellMsgDict;
 @property (nonatomic, strong) RCMessageModel *currentSelectedModel;
 @property (nonatomic, strong) NSMutableArray *needReadResponseArray;
-// 正在编辑中的配置
-@property (nonatomic, strong) RCEditInputBarConfig *editingInputBarConfig;
+
 
 #pragma mark view
 @property (nonatomic, strong) UITapGestureRecognizer *resetBottomTapGesture;
@@ -199,7 +192,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self registerNotification];
 
     [RCMessageSelectionUtility sharedManager].delegate = self;
-    [self rrs_observeReadReceiptV5];
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_10_3
     if (@available(iOS 11.0, *)) {
@@ -263,11 +255,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
     [self.conversationMessageCollectionView addGestureRecognizer:self.resetBottomTapGesture];
     
-    // 如果正在编辑模式，不调用正常输入框的生命周期，避免状态冲突
-    if (![self edit_isMessageEditing]) {
-        [self.chatSessionInputBarControl containerViewWillAppear];
-    }
-    [self edit_viewWillAppear:animated];
+    [self.chatSessionInputBarControl containerViewWillAppear];
     
     [[RCSystemSoundPlayer defaultPlayer] setIgnoreConversationType:self.conversationType targetId:self.targetId];
     
@@ -286,14 +274,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     DebugLog(@"%s======%@", __func__, self);
     self.isConversationAppear = YES;
     [self sendGroupReadReceiptResponseForCache];
-    // 如果正在编辑模式，不调用正常输入框的生命周期，避免状态冲突
-    if (![self edit_isMessageEditing]) {
-        [self.chatSessionInputBarControl containerViewDidAppear];
-    }
+    [self.chatSessionInputBarControl containerViewDidAppear];
     [self updateDraftAfterViewAppear];
     self.navigationTitle = self.navigationItem.title;
     [[RCCoreClient sharedCoreClient] setRCTypingStatusDelegate:self];
-    [self edit_loadEditingMessageIfNeeded];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -310,14 +294,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self.chatSessionInputBarControl cancelVoiceRecord];
     [[RCCoreClient sharedCoreClient] setRCTypingStatusDelegate:nil];
     self.navigationItem.title = self.navigationTitle;
-    // 如果正在编辑模式，不调用正常输入框的生命周期，避免状态冲突
-    if (![self edit_isMessageEditing]) {
-        [self.chatSessionInputBarControl containerViewWillDisappear];
-    }
+    [self.chatSessionInputBarControl containerViewWillDisappear];
     [[RongIMKitExtensionManager sharedManager] extensionViewWillDisappear:self.conversationType targetId:self.targetId];
-    
-    // 保存编辑状态（被动离开场景）
-    [self edit_saveCurrentEditStateIfNeeded];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -325,13 +303,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if (!self.navigationController || ![self.navigationController.viewControllers containsObject:self]) {
         [self.dataSource cancelAppendMessageQueue];
     }
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    
-    // 保存编辑状态（内存警告场景）
-    [self edit_saveCurrentEditStateIfNeeded];
 }
 
 - (void)didMoveToParentViewController:(UIViewController *)parent{
@@ -446,12 +417,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         self.chatSessionInputBarControl.delegate = self;
         self.chatSessionInputBarControl.dataSource = self;
         [self.view addSubview:self.chatSessionInputBarControl];
-        
-        // 初始化编辑控件
-        [self edit_createEditBarControl];
     }
 }
-
 
 
 - (void)createConversationMessageCollectionView {
@@ -505,9 +472,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         self.conversationMessageCollectionView.frame.size.height - self.chatSessionInputBarControl.frame.size.height;
     self.chatSessionInputBarControl.frame = controlFrame;
     [self.chatSessionInputBarControl containerViewSizeChangedNoAnnimation];
-    
-    // 同步更新编辑控件位置
-    self.editInputBarControl.frame = controlFrame;
 }
 
 - (void)setNavigationItem{
@@ -547,11 +511,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 - (void)updateUnreadMsgCountLabelFrame {
     if (!self.unreadRightBottomIcon.hidden) {
         CGRect rect = self.unreadRightBottomIcon.frame;
-        if ([self edit_isMessageEditing]) {
-            rect.origin.y = self.editInputBarControl.frame.origin.y - 12 - 35;
-            [self.unreadRightBottomIcon setFrame:rect];
-            return;
-        }
         if (self.referencingView) {
             rect.origin.y =
                 self.chatSessionInputBarControl.frame.origin.y - 12 - 35 - self.referencingView.frame.size.height;
@@ -688,11 +647,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                                              selector:@selector(currentViewFrameChange:)
                                                  name:UIApplicationWillChangeStatusBarFrameNotification
                                                object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(onMessagesModifiedNotification:)
-                                                 name:RCKitDispatchMessagesModifiedNotification
-                                               object:nil];
 }
 
 - (void)didReceiveMessageNotification:(NSNotification *)notification {
@@ -789,10 +743,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 - (void)handleWillResignActiveNotification {
     self.isConversationAppear = NO;
     [self.chatSessionInputBarControl endVoiceRecord];
-    
-    // 保存编辑状态（应用进入后台场景）
-    [self edit_saveCurrentEditStateIfNeeded];
-    
     //直接从会话页面杀死 app，保存或者清除草稿
     [self.util saveDraftIfNeed];
 }
@@ -940,17 +890,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self.chatSessionInputBarControl containerViewSizeChanged];
 }
 
-- (void)onMessagesModifiedNotification:(NSNotification *)notification {
-    NSArray<RCMessage *> *messages = notification.object;
-    NSMutableArray<RCMessageModel *> *models = [NSMutableArray array];
-    for (RCMessage *message in messages) {
-        if (message.conversationType == self.conversationType && [message.targetId isEqual:self.targetId]) {
-            [models addObject:[RCMessageModel modelWithMessage:message]];
-        }
-    }
-    [self.dataSource edit_refreshUIMessagesEditedStatus:models];
-}
-
 #pragma mark 语音连续播放
 - (void)receiveContinuousPlayNotification:(NSNotification *)notification {
     if (!self.enableContinuousReadUnreadVoice) {
@@ -972,10 +911,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
     self.isTouchScrolled = YES;
-    if (self.edit_isMessageEditing) {
-        [self edit_dismissEditBottomPanels];
-        return;
-    }
     if (self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarDefaultStatus &&
         self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarRecordStatus &&
         self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarDestructStatus) {
@@ -1574,11 +1509,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     });
 }
 
-#pragma mark - 消息编辑
-
-
-
-
 #pragma mark - RCChatSessionInputBarControlDelegate 输入工具栏回调
 
 - (void)chatInputBar:(RCChatSessionInputBarControl *)chatInputBar shouldChangeFrame:(CGRect)frame {
@@ -1641,6 +1571,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     // 讯飞语音输入的文字结束时，也要发送“正在输入”消息
     [self p_sendTypingStatusIfNeedWithText:inputTextView.text];
 }
+
 
 - (void)p_sendTypingStatusIfNeedWithText:(NSString *)text {
     if (RCKitConfigCenter.message.enableTypingStatus && ![text isEqualToString:@"\n"]) {
@@ -2173,9 +2104,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if (self.referencingView && self.referencingView.referModel.messageId == model.messageId) {
         [self dismissReferencingView:self.referencingView];
     }
-    if (model.messageUId) {
-        [self.dataSource edit_setUIReferenceMessagesEditStatus:RCReferenceMessageStatusDeleted forMessageUIds:@[model.messageUId]];
-    }
 }
 
 - (void)deleteOldMessageNotificationMessageIfNeed {
@@ -2426,21 +2354,27 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
+// 长按语音转文本内容
+- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view {
+    [self stt_didLongTouchSTTInfo:model inView:view];
+}
+
+- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model {
+    return [self stt_getLongTouchSTTInfoMenuList:model];
+}
+
 //长按消息内容
 - (void)didLongTouchMessageCell:(RCMessageModel *)model inView:(UIView *)view {
     //长按消息需要停止播放语音消息
     [self.util stopVoiceMessageIfNeed:model];
+
+    self.chatSessionInputBarControl.inputTextView.disableActionMenu = YES;
     self.currentSelectedModel = model;
-    
-    if (![self edit_isMessageEditing]) {
-        self.chatSessionInputBarControl.inputTextView.disableActionMenu = YES;
-        if (![self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
-            //聊天界面不为第一响应者时，长按消息，UIMenuController不能正常显示菜单
-            // inputTextView 是第一响应者时，不需要再设置 self 为第一响应者，否则会导致键盘收起
-            [self becomeFirstResponder];
-        }
+    if (![self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
+        //聊天界面不为第一响应者时，长按消息，UIMenuController不能正常显示菜单
+        // inputTextView 是第一响应者时，不需要再设置 self 为第一响应者，否则会导致键盘收起
+        [self becomeFirstResponder];
     }
-    
     CGRect rect = [self.view convertRect:view.frame fromView:view.superview];
 
     UIMenuController *menu = [UIMenuController sharedMenuController];
@@ -2473,7 +2407,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     UIMenuItem *referItem =
         [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Reference")
                                    action:@selector(onReferenceMessageCell:)];
-
     NSMutableArray *items = @[].mutableCopy;
     if (model.content.destructDuration > 0) {
         [items addObject:deleteItem];
@@ -2485,18 +2418,18 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
             [model.content isMemberOfClass:[RCReferenceMessage class]]) {
             [items addObject:copyItem];
         }
-        
+        // 语音转文本
+        UIMenuItem *sttItem = [self stt_menuItemForModel:model];
+        if (sttItem) {
+            [items addObject:sttItem];
+        }
         [items addObject:deleteItem];
         if ([self.util canRecallMessageOfModel:model]) {
             [items addObject:recallItem];
         }
         if ([self.util canReferenceMessage:model]) {
             [items addObject:referItem];
-        }
-        if ([self.util isMessageEditable:model]) {
-            UIMenuItem *editItem = [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Edit") action:@selector(onEditMessage:)];
-            [items addObject:editItem];
-        }
+        }        
     }
     
     BOOL translateEnable = [self isTranslationEnable] && !model.isTranslated && [model.content isKindOfClass:[RCTextMessage class]] && !model.translating;
@@ -2512,8 +2445,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     
     return items.copy;
 }
-
-
 
 - (NSArray<UIMenuItem *> *)getLongTouchStreamMessageCellMenuList:(RCMessageModel *)model {
     
@@ -2549,10 +2480,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (void)didTapReedit:(RCMessageModel *)model {
-    if ([self edit_didTapReedit:model]) {
-        return;
-    }
-    
     // 获取被撤回的文本消息的内容
     RCRecallNotificationMessage *recallMessage = (RCRecallNotificationMessage *)model.content;
     NSString *content = recallMessage.recallContent;
@@ -2593,7 +2520,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [userId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
         return;
     }
-    [self addMentionedUserToCurrentInput:[self getSelectingUserInfo:userId]];
+
+    [self.chatSessionInputBarControl addMentionedUser:[self getSelectingUserInfo:userId]];
+    [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
 }
 
 - (BOOL)didTapCommonPhrasesButton {
@@ -2607,10 +2536,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)tap4ResetDefaultBottomBarStatus:(UIGestureRecognizer *)gestureRecognizer {
     if (gestureRecognizer.state == UIGestureRecognizerStateEnded) {
-        if (self.edit_isMessageEditing) {
-            [self edit_dismissEditBottomPanels];
-            return;
-        }
         if (self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarDefaultStatus &&
             self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarRecordStatus) {
             [self.chatSessionInputBarControl resetToDefaultStatus];
@@ -2731,9 +2656,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (void)updateConversationMessageCollectionView {
-    if ([self edit_updateConversationMessageCollectionView]) {
-        return;
-    }
     [self updateNavigationBarItem];
     if ([RCMessageSelectionUtility sharedManager].multiSelect) {
         if (self.chatSessionInputBarControl.currentBottomBarStatus != KBottomBarRecordStatus) {
@@ -2845,50 +2767,35 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     long messageId = message.messageId;
     RCMessageContent *content = message.content;
     DebugLog(@"message<%ld> send succeeded ", messageId);
-
     [self.csUtil startNotSendMessageAlertTimer];
 
     dispatch_async(dispatch_get_main_queue(), ^{
         RCMessage *message = [[RCCoreClient sharedCoreClient] getMessage:messageId];
-        if ([message.content isKindOfClass:[RCReferenceMessage class]]) {
-            RCReferenceMessage *refMessage = (RCReferenceMessage *)message.content;
-            RCMessageModel *uiMessageModel = [self.util modelByMessageUId:refMessage.referMsgUid];
-            if (uiMessageModel && uiMessageModel.hasChanged) {
-                refMessage.referMsgStatus = RCReferenceMessageStatusModified;
+        NSArray *conversationDataRepository = self.conversationDataRepository.copy;
+        for (RCMessageModel *model in conversationDataRepository) {
+            if (model.messageId == messageId) {
+                model.sentStatus = SentStatus_SENT;
+                if (model.messageId > 0) {
+                    if (message) {
+                        model.sentTime = message.sentTime;
+                        model.messageUId = message.messageUId;
+                        model.content = message.content;
+                    }
+                }
+                break;
             }
         }
-        BOOL updated = [self.dataSource updateForMessageSendSuccess:message];
-        if (!updated) {
-            NSArray *conversationDataRepository = self.conversationDataRepository.copy;
-            for (RCMessageModel *model in conversationDataRepository) {
-                if (model.messageId == messageId) {
-                    model.sentStatus = SentStatus_SENT;
-                    if (model.messageId > 0) {
-                        if (message) {
-                            model.sentTime = message.sentTime;
-                            model.messageUId = message.messageUId;
-                            model.content = message.content;
-                            updated= YES;
-                        }
+        for(RCMessageModel *model in self.dataSource.cachedReloadMessages){
+            if (model.messageId == messageId) {
+                model.sentStatus = SentStatus_SENT;
+                if (model.messageId > 0) {
+                    if (message) {
+                        model.sentTime = message.sentTime;
+                        model.messageUId = message.messageUId;
+                        model.content = message.content;
                     }
-                    break;
                 }
-            }
-        }
-        if (!updated) {
-            for(RCMessageModel *model in self.dataSource.cachedReloadMessages){
-                if (model.messageId == messageId) {
-                    model.sentStatus = SentStatus_SENT;
-                    if (model.messageId > 0) {
-                        if (message) {
-                            model.sentTime = message.sentTime;
-                            model.messageUId = message.messageUId;
-                            model.content = message.content;
-                            updated= YES;
-                        }
-                    }
-                    break;
-                }
+                break;
             }
         }
         [self.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_SUCCESS messageId:messageId progress:0];
@@ -3282,10 +3189,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 #pragma mark - Reference
 - (void)onReferenceMessageCell:(id)sender {
-    if ([self edit_onReferenceMessageCell:sender])  {
-        return;
-    }
-    // 进入普通输入引用消息模式
     [self onReferenceMessageCellAndEditing:YES];
 }
 
@@ -3344,10 +3247,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (void)previewReferenceView:(RCMessageModel *)messageModel {
-    if ([self disableReferencedPreview:messageModel]) {
-        return;
-    }
-    
     RCMessageContent *msgContent = messageModel.content;
     if ([messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
         RCReferenceMessage *refer = (RCReferenceMessage *)messageModel.content;
@@ -3375,12 +3274,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
             [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
         }
-        BOOL isEdited = NO;
-        if ([messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
-            isEdited = ((RCReferenceMessage *)messageModel.content).referMsgStatus == RCReferenceMessageStatusModified;
-        }
-        NSString *showText = [RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES];
-        [RCTextPreviewView edit_showText:showText messageId:messageModel.messageId edited:isEdited delegate:self];
+        [RCTextPreviewView showText:[RCKitUtility formatMessage:msgContent targetId:self.targetId conversationType:self.conversationType isAllMessage:YES] messageId:messageModel.messageId  delegate:self];
     } else if ([msgContent isKindOfClass:[RCStreamMessage class]]){
          if ([self.chatSessionInputBarControl.inputTextView isFirstResponder]) {
              [self.chatSessionInputBarControl.inputTextView resignFirstResponder];
@@ -3436,9 +3330,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         reference.referMsgUserId = self.referencingView.referModel.senderUserId;
         reference.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
         reference.referMsgUid = self.referencingView.referModel.messageUId;
-        if (self.referencingView.referModel.hasChanged) {
-            [reference setValue:@(RCReferenceMessageStatusModified) forKey:@"referMsgStatus"];
-        }
         [self sendMessage:reference pushContent:nil];
         [self dismissReferencingView:self.referencingView];
         return YES;
@@ -3574,6 +3465,28 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     return [super canPerformAction:action withSender:sender];
 }
 
+- (BOOL)resignFirstResponder {
+    // 🎯 当RCConversationViewController丧失第一响应者身份时，清空UIMenuController的菜单项
+    // 这样可以避免消息cell的菜单项残留，影响输入框的菜单显示
+    UIMenuController *menu = [UIMenuController sharedMenuController];
+    
+    // 只有当菜单项不为空时才进行清空操作，避免不必要的UI更新
+    if (menu.menuItems.count > 0) {
+        // iOS 13+ 和之前版本的兼容性处理
+        if (@available(iOS 13.0, *)) {
+            // iOS 13+ 使用新的API，需要同时隐藏菜单和清空菜单项
+            [menu hideMenuFromView:self.view];
+            [menu setMenuItems:nil];
+        } else {
+            // iOS 13以下使用传统方式
+            [menu setMenuItems:nil];
+            [menu setMenuVisible:NO animated:NO];
+        }
+    }
+    
+    return [super resignFirstResponder];
+}
+
 - (float)getSafeAreaExtraBottomHeight {
     return [RCKitUtility getWindowSafeAreaInsets].bottom;
 }
@@ -3601,17 +3514,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (BOOL)isRemainMessageExisted {
     return self.locatedMessageSentTime != 0;
-}
-
-- (void)addMentionedUserToCurrentInput:(RCUserInfo *)userInfo {
-    if ([self edit_addMentionedUserToCurrentInput:userInfo]) {
-        return;
-    }
-    // 普通模式
-    if (self.chatSessionInputBarControl.isMentionedEnabled) {
-        [self.chatSessionInputBarControl addMentionedUser:userInfo];
-        [self.chatSessionInputBarControl.inputTextView becomeFirstResponder];
-    }
 }
 
 #pragma mark - 钩子
@@ -3953,90 +3855,4 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
     // phoneNumber
 }
-#pragma mark - 已读回执V5
-- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
-    [self rrs_didReceiveMessageReadReceiptResponses:responses];
-}
-
-#pragma mark - Edit Message
-
-- (BOOL)disableReferencedPreview:(RCMessageModel *)messageModel {
-    if ([messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
-        RCReferenceMessage *refMsg = (RCReferenceMessage *)messageModel.content;
-        if (refMsg.referMsgStatus == RCReferenceMessageStatusDeleted
-            || refMsg.referMsgStatus == RCReferenceMessageStatusRecalled) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-- (void)onEditMessage:(id)sender {
-    [self edit_onEditMessage:sender];
-}
-
-- (void)didTapEditRetryButton:(RCMessageModel *)model {
-    [self edit_didTapEditRetryButton:model];
-}
-
-#pragma mark RCEditBarControlDelegate
-
-- (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl didConfirmWithText:(NSString *)text {
-    [self edit_editInputBarControl:editInputBarControl didConfirmWithText:text];
-}
-
-- (void)editInputBarControlDidCancel:(RCEditInputBarControl *)editInputBarControl {
-    [self edit_editInputBarControlDidCancel:editInputBarControl];
-}
-
-- (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl shouldChangeFrame:(CGRect)frame {
-    [self edit_editInputBarControl:editInputBarControl shouldChangeFrame:frame];
-}
-
-- (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl
-           showUserSelector:(void (^)(RCUserInfo *selectedUser))selectedBlock
-                     cancel:(void (^)(void))cancelBlock {
-    [self edit_editInputBarControl:editInputBarControl showUserSelector:selectedBlock cancel:cancelBlock];
-}
-
-- (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl
-   didUpdateMentionedInfo:(nullable RCMentionedInfo *)mentionedInfo {
-    [self edit_editInputBarControl:editInputBarControl didUpdateMentionedInfo:mentionedInfo];
-}
-
-- (void)editInputBarControlRequestFullScreenEdit:(RCEditInputBarControl *)editInputBarControl {
-    [self edit_editInputBarControlRequestFullScreenEdit:editInputBarControl];
-}
-
-#pragma mark FullScreenEditViweDelegate
-
-- (void)fullScreenEditViewCollapse:(RCFullScreenEditView *)fullScreenEditView {
-    [self edit_fullScreenEditViewCollapse:fullScreenEditView];
-}
-
-- (void)fullScreenEditViewCancel:(RCFullScreenEditView *)fullScreenEditView {
-    [self edit_fullScreenEditViewCancel:fullScreenEditView];
-}
-
-- (void)fullScreenEditView:(RCFullScreenEditView *)fullScreenEditView didConfirmWithText:(NSString *)text {
-    [self edit_fullScreenEditView:fullScreenEditView didConfirmWithText:text];
-}
-
-- (void)fullScreenEditView:(RCFullScreenEditView *)fullScreenEditView showUserSelector:(void (^)(RCUserInfo * _Nonnull))selectedBlock cancel:(void (^)(void))cancelBlock {
-    [self edit_fullScreenEditView:fullScreenEditView showUserSelector:selectedBlock cancel:cancelBlock];
-}
-
-#pragma mark RCEditBarControlDataSource
-
-- (nullable RCUserInfo *)editInputBarControl:(RCEditInputBarControl *)editInputBarControl
-                            getUserInfo:(NSString *)userId {
-    return [self edit_editInputBarControl:editInputBarControl getUserInfo:userId];
-}
-
-#pragma mark RCSelectingUserDataSource
-
-- (void)getSelectingUserIdList:(void (^)(NSArray<NSString *> *userIdList))completion {
-    [self getSelectingUserIdList:completion functionTag:INPUT_MENTIONED_SELECT_TAG];
-}
-
 @end

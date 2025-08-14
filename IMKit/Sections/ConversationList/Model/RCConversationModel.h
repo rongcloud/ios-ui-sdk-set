@@ -166,12 +166,6 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @property (nonatomic, assign) int mentionedCount;
 
-/*!
- 已读人数
-
- */
-@property (nonatomic, assign) NSInteger readReceiptCount;
-
 
 /*!
  免打扰级别
@@ -187,15 +181,6 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @property (nonatomic, assign) long long firstUnreadMsgSendTime;
 
-/// 最后一条消息 messageUId。
-///
-/// - Since: 5.20.0
-@property (nonatomic, copy, nullable) NSString *latestMessageUId;
-
-/// 消息已读回执操作标识。
-///
-/// - Since: 5.20.0
-@property (nonatomic, assign) BOOL needReceipt;
 
 /*!
  初始化会话显示数据模型

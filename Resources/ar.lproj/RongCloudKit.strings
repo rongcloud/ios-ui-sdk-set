@@ -467,18 +467,9 @@
 "Saving"="توفير...";
 "Content_Contains_Sensitive"="فشلت العملية، المحتوى يحتوي على معلومات حساسة";
 
-"Tip"="تحذير";
-"MessageEdit"="يحرر";
-"MessageEditingAlert"="رسالة أخرى قيد التعديل. إذا أكدت تعديل الرسالة الحالية، فسيتم فقدان الرسالة التي تم تعديلها سابقًا.";
-"MessageEditDeletedAlert"="لقد تم حذف الرسالة ولا يمكن حفظها.";
-"MessageEditRecalledAlert"="لقد تم سحب الرسالة ولا يمكن حفظها.";
-"MessageEditExpired"="تحرير انتهت صلاحيته";
-"MessageEditUpdating"="جارٍ التحديث...";
-"MessageEditFailed"="فشل التحديث. انقر لإعادة المحاولة";
-"MessageEditRetryFailed"="فشلتفشلت المحاولة مرة أخرى. يُرجى المحاولة لاحقًا.";
-"MessageEdited"="تم تحريره";
-"ReferencedMessageDeleted"="تم حذف هذه الرسالة";
-"ReferencedMessageRecalled"="تم سحب هذه الرسالة";
-"MessageEditNotExist"="الرسالة السحابية غير موجودة ولا يمكن تحريرها.";
-"MessageEditContentSensitive"="يحتوي المحتوى المحرر على معلومات حساسة، وفشل التحديث.";
-"MessageEditExpiredToast"="تجاوز وقت التحرير الفعلي ولا يمكن تحريره";
+// STT
+"STTOperationFailed"="فشل تحويل الكلام إلى نص";
+"STTMenuItemDo"="تحويل إلى نص";
+"STTMenuItemUndo"="إلغاء تحويل النص";
+"STTConvertFailureTips"=" تعذر تحويل الصوت إلى نص. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى";
+"STTConvertFailedByContentTips"="صيغة هذا التسجيل الصوتي غير مدعومة للتحويل إلى نص";

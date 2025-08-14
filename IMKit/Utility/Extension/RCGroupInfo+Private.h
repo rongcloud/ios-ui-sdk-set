@@ -39,6 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// 不解析 groupId 和 readonly 属性
 - (void)decodeBaseData:(NSDictionary<NSString *, NSString *> *)data;
 
++ (NSArray<NSString *> *)convertKeysToNames:(NSArray<RCGroupInfoKeys> *)keys;
+
 @end
 
 NS_ASSUME_NONNULL_END

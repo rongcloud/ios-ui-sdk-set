@@ -375,7 +375,8 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
 - (void)checkApplicationStateAndAlert {
     if (self.callSession.callStatus == RCCallDialing) {
         if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
-            NSString *ringPath = [RCCallKitUtility fileName:@"voip/voip_calling_ring.mp3" ofBundle:@"RongCallKit.bundle"];
+            NSString *ringPath = [[[NSBundle mainBundle] pathForResource:@"RongCallKit" ofType:@"bundle"]
+                stringByAppendingPathComponent:@"voip/voip_calling_ring.mp3"];
             if (self.callSession.mediaType == RCCallMediaVideo) {
                 [self setSpeakerEnable:YES];
             } else {
@@ -1794,7 +1795,8 @@ NSNotificationName const RCCallNewSessionCreationNotification = @"RCCallNewSessi
  */
 - (void)shouldRingForIncomingCall {
     if ([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Foreground) {
-        NSString *ringPath = [RCCallKitUtility fileName:@"voip/voip_calling_ring.mp3" ofBundle:@"RongCallKit.bundle"];
+        NSString *ringPath = [[[NSBundle mainBundle] pathForResource:@"RongCallKit" ofType:@"bundle"]
+            stringByAppendingPathComponent:@"voip/voip_call.mp3"];
         [self startPlayRing:ringPath];
         self.needPlayingRingAfterForeground = NO;
     } else {

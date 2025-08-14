@@ -14,6 +14,9 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
+#import "RCSTTContentView.h"
+#import "RCMessageModel+STT.h"
+
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
@@ -30,6 +33,9 @@ static RCMessageDirection hq_previousMessageDirection;
 @property (nonatomic, strong) NSTimer *animationTimer;
 @property (nonatomic) int animationIndex;
 @property (nonatomic, strong) RCVoicePlayer *voicePlayer;
+@property (nonatomic, strong) RCSTTContentView *sttContentView;
+
+
 @end
 
 @implementation RCHQVoiceMessageCell
@@ -61,6 +67,7 @@ static RCMessageDirection hq_previousMessageDirection;
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
+    [RCSTTContentViewModel configureSTTIfNeeded:model];
     CGFloat __messagecontentview_height = Voice_Height;
 
     if (__messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
@@ -68,11 +75,12 @@ static RCMessageDirection hq_previousMessageDirection;
     }
 
     __messagecontentview_height += extraHeight;
-
+    __messagecontentview_height += [self sstInfoHeight:model];
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
+    RCSTTLog(@" model changed %p to %p  on %p ", self.model, model, self);
     [super setDataModel:model];
     [self resetAnimationTimer];
 
@@ -81,6 +89,7 @@ static RCMessageDirection hq_previousMessageDirection;
     [self setMessageInfo:voiceMessage];
     [self updateSubViewsLayout:voiceMessage];
     [self updateVoiceDownloadStatusView:voiceMessage];
+    [self configureSTTContentViewIfNeed];
 }
 
 #pragma mark - Public API
@@ -216,7 +225,7 @@ static RCMessageDirection hq_previousMessageDirection;
 
 - (void)initialize {
     [self showBubbleBackgroundView:YES];
-    
+    self.messageContentView.accessibilityLabel = @"messageContentView";
     [self.messageContentView addSubview:self.playVoiceView];
     [self.messageContentView addSubview:self.voiceDurationLabel];
     
@@ -273,13 +282,8 @@ static RCMessageDirection hq_previousMessageDirection;
 
 - (void)updateSubViewsLayout:(RCHQVoiceMessage *)voiceMessage{
     CGFloat audioBubbleWidth = [self getBubbleWidth:voiceMessage.duration];
-    CGSize size = self.messageContentView.contentSize;
-    size.width = audioBubbleWidth;
-    if (size.height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
-        size.height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
-    }
-    self.messageContentView.contentSize = size;
-    CGFloat voiceHeight = size.height;
+    CGFloat voiceHeight = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
+    self.messageContentView.contentSize = CGSizeMake(audioBubbleWidth, voiceHeight);
     if ([RCKitUtility isRTL]) {
         if (self.model.messageDirection == MessageDirection_SEND) {
             self.playVoiceView.image = RCResourceImage(@"from_voice_3");
@@ -391,6 +395,42 @@ static RCMessageDirection hq_previousMessageDirection;
         }
     }
 }
+
+#pragma mark - STT
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (self.sttContentView) {
+        [self.sttContentView bindCollectionView:self.hostCollectionView];
+        [self.sttContentView layoutContentView];
+    }
+}
+
++ (CGFloat)sstInfoHeight:(RCMessageModel *)model {
+    RCSTTContentViewModel *vm =  [model stt_sttViewModel];
+    return [vm speedToTextContentHeight]+4;
+}
+
+- (void)configureSTTContentViewIfNeed {
+    RCSTTContentViewModel *vm = [self.model stt_sttViewModel];
+    if (vm) {
+        if (!self.sttContentView) {
+            self.sttContentView = [RCSTTContentView new];
+            __weak __typeof(self)weakSelf = self;
+            self.sttContentView.sttFinishedBlock = ^(){
+                [weakSelf removeUnreadTagView];
+            };
+            [self.baseContentView addSubview:self.sttContentView];
+        }
+    }
+    [self.sttContentView bindViewModel:vm
+                             baseFrame:self.messageContentView.frame];
+}
+
+- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
+    [super setDelegate:delegate];
+    [self.sttContentView bindGestureDelegate:delegate];
+}
+
 #pragma mark - stop and disable timer during background mode.
 - (void)resetActiveEventInBackgroundMode {
     [self stopPlayingVoiceData];

@@ -14,7 +14,7 @@
 @end
 
 
-@class RCConversationViewController,RCMessageModel,RCMessage,RCConversationViewLayout,RCConversation,RCMessageResult;
+@class RCConversationViewController,RCMessageModel,RCMessage,RCConversationViewLayout,RCConversation;
 
 @interface RCConversationDataSource : NSObject
 
@@ -36,16 +36,6 @@
 @property (nonatomic, strong) NSMutableArray *unreadMentionedMessages;
 
 @property (nonatomic, strong) NSMutableArray *cachedReloadMessages;
-
-@property (nonatomic, assign, readonly) BOOL isMentionedEnabled;
-
-// 用于合并本地和远程回调的相关属性
-@property (nonatomic, strong) NSArray<RCMessageResult *> *pendingRemoteResults;
-@property (nonatomic, strong) NSArray<RCMessage *> *pendingLocalMessages;
-@property (nonatomic, copy) void (^pendingCompleteBlock)(NSArray<RCMessage *> *);
-@property (nonatomic, assign) BOOL isWaitingForRemoteResults;
-@property (nonatomic, strong) dispatch_source_t combineTimer;
-
 
 //进入聊天页面初次加载的消息
 - (void)getInitialMessage:(RCConversation *)conversation;
@@ -91,8 +81,4 @@
 - (void)didReceiveMessageNotification:(RCMessage *)rcMessage leftDic:(NSDictionary *)leftDic;
 
 - (BOOL)isAtTheBottomOfTableView;
-
-/// 修改发送上下文中的 消息
-/// - Parameter message: 消息
-- (BOOL)updateForMessageSendSuccess:(RCMessage *)message;
 @end

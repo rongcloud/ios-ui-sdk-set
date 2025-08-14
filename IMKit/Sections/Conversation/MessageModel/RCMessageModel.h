@@ -141,20 +141,6 @@ NS_ASSUME_NONNULL_BEGIN
  媒体消息上传进度
 */
 @property (nonatomic, assign) NSInteger uploadProgress;
-
-/// 消息已读回执操作标识。
-///
-/// - Since: 5.20.0
-@property (nonatomic, assign) BOOL needReceipt;
-
-/// 已读回执是否已发送。
-///
-/// - Since: 5.20.0
-@property (nonatomic, assign) BOOL sentReceipt;
-
-/// 消息是否已被编辑
-@property (nonatomic, assign) BOOL hasChanged;
-
 /*!
  初始化消息Cell的数据模型
 
