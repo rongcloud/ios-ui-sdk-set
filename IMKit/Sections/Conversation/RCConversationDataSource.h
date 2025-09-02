@@ -9,16 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-@protocol RCMessagesLoadProtocol <NSObject>
-- (void)noMoreMessageToFetch;
-@end
-
-
 @class RCConversationViewController,RCMessageModel,RCMessage,RCConversationViewLayout,RCConversation;
 
 @interface RCConversationDataSource : NSObject
 
-@property (nonatomic, weak) id<RCMessagesLoadProtocol> loadDelegate;
 - (instancetype)init:(RCConversationViewController *)chatVC;
 //是否所有消息都已经加载完成
 @property (nonatomic, assign, readonly) BOOL allMessagesAreLoaded;

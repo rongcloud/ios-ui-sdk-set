@@ -88,8 +88,6 @@
 
  */
 @property (nonatomic, assign) BOOL showPortrait;
-
-@property (nonatomic, weak, readonly) UICollectionView *hostCollectionView;
 /*!
  设置当前消息Cell的数据模型
 
