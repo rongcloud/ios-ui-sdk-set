@@ -23,6 +23,9 @@
 #import <RongPublicService/RongPublicService.h>
 #import <UIKit/UIKit.h>
 #import "RCSemanticContext.h"
+#import "RCPublicServiceWebViewController.h"
+#import "NSDictionary+RCAccessor.h"
+#import "RCStreamUtilities.h"
 @interface RCKitWeakRefObject : NSObject
 @property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
@@ -119,10 +122,20 @@
     if (![image_name hasSuffix:@".png"]) {
         image_name = [NSString stringWithFormat:@"%@.png", name];
     }
-    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
-    NSString *bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
-    NSString *image_path = [bundlePath stringByAppendingPathComponent:image_name];
+    
+    NSString *bundlePath = nil;
 
+    NSString *bundleNameString = [bundleName stringByDeletingPathExtension];
+    NSURL *rootBundleURL = [[NSBundle mainBundle] URLForResource:bundleNameString withExtension:@"bundle"];
+    if (rootBundleURL) {
+        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
+    } else {
+        NSBundle *innerBundle = [NSBundle bundleForClass:[self class]];
+        NSString *resourcePath = [innerBundle resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
+    }
+    NSString *image_path = [bundlePath stringByAppendingPathComponent:image_name];
     image = [UIImage rc_imageWithLocalPath:image_path];
 
     [loadedObjectDict setObject:[RCKitWeakRefObject refWithObject:image] forKey:keyString];
@@ -173,6 +186,19 @@
     } else if ([messageContent isMemberOfClass:[RCPublicServiceRichContentMessage class]]) {
         RCPublicServiceRichContentMessage *notification = (RCPublicServiceRichContentMessage *)messageContent;
         return notification.richContent.title;
+    } else if ([messageContent isMemberOfClass:[RCStreamMessage class]]) {
+        return [self formatStreamDigest:message];
+    } else if ([self isCommonMessage:messageContent]) {
+        if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
+            NSString *key = [messageContent performSelector:@selector(conversationDigest)];
+            if ([messageContent isMemberOfClass:[RCFileMessage class]]) {
+                RCFileMessage* fileMsg = (RCFileMessage *)messageContent;
+                return [NSString stringWithFormat:@"%@ %@", RCLocalizedString(key), fileMsg.name.length == 0 ? @"" : fileMsg.name];
+            } else {
+                return RCLocalizedString(key);
+            }  
+        }
+        return @"";
     } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
         NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
         //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
@@ -188,12 +214,31 @@
     }
 }
 
++ (NSString *)formatStreamDigest:(RCMessage *)message {
+    if (![message.content isKindOfClass:RCStreamMessage.class]) {
+        return @"";
+    }
+    RCStreamSummaryModel *summary = [RCStreamUtilities parserStreamSummary:[RCMessageModel modelWithMessage:message]];
+    if (summary.summary.length > 0) {
+        return summary.summary;
+    }
+    
+    RCStreamMessage *stream = (RCStreamMessage *)message.content;
+    if (stream.isSync) {
+        return stream.content;
+    }
+    if (stream.content.length < RCStreamMessageCellLoadingLimit) {
+        return [RCLocalizedString(@"StreamMessageTyping") stringByAppendingString:@"..."];
+    }
+    return stream.content;
+}
+
 + (NSString *)formatMessage:(RCMessageContent *)messageContent
                    targetId:(NSString *)targetId
            conversationType:(RCConversationType)conversationType
                isAllMessage:(BOOL)isAllMessage {
     if (messageContent.destructDuration > 0) {
-        return NSLocalizedStringFromTable(@"BurnAfterRead", @"RongCloudKit", nil);
+        return RCLocalizedString(@"BurnAfterRead");
     }
     if ([messageContent isMemberOfClass:RCDiscussionNotificationMessage.class]) {
         RCDiscussionNotificationMessage *notification = (RCDiscussionNotificationMessage *)messageContent;
@@ -216,15 +261,19 @@
     } else if ([messageContent isMemberOfClass:[RCPublicServiceRichContentMessage class]]) {
         RCPublicServiceRichContentMessage *notification = (RCPublicServiceRichContentMessage *)messageContent;
         return notification.richContent.title;
+    } else if ([self isCommonMessage:messageContent]) {
+        if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
+            NSString *key = [messageContent performSelector:@selector(conversationDigest)];
+            if ([messageContent isMemberOfClass:[RCFileMessage class]]) {
+                RCFileMessage* fileMsg = (RCFileMessage *)messageContent;
+                return [NSString stringWithFormat:@"%@ %@", RCLocalizedString(key), fileMsg.name.length == 0 ? @"" : fileMsg.name];
+            } else {
+                return RCLocalizedString(key);
+            }
+        }
+        return @"";
     } else if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
         NSString *formatedMsg = [messageContent performSelector:@selector(conversationDigest)];
-        //父类conversationDigest return objName
-        if ([formatedMsg isEqualToString:[[messageContent class] getObjectName]]) {
-            formatedMsg = [RCKitUtility localizedDescription:messageContent];
-        }
-        if ([formatedMsg isEqualToString:[[messageContent class] getObjectName]]) {
-            formatedMsg = @"";
-        }
         //当会话最后一条消息是文本且长度超过1W时，滑动会话列表卡顿,所以这里做截取
         if (!isAllMessage && formatedMsg.length > 500) {
             formatedMsg = [formatedMsg substringToIndex:500];
@@ -238,6 +287,28 @@
     }
 }
 
++ (BOOL)isCommonMessage:(RCMessageContent *)messageContent {
+    if ([messageContent respondsToSelector:@selector(conversationDigest)]) {
+        Class location = NSClassFromString(@"RCLocationMessage");
+        Class start = NSClassFromString(@"RCRealTimeLocationEndMessage");
+        Class end = NSClassFromString(@"RCRealTimeLocationStartMessage");
+        BOOL isLocationMessage = [messageContent isMemberOfClass:location] ||
+        [messageContent isMemberOfClass:start] ||
+        [messageContent isMemberOfClass:end] ;
+       BOOL ret = [messageContent isMemberOfClass:[RCCombineMessage class]] ||
+            [messageContent isMemberOfClass:[RCFileMessage class]] ||
+            [messageContent isMemberOfClass:[RCGIFMessage class]] ||
+            [messageContent isMemberOfClass:[RCHQVoiceMessage class]] ||
+            [messageContent isMemberOfClass:[RCImageMessage class]] ||
+            [messageContent isMemberOfClass:[RCSightMessage class]] ||
+        [messageContent isMemberOfClass:[RCVoiceMessage class]] ||
+        [messageContent isMemberOfClass:[RCRichContentMessage class]] ||
+        [messageContent isMemberOfClass:[RCCombineV2Message class]]  ;
+        return ret || isLocationMessage;
+    }
+    return NO;
+}
+
 + (NSString *)formatMessage:(RCMessageContent *)messageContent
                    targetId:(NSString *)targetId
            conversationType:(RCConversationType)conversationType {
@@ -249,16 +320,20 @@
 }
 
 + (BOOL)isVisibleMessage:(RCMessage *)message {
-    if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
+    BOOL isUnkownMessage = [self isUnkownMessage:message.messageId content:message.content];
+    if (isUnkownMessage && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
-    } else if (!message.content && message.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
+    } else  if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
         return YES;
     }
     return NO;
 }
 
 + (BOOL)isUnkownMessage:(long)messageId content:(RCMessageContent *)content {
-    if (!content && messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
+    if([content isKindOfClass:[RCUnknownMessage class]]) {
+        return YES;
+    }
+    if (!content && messageId > 0) {
         return YES;
     }
     return NO;
@@ -558,7 +633,7 @@
             RCLogI(@"Push to web Page url is Invalid");
         }
     } else {
-        UIViewController *webview = [[RCPublicServiceClient sharedPublicServiceClient] getPublicServiceWebViewController:url];
+        UIViewController *webview = [self getPublicServiceWebViewController:url];
         [viewController.navigationController pushViewController:webview animated:YES];
     }
 }
@@ -1059,10 +1134,10 @@
     
     if (targetUserIds.count > targetUserNickName.count) {
         names = [NSMutableString
-            stringWithFormat:@"%@%@", names, NSLocalizedStringFromTable(@"GroupEtc", @"RongCloudKit", nil)];
+            stringWithFormat:@"%@%@", names, RCLocalizedString(@"GroupEtc")];
     }
     message =
-        [NSString stringWithFormat:NSLocalizedStringFromTable(isMeOperate ? @"GroupHaveRemoved" : @"GroupRemoved", @"RongCloudKit", nil), nickName, names];
+        [NSString stringWithFormat:RCLocalizedString(isMeOperate ? @"GroupHaveRemoved" : @"GroupRemoved"), nickName, names];
     return message;
 }
 
@@ -1227,10 +1302,10 @@
     NSString *operator= recallNotificationMessageNotification.operatorId;
     if (recallNotificationMessageNotification.isAdmin) {
         return
-            [NSString stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil),
-                                       NSLocalizedStringFromTable(@"AdminWithMessageRecalled", @"RongCloudKit", nil)];
+            [NSString stringWithFormat:RCLocalizedString(@"OtherHasRecalled"),
+             RCLocalizedString(@"AdminWithMessageRecalled")];
     }else if ([operator isEqualToString:currentUserId]) {
-        return [NSString stringWithFormat:@"%@", NSLocalizedStringFromTable(@"SelfHaveRecalled", @"RongCloudKit", nil)];
+        return [NSString stringWithFormat:@"%@", RCLocalizedString(@"SelfHaveRecalled")];
     } else {
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:operator];
         NSString *operatorName = userInfo.name;
@@ -1250,10 +1325,10 @@
         }
         if (conversationType == ConversationType_GROUP) {
             return [NSString
-                stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil), operatorName];
+                stringWithFormat:RCLocalizedString(@"OtherHasRecalled"), operatorName];
         } else {
             return [NSString
-                stringWithFormat:NSLocalizedStringFromTable(@"MessageHasRecalled", @"RongCloudKit", nil)];
+                stringWithFormat:@"%@",RCLocalizedString(@"MessageHasRecalled")];
         }
     }
 }
@@ -1297,8 +1372,10 @@
 + (NSDictionary *)getColorDic {
     static NSDictionary *colorDic = nil;
     if (!colorDic) {
-        colorDic = [[NSDictionary alloc] initWithContentsOfFile:[[[NSBundle mainBundle] resourcePath]
-                                                                    stringByAppendingPathComponent:@"RCColor.plist"]];
+        NSString *path = [self filePathForName:@"RCColor.plist"];
+//        colorDic = [[NSDictionary alloc] initWithContentsOfFile:[[[NSBundle mainBundle] resourcePath]
+//                                                                    stringByAppendingPathComponent:@"RCColor.plist"]];
+        colorDic = [[NSDictionary alloc] initWithContentsOfFile:path];
     }
     return colorDic;
 }
@@ -1308,5 +1385,91 @@
         return userInfo.alias;
     }
     return userInfo.name;
+}
+
+
++ (NSString *)localizedString:(NSString *)key table:(NSString *)table {
+    
+    NSString *language = [[NSLocale preferredLanguages] firstObject];
+    if (language.length == 0) {
+        return key;
+    }
+    NSString *fileNamePrefix = @"en";
+    if([language hasPrefix:@"zh"]) {
+        fileNamePrefix = @"zh-Hans";
+    } else if ([language hasPrefix:@"ar"]) {
+        fileNamePrefix = @"ar";
+    }
+    NSString *fullName = [NSString stringWithFormat:@"%@.strings", table];
+  
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    NSString *path = [mainBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *filePath = [path stringByAppendingPathComponent:fullName];
+    if (![fileManager fileExistsAtPath:filePath]) {
+        NSBundle *frameworkBundle = [NSBundle bundleForClass:[self class]];
+        path = [frameworkBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    }
+    
+    NSBundle *bundle = [NSBundle bundleWithPath:path];
+    NSString *localizedString = [bundle localizedStringForKey:key value:nil table:table];
+    if (!localizedString) {
+        localizedString = key;
+    }
+    return localizedString;
+}
+
+
++ (NSString *)filePathForName:(NSString *)name {
+    NSBundle *tmp = [NSBundle mainBundle];;
+    NSString *resourcePath = [tmp resourcePath];
+    NSString *bundlePath = [resourcePath stringByAppendingPathComponent:name];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if ([fileManager fileExistsAtPath:bundlePath]) {
+        return bundlePath;
+    } else {
+        NSBundle *innerBundle = [NSBundle bundleForClass:[self class]];
+        NSString *innerFilePath =  [[innerBundle resourcePath] stringByAppendingPathComponent:name];
+        return innerFilePath;
+    }
+}
+
++ (NSString *)bundlePathWithName:(NSString *)bundleName {
+    NSString *bundlePath = nil;
+    NSString *fullName= [NSString stringWithFormat:@"%@.bundle",bundleName];
+    NSURL *rootBundleURL = [[NSBundle mainBundle] URLForResource:bundleName withExtension:@"bundle"];
+    if (rootBundleURL) {
+        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:fullName];
+    } else {
+        NSBundle *innerBundle = [NSBundle bundleForClass:[self class]];
+        NSString *resourcePath = [innerBundle resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:fullName];
+    }
+    return bundlePath;
+}
+
++ (nullable UIViewController *)getPublicServiceWebViewController:(NSString *)URLString {
+    // check parameter
+    if (!URLString || 0 == [URLString length]) {
+        return nil;
+    }
+    RCPublicServiceWebViewController *vc = [[RCPublicServiceWebViewController alloc] initWithURLString:URLString];
+    return vc;
+
+}
+//判断是否是暗黑模式
++ (BOOL)isDarkMode {
+    if (@available(iOS 13.0, *)) {
+        NSNumber *currentUserInterfaceStyle =
+        [[NSUserDefaults standardUserDefaults] objectForKey:@"RCCurrentUserInterfaceStyle"];
+        if (!currentUserInterfaceStyle) {
+            currentUserInterfaceStyle = @(UITraitCollection.currentTraitCollection.userInterfaceStyle);
+        }
+        if (currentUserInterfaceStyle.integerValue == UIUserInterfaceStyleDark) {
+            return YES;
+        }
+    }
+    return NO;
 }
 @end

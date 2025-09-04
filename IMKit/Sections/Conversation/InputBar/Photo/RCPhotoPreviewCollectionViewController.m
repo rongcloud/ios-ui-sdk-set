@@ -164,10 +164,10 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     } else {
         cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
         //    [self _updateTopBarStatus];
-        //        __weak typeof(self) weakSelf = self;
+        __weak typeof(self) weakSelf = self;
         [cell setSingleTap:^{
-            //            weakSelf.topView.hidden = !weakSelf.topView.hidden;
-            //            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
+            weakSelf.topView.hidden = !weakSelf.topView.hidden;
+            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
         }];
     }
     [cell configPreviewCellWithItem:model];

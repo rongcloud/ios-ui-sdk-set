@@ -47,13 +47,12 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     [self registerNotificationCenter];
     
     [self setNavigationItems];
-
+    [self setupSubViews];
     if ([self isFileDownloaded] && [self isFileSupported]) {
         [self layoutAndPreviewFile];
     } else {
         [self layoutForShowFileInfo];
     }
-    [self.view bringSubviewToFront:_cancelButton];
 }
 
 - (void)dealloc {
@@ -143,6 +142,17 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 #pragma mark - Private Methods
+- (void)setupSubViews {
+    [self.view addSubview:self.webView];
+    [self.view addSubview:self.typeIconView];
+    [self.view addSubview:self.nameLabel];
+    [self.view addSubview:self.sizeLabel];
+    [self.view addSubview:self.progressLabel];
+    [self.view addSubview:self.cancelButton];
+    [self.view addSubview:self.downloadButton];
+    [self.view addSubview:self.openInOtherAppButton];
+    [self.view bringSubviewToFront:self.cancelButton];
+}
 
 - (void)layoutForShowFileInfo {
     self.webView.hidden = YES;
@@ -338,8 +348,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)setNavigationItems {
     //设置右键
+    
     RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
-    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(9.5, 0, 9.5, -9.5);
+    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8);
     rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
@@ -372,7 +383,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _webView.backgroundColor =
             [UIColor colorWithRed:242.f / 255.f green:242.f / 255.f blue:243.f / 255.f alpha:1.f];
         [_webView setOpaque:NO];
-        [self.view addSubview:_webView];
     }
     return _webView;
 }
@@ -382,8 +392,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _typeIconView =
             [[RCBaseImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileMessage.type];
-
-        [self.view addSubview:_typeIconView];
     }
 
     return _typeIconView;
@@ -397,7 +405,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _nameLabel.textAlignment = NSTextAlignmentCenter;
         _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x343434) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-        [self.view addSubview:_nameLabel];
     }
     return _nameLabel;
 }
@@ -409,7 +416,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _sizeLabel.text = [RCKitUtility getReadableStringForFileSize:self.fileMessage.size];
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
         _sizeLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa8a8a8) darkColor:RCMASKCOLOR(0xa0a5ab, 0.4)];
-        [self.view addSubview:_sizeLabel];
     }
     return _sizeLabel;
 }
@@ -420,7 +426,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _progressLabel.textColor = HEXCOLOR(0xa8a8a8);
         _progressLabel.textAlignment = NSTextAlignmentCenter;
         _progressLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
-        [self.view addSubview:_progressLabel];
     }
     return _progressLabel;
 }
@@ -436,7 +441,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _cancelButton.layer.cornerRadius = 5.0f;
         _cancelButton.layer.borderWidth = 0.5f;
         _cancelButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
-        [self.view addSubview:_cancelButton];
     }
     return _cancelButton;
 }
@@ -454,7 +458,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_downloadButton addTarget:self
                             action:@selector(startFileDownLoad)
                   forControlEvents:UIControlEventTouchUpInside];
-        [self.view addSubview:_downloadButton];
     }
     return _downloadButton;
 }
@@ -472,8 +475,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_openInOtherAppButton addTarget:self
                                   action:@selector(openCurrentFileInOtherApp)
                         forControlEvents:UIControlEventTouchUpInside];
-
-        [self.view addSubview:_openInOtherAppButton];
     }
     return _openInOtherAppButton;
 }

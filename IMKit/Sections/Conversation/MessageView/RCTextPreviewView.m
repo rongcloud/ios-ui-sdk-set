@@ -11,11 +11,13 @@
 #import "RCKitCommonDefine.h"
 #import "RCMessageCellTool.h"
 #import "RCAlertView.h"
+#import "RCTextPreviewView+Edit.h"
 
 @interface RCTextPreviewView()<RCAttributedLabelDelegate>
 @property (nonatomic, strong) RCAttributedLabel *label;
 @property (nonatomic, weak) id<RCTextPreviewViewDelegate> textPreviewDelegate;
 @property (nonatomic, assign) long messageId;
+@property (nonatomic, copy) NSString *originalText;
 @end
 @implementation RCTextPreviewView
 + (void)showText:(NSString *)text messageId:(long)messageId delegate:(nonnull id<RCTextPreviewViewDelegate>)delegate{
@@ -126,7 +128,13 @@
 // copy 按钮点击事件
 - (void)copyAction {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = self.label.text;
+    NSString *labelText = self.label.text;
+    NSString *copyText = [self edit_copyText];
+    if (copyText.length > 0 && ![copyText isEqualToString:labelText]) {
+        pasteboard.string = copyText;
+    } else {
+        pasteboard.string = labelText;
+    }
     [self.label resignFirstResponder];
 }
 

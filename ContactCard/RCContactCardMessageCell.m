@@ -11,6 +11,7 @@
 #import "UIColor+RCCCColor.h"
 #import "RCCCUtilities.h"
 #import "RCloudImageView.h"
+#import "RCUserInfoCacheManager.h"
 #define Cart_Message_Cell_Height 93
 #define Cart_Portrait_View_Width 40
 
@@ -126,17 +127,11 @@
         if (portraitUri.length < 1) {
             RCUserInfo *userInfo = [[RCIM sharedRCIM] getUserInfoCache:cardMessage.userId];
             if (userInfo == nil || userInfo.portraitUri.length < 1) {
-                if ([[RCIM sharedRCIM]
-                            .userInfoDataSource respondsToSelector:@selector(getUserInfoWithUserId:completion:)]) {
-                    [[RCIM sharedRCIM]
-                            .userInfoDataSource
-                        getUserInfoWithUserId:cardMessage.userId
-                                   completion:^(RCUserInfo *userInfo) {
-                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                           [self.portraitView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
-                                       });
-                                   }];
-                }
+                [[RCUserInfoCacheManager sharedManager] getUserInfo:cardMessage.userId complete:^(RCUserInfo * _Nonnull userInfo) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.portraitView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+                    });
+                }];
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self.portraitView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
