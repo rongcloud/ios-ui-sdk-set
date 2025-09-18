@@ -18,7 +18,7 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCloudImageView.h"
 
-#define currentUserId ([RCCoreClient sharedCoreClient].currentUserInfo.userId)
+#define currentUserId ([RCIMClient sharedRCIMClient].currentUserInfo.userId)
 #define RongVoIPMultiAudioCellReuseID @"RongVoIPMultiAudioCellReuseID"
 
 @interface RCCallAudioMultiCallViewController () <UICollectionViewDataSource>

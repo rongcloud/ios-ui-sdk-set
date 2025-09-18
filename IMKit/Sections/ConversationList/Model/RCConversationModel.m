@@ -54,7 +54,6 @@
         }
         self.notificationLevel = conversation.notificationLevel;
         self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
-        self.latestMessageUId = conversation.latestMessageUId;
     }
     return self;
 }

@@ -20,7 +20,7 @@
 #import "RCloudImageView.h"
 #import "UICollectionView+BackgroundView.h"
 
-#define currentUserId ([RCCoreClient sharedCoreClient].currentUserInfo.userId)
+#define currentUserId ([RCIMClient sharedRCIMClient].currentUserInfo.userId)
 #define RongVoIPMultiVideoCellReuseID @"RongVoIPMultiVideoCellReuseID"
 
 @interface RCCallVideoMultiCallViewController () <UICollectionViewDataSource, UICollectionViewDelegate>
@@ -584,7 +584,6 @@
         self.mainNameLabel.hidden = self.isFullScreen;
         self.timeLabel.hidden = self.isFullScreen;
         self.signalImageView.hidden = self.isFullScreen;
-        self.asrButton.hidden = self.isFullScreen;
     }
 }
 

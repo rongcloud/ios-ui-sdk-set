@@ -59,7 +59,8 @@ UIColor *dynamic_color(NSInteger light_hex_value, NSInteger dark_hex_value);
 // iphoneX顶部额外加上statusbar的30（实际刘海的高度）
 #define RCCallStatusBarHeight (BOTTOMSAFEAREA > 0 ? 30.0f : 0.0f)
 // 国际化
-#define RCCallKitLocalizedString(key) [RCCallKitUtility localizedString:(key) table:@"RongCallKit"]
+#define RCCallKitLocalizedString(key) \
+    NSLocalizedStringFromTableInBundle(key, @"RongCallKit", [RCCallKitUtility callKitBundle], nil)
 
 @interface RCCallKitUtility : NSObject
 
@@ -87,11 +88,5 @@ UIColor *dynamic_color(NSInteger light_hex_value, NSInteger dark_hex_value);
 + (NSInteger)compareVersion:(NSString *)version1 toVersion:(NSString *)version2;
 /// 取出callKit资源
 + (NSBundle *)callKitBundle;
-
-+ (NSString *)localizedString:(NSString *)key table:(NSString *)table;
-
-+ (NSString *)fileName:(NSString *)fileName ofBundle:(NSString *)bundleName;
-
-+ (BOOL)isArabic;
 
 @end

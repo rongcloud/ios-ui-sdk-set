@@ -42,9 +42,9 @@
     }
 #endif
 
-static NSString *const __RongCallKit__Version = @"5.26.0_opensource";
-static NSString *const __RongCallKit__Commit = @"cdb4cd8e6";
-static NSString *const __RongCallKit__Time = @"202509041018";
+static NSString *const __RongCallKit__Version = @"5.21.0_opensource";
+static NSString *const __RongCallKit__Commit = @"e645c23c0";
+static NSString *const __RongCallKit__Time = @"202509171906";
 
 @interface RCCall () <RCCallReceiveDelegate>
 
@@ -68,7 +68,6 @@ static NSString *const __RongCallKit__Time = @"202509041018";
             pRongVoIP.maxMultiAudioCallUserNumber = 20;
             pRongVoIP.maxMultiVideoCallUserNumber = 7;
             pRongVoIP.canIncomingCall = YES;
-            pRongVoIP.displayASRUI = YES;
             pRongVoIP.callWindows = [[NSMutableArray alloc] init];
             pRongVoIP.locationNotificationMap = [[NSMutableDictionary alloc] init];
             [pRongVoIP registerNotification];
@@ -150,7 +149,7 @@ static NSString *const __RongCallKit__Time = @"202509041018";
             initWithConversationType:conversationType
                             targetId:targetId
                            mediaType:mediaType
-                               exist:@[[RCCoreClient sharedCoreClient].currentUserInfo.userId]
+                               exist:@[[RCIMClient sharedRCIMClient].currentUserInfo.userId]
                              success:^(NSArray *addUserIdList) {
                                  [weakSelf startMultiCallViewController:conversationType
                                                                targetId:targetId
@@ -409,7 +408,7 @@ static NSString *const __RongCallKit__Time = @"202509041018";
     NSString *title = @"";
     NSString *soundName = @"RongCallKit.bundle/voip/voip_call.caf";
 
-    if ([RCCoreClient sharedCoreClient].pushProfile.isShowPushContent ||
+    if ([RCIMClient sharedRCIMClient].pushProfile.isShowPushContent ||
         (pushConfig && pushConfig.forceShowDetailContent)) {
         if (pushConfig && pushConfig.pushTitle && pushConfig.pushTitle.length != 0) {
             title = pushConfig.pushTitle;

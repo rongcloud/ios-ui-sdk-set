@@ -18,7 +18,6 @@
 @property (nonatomic, strong) NSTimer *activeTimer;
 @property (nonatomic, copy) void (^touchedBlock)(RCCallSession *callSession);
 @property (nonatomic, strong) CTCallCenter *callCenter;
-@property (nonatomic, assign) long long deltaTime;
 @end
 
 static RCCallFloatingBoard *staticBoard = nil;
@@ -48,7 +47,6 @@ static NSString *RCVoipFloatingBoardPosY = @"RCVoipFloatingBoardPosY";
     if (self.callSession.callStatus == RCCallHangup) {
         [self performSelector:@selector(clearCallFloatingBoard) withObject:nil afterDelay:2];
     }
-    _deltaTime = [[RCCoreClient sharedCoreClient] getDeltaTime];
     [self updateActiveTimer];
     [self startActiveTimer];
     [self updateBoard];
@@ -94,8 +92,7 @@ static NSString *RCVoipFloatingBoardPosY = @"RCVoipFloatingBoardPosY";
         if (!self.callSession.connectedTime) {
             return;
         }
-        long long millsec = [[NSDate date] timeIntervalSince1970] * 1000 - self.deltaTime - self.callSession.connectedTime;
-        long long sec = millsec / 1000;
+        long sec = [[NSDate date] timeIntervalSince1970] - self.callSession.connectedTime / 1000;
         [self.floatingButton setTitle:[RCCallKitUtility getReadableStringForTime:sec] forState:UIControlStateNormal];
         [self layoutTextUnderImageButton:self.floatingButton];
     }
@@ -144,7 +141,7 @@ static NSString *RCVoipFloatingBoardPosY = @"RCVoipFloatingBoardPosY";
     if ([self isVideoViewEnabledSession]) {
         if (self.callSession.callStatus == RCCallActive) {
             [self.callSession setVideoView:self.videoView userId:self.callSession.targetId];
-            [self.callSession setVideoView:nil userId:[RCCoreClient sharedCoreClient].currentUserInfo.userId];
+            [self.callSession setVideoView:nil userId:[RCIMClient sharedRCIMClient].currentUserInfo.userId];
         } else if (self.callSession.callStatus == RCCallHangup) {
             UILabel *videoStopTips =
                 [[UILabel alloc] initWithFrame:CGRectMake(0, self.videoView.frame.size.height / 2 - 10,
