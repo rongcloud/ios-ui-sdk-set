@@ -278,42 +278,32 @@ progressHandler:(void (^)(double progress, NSError *error, BOOL *stop, NSDiction
         }
         PHFetchOptions *option = [[PHFetchOptions alloc] init];
         option.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES] ];
-        NSMutableArray *smartAlbumSubtypes = [NSMutableArray arrayWithArray: @[@(PHAssetCollectionSubtypeSmartAlbumUserLibrary),
-                                                                               @(PHAssetCollectionSubtypeSmartAlbumRecentlyAdded),
-                                                                               @(PHAssetCollectionSubtypeSmartAlbumVideos),
-                                                                             @(PHAssetCollectionSubtypeSmartAlbumFavorites),
-                                                                               @(PHAssetCollectionSubtypeSmartAlbumSlomoVideos)]];
-        NSMutableArray *albums = [NSMutableArray array];
+        PHAssetCollectionSubtype smartAlbumSubtype =
+        PHAssetCollectionSubtypeSmartAlbumUserLibrary | PHAssetCollectionSubtypeSmartAlbumRecentlyAdded;
+        //            PHAssetCollectionSubtype smartAlbumSubtype =
+        //            PHAssetCollectionSubtypeSmartAlbumUserLibrary | PHAssetCollectionSubtypeSmartAlbumVideos;
         // For iOS 9, We need to show ScreenShots Album && SelfPortraits Album
         if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0")) {
-            [smartAlbumSubtypes addObject:@(PHAssetCollectionSubtypeSmartAlbumScreenshots)];
-            [smartAlbumSubtypes addObject:@(PHAssetCollectionSubtypeSmartAlbumSelfPortraits)];
-            [smartAlbumSubtypes addObject:@(PHAssetCollectionSubtypeSmartAlbumLivePhotos)];
+            smartAlbumSubtype =
+            PHAssetCollectionSubtypeSmartAlbumUserLibrary | PHAssetCollectionSubtypeSmartAlbumRecentlyAdded |
+            PHAssetCollectionSubtypeSmartAlbumScreenshots | PHAssetCollectionSubtypeSmartAlbumSelfPortraits;
         }
+        PHFetchResult *smartAlbums =
+        [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
+                                                 subtype:smartAlbumSubtype
+                                                 options:nil];
         
-        for (NSNumber *typs in smartAlbumSubtypes) {
-            PHFetchResult *smartAlbums =
-            [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
-                                                     subtype:[typs integerValue]
-                                                     options:nil];
-            if (smartAlbums) {
-                [albums addObject:smartAlbums];
-            }
-        }
-
-        NSArray *mySubTypes = @[@(PHAssetCollectionSubtypeAlbumRegular),@(PHAssetCollectionSubtypeAlbumSyncedAlbum)];
-        for (NSNumber *typs in mySubTypes) {
-            PHFetchResult *album =
-            [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum
-                                                     subtype:[typs integerValue]
-                                                     options:nil];
-            if (album) {
-                [albums addObject:album];
-            }
-        }
+        PHFetchResult *myAlbums =
+        [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum
+                                                 subtype:PHAssetCollectionSubtypeAlbumRegular |
+         PHAssetCollectionSubtypeAlbumSyncedAlbum
+                                                 options:nil];
+        
+        NSArray *allAlbums = @[ smartAlbums, myAlbums ];
+        
         dispatch_async(__rc__photo__working_queue, ^{
             NSMutableArray *albumGroups = [NSMutableArray array];
-            for (PHFetchResult *fetchResult in albums) {
+            for (PHFetchResult *fetchResult in allAlbums) {
                 for (PHAssetCollection *collection in fetchResult) {
                     PHFetchResult *fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:nil];
                     if (fetchResult.count < 1)

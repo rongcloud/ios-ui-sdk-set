@@ -63,14 +63,7 @@
 
 - (void)onTel:(id)sender {
     NSMutableString *str = [[NSMutableString alloc] initWithFormat:@"telprompt://%@", self.content.text];
-    if (@available(iOS 10.0, *)) {
-          [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]
-                                             options:@{}
-                                   completionHandler:^(BOOL success) {
-          }];
-      } else {
-          [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]];
-      }
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]];
 }
 
 - (void)updateFrame {

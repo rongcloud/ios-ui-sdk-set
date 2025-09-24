@@ -26,8 +26,6 @@
 #import "RCKitListenerManager.h"
 #import "RCMessageNotificationHelper.h"
 #import "RCIMNotificationDataContext.h"
-#import "RCInfoProvider.h"
-#import "RCInfoManagement.h"
 
 NSString *const RCKitDispatchMessageNotification = @"RCKitDispatchMessageNotification";
 NSString *const RCKitDispatchTypingMessageNotification = @"RCKitDispatchTypingMessageNotification";
@@ -43,8 +41,6 @@ NSString *const RCKitDispatchMessageReceiptResponseNotification = @"RCKitDispatc
 NSString *const RCKitMessageDestructingNotification = @"RCKitMessageDestructingNotification";
 NSString *const RCKitDispatchConversationStatusChangeNotification =
     @"RCKitDispatchConversationStatusChangeNotification";
-NSString *const RCKitDispatchConversationDraftUpdateNotification =
-    @"RCKitDispatchConversationDraftUpdateNotification";
 
 @interface RCIM () <RCIMClientReceiveMessageDelegate, RCConnectionStatusChangeDelegate, RCMessageDestructDelegate,
                     RCConversationStatusChangeDelegate>
@@ -57,7 +53,7 @@ NSString *const RCKitDispatchConversationDraftUpdateNotification =
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.21.0_opensource";
+static NSString *const RCIMKitVersion = @"5.10.2.122_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -86,7 +82,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
     [[RCCoreClient sharedCoreClient] setCurrentUserInfo:currentUserInfo];
     if (currentUserInfo) {
         [[RCUserInfoCacheManager sharedManager] updateUserInfo:currentUserInfo forUserId:currentUserInfo.userId];
-        [RCInfoProvider sharedManager].currentUserId = currentUserInfo.userId;
+        [RCUserInfoCacheManager sharedManager].currentUserId = currentUserInfo.userId;
     }
 }
 
@@ -97,8 +93,12 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
 - (void)setGroupUserInfoDataSource:(id<RCIMGroupUserInfoDataSource>)groupUserInfoDataSource {
     _groupUserInfoDataSource = groupUserInfoDataSource;
     if (groupUserInfoDataSource) {
-        [RCInfoProvider sharedManager].groupUserInfoEnabled = YES;
+        [RCUserInfoCacheManager sharedManager].groupUserInfoEnabled = YES;
     }
+}
+
+- (void)initWithAppKey:(NSString *)appKey {
+    [self initWithAppKey:appKey option:nil];
 }
 
 - (void)initWithAppKey:(NSString *)appKey option:(RCInitOption *)option {
@@ -130,7 +130,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
                                                object:nil];
 
     [self registerMessageType:RCUserInfoUpdateMessage.class];
-    [RCInfoProvider sharedManager].appKey = appKey;
+    [RCUserInfoCacheManager sharedManager].appKey = appKey;
 
     [[RongIMKitExtensionManager sharedManager] initWithAppKey:appKey];
     [[RCCoreClient sharedCoreClient] setRCConversationStatusChangeDelegate:self];
@@ -217,7 +217,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
                  success:(void (^)(NSString *userId))successBlock
                    error:(void (^)(RCConnectErrorCode errorCode))errorBlock {
     [[RCCoreClient sharedCoreClient] connectWithToken:token timeLimit:timeLimit dbOpened:dbOpenedBlock success:^(NSString *userId) {
-        [RCInfoProvider sharedManager].currentUserId = userId;
+            [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             if (successBlock) {
                 successBlock(userId);
             }
@@ -236,7 +236,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
         } error:^(RCConnectErrorCode errorCode) {
             NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
             if (userId) {
-                [RCInfoProvider sharedManager].currentUserId = userId;
+                [RCUserInfoCacheManager sharedManager].currentUserId = userId;
             }
             if (errorBlock != nil)
                 errorBlock(errorCode);
@@ -408,9 +408,6 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
 }
 
 - (BOOL)p_updateUserInfoCache:(RCMessageContent *)messageContent{
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        return NO;
-    }
     RCUserInfo *senderUserInfo = messageContent.senderUserInfo;
     NSString *senderUserId = senderUserInfo.userId;
     if (senderUserId.length > 0 && ![senderUserId isEqualToString:[RCCoreClient sharedCoreClient].currentUserInfo.userId]) {
@@ -462,13 +459,17 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
         return YES;
     }
     
+    BOOL isCustomMessageAlert = YES;
     // 不入库的不响铃，不本地通知提醒 此处不要return
     if (!([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
-        return YES;
+        isCustomMessageAlert = NO;
     }
-    BOOL isUnkownMessage = [RCKitUtility isUnkownMessage:message.messageId content:message.content];
-    // 未知消息不展示通知时，不提醒
-    if (!RCKitConfigCenter.message.showUnkownMessageNotificaiton && isUnkownMessage) {
+    // 不识别消息的综合判断
+    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.messageId > 0 && !message.content) {
+        isCustomMessageAlert = YES;
+    }
+    
+    if (!isCustomMessageAlert) {
         return YES;
     }
     
@@ -725,15 +726,16 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
     _enablePersistentUserInfoCache = enablePersistentUserInfoCache;
     NSString *userId = [[RCCoreClient sharedCoreClient].currentUserInfo.userId copy];
     if (enablePersistentUserInfoCache && userId) {
-        [RCInfoProvider sharedManager].currentUserId = userId;
+        [RCUserInfoCacheManager sharedManager].currentUserId = userId;
     }
 }
 
 - (RCUserInfo *)getUserInfoCache:(NSString *)userId {
-    return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+    return [[RCUserInfoCacheManager sharedManager] getUserInfoFromCacheOnly:userId];
 }
 
 - (void)refreshUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId {
+    //    [[RCUserInfoCacheManager sharedManager] clearUserInfoNetworkCacheOnly:userId];
     [[RCUserInfoCacheManager sharedManager] updateUserInfo:userInfo forUserId:userId];
 }
 
@@ -742,7 +744,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
 }
 
 - (RCGroup *)getGroupInfoCache:(NSString *)groupId {
-    return [[RCUserInfoCacheManager sharedManager] getGroupInfo:groupId];
+    return [[RCUserInfoCacheManager sharedManager] getGroupInfoFromCacheOnly:groupId];
 }
 
 - (void)refreshGroupInfoCache:(RCGroup *)groupInfo withGroupId:(NSString *)groupId {
@@ -754,7 +756,7 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
 }
 
 - (RCUserInfo *)getGroupUserInfoCache:(NSString *)userId withGroupId:(NSString *)groupId {
-    return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId inGroupId:groupId];
+    return [[RCUserInfoCacheManager sharedManager] getUserInfoFromCacheOnly:userId inGroupId:groupId];
 }
 
 - (void)refreshGroupUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId withGroupId:(NSString *)groupId {
@@ -763,51 +765,6 @@ static NSString *const RCIMKitVersion = @"5.21.0_opensource";
 
 - (void)clearGroupUserInfoCache {
     [[RCUserInfoCacheManager sharedManager] clearAllGroupUserInfo];
-}
-
-- (void)updateMyUserProfile:(RCUserProfile *)profile
-               successBlock:(void (^)(void))successBlock
-                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCInfoManagement sharedInstance] updateMyUserProfile:profile successBlock:successBlock errorBlock:errorBlock];
-}
-
-- (void)setFriendInfo:(NSString *)userId
-               remark:(nullable NSString *)remark
-           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
-         successBlock:(void (^)(void))successBlock
-           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCInfoManagement sharedInstance] setFriendInfo:userId
-                                              remark:remark
-                                          extProfile:extProfile
-                                        successBlock:successBlock
-                                          errorBlock:errorBlock];
-}
-
-- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
-           successBlock:(void (^)(void))successBlock
-             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCInfoManagement sharedInstance] updateGroupInfo:groupInfo
-                                          successBlock:successBlock
-                                            errorBlock:errorBlock];
-}
-
-- (void)setGroupRemark:(NSString *)groupId remark:(NSString *)remark success:(void (^)(void))successBlock error:(void (^)(RCErrorCode))errorBlock {
-    [[RCInfoManagement sharedInstance] setGroupRemark:groupId remark:remark success:successBlock error:errorBlock];
-}
-
-- (void)setGroupMemberInfo:(NSString *)groupId
-                    userId:(NSString *)userId
-                  nickname:(nullable NSString *)nickname
-                     extra:(nullable NSString *)extra
-              successBlock:(void (^)(void))successBlock
-                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock {
-    [[RCInfoManagement sharedInstance] setGroupMemberInfo:groupId
-                                                   userId:userId
-                                                 nickname:nickname
-                                                    extra:extra
-                                             successBlock:successBlock
-                                               errorBlock:errorBlock];
-
 }
 
 - (RCMessage *)sendMessage:(RCConversationType)conversationType
