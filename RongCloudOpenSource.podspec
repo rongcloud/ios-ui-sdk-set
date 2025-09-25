@@ -67,12 +67,12 @@ Pod::Spec.new do |s|
     lokit.dependency 'RongCloudIM/Location'
   end
 
-  s.subspec 'RongCallKit' do |ck|
-    ck.source_files = 'CallKit/RongCallKit.h','CallKit/**/*.{h,m,mm}'
-    ck.private_header_files = 'CallKit/Header/*.h'
-    ck.resources = "Resources/RongCallKit.bundle"
-    ck.dependency 'RongCloudOpenSource/IMKit'
-    ck.dependency 'RongCloudRTC/RongCallLib'
-  end
+  # s.subspec 'RongCallKit' do |ck|
+  #   ck.source_files = 'CallKit/RongCallKit.h','CallKit/**/*.{h,m,mm}'
+  #   ck.private_header_files = 'CallKit/Header/*.h'
+  #   ck.resources = "Resources/RongCallKit.bundle"
+  #   ck.dependency 'RongCloudOpenSource/IMKit'
+  #   ck.dependency 'RongCloudRTC/RongCallLib'
+  # end
 
 end
