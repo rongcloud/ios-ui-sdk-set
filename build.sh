@@ -39,7 +39,7 @@ update_sdk RongSight Sight
 update_sdk RongiFlyKit iFlyKit
 update_sdk RongContactCard ContactCard
 update_sdk RongLocationKit LocationKit
-update_sdk RongCallKit CallKit
+#update_sdk RongCallKit CallKit
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   ## 剔除 ifly 的敏感信息
@@ -47,18 +47,18 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   ## 修改 RCIMKitVersion
   sed -i '' -e 's?^static NSString \*const RCIMKitVersion.*$?static NSString *const RCIMKitVersion = @\"'$Version'_opensource\";?' IMKit/RCIM.m
   ## 修改 __RongCallKit__Version
-  sed -i '' -e 's?^static NSString \*const __RongCallKit__Version.*$?static NSString *const __RongCallKit__Version = @\"'$Version'_opensource\";?' CallKit/RCCall.mm
+#  sed -i '' -e 's?^static NSString \*const __RongCallKit__Version.*$?static NSString *const __RongCallKit__Version = @\"'$Version'_opensource\";?' CallKit/RCCall.mm
 else
   sed -i -e 's?^#define iFlyKey.*$?#define iFlyKey @\"\"?' iFlyKit/Extention/RCiFlyKitExtensionModule.m
   sed -i -e 's?^static NSString \*const RCIMKitVersion.*$?static NSString *const RCIMKitVersion = @\"'$Version'_opensource\";?' IMKit/RCIM.m
-  sed -i -e 's?^static NSString \*const __RongCallKit__Version.*$?static NSString *const __RongCallKit__Version = @\"'$Version'_opensource\";?' CallKit/RCCall.mm
+#  sed -i -e 's?^static NSString \*const __RongCallKit__Version.*$?static NSString *const __RongCallKit__Version = @\"'$Version'_opensource\";?' CallKit/RCCall.mm
 fi
 
 
 ## 3. 删除重复存在的 .h
 
 python delete_existed_header.py
-python delete_unuse_callkit.py
+#python delete_unuse_callkit.py
 
 ## 4. 统一管理资源文件
 
@@ -71,7 +71,7 @@ fi
 rsync -a IMKit/Resource/* $res_path/ && rm -rf IMKit/Resource/
 rsync -a Sticker/Resource/* $res_path/ && rm -rf Sticker/Resource/
 rsync -a iFlyKit/Resource/* $res_path/ && rm -rf iFlyKit/Resource/
-rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
+#rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
 
 #sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
 
