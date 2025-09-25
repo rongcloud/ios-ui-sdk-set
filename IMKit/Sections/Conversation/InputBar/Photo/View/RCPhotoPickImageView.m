@@ -20,7 +20,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 };
 @interface RCPhotoPickImageView()
 
-@property (nonatomic, strong) UIView *maskView;
+@property (nonatomic, strong) UIView *maskCoverView;
 @property (nonatomic, strong) UIView *typeBackgroundView;
 
 @property (nonatomic, strong) UILabel *gifLabel;
@@ -48,10 +48,10 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 - (void)setPickStatus:(RCPotoPickStatus)pickStatus{
     switch (pickStatus) {
         case RCPotoPickStatusNormal:
-            _maskView.backgroundColor = [UIColor clearColor];
+            _maskCoverView.backgroundColor = [UIColor clearColor];
             break;
         case RCPotoPickStatusSelect:
-            _maskView.backgroundColor = RCMASKCOLOR(0x000000, 0.4);
+            _maskCoverView.backgroundColor = RCMASKCOLOR(0x000000, 0.4);
             break;
         default:
             break;
@@ -80,12 +80,13 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 }
 
 #pragma mark - getter
-- (UIView *)maskView{
-    if (!_maskView) {
-        _maskView = [[UIView alloc] initWithFrame:self.bounds];
-        [self addSubview:_maskView];
+- (UIView *)maskCoverView{
+    if (!_maskCoverView) {
+        UIView *view = [[UIView alloc] initWithFrame:self.bounds];
+        [self addSubview:view];
+        _maskCoverView = view;
     }
-    return _maskView;
+    return _maskCoverView;
 }
 
 - (UIView *)typeBackgroundView{

@@ -263,7 +263,8 @@
         }
         dispatch_async(self.updateEventQueue, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                for (RCConversationModel *model in self.dataList) {
+                NSArray *arrayDataList = [self.dataList copy];
+                for (RCConversationModel *model in arrayDataList) {
                     if ([model.targetId isEqualToString:targetId]) {
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
@@ -485,6 +486,10 @@
                                              selector:@selector(didReceiveRecallMessageNotification:)
                                                  name:RCKitDispatchRecallMessageNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onMessagesModifiedNotification:)
+                                                 name:RCKitDispatchMessagesModifiedNotification
+                                               object:nil];
 }
 
 #pragma mark - helper
@@ -532,4 +537,39 @@
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
+
+#pragma mark - 消息编辑
+
+- (void)onMessagesModifiedNotification:(NSNotification *)notification {
+    if (!self.isConverstaionListAppear) {// 列表页不显示时无需处理
+        return;
+    }
+    NSArray<RCMessage *> *messages = notification.object;
+    // 将 dataList 快照转为哈希表，key 为 latestMessageUId
+    NSArray<RCConversationModel *> *arrayDataList = [self.dataList copy];
+    NSMutableDictionary<NSString *, RCConversationModel *> *uidToModel = [NSMutableDictionary dictionaryWithCapacity:arrayDataList.count];
+    for (RCConversationModel *model in arrayDataList) {
+        if (model.latestMessageUId.length > 0) {
+            uidToModel[model.latestMessageUId] = model;
+        }
+    }
+
+    for (RCMessage *message in messages) {
+        RCConversationModel *model = uidToModel[message.messageUId];
+        if (!model) {
+            continue;
+        }
+        // 更新最后一条消息的显示内容
+        model.lastestMessage = message.content;
+        
+        RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
+        updateInfo.model = model;
+        updateInfo.updateType = RCConversationCell_MessageContent_Update;
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:RCKitConversationCellUpdateNotification
+         object:updateInfo
+         userInfo:nil];
+    }
+}
+
 @end

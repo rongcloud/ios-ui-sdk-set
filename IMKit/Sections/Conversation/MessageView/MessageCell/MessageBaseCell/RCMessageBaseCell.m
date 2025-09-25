@@ -18,7 +18,9 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 #define SelectButtonSpaceLeft 8 //选择按钮据屏幕左侧 5
 
 @interface RCMessageBaseCell ()
-
+{
+    __weak id<RCMessageCellDelegate> _delegate;
+}
 @property (nonatomic, strong) UITapGestureRecognizer *multiSelectTap;
 @property (nonatomic, strong) RCBaseButton *selectButton;
 
@@ -44,6 +46,20 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
+    _delegate = delegate;
+}
+
+- (id<RCMessageCellDelegate>)delegate {
+    return _delegate;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [self setBaseAutoLayout];
+    [self updateUIForMultiSelect];
 }
 
 #pragma mark - Public Methods
@@ -110,6 +126,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 - (void)onChangedMessageMultiSelectStatus:(NSNotification *)notification {
     [self setDataModel:self.model];
 }
+
 
 - (void)updateUIForMultiSelect {
     [self.contentView removeGestureRecognizer:self.multiSelectTap];

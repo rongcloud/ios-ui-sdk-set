@@ -9,6 +9,12 @@
 #import "RCMessageModel.h"
 #import "RCCustomerServiceMessageModel.h"
 
+@interface RCMessageModel ()
+
+@property (nonatomic, strong) id cellViewModel;
+
+@end
+
 @implementation RCMessageModel
 
 + (instancetype)modelWithMessage:(RCMessage *)rcMessage {
@@ -44,6 +50,8 @@
         }
         self.canIncludeExpansion = rcMessage.canIncludeExpansion;
         self.expansionDic = rcMessage.expansionDic;
+ 		self.hasChanged = rcMessage.hasChanged;
+        self.modifyInfo = rcMessage.modifyInfo;
     }
 
     return self;

@@ -41,6 +41,7 @@
         self.sentTime = conversation.sentTime;
         self.operationTime = conversation.operationTime;
         self.draft = conversation.draft;
+        self.editedMessageDraft = conversation.editedMessageDraft;
         self.objectName = conversation.objectName;
         self.senderUserId = conversation.senderUserId;
         self.receivedStatusInfo = conversation.receivedStatusInfo;
@@ -54,24 +55,7 @@
         }
         self.notificationLevel = conversation.notificationLevel;
         self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
-        if (conversation && conversation.draft.length > 0) {
-            __autoreleasing NSError *error = nil;
-            NSData *draftData = [conversation.draft dataUsingEncoding:NSUTF8StringEncoding];
-            if (!draftData) {
-                self.draft = conversation.draft;
-            } else {
-                NSDictionary *draftDict =
-                    [NSJSONSerialization JSONObjectWithData:draftData options:kNilOptions error:&error];
-                if (error) {
-                    self.draft = conversation.draft;
-                } else {
-                    if ([draftDict isKindOfClass:[NSDictionary class]] &&
-                        [draftDict.allKeys containsObject:@"draftContent"]) {
-                        self.draft = [draftDict objectForKey:@"draftContent"];
-                    }
-                }
-            }
-        }
+        self.latestMessageUId = conversation.latestMessageUId;
     }
     return self;
 }
@@ -143,6 +127,29 @@
         _receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
     }
     return _receivedStatusInfo;
+}
+
+- (void)setDraft:(NSString *)draft {
+    if (draft.length) {
+        __autoreleasing NSError *error = nil;
+        NSData *draftData = [draft dataUsingEncoding:NSUTF8StringEncoding];
+        if (!draftData) {
+            _draft = draft;
+        } else {
+            NSDictionary *draftDict =
+                [NSJSONSerialization JSONObjectWithData:draftData options:kNilOptions error:&error];
+            if (error) {
+                _draft = draft;
+            } else {
+                if ([draftDict isKindOfClass:[NSDictionary class]] &&
+                    [draftDict.allKeys containsObject:@"draftContent"]) {
+                    _draft = [draftDict objectForKey:@"draftContent"];
+                }
+            }
+        }
+    } else {
+        _draft = draft;
+    }
 }
 
 @end

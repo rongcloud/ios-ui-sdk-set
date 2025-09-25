@@ -348,8 +348,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)setNavigationItems {
     //设置右键
+    
     RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
-    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(9.5, 0, 9.5, -9.5);
+    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8);
     rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];

@@ -12,6 +12,7 @@
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
+#import "RCEditInputBarConfig.h"
 @interface RCConversationDetailContentView ()
 @property (nonatomic, strong) NSArray *constraints;
 @property (nonatomic, copy) NSString *prefixName;
@@ -51,7 +52,7 @@
 }
 
 - (void)updateContent:(RCConversationModel *)model {
-    if (model.draft.length > 0 && !model.hasUnreadMentioned) {
+    if ([self isShowDraft:model]) {
         self.sentStatusView.hidden = YES;
         self.hightlineLabel.text = RCLocalizedString(@"Draft");
         self.hightlineLabel.textColor = HEXCOLOR(0xcc3333);
@@ -77,13 +78,20 @@
     }
 
     NSString *messageContent = nil;
-    if (model.draft.length > 0 && !model.hasUnreadMentioned) {
-        messageContent = model.draft;
+    if ([self isShowDraft:model]) {
+        NSString *editedDraftContent = model.editedMessageDraft.content;
+        if (editedDraftContent.length) {
+            RCEditInputBarConfig *config = [[RCEditInputBarConfig alloc] initWithData:editedDraftContent];
+            messageContent = config.textContent;
+        } else {
+            messageContent = model.draft;
+        }
     } else if (model.lastestMessageId > 0) {
         if (self.prefixName.length == 0 || model.lastestMessageDirection == MessageDirection_SEND ||
             [model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]] ||
             [model.lastestMessage isKindOfClass:[RCInformationNotificationMessage class]] ||
-            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
+            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]] ||
+            [model.lastestMessage isKindOfClass:[RCUnknownMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
             messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];
@@ -152,7 +160,9 @@
     if ([RCKitUtility isUnkownMessage:model.lastestMessageId content:model.lastestMessage] &&
         RCKitConfigCenter.message.showUnkownMessage) {
         return RCLocalizedString(@"unknown_message_cell_tip");
-    } else {
+    } else if ([model.lastestMessage isKindOfClass:[RCStreamMessage class]]) {
+        return [RCKitUtility formatStreamDigest:[[RCCoreClient sharedCoreClient] getMessage:model.lastestMessageId]];
+    }  else {
         return [RCKitUtility formatMessage:model.lastestMessage
                                   targetId:model.targetId
                           conversationType:model.conversationType];
@@ -183,6 +193,11 @@
     } else {
         return 0;
     }
+}
+
+// 是否显示草稿
+- (BOOL)isShowDraft:(RCConversationModel *)model {
+    return (model.editedMessageDraft.content.length > 0 || model.draft.length > 0) && !model.hasUnreadMentioned;
 }
 
 #pragma mark - Constraint

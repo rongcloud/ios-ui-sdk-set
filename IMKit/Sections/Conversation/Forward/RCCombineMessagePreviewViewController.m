@@ -53,6 +53,8 @@
 @property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
+//显示撤回消息对话框
+@property (nonatomic, assign) BOOL displayRecallDialog;
 
 @end
 
@@ -103,6 +105,14 @@
     [self registerObserver];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if (self.displayRecallDialog) {
+        self.displayRecallDialog = NO;
+        [self showRecallDialog];
+    }
+}
+
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [self.combineMsgWebView.configuration.userContentController removeScriptMessageHandlerForName:FUNCTIONNAME];
@@ -128,22 +138,30 @@
                                                object:nil];
 }
 
+- (void)showRecallDialog {
+    UIAlertController *alertController = [UIAlertController
+        alertControllerWithTitle:nil
+                         message:RCLocalizedString(@"MessageRecallAlert")
+                  preferredStyle:UIAlertControllerStyleAlert];
+    [alertController
+        addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                           style:UIAlertActionStyleDefault
+                                         handler:^(UIAlertAction *_Nonnull action) {
+                                             [self.navigationController popViewControllerAnimated:YES];
+                                         }]];
+    [self.navigationController presentViewController:alertController animated:YES completion:nil];
+}
+
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            UIAlertController *alertController = [UIAlertController
-                alertControllerWithTitle:nil
-                                 message:RCLocalizedString(@"MessageRecallAlert")
-                          preferredStyle:UIAlertControllerStyleAlert];
-            [alertController
-                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *_Nonnull action) {
-                                                     [self.navigationController popViewControllerAnimated:YES];
-                                                 }]];
-            [self.navigationController presentViewController:alertController animated:YES completion:nil];
+            if ([self isViewLoaded] && self.view.window != nil) {
+                [self showRecallDialog];
+            } else {
+                self.displayRecallDialog = YES;
+            }
         }
     });
 }
@@ -193,13 +211,29 @@
         } else if ([templateType isEqualToString:@"phone"]) {
             NSString *phoneNum = [dict objectForKey:@"phoneNum"];
             if (phoneNum) {
-                [[UIApplication sharedApplication]
-                    openURL:[NSURL URLWithString:[NSString stringWithFormat:@"tel://%@", phoneNum]]];
+                NSString *phoneStr = [NSString stringWithFormat:@"tel://%@", phoneNum];
+                if (@available(iOS 10.0, *)) {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]
+                                                         options:@{}
+                                               completionHandler:^(BOOL success) {
+                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]];
+                  }
             }
         } else if ([templateType isEqualToString:@"link"]) {
             NSString *url = [dict objectForKey:@"link"];
             if (url) {
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                if (@available(iOS 10.0, *)) {
+                    [RCKitUtility openURLInSafariViewOrWebView:url base:self];
+                    // 无法打开 a@126.com, 改为程序内加载
+//                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]
+//                                                         options:@{}
+//                                               completionHandler:^(BOOL success) {
+//                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                  }
             }
         } else if ([templateType isEqualToString:RCGIFMessageTypeIdentifier]) {
             [self presentGIFPreviewViewController:dict];
@@ -408,7 +442,7 @@
 
     RCSightSlideViewController *svc = [[RCSightSlideViewController alloc] init];
     svc.messageModel = model;
-//    svc.topRightBtnHidden = YES;
+    svc.topRightBtnHidden = YES;
     svc.onlyPreviewCurrentMessage = YES;
     RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:svc];
     navc.modalPresentationStyle = UIModalPresentationFullScreen;

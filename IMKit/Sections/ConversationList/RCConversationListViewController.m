@@ -137,7 +137,10 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    RCConversationModel *model = self.dataSource.dataList[indexPath.row];
+    RCConversationModel *model = nil;
+    if (indexPath.row < self.dataSource.dataList.count) {
+        model = self.dataSource.dataList[indexPath.row];
+    }
 
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
         RCConversationBaseCell *userCustomCell =
@@ -454,6 +457,10 @@
                                              selector:@selector(conversationStatusChanged:)
                                                  name:RCKitDispatchConversationStatusChangeNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(draftDidUpdate:)
+                                                 name:RCKitDispatchConversationDraftUpdateNotification
+                                               object:nil];
 }
 
 - (void)didReceiveMessageNotification:(NSNotification *)notification {
@@ -524,6 +531,45 @@
             }
         } else {
             [ws refreshConversationTableViewIfNeeded];
+        }
+    });
+}
+
+- (void)draftDidUpdate:(NSNotification *)notification {
+    NSDictionary *dict = notification.userInfo;
+    if (![dict isKindOfClass:[NSDictionary class]]) {
+        return;
+    }
+    RCConversationType type = [dict[@"conversationType"] integerValue];
+    NSString *targetId = dict[@"targetId"];
+    NSString *channelId = dict[@"channelId"];
+    NSString *draft = dict[@"draft"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        RCConversationModel *conversationModel;
+        for (RCConversationModel *model in self.conversationListDataSource) {
+            if (type != model.conversationType) {
+                continue;
+            }
+            if (![model.targetId isEqualToString:targetId]) {
+                continue;
+            }
+            if (channelId.length) {
+                if (![model.channelId isEqualToString:channelId]) {
+                    continue;
+                }
+            }
+            conversationModel = model;
+            break;
+        }
+        if (conversationModel) {
+            NSInteger index = [self.conversationListDataSource indexOfObject:conversationModel];
+            if (NSNotFound == index) {
+                return;
+            }
+            conversationModel.draft = draft;
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            [self.conversationListTableView reloadRowsAtIndexPaths:@[indexPath]
+                                                  withRowAnimation:UITableViewRowAnimationNone];
         }
     });
 }

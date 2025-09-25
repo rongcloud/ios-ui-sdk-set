@@ -24,6 +24,8 @@
 #import <RongChatRoom/RongChatRoom.h>
 #import "RCConversationViewController+internal.h"
 #import "RCAlertView.h"
+#import "RCStreamMessageCell.h"
+#import "RCConversationDataSource+Edit.h"
 typedef enum : NSUInteger {
     RCConversationLoadMessageVersion1,//消息先加载本地，本地加载完之后加载远端
     RCConversationLoadMessageVersion2,//使用消息断档方法异步加载
@@ -80,6 +82,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         self.appendMessageQueue.name = @"cn.rongcloud.appendMessageQueue";
         self.unreadMentionedMessages = [[NSMutableArray alloc] init];
         self.loadMessageVersion = RCConversationLoadMessageVersion2;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(streamMessageCellDidUpdate:) name:RCStreamMessageCellUpdateEndNotification object:nil];
     }
     return self;
 }
@@ -103,6 +106,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         if((self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_ULTRAGROUP)) {
             if(RCKitConfigCenter.message.enableMessageMentioned) {
                 self.chatVC.chatSessionInputBarControl.isMentionedEnabled = YES;
+                self.chatVC.editInputBarControl.isMentionedEnabled = YES;
                 if (conversation.hasUnreadMentioned) {
                     self.unreadMentionedMessages =
                         [[[RCCoreClient sharedCoreClient] getUnreadMentionedMessages:self.chatVC.conversationType targetId:self.chatVC.targetId] mutableCopy];
@@ -229,9 +233,12 @@ static BOOL msgRoamingServiceAvailable = YES;
             return NO;
         }
     }
-
-    if (newId != -1 && !(!model.content && model.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) &&
-        !([[model.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
+    
+    BOOL isUnknown = [RCKitUtility isUnkownMessage:model.messageId content:model.content];
+    if (isUnknown && !RCKitConfigCenter.message.showUnkownMessage) {// 未知消息设置不显示
+        return NO;
+    }
+    if (newId != -1 && !([[model.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {// 不入库不显示
         return NO;
     }
 
@@ -248,8 +255,12 @@ static BOOL msgRoamingServiceAvailable = YES;
 }
 
 - (BOOL)pushOldMessageModel:(RCMessageModel *)model {
-    if (!(!model.content && model.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) &&
-        !([[model.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
+    
+    BOOL isUnknown = [RCKitUtility isUnkownMessage:model.messageId content:model.content];
+    if (isUnknown && !RCKitConfigCenter.message.showUnkownMessage) {// 未知消息设置不显示
+        return NO;
+    }
+    if (!([[model.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
         return NO;
     }
 
@@ -761,7 +772,8 @@ static BOOL msgRoamingServiceAvailable = YES;
     option.count = self.chatVC.defaultMessageCount;
     option.order = order;
     __weak typeof(self) weakSelf = self;
-    void (^completeHandle)(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) = ^(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) {
+    
+    void (^updateMessageListBlock)(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) = ^(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         dispatch_async(dispatch_get_main_queue(), ^{
             strongSelf.isIndicatorLoading = NO;
@@ -789,6 +801,14 @@ static BOOL msgRoamingServiceAvailable = YES;
                 }
             }
         });
+    };
+    
+    
+    void (^completeHandle)(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) = ^(NSArray *messages, BOOL isRemaining, RCErrorCode code, BOOL isDoubleCallback) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf edit_refreshReferenceMessage:messages complete:^(NSArray<RCMessage *> *results) {
+            updateMessageListBlock(results, isRemaining, code, isDoubleCallback);
+        }];
     };
     
     if (self.chatVC.conversationType == ConversationType_ULTRAGROUP) {
@@ -1010,12 +1030,10 @@ static BOOL msgRoamingServiceAvailable = YES;
 - (void)appendSendOutMessage:(RCMessage *)message {
     __weak typeof(self) __weakself = self;
     RCConversationViewController *chatVC = self.chatVC;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        __strong typeof(__weakself) strongSelf = __weakself;
-        RCMessage *tempMessage = [chatVC willAppendAndDisplayMessage:message];
-        strongSelf.showUnreadViewMessageId = message.messageId;
-        [strongSelf appendAndDisplayMessage:tempMessage];
-    });
+
+    RCMessage *tempMessage = [chatVC willAppendAndDisplayMessage:message];
+    self.showUnreadViewMessageId = message.messageId;
+    [self appendAndDisplayMessage:tempMessage];
 }
 
 - (void)didRecallMessage:(RCMessage *)recalledMsg{
@@ -1055,6 +1073,10 @@ static BOOL msgRoamingServiceAvailable = YES;
 
 - (void)didReloadRecalledMessage:(long)recalledMsgId {
     [[RCCoreClient sharedCoreClient] getMessage:recalledMsgId completion:^(RCMessage * _Nullable newMsg) {
+        if (newMsg.messageUId) {
+            [self edit_setUIReferenceMessagesEditStatus:RCReferenceMessageStatusRecalled forMessageUIds:@[newMsg.messageUId]];
+        }
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             int index = -1;
             RCMessageModel *msgModel;
@@ -1214,9 +1236,21 @@ static BOOL msgRoamingServiceAvailable = YES;
             [strongSelf2.chatVC.conversationMessageCollectionView layoutIfNeeded];
 
             [strongSelf2 loadMoreNewerMessageV2:msgArr];
+           
             [strongSelf2 scrollToSpecifiedPosition:YES baseMeassage:firstUnReadMentionedMessagge];
             // message 加载完成后, 再次滚动需要检测是否移除未读消息按钮
-            strongSelf2.hideUnreadBtnForMentioned = YES;
+            if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"18.0")) {
+                if (firstUnReadMentionedMessagge.messageId == self.firstUnreadMessage.messageId) {
+                    self.hideUnreadBtnForMentioned = NO;
+                    [self.chatVC.unReadButton removeFromSuperview];
+                    self.chatVC.unReadButton = nil;
+                    self.chatVC.unReadMessage = 0;
+                } else {
+                    strongSelf2.hideUnreadBtnForMentioned = YES;
+                }
+            } else {
+                strongSelf2.hideUnreadBtnForMentioned = YES;
+            }
 
             //判断是否是最后一条消息,如果是，隐藏底部新消息按钮
             NSArray *latestMessageArray = [[RCCoreClient sharedCoreClient] getLatestMessages:weakSelf.chatVC.conversationType targetId:weakSelf.chatVC.targetId count:1];
@@ -1309,7 +1343,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             }else{
                 self.chatVC.unReadMentionedButton.hidden = NO;
                 NSString *unReadMentionedMessagesCount = [NSString stringWithFormat:@"%ld", (long)self.unreadMentionedMessages.count];
-                NSString *stringUnReadMentioned = [NSString stringWithFormat:NSLocalizedStringFromTable(@"HaveMentionedMeCount", @"RongCloudKit", nil), unReadMentionedMessagesCount];
+                NSString *stringUnReadMentioned = [NSString stringWithFormat:RCLocalizedString(@"HaveMentionedMeCount"), unReadMentionedMessagesCount];
                 
                 self.chatVC.unReadMentionedLabel.text = stringUnReadMentioned;
                 [self.chatVC.util adaptUnreadButtonSize:self.chatVC.unReadMentionedLabel];
@@ -1449,4 +1483,20 @@ static BOOL msgRoamingServiceAvailable = YES;
     }
     return _isLoadingHistoryMessage;
 }
+
+- (void)streamMessageCellDidUpdate:(NSNotification *)notifi {
+    if (self.isShowingLastestMessage || [self isAtTheBottomOfTableView]) {
+        [self.chatVC scrollToBottomAnimated:YES];
+    }
+}
+
+#pragma mark - getter
+
+- (BOOL)isMentionedEnabled {
+    if((self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_ULTRAGROUP)) {
+        return RCKitConfigCenter.message.enableMessageMentioned;
+    }
+    return NO;
+}
+
 @end

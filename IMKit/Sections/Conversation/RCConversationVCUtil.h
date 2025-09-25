@@ -10,7 +10,7 @@
 #import "RCMessageCellNotificationModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 
-@class RCConversationViewController,RCMessageModel;
+@class RCConversationViewController,RCMessageModel,RCEditInputBarConfig;
 
 @interface RCConversationVCUtil : NSObject
 - (instancetype)init:(RCConversationViewController *)chatVC;
@@ -62,8 +62,12 @@
 
 
 /// 根据消息ID获取model
-/// - Parameter messageID: <#messageID description#>
+/// - Parameter messageID
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
+
+/// 根据消息 UId 获取页面中的 model
+- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId;
+
 #pragma mark - Util
 //保存草稿
 - (void)saveDraftIfNeed;
@@ -73,5 +77,14 @@
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)errorCode;
 
 + (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model;
+
+#pragma mark - Edit
+
+/// 获取编辑状态
+- (RCEditInputBarConfig *)getCacheEditConfig;
+
+/// 清理编辑状态
+- (void)clearEditingState;
+
 @end
 
