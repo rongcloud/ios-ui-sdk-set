@@ -12,9 +12,6 @@
 #import "RCKitUtility.h"
 #import "RCVoicePlayer.h"
 #import "RCKitConfig.h"
-#import "RCSTTContentView.h"
-#import "RCMessageModel+STT.h"
-
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
 #define Play_Voice_View_Width 16
@@ -34,7 +31,6 @@ static RCMessageDirection s_previousMessageDirection;
 @property (nonatomic, strong) NSTimer *animationTimer;
 
 @property (nonatomic, strong) RCVoicePlayer *voicePlayer;
-@property (nonatomic, strong) RCSTTContentView *sttContentView;
 
 @end
 
@@ -96,14 +92,13 @@ static RCMessageDirection s_previousMessageDirection;
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
     CGFloat __messagecontentview_height = Voice_Height;
-    [RCSTTContentViewModel configureSTTIfNeeded:model];
-
+    
     if (__messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
         __messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
     
     __messagecontentview_height += extraHeight;
-    __messagecontentview_height += [self sstInfoHeight:model];
+    
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
@@ -179,8 +174,6 @@ static RCMessageDirection s_previousMessageDirection;
     
     [self setMessageInfo:voiceMessage];
     [self updateSubViewsLayout:voiceMessage];
-    [self configureSTTContentViewIfNeed];
-
 }
 
 #pragma mark - RCVoicePlayerObserver
@@ -391,40 +384,6 @@ static RCMessageDirection s_previousMessageDirection;
     }
 }
 
-#pragma mark - STT
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    if (self.sttContentView) {
-        [self.sttContentView layoutContentView];
-        [self.sttContentView bindCollectionView:self.hostCollectionView];
-    }
-}
-
-+ (CGFloat)sstInfoHeight:(RCMessageModel *)model {
-    RCSTTContentViewModel *vm =  [model stt_sttViewModel];
-    return [vm speedToTextContentHeight]+4;
-}
-
-- (void)configureSTTContentViewIfNeed {
-    RCSTTContentViewModel *vm = [self.model stt_sttViewModel];
-    if (vm) {
-        if (!self.sttContentView) {
-            self.sttContentView = [RCSTTContentView new];
-            __weak __typeof(self)weakSelf = self;
-            self.sttContentView.sttFinishedBlock = ^(){
-                [weakSelf removeUnreadTagView];
-            };
-            [self.baseContentView addSubview:self.sttContentView];
-        }
-    }
-    [self.sttContentView bindViewModel:vm
-                             baseFrame:self.messageContentView.frame];
-}
-
-- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
-    [super setDelegate:delegate];
-    [self.sttContentView bindGestureDelegate:delegate];
-}
 #pragma mark - Getter
 
 - (RCVoicePlayer *)voicePlayer{

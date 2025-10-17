@@ -320,20 +320,16 @@
 }
 
 + (BOOL)isVisibleMessage:(RCMessage *)message {
-    BOOL isUnkownMessage = [self isUnkownMessage:message.messageId content:message.content];
-    if (isUnkownMessage && RCKitConfigCenter.message.showUnkownMessage) {
+    if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
         return YES;
-    } else  if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
+    } else if (!message.content && message.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;
 }
 
 + (BOOL)isUnkownMessage:(long)messageId content:(RCMessageContent *)content {
-    if([content isKindOfClass:[RCUnknownMessage class]]) {
-        return YES;
-    }
-    if (!content && messageId > 0) {
+    if (!content && messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;

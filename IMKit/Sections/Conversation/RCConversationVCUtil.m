@@ -22,7 +22,6 @@
 #import "RCKitConfig.h"
 #import "RCSightMessage+imkit.h"
 #import "RCConversationDataSource.h"
-#import "NSMutableDictionary+RCOperation.h"
 
 NSInteger const RCMessageCellDisplayTimeHeightForCommon = 45;
 NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
@@ -247,16 +246,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     return nil;
 }
 
-- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId {
-    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
-        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
-        if ([msg.messageUId isEqualToString:messageUId] && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
-            return msg;
-        }
-    }
-    return nil;
-}
-
 - (BOOL)alertDestructMessageRemind {
     if (![[NSUserDefaults standardUserDefaults] valueForKey:@"FirstTimeBeginBurnMode"]) {
         [[NSUserDefaults standardUserDefaults] setValue:@"YES" forKey:@"FirstTimeBeginBurnMode"];
@@ -308,12 +297,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 
 - (BOOL)canReferenceMessage:(RCMessageModel *)message {
-    BOOL inputHidden = self.chatVC.chatSessionInputBarControl.hidden;
-    if (self.chatVC.editInputBarControl.isVisible) {
-        inputHidden = self.chatVC.editInputBarControl.hidden;
-    }
-    
-    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || inputHidden ||
+    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || self.chatVC.chatSessionInputBarControl.hidden ||
         self.chatVC.chatSessionInputBarControl.destructMessageMode) {
         return NO;
     }
@@ -438,7 +422,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                                                    attributes:nil
                                                         error:nil];
     }
-    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.aac", @(currentTime)];
+    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.m4a", @(currentTime)];
     path = [path stringByAppendingPathComponent:fileName];
     return path;
 }
@@ -656,40 +640,4 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     }
     return NO;
 }
-
-- (RCMessageModel *)messageModelByUId:(NSString *)messageUId {
-    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
-        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
-        if (msg.messageUId == messageUId && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
-            return msg;
-        }
-    }
-    return nil;
-}
-
-#pragma mark - 编辑状态管理
-
-- (RCEditInputBarConfig *)getCacheEditConfig {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSDictionary *stateData = [userDefaults objectForKey:[self editingStateDataKey]];
-    if (stateData && stateData.count > 0) {
-        NSData *data = [NSJSONSerialization dataWithJSONObject:stateData options:kNilOptions error:nil];
-        NSString *jsonStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        RCEditInputBarConfig *editConfig = [[RCEditInputBarConfig alloc] initWithData:jsonStr];
-        return editConfig;
-    }
-    return nil;
-}
-
-- (void)clearEditingState {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults removeObjectForKey:[self editingStateDataKey]];
-    [userDefaults synchronize];
-}
-
-- (NSString *)editingStateDataKey {
-    return [NSString stringWithFormat:@"rc_editing_state_%@_%@_%@",
-            @(self.chatVC.conversationType), self.chatVC.targetId, self.chatVC.channelId];
-}
-
 @end

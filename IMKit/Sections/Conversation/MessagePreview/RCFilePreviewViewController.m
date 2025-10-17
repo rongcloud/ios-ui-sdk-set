@@ -350,7 +350,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     //设置右键
     
     RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
-    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8);
     rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
     UIImage *rightImage = RCResourceImage(@"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];

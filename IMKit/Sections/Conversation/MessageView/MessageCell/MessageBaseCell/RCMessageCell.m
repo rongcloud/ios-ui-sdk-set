@@ -7,7 +7,6 @@
 //
 
 #import "RCMessageCell.h"
-#import "RCMessageCell+Edit.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitUtility.h"
 #import "RCUserInfoCacheManager.h"
@@ -39,12 +38,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 //cell 复用的时候，检测如果是即将刷新的是同一个用户信息，那么就跳过刷新
 //IMSDK-2705
 @property (nonatomic, strong) RCUserInfo *currentDisplayedUserInfo;
-
-@property (nonatomic, weak, readwrite) UICollectionView *hostCollectionView;
-
-/// 消息编辑状态
-@property (nonatomic, assign) RCMessageModifyStatus editStatus;
-
 @end
 @implementation RCMessageCell
 
@@ -97,25 +90,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     [self p_setUserInfo];
     [self setCellAutoLayout];
     [self messageDestructing];
-    [self edit_showEditStatusIfNeeded];
 }
 
-- (UICollectionView *)hostCollectionView {
-    if (!_hostCollectionView) {
-        _hostCollectionView = [self parentCollectionView];
-    }
-    return _hostCollectionView;
-}
-- (UICollectionView *)parentCollectionView {
-    UIView *view = self.superview;
-    while (view) {
-        if ([view isKindOfClass:[UICollectionView class]]) {
-            return (UICollectionView *)view;
-        }
-        view = view.superview;
-    }
-    return nil;
-}
 #pragma mark - Public Methods
 
 - (void)updateStatusContentView:(RCMessageModel *)model {
@@ -257,12 +233,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     self.messageActivityIndicatorView.hidden = YES;
     [self.statusContentView addSubview:self.receiptStatusLabel];
     [self.statusContentView addSubview:self.receiptView];
-    
-    [self.baseContentView addSubview:self.editStatusContentView];
-    [self.editStatusContentView addSubview:self.editStatusLabel];
-    [self.editStatusContentView addSubview:self.editRetryButton];
-    [self.editStatusContentView addSubview:self.editCircularLoadingView];
-    
+
+
     [self setPortraitStyle:RCKitConfigCenter.ui.globalMessageAvatarStyle];
 }
 
@@ -331,7 +303,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                     strongSelf.messageActivityIndicatorView.frame = strongSelf.messageFailedStatusView.frame;
                 }
             }
-            
             if (strongSelf.showBubbleBackgroundView) {
                 strongSelf.bubbleBackgroundView.frame = strongSelf.messageContentView.bounds;
             }
@@ -1099,51 +1070,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         [self.messageContentView addSubview:self.bubbleBackgroundView];
     }
     return _bubbleBackgroundView;
-}
-
-#pragma mark - Edit
-
-- (UIView *)editStatusContentView {
-    if (!_editStatusContentView) {
-        _editStatusContentView = [[UIView alloc] init];
-        _editStatusContentView.hidden = YES;
-    }
-    return _editStatusContentView;
-}
-
-- (RCCircularLoadingView *)editCircularLoadingView {
-    if (!_editCircularLoadingView) {
-        _editCircularLoadingView = [[RCCircularLoadingView alloc] init];
-        _editCircularLoadingView.hidden = YES;
-    }
-    return _editCircularLoadingView;
-}
-
-- (UILabel *)editStatusLabel {
-    if (!_editStatusLabel) {
-        _editStatusLabel = [[UILabel alloc] init];
-        _editStatusLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
-        _editStatusLabel.textColor = RCDYCOLOR(0x007AFF, 0x007AFF);
-        _editStatusLabel.textAlignment = NSTextAlignmentRight;
-        _editStatusLabel.hidden = YES;
-        _editStatusLabel.numberOfLines = 1;
-        _editStatusLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-    }
-    return _editStatusLabel;
-}
-
-- (UIButton *)editRetryButton {
-    if (!_editRetryButton) {
-        NSString *title = [NSString stringWithFormat:@" %@", RCLocalizedString(@"MessageEditFailed")];
-        _editRetryButton = [[UIButton alloc] init];
-        [_editRetryButton setImage:RCResourceImage(@"edit_retry") forState:UIControlStateNormal];
-        [_editRetryButton setTitle:title forState:UIControlStateNormal];
-        [_editRetryButton setTitleColor:RCDYCOLOR(0xFF5A50, 0xFF5A50) forState:UIControlStateNormal];
-        _editRetryButton.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
-        [_editRetryButton addTarget:self action:@selector(edit_didTapEditRetryButton:) forControlEvents:UIControlEventTouchUpInside];
-        _editRetryButton.hidden = YES;
-    }
-    return _editRetryButton;
 }
 
 @end

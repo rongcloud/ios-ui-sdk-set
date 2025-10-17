@@ -50,8 +50,6 @@
         }
         self.canIncludeExpansion = rcMessage.canIncludeExpansion;
         self.expansionDic = rcMessage.expansionDic;
- 		self.hasChanged = rcMessage.hasChanged;
-        self.modifyInfo = rcMessage.modifyInfo;
     }
 
     return self;

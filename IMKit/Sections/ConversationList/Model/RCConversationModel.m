@@ -41,7 +41,6 @@
         self.sentTime = conversation.sentTime;
         self.operationTime = conversation.operationTime;
         self.draft = conversation.draft;
-        self.editedMessageDraft = conversation.editedMessageDraft;
         self.objectName = conversation.objectName;
         self.senderUserId = conversation.senderUserId;
         self.receivedStatusInfo = conversation.receivedStatusInfo;
@@ -55,7 +54,6 @@
         }
         self.notificationLevel = conversation.notificationLevel;
         self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
-        self.latestMessageUId = conversation.latestMessageUId;
     }
     return self;
 }
