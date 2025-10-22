@@ -71,7 +71,8 @@
         [refer.referMsg isKindOfClass:[RCRichContentMessage class]] ||
         [refer.referMsg isKindOfClass:[RCImageMessage class]]  ||
         [refer.referMsg isKindOfClass:[RCTextMessage class]] ||
-        [refer.referMsg isKindOfClass:[RCReferenceMessage class]]) {
+        [refer.referMsg isKindOfClass:[RCReferenceMessage class]] ||
+        [refer.referMsg isKindOfClass:[RCStreamMessage class]]) {
         if ([self.delegate respondsToSelector:@selector(didTapReferencedContentView:)]) {
             [self.delegate didTapReferencedContentView:message];
         }

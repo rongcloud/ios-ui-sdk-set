@@ -71,8 +71,8 @@ static int rc_currentSelectIndexPage;
     if (self) {
         // Initialization code
         rc_currentSelectIndexPage = 0;
-        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
-        NSString *bundlePath = [resourcePath stringByAppendingPathComponent:@"Emoji.plist"];
+
+        NSString *bundlePath = [RCKitUtility filePathForName:@"Emoji.plist"];
         DebugLog(@"Emoji.plist > %@", bundlePath);
         self.faceEmojiArray = [[NSArray alloc] initWithContentsOfFile:bundlePath];
         self.emojiLoadedPage = 0;

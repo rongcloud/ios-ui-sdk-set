@@ -164,10 +164,10 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     } else {
         cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
         //    [self _updateTopBarStatus];
-        //        __weak typeof(self) weakSelf = self;
+        __weak typeof(self) weakSelf = self;
         [cell setSingleTap:^{
-            //            weakSelf.topView.hidden = !weakSelf.topView.hidden;
-            //            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
+            weakSelf.topView.hidden = !weakSelf.topView.hidden;
+            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
         }];
     }
     [cell configPreviewCellWithItem:model];
@@ -255,7 +255,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         return;
     }
     //如果预览页面当前的视频图片也无法 iCloud 下载，那么就得报错
-    if(selectModel.isDownloadFailFromiCloud || [selectModel isVideoAssetInvalid]) {
+    if(selectModel.isDownloadFailFromiCloud ) {
         [RCAlertView showAlertController:nil message:RCLocalizedString(@"DownloadFailFromiCloud") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
         return;
     }
@@ -308,7 +308,9 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                               [self.selectedArr addObject:model];
                                           }
                                       }
-                                      self.allPhotosArr[i].isSelect = YES;
+                                      if (!self.allPhotosArr[i].isSelect) {
+                                          self.allPhotosArr[i].isSelect = YES;
+                                      }
                                       [self _updateTopBarStatus];
                                   } else {
                                       [RCAlertView showAlertController:nil message:RCLocalizedString(@"Max_Selected_Photos") cancelTitle:RCLocalizedString(@"i_know_it") inViewController:self];

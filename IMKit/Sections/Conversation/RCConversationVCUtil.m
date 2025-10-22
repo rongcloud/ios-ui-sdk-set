@@ -180,17 +180,28 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)saveDraftIfNeed {
-    NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
-    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+    RCConversationType type = self.chatVC.conversationType;
+    NSString *targetId = self.chatVC.targetId?:@"";
+    NSString *channelId = self.chatVC.channelId?:@"";
+    NSString *draft = self.chatVC.chatSessionInputBarControl.draft?:@"";
+    NSDictionary *userInfo = @{
+        @"conversationType": @(type),
+        @"targetId": targetId,
+        @"channelId": channelId,
+        @"draft": draft,
+    };
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:type targetId:targetId channelId:channelId completion:^(NSString * _Nullable draftInDB) {
         if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
-                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
-                    
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:type targetId:targetId channelId:channelId content:draft completion:^(BOOL result) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                        object:nil userInfo:userInfo];
                 }];
             }
         } else if (draftInDB.length > 0){
             [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-                
+                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                    object:nil userInfo:userInfo];
             }];
         }
     }];
@@ -424,10 +435,14 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     if ([model.content isMemberOfClass:[RCVoiceMessage class]]) {
         RCVoiceMessageCell *cell =
             (RCVoiceMessageCell *)[self.chatVC.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        [cell stopPlayingVoice];
+        if ([cell respondsToSelector:@selector(stopPlayingVoice)]) {
+            [cell stopPlayingVoice];
+        }
     }else if([model.content isMemberOfClass:[RCHQVoiceMessage class]]) {
         RCHQVoiceMessageCell *cell = (RCHQVoiceMessageCell *)[self.chatVC.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        [cell stopPlayingVoice];
+        if ([cell respondsToSelector:@selector(stopPlayingVoice)]) {
+            [cell stopPlayingVoice];
+        }
     }
 }
 
@@ -568,6 +583,10 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
+            // -1 无需发送已读回执
+            if (self.lastReadReceiptTime == -1) {
+                return;
+            }
             [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }

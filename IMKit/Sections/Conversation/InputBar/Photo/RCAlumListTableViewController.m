@@ -73,24 +73,18 @@ static NSString *const cellReuseIdentifier = @"cell";
 
 #pragma mark - Private Methods
 - (void)setNavigationItem{
-    UIView *rightBarView = [[UIView alloc] init];
-    rightBarView.frame = CGRectMake(0, 0, 80, 40);
-    UILabel *doneTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 40)];
-    doneTitleLabel.text = RCLocalizedString(@"Cancel");
-    if([RCKitUtility isRTL]){
-        doneTitleLabel.textAlignment = NSTextAlignmentLeft;
-    }else{
-        doneTitleLabel.textAlignment = NSTextAlignmentRight;
-    }
-    doneTitleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-    
-    doneTitleLabel.textColor = [RCKitUtility
-                                generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
-                                darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
-    [rightBarView addSubview:doneTitleLabel];
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissCurrentModelViewController)];
-    [rightBarView addGestureRecognizer:tap];
-    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:rightBarView];
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+    btn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
+    UIColor *color = [RCKitUtility
+                       generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
+                       darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
+    [btn setTitleColor:color forState:UIControlStateNormal];
+    [btn addTarget:self
+            action:@selector(dismissCurrentModelViewController)
+  forControlEvents:UIControlEventTouchUpInside];
+    [btn setTitle:RCLocalizedString(@"Cancel") forState:UIControlStateNormal];
+    [btn sizeToFit];
+    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:btn];
     [self.navigationItem setRightBarButtonItem:rightItem];
 }
 

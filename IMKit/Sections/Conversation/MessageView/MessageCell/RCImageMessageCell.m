@@ -50,7 +50,7 @@
 - (void)setDataModel:(RCMessageModel *)model {
     if (self.model && self.model.messageId != model.messageId) {
         [self showProgressView];
-        [self.progressView updateProgress:0];
+        [self.progressView updateProgress:model.uploadProgress];
     }
     [super setDataModel:model];
 
@@ -179,6 +179,7 @@
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self showProgressView];
+                self.model.uploadProgress = progress;
                 [self.progressView updateProgress:progress];
             });
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
