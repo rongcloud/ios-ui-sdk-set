@@ -243,6 +243,9 @@
 }
 
 - (void)switchToRecord {
+    if (self.inputTextView.hidden) {
+        return;
+    }
     [self layoutInputBoxUIIfNeed];
     [self updateButtonImage];
 }

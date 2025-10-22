@@ -263,8 +263,7 @@
         }
         dispatch_async(self.updateEventQueue, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSArray *arrayDataList = [self.dataList copy];
-                for (RCConversationModel *model in arrayDataList) {
+                for (RCConversationModel *model in self.dataList) {
                     if ([model.targetId isEqualToString:targetId]) {
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         [[RCCoreClient sharedCoreClient] getConversation:model.conversationType

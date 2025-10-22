@@ -10,7 +10,7 @@
 #ifndef RCKitCommonDefine_h
 #define RCKitCommonDefine_h
 
-#define RCLocalizedString(key) [RCKitUtility localizedString:(key) table:@"RongCloudKit"]
+#define RCLocalizedString(key) NSLocalizedStringFromTable(key, @"RongCloudKit", nil)
 #define RCResourceImage(value) [RCKitUtility imageNamed:(value) ofBundle:@"RongCloud.bundle"]
 #define RCResourceColor(key, colorStr) [RCKitUtility color:(key) originalColor:(colorStr)]
 
