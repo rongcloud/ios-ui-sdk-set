@@ -70,27 +70,27 @@
 }
 
 - (void)showViewWithErrorMsg:(NSString *)errorMsg {
-    self.recordStatusView.image = RCResourceImage(@"audio_press_short");
+    self.recordStatusView.image = RCDynamicImage(@"conversation_mic_too_short_img", @"audio_press_short");
     self.textLabel.text = errorMsg ?: RCLocalizedString(@"message_too_short");
     [self.textLabel setBackgroundColor:[UIColor clearColor]];
-    self.textLabel.textColor = HEXCOLOR(0xffffff);
+    self.textLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
     self.textLabel.frame = CGRectMake(0, 127, self.contentView.frame.size.width, 22);
 }
 
 - (void)showCancelView {
-    self.recordStatusView.image = RCResourceImage(@"return");
+    self.recordStatusView.image = RCDynamicImage(@"conversation_mic_return_img",@"return");
     self.textLabel.text = RCLocalizedString(@"release_to_cancel_title");
-    [self.textLabel setBackgroundColor:RCDYCOLOR(0xff4141, 0x7d2c2c)];
-    self.textLabel.textColor = RCDYCOLOR(0xffffff, 0xc1a0a0);
+    [self.textLabel setBackgroundColor:RCDynamicColor(@"hint_color", @"0xff4141", @"0x7d2c2c")];
+    self.textLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xc1a0a0");
     self.textLabel.frame = CGRectMake((self.contentView.frame.size.width-136)/2, 126, 136, 20);
 
 }
 
 - (void)hideCancelView {
-    self.recordStatusView.image = RCResourceImage(@"voice_volume0");
+    self.recordStatusView.image = RCDynamicImage(@"conversation_mic_volume_0_img",@"voice_volume0");
     self.textLabel.text = RCLocalizedString(@"slide_up_to_cancel_title");
     [self.textLabel setBackgroundColor:[UIColor clearColor]];
-    self.textLabel.textColor = HEXCOLOR(0xffffff);
+    self.textLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
     self.textLabel.frame = CGRectMake(0, 127, self.contentView.frame.size.width, 22);
 }
 
@@ -185,21 +185,21 @@
     }
     UIImage *image = nil;
     if (volume > 0.0f && volume < 0.85f) {
-        image = RCResourceImage(@"voice_1");
+        image = RCDynamicImage(@"conversation_mic_volume_1_img", @"voice_1");
     } else if (volume >= 0.85f && volume < 0.87f) {
-        image = RCResourceImage(@"voice_2");
+        image = RCDynamicImage(@"conversation_mic_volume_2_img",@"voice_2");
     } else if (volume >= 0.87f && volume < 0.88f) {
-        image = RCResourceImage(@"voice_3");
+        image = RCDynamicImage(@"conversation_mic_volume_3_img",@"voice_3");
     } else if (volume >= 0.88f && volume < 0.90f) {
-        image = RCResourceImage(@"voice_4");
+        image = RCDynamicImage(@"conversation_mic_volume_4_img",@"voice_4");
     } else if (volume >= 0.90f && volume < 0.92f) {
-        image = RCResourceImage(@"voice_5");
+        image = RCDynamicImage(@"conversation_mic_volume_5_img",@"voice_5");
     } else if (volume >= 0.92f && volume < 0.94f) {
-        image = RCResourceImage(@"voice_6");
+        image = RCDynamicImage(@"conversation_mic_volume_6_img",@"voice_6");
     } else if (volume >= 0.94f && volume < 0.96f) {
-        image = RCResourceImage(@"voice_7");
+        image = RCDynamicImage(@"conversation_mic_volume_7_img",@"voice_7");
     } else if (volume >= 0.96f && volume <= 1.0f) {
-        image = RCResourceImage(@"voice_8");
+        image = RCDynamicImage(@"conversation_mic_volume_8_img",@"voice_8");
     }
     if (image) {
         [self.recordStatusView setImage:image];
@@ -220,7 +220,7 @@
         [_textLabel setTextAlignment:NSTextAlignmentCenter];
         [_textLabel setFont:[[RCKitConfig defaultConfig].font fontOfGuideLevel]];
         [_textLabel setText:RCLocalizedString(@"slide_up_to_cancel_title")];
-        _textLabel.textColor = HEXCOLOR(0xffffff);
+        _textLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
         _textLabel.layer.cornerRadius = 2;
         _textLabel.layer.masksToBounds = YES;
 
@@ -234,7 +234,7 @@
         _escapeTimeLabel.tag = 444;
         _escapeTimeLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:80];
         _escapeTimeLabel.textAlignment = NSTextAlignmentCenter;
-        [_escapeTimeLabel setTextColor:[UIColor whiteColor]];
+        [_escapeTimeLabel setTextColor:RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff")];
         [_escapeTimeLabel setTextAlignment:NSTextAlignmentCenter];
     }
     return _escapeTimeLabel;
@@ -243,7 +243,7 @@
 - (RCBaseImageView *)recordStatusView{
     if (!_recordStatusView) {
         _recordStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(29.0f, 20.0f, 102, 102)];
-        [_recordStatusView setImage:RCResourceImage(@"voice_volume0")];
+        [_recordStatusView setImage:RCDynamicImage(@"conversation_mic_volume_0_img",@"voice_volume0")];
     }
     return _recordStatusView;
 }

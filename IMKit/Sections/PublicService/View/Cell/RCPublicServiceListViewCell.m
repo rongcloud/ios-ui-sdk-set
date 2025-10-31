@@ -49,7 +49,10 @@
     while (range.location != NSNotFound) {
 
         NSMutableDictionary *dict = [[attributedStr attributesAtIndex:range.location effectiveRange:NULL] mutableCopy];
-        [dict setValue:RGBCOLOR(83, 213, 105) forKey:NSForegroundColorAttributeName];
+        UIColor *color = RCDynamicColor(@"success_color", @"0x53d569", @"0x53d569");
+        if (color) {
+            [dict setValue:color forKey:NSForegroundColorAttributeName];
+        }
         [attributedStr addAttributes:dict range:range];
 
         range.location++;
@@ -61,8 +64,7 @@
 }
 
 - (void)setup {
-    self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                    darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
     [self setSelectionStyle:UITableViewCellSelectionStyleNone];
     self.headerImageView = [[RCloudImageView alloc]
         initWithFrame:CGRectMake(RCPublicServiceProfileCellPaddingLeft, RCPublicServiceProfileCellPaddingTop,
@@ -71,7 +73,7 @@
     self.nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     self.describeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     self.nameLabel.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    self.nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
+    self.nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f") ;
     self.nameLabel.numberOfLines = 1;
     [self.nameLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
 
@@ -79,8 +81,8 @@
     [self.describeLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
     self.describeLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     self.describeLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-    self.describeLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x666666)];
-    self.headerImageView.placeholderImage = RCResourceImage(@"default_portrait");
+    self.describeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x808080", @"0x666666");
+    self.headerImageView.placeholderImage = RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
 
     //[self.headerImageView setTranslatesAutoresizingMaskIntoConstraints:NO];
     self.headerImageView.layer.masksToBounds = YES;

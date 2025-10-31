@@ -11,6 +11,8 @@
 
 @class RCDiscussion,RCPublicServiceProfile;
 
+NS_ASSUME_NONNULL_BEGIN
+
 /// 收到消息的 Notification
 /// 
 /// 接收到消息后，SDK会分发此通知。
@@ -65,7 +67,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConnectionStatusChangedNotificati
 /// ```
 FOUNDATION_EXPORT NSString *const RCKitDispatchMessageReceiptResponseNotification;
 
-
 /// 收到消息已读回执的请求
 /// 
 /// 通知的 object 中携带信息如下：
@@ -97,7 +98,34 @@ FOUNDATION_EXPORT NSString *const RCKitMessageDestructingNotification;
 /// - Remark: 事件监听
 FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotification;
 
+/// 收到消息修改的 Notification。
+/// 
+/// 收到消息修改之后，IMKit 会分发此通知。
+/// 
+/// Notification 的 object 是 `RCMessage` 对象的数组，userInfo 为 nil。
+/// 
+/// 收到这个消息之后可以更新您的消息状态。
+/// 
+/// - Remark: 事件监听
+FOUNDATION_EXPORT NSString *const RCKitDispatchMessagesModifiedNotification;
+
+/// 收到会话草稿更新通知。
+///
+/// Notification 的 userInfo 结构是 @{ @"conversationType": @(conversationType), @"targetId": targetId, @"channelId": channelId}
+///
+/// 收到这个消息之后可以更新您的会话的状态。
+///
+/// - Remark: 事件监听
+FOUNDATION_EXPORT NSString *const RCKitDispatchConversationDraftUpdateNotification;
+
 #pragma mark - 用户信息提供者、群组信息提供者、群名片信息提供者
+
+typedef NS_ENUM(NSUInteger, RCDataSourceType) {
+    /// 信息提供者
+    RCDataSourceTypeInfoProvider = 0,
+    /// 信息托管
+    RCDataSourceTypeInfoManagement,
+};
 
 /// 用户信息提供者
 /// 
@@ -111,7 +139,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// SDK通过此方法获取用户信息并显示，请在completion中返回该用户ID对应的用户信息。
 /// 在您设置了用户信息提供者之后，SDK在需要显示用户信息的时候，会调用此方法，向您请求用户信息用于显示。
-- (void)getUserInfoWithUserId:(NSString *)userId completion:(void (^)(RCUserInfo *userInfo))completion;
+- (void)getUserInfoWithUserId:(NSString *)userId completion:(void (^)(RCUserInfo *_Nullable userInfo))completion;
 
 @end
 
@@ -149,7 +177,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// SDK通过此方法获取群组信息并显示，请在completion的block中返回该群组ID对应的群组信息。
 /// 在您设置了群组信息提供者之后，SDK在需要显示群组信息的时候，会调用此方法，向您请求群组信息用于显示。
-- (void)getGroupInfoWithGroupId:(NSString *)groupId completion:(void (^)(RCGroup *groupInfo))completion;
+- (void)getGroupInfoWithGroupId:(NSString *)groupId completion:(void (^)(RCGroup *_Nullable groupInfo))completion;
 
 @end
 
@@ -167,7 +195,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 如果您使用了群名片功能，SDK需要通过您实现的群名片信息提供者，获取用户在群组中的名片信息并显示。
 - (void)getUserInfoWithUserId:(NSString *)userId
                       inGroup:(NSString *)groupId
-                   completion:(void (^)(RCUserInfo *userInfo))completion;
+                   completion:(void (^)(RCUserInfo *_Nullable userInfo))completion;
 
 @end
 
@@ -182,7 +210,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// SDK通过此方法群组中的成员列表，请在resultBlock中返回该群组ID对应的群成员ID列表。
 /// 在您设置了群组成员列表提供者之后，SDK在需要获取群组成员列表的时候，会调用此方法，向您请求群组成员用于显示。
-- (void)getAllMembersOfGroup:(NSString *)groupId result:(void (^)(NSArray<NSString *> *userIdList))resultBlock;
+- (void)getAllMembersOfGroup:(NSString *)groupId result:(void (^)(NSArray<NSString *> *_Nullable userIdList))resultBlock;
 @end
 
 #pragma mark - 消息接收监听器
@@ -330,7 +358,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// 如果您使用了RCConversationViewController 中的 willSendMessage: 方法，请不要重复使用此方法。
 /// 选择其中一种方式实现您的需求即可。
-- (RCMessageContent *)willSendIMMessage:(RCMessageContent *)messageContent;__deprecated_msg("Use [RCIMMessageInterceptor interceptWillSendMessage:] instead");
+- (RCMessageContent *)willSendIMMessage:(RCMessageContent *)messageContent __deprecated_msg("Use [RCIMMessageInterceptor interceptWillSendMessage:] instead");
 
 /// 发送消息完成的监听器
 /// 
@@ -342,7 +370,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// 如果您使用了 RCConversationViewController 中的 didSendMessage:content: 方法，请不要重复使用此方法。
 /// 选择其中一种方式实现您的需求即可。
-- (void)didSendIMMessage:(RCMessageContent *)messageContent status:(NSInteger)status;__deprecated_msg("Use [RCIMMessageInterceptor interceptDidSendMessage:] instead");
+- (void)didSendIMMessage:(RCMessageContent *)messageContent status:(NSInteger)status __deprecated_msg("Use [RCIMMessageInterceptor interceptDidSendMessage:] instead");
 
 
 @end
@@ -403,17 +431,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 初始化融云SDK
 /// 
 /// - Parameter appKey:  从融云开发者平台创建应用后获取到的App Key
-/// 
-/// 您在使用融云SDK所有功能（包括显示SDK中或者继承于SDK的View）之前，您必须先调用此方法初始化SDK。
-/// 在App整个生命周期中，您只需要执行一次初始化。
-/// 
-/// - Warning: 如果您使用IMKit，请使用此方法初始化SDK；
-/// 如果您使用IMLib，请使用RCIMClient中的同名方法初始化，而不要使用此方法。
-- (void)initWithAppKey:(NSString *)appKey __deprecated_msg("Use [RCIM initWithAppKey:option:] instead");
-
-/// 初始化融云SDK
-/// 
-/// - Parameter appKey:  从融云开发者平台创建应用后获取到的App Key
 /// - Parameter option:  设置配置信息，详细配置项信息请查看 RCInitOption.h 文件
 /// 
 /// 您在使用融云SDK所有功能（包括显示SDK中或者继承于SDK的View）之前，您必须先调用此方法初始化SDK。
@@ -446,9 +463,9 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// 此方法的回调并非为原调用线程，您如果需要进行 UI 操作，请注意切换到主线程。
 - (void)connectWithToken:(NSString *)token
-                dbOpened:(void (^)(RCDBErrorCode code))dbOpenedBlock
-                 success:(void (^)(NSString *userId))successBlock
-                   error:(void (^)(RCConnectErrorCode errorCode))errorBlock;
+                dbOpened:(nullable void (^)(RCDBErrorCode code))dbOpenedBlock
+                 success:(nullable void (^)(NSString *userId))successBlock
+                   error:(nullable void (^)(RCConnectErrorCode errorCode))errorBlock;
 
 /// 与融云服务器建立连接
 /// 
@@ -477,9 +494,9 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 此方法的回调并非为原调用线程，您如果需要进行 UI 操作，请注意切换到主线程。
 - (void)connectWithToken:(NSString *)token
                timeLimit:(int)timeLimit
-                dbOpened:(void (^)(RCDBErrorCode code))dbOpenedBlock
-                 success:(void (^)(NSString *userId))successBlock
-                   error:(void (^)(RCConnectErrorCode errorCode))errorBlock;
+                dbOpened:(nullable void (^)(RCDBErrorCode code))dbOpenedBlock
+                 success:(nullable void (^)(NSString *userId))successBlock
+                   error:(nullable void (^)(RCConnectErrorCode errorCode))errorBlock;
 
 
 /// 断开与融云服务器的连接
@@ -530,7 +547,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Warning: 如果您使用IMKit，可以设置并实现此Delegate监听消息接收；
 /// 如果您使用IMLib，请使用RCIMClient中的 setRCConnectionStatusChangeDelegate 监听连接状态，而不要使用此方法。
-@property (nonatomic, weak) id<RCIMConnectionStatusDelegate> connectionStatusDelegate;
+@property (nonatomic, weak, nullable) id<RCIMConnectionStatusDelegate> connectionStatusDelegate;
 
 /// 添加 IMKit 连接状态监听
 /// 
@@ -562,13 +579,13 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 #pragma mark 消息发送监听
 
 /// 消息发送监听
-@property (nonatomic, weak) id<RCIMSendMessageDelegate> sendMessageDelegate;
+@property (nonatomic, weak, nullable) id<RCIMSendMessageDelegate> sendMessageDelegate;
 
 #pragma mark 消息发送拦截
 
 /// 消息发送拦截
 /// - Since: 5.3.5
-@property (nonatomic, weak) id<RCIMMessageInterceptor> messageInterceptor;
+@property (nonatomic, weak, nullable) id<RCIMMessageInterceptor> messageInterceptor;
 
 #pragma mark 消息发送
 
@@ -594,10 +611,10 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (RCMessage *)sendMessage:(RCConversationType)conversationType
                   targetId:(NSString *)targetId
                    content:(RCMessageContent *)content
-               pushContent:(NSString *)pushContent
-                  pushData:(NSString *)pushData
-                   success:(void (^)(long messageId))successBlock
-                     error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock;
+               pushContent:(nullable NSString *)pushContent
+                  pushData:(nullable NSString *)pushData
+                   success:(nullable void (^)(long messageId))successBlock
+                     error:(nullable void (^)(RCErrorCode nErrorCode, long messageId))errorBlock;
 
 /// 发送消息(除图片消息、文件消息外的所有消息)，会自动更新UI
 /// 
@@ -619,10 +636,10 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Remark: 消息操作
 - (RCMessage *)sendMessage:(RCMessage *)message
-               pushContent:(NSString *)pushContent
-                  pushData:(NSString *)pushData
-              successBlock:(void (^)(RCMessage *successMessage))successBlock
-                errorBlock:(void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock;
+               pushContent:(nullable NSString *)pushContent
+                  pushData:(nullable NSString *)pushData
+              successBlock:(nullable void (^)(RCMessage *successMessage))successBlock
+                errorBlock:(nullable void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock;
 
 /// 发送媒体文件消息，会自动更新UI
 /// 
@@ -648,12 +665,12 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (RCMessage *)sendMediaMessage:(RCConversationType)conversationType
                        targetId:(NSString *)targetId
                         content:(RCMessageContent *)content
-                    pushContent:(NSString *)pushContent
-                       pushData:(NSString *)pushData
-                       progress:(void (^)(int progress, long messageId))progressBlock
-                        success:(void (^)(long messageId))successBlock
-                          error:(void (^)(RCErrorCode errorCode, long messageId))errorBlock
-                         cancel:(void (^)(long messageId))cancelBlock;
+                    pushContent:(nullable NSString *)pushContent
+                       pushData:(nullable NSString *)pushData
+                       progress:(nullable void (^)(int progress, long messageId))progressBlock
+                        success:(nullable void (^)(long messageId))successBlock
+                          error:(nullable void (^)(RCErrorCode errorCode, long messageId))errorBlock
+                         cancel:(nullable void (^)(long messageId))cancelBlock;
 
 /// 发送媒体文件消息，会自动更新UI
 /// 
@@ -675,12 +692,12 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// - Warning: 如果您使用IMKit，使用此方法发送媒体文件消息SDK会自动更新UI；
 /// 如果您使用IMLib，请使用RCIMClient中的同名方法发送媒体文件消息，不会自动更新UI。
 - (RCMessage *)sendMediaMessage:(RCMessage *)message
-                    pushContent:(NSString *)pushContent
-                       pushData:(NSString *)pushData
-                       progress:(void (^)(int progress, RCMessage *progressMessage))progressBlock
-                   successBlock:(void (^)(RCMessage *successMessage))successBlock
-                     errorBlock:(void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock
-                         cancel:(void (^)(RCMessage *cancelMessage))cancelBlock;
+                    pushContent:(nullable NSString *)pushContent
+                       pushData:(nullable NSString *)pushData
+                       progress:(nullable void (^)(int progress, RCMessage *progressMessage))progressBlock
+                   successBlock:(nullable void (^)(RCMessage *successMessage))successBlock
+                     errorBlock:(nullable void (^)(RCErrorCode nErrorCode, RCMessage *errorMessage))errorBlock
+                         cancel:(nullable void (^)(RCMessage *cancelMessage))cancelBlock;
 
 
 /// 发送媒体文件消息，会自动更新UI(上传图片或文件到App指定的服务器)
@@ -708,13 +725,13 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Since: 5.3.5
 - (RCMessage *)sendMediaMessage:(RCMessage *)message
-                    pushContent:(NSString *)pushContent
-                       pushData:(NSString *)pushData
-                  uploadPrepare:(void (^)(RCUploadMediaStatusListener *uploadListener))uploadPrepareBlock
-                       progress:(void (^)(int progress, long messageId))progressBlock
-                   successBlock:(void (^)(long messageId))successBlock
-                     errorBlock:(void (^)(RCErrorCode errorCode, long messageId))errorBlock
-                         cancel:(void (^)(long messageId))cancelBlock;
+                    pushContent:(nullable NSString *)pushContent
+                       pushData:(nullable NSString *)pushData
+                  uploadPrepare:(nullable void (^)(RCUploadMediaStatusListener *uploadListener))uploadPrepareBlock
+                       progress:(nullable void (^)(int progress, long messageId))progressBlock
+                   successBlock:(nullable void (^)(long messageId))successBlock
+                     errorBlock:(nullable void (^)(RCErrorCode errorCode, long messageId))errorBlock
+                         cancel:(nullable void (^)(long messageId))cancelBlock;
 
 /// 取消发送中的媒体信息
 /// 
@@ -733,10 +750,10 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// 媒体消息仅限于图片消息和文件消息。
 - (void)downloadMediaMessage:(long)messageId
-                    progress:(void (^)(int progress))progressBlock
-                     success:(void (^)(NSString *mediaPath))successBlock
-                       error:(void (^)(RCErrorCode errorCode))errorBlock
-                      cancel:(void (^)(void))cancelBlock;
+                    progress:(nullable void (^)(int progress))progressBlock
+                     success:(nullable void (^)(NSString *mediaPath))successBlock
+                       error:(nullable void (^)(RCErrorCode errorCode))errorBlock
+                      cancel:(nullable void (^)(void))cancelBlock;
 
 /// 根据文件 URL 地址下载文件内容
 ///
@@ -756,7 +773,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 - (void)downloadMediaFile:(NSString *_Nonnull)fileName
                  mediaUrl:(NSString *_Nonnull)mediaUrl
                  progress:(nullable void (^)(int progress))progressBlock
-                  success:(nullable void (^)(NSString * _Nonnull mediaPath))successBlock
+                  success:(nullable void (^)(NSString * mediaPath))successBlock
                     error:(nullable void (^)(RCErrorCode errorCode))errorBlock
                    cancel:(nullable void (^)(void))cancelBlock;
 
@@ -790,10 +807,10 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
                              targetId:(NSString *)targetId
                          toUserIdList:(NSArray *)userIdList
                               content:(RCMessageContent *)content
-                          pushContent:(NSString *)pushContent
-                             pushData:(NSString *)pushData
-                              success:(void (^)(long messageId))successBlock
-                                error:(void (^)(RCErrorCode nErrorCode, long messageId))errorBlock;
+                          pushContent:(nullable NSString *)pushContent
+                             pushData:(nullable NSString *)pushData
+                              success:(nullable void (^)(long messageId))successBlock
+                                error:(nullable void (^)(RCErrorCode nErrorCode, long messageId))errorBlock;
 
 /// 发起VoIP语音通话
 /// 
@@ -808,7 +825,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Warning: 如果您使用IMKit，可以设置并实现此Delegate监听消息接收；
 /// 如果您使用IMLib，请使用RCIMClient中的 `RCIMClientReceiveMessageDelegate` 监听消息接收，而不要使用此方法。
-@property (nonatomic, weak) id<RCIMReceiveMessageDelegate> receiveMessageDelegate;
+@property (nonatomic, weak, nullable) id<RCIMReceiveMessageDelegate> receiveMessageDelegate;
 
 /// 添加 IMKit 接收消息监听
 /// 
@@ -915,7 +932,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 与融云服务器建立连接之后，应该设置当前用户的用户信息，用于SDK显示和发送。
 /// 
 /// - Warning: 如果传入的用户信息中的用户ID与当前登录的用户ID不匹配，则将会忽略。
-@property (nonatomic, strong) RCUserInfo *currentUserInfo;
+@property (nonatomic, strong, nullable) RCUserInfo *currentUserInfo;
 
 /// 是否将用户信息和群组信息在本地持久化存储，默认值为 NO
 /// 
@@ -933,12 +950,15 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// - Warning: 需要先设置当前登录用户的用户信息，参考RCIM的currentUserInfo。
 @property (nonatomic, assign) BOOL enableMessageAttachUserInfo;
 
+/// 用户信息类型， 默认为 RCDataSourceTypeInfoProvider， 表示使用信息提供者
+@property (nonatomic, assign) RCDataSourceType currentDataSourceType;
+
 #pragma mark 用户信息
 
 /// 用户信息提供者
 /// 
 /// SDK需要通过您实现的用户信息提供者，获取用户信息并显示。
-@property (nonatomic, weak) id<RCIMUserInfoDataSource> userInfoDataSource;
+@property (nonatomic, weak, nullable) id<RCIMUserInfoDataSource> userInfoDataSource;
 
 /// 更新SDK中的用户信息缓存
 /// 
@@ -954,7 +974,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Parameter userId:  用户ID
 /// - Returns: SDK中缓存的用户信息
-- (RCUserInfo *)getUserInfoCache:(NSString *)userId;
+- (nullable RCUserInfo *)getUserInfoCache:(NSString *)userId;
 
 /// 清空SDK中所有的用户信息缓存
 /// 
@@ -963,12 +983,38 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 如果您想立即刷新，您可以在会话列表或者会话页面reload强制刷新。
 - (void)clearUserInfoCache;
 
+/// 修改自己的用户信息
+///
+/// - Parameter profile: 用户信息
+/// - Parameter successBlock: 成功的回调
+/// - Parameter errorBlock: 失败的回调
+///
+/// - Since: 5.16.0
+- (void)updateMyUserProfile:(RCUserProfile *)profile
+               successBlock:(void (^)(void))successBlock
+                 errorBlock:(nullable void (^)(RCErrorCode errorCode,  NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+
+/// 好友信息设置
+/// - Parameter userId: 用户ID
+/// - Parameter remark: 好友备注，最多为 64 个字符，不传或为空时清除备注名。
+/// - Parameter extProfile: 扩展信息
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.16.0
+- (void)setFriendInfo:(NSString *)userId
+               remark:(nullable NSString *)remark
+           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
+         successBlock:(void (^)(void))successBlock
+           errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+
+
 #pragma mark 群组信息
 
 /// 群组信息提供者
 /// 
 /// SDK需要通过您实现的群组信息提供者，获取群组信息并显示。
-@property (nonatomic, weak) id<RCIMGroupInfoDataSource> groupInfoDataSource;
+@property (nonatomic, weak, nullable) id<RCIMGroupInfoDataSource> groupInfoDataSource;
 
 /// 更新SDK中的群组信息缓存
 /// 
@@ -984,7 +1030,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 
 /// - Parameter groupId:     群组ID
 /// - Returns: SDK中缓存的群组信息
-- (RCGroup *)getGroupInfoCache:(NSString *)groupId;
+- (nullable RCGroup *)getGroupInfoCache:(NSString *)groupId;
 
 /// 清空SDK中所有的群组信息缓存
 /// 
@@ -993,19 +1039,59 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 如果您想立即刷新，您可以在会话列表或者会话页面reload强制刷新。
 - (void)clearGroupInfoCache;
 
+/// 更新群组信息
+/// - Parameter groupInfo: 群组信息，groupId 必填，否则更新失败
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.16.0
+
+- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
+           successBlock:(void (^)(void))successBlock
+             errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock NS_SWIFT_NAME(updateGroupInfo(_:successBlock:errorBlock:));
+
+
+/// 设置群组备注名
+/// - Parameter groupId: 群组ID
+/// - Parameter remark: 群备注，字符串长度不超过 64 个字符。传 nil 或 空字符串 表示移除群备注
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.12.2
+- (void)setGroupRemark:(NSString *)groupId
+                remark:(nullable NSString *)remark
+               success:(void (^)(void))successBlock
+                 error:(void (^)(RCErrorCode errorCode))errorBlock;
+
+/// 设置群成员资料
+/// - Parameter groupId: 群组ID
+/// - Parameter userId: 用户ID， 必填项，支持传入当前登录用户 ID
+/// - Parameter nickname: 用户昵称，非必填项，长度不超过 64 个字符，传 nil 或 空字符串表示移除用户昵称
+/// - Parameter extra: 附加信息，非必填项，长度不超过 128 个字符
+/// - Parameter successBlock: 成功回调
+/// - Parameter errorBlock: 失败回调
+///
+/// - Since: 5.16.0
+- (void)setGroupMemberInfo:(NSString *)groupId
+                    userId:(NSString *)userId
+                  nickname:(nullable NSString *)nickname
+                     extra:(nullable NSString *)extra
+              successBlock:(void (^)(void))successBlock
+                errorBlock:(void (^)(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys))errorBlock;
+
 #pragma mark 群名片信息（可选）
 
 /// 群名片信息提供者
 /// 
 /// 如果您使用了群名片功能，SDK需要通过您实现的群名片信息提供者，获取用户在群组中的名片信息并显示。
-@property (nonatomic, weak) id<RCIMGroupUserInfoDataSource> groupUserInfoDataSource;
+@property (nonatomic, weak, nullable) id<RCIMGroupUserInfoDataSource> groupUserInfoDataSource;
 
 /// 获取SDK中缓存的群名片信息
 /// 
 /// - Parameter userId:      用户ID
 /// - Parameter groupId:     群组ID
 /// - Returns: 群名片信息
-- (RCUserInfo *)getGroupUserInfoCache:(NSString *)userId withGroupId:(NSString *)groupId;
+- (nullable RCUserInfo *)getGroupUserInfoCache:(NSString *)userId withGroupId:(NSString *)groupId;
 
 /// 更新SDK中的群名片信息缓存
 /// 
@@ -1030,7 +1116,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 群成员信息提供者
 /// 
 /// 如果您使用了 @ 功能，SDK需要通过您实现的群用户成员提供者，获取群组中的用户列表。
-@property (nonatomic, weak) id<RCIMGroupMemberDataSource> groupMemberDataSource;
+@property (nonatomic, weak, nullable) id<RCIMGroupMemberDataSource> groupMemberDataSource;
 
 #pragma mark 高质量语音消息自动下载
 
@@ -1044,7 +1130,7 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 /// 公众号信息提供者
 ///
 /// SDK需要通过您实现公众号信息提供者，获取公众号信息并显示。
-@property (nonatomic, weak) id<RCIMPublicServiceProfileDataSource> publicServiceInfoDataSource;
+@property (nonatomic, weak, nullable) id<RCIMPublicServiceProfileDataSource> publicServiceInfoDataSource;
 
 #pragma mark - 网页展示模式
 
@@ -1079,3 +1165,5 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotificat
 + (NSString *)getVersion;
 
 @end
+
+NS_ASSUME_NONNULL_END

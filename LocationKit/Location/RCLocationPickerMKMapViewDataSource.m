@@ -27,7 +27,7 @@
     if (self = [super init]) {
         self.mapView = [[MKMapView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
         self.annotationLayer = [CALayer layer];
-        UIImage *image = RCResourceImage(@"map_annotation");
+        UIImage *image = RCDynamicImage(@"location_map_annotation_img", @"map_annotation");
         self.annotationLayer.contents = (id)image.CGImage;
         self.annotationLayer.frame = CGRectMake(0, 0, 27, 37.5);
         [self.mapView setShowsUserLocation:YES];
@@ -222,7 +222,7 @@
     [self.mapView.layer renderInContext:UIGraphicsGetCurrentContext()];
     CGAffineTransform flipVertical = CGAffineTransformMake(1, 0, 0, -1, 0, self.mapView.frame.size.height);
     CGContextConcatCTM(UIGraphicsGetCurrentContext(), flipVertical);
-    UIImage *imageAnnotation = RCResourceImage(@"map_annotation");
+    UIImage *imageAnnotation = RCDynamicImage(@"location_map_annotation_img", @"map_annotation");
     CGRect imageAnnotationFrame = CGRectMake(0, 0, 27, 37.5);
     imageAnnotationFrame.origin.y = self.mapView.frame.size.height / 2;
     imageAnnotationFrame.origin.x = self.mapView.frame.size.width / 2 - 16;

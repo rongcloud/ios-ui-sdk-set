@@ -11,13 +11,16 @@
 #import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
+#import "RCAttributedLabel+Edit.h"
+#import "RCMessageCell+Edit.h"
 
 #define bubble_top_space 12
 #define bubble_bottom_space 12
-#define refer_and_text_space 6
+#define refer_and_text_space 16
 #define content_space_left 12
 #define content_space_right 12
 @interface RCReferenceMessageCell () <RCAttributedLabelDelegate, RCReferencedContentViewDelegate>
+@property (nonatomic, strong) UIView *lineView;
 @end
 @implementation RCReferenceMessageCell
 
@@ -45,7 +48,8 @@
          referenceExtraHeight:(CGFloat)extraHeight {
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)model.content;
-    CGSize textLabelSize = [[self class] getTextLabelSize:refenceMessage.content
+    NSString *displayText = [RCMessageEditUtil displayTextForOriginalText:refenceMessage.content isEdited:model.hasChanged];
+    CGSize textLabelSize = [[self class] getTextLabelSize:displayText
                                                  maxWidth:maxWidth - 33
                                                      font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
     CGSize contentSize = [[self class] contentInfoSizeWithContent:model maxWidth:maxWidth - 33];
@@ -54,7 +58,8 @@
                                             bubble_bottom_space + refer_and_text_space);
     CGFloat __messagecontentview_height = messageContentSize.height;
     __messagecontentview_height += extraHeight;
-
+    __messagecontentview_height += [self edit_editStatusBarHeightWithModel:model];
+    
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
@@ -71,7 +76,8 @@
         [refer.referMsg isKindOfClass:[RCRichContentMessage class]] ||
         [refer.referMsg isKindOfClass:[RCImageMessage class]]  ||
         [refer.referMsg isKindOfClass:[RCTextMessage class]] ||
-        [refer.referMsg isKindOfClass:[RCReferenceMessage class]]) {
+        [refer.referMsg isKindOfClass:[RCReferenceMessage class]] ||
+        [refer.referMsg isKindOfClass:[RCStreamMessage class]]) {
         if ([self.delegate respondsToSelector:@selector(didTapReferencedContentView:)]) {
             [self.delegate didTapReferencedContentView:message];
         }
@@ -112,21 +118,22 @@
     [self showBubbleBackgroundView:YES];
 
     [self.messageContentView addSubview:self.referencedContentView];
+    [self.messageContentView addSubview:self.lineView];
     [self.messageContentView addSubview:self.contentLabel];
 }
 
 - (void)setAutoLayout {
     if(self.model.messageDirection == MessageDirection_RECEIVE){
-        [self.contentLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+        [self.contentLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc")];
     }else{
-        [self.contentLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
+        [self.contentLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0x040A0F")];
     }
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)self.model.content;
     if (refenceMessage) {
-        self.contentLabel.text = refenceMessage.content;
+        [self.contentLabel edit_setTextWithEditedState:refenceMessage.content isEdited:self.model.hasChanged];
     }
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    CGSize textLabelSize = [[self class] getTextLabelSize:refenceMessage.content
+    CGSize textLabelSize = [[self class] getTextLabelSize:self.contentLabel.text
                                                  maxWidth:maxWidth - 33
                                                      font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
     CGSize contentSize = [[self class] contentInfoSizeWithContent:self.model maxWidth:maxWidth - 33];
@@ -136,6 +143,7 @@
     [self.referencedContentView setMessage:self.model contentSize:contentSize];
     
     self.referencedContentView.frame = CGRectMake(content_space_left, 10, contentSize.width, contentSize.height);
+    self.lineView.frame = CGRectMake(content_space_left, CGRectGetMaxY(self.referencedContentView.frame) + refer_and_text_space/2, contentSize.width, 1);
     self.contentLabel.frame = CGRectMake(content_space_left, CGRectGetMaxY(self.referencedContentView.frame) + refer_and_text_space,
                                          textLabelSize.width, textLabelSize.height);
     self.messageContentView.contentSize = CGSizeMake(messageContentSize.width, messageContentSize.height);
@@ -149,7 +157,9 @@
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)model.content;
     RCMessageContent *content = refenceMessage.referMsg;
     CGFloat height = 17;//名字显示高度
-    if ([content isKindOfClass:[RCImageMessage class]]) {
+    BOOL isDeletedOrRecalled = (refenceMessage.referMsgStatus == RCReferenceMessageStatusRecalled
+                                || refenceMessage.referMsgStatus == RCReferenceMessageStatusDeleted);
+    if ([content isKindOfClass:[RCImageMessage class]] && !isDeletedOrRecalled) {
         RCImageMessage *msg = (RCImageMessage *)content;
         height = [RCMessageCellTool getThumbnailImageSize:msg.thumbnailImage].height + height + name_and_image_view_space;
     } else {
@@ -160,8 +170,7 @@
 
 + (CGSize)getTextLabelSize:(NSString *)message maxWidth:(CGFloat)maxWidth font:(UIFont *)font {
     if ([message length] > 0) {
-        CGSize textSize =
-            [RCKitUtility getTextDrawingSize:message font:font constrainedSize:CGSizeMake(maxWidth, MAXFLOAT)];
+        CGSize textSize = [RCKitUtility getTextDrawingSize:message font:font constrainedSize:CGSizeMake(maxWidth, MAXFLOAT)];
         textSize.height = ceilf(textSize.height);
         return CGSizeMake(maxWidth, textSize.height);
     } else {
@@ -190,5 +199,13 @@
         _referencedContentView.delegate = self;
     }
     return _referencedContentView;
+}
+
+- (UIView *)lineView {
+    if (!_lineView) {
+        _lineView = [UIView new];
+        _lineView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
+    }
+    return _lineView;
 }
 @end

@@ -30,8 +30,8 @@
                                                             targetId:(NSString *)targetId {
     NSMutableArray *itemList = [[NSMutableArray alloc] init];
     RCExtensionPluginItemInfo *locationItem = [[RCExtensionPluginItemInfo alloc] init];
-    locationItem.normalImage = RCResourceImage(@"plugin_item_location");
-    locationItem.highlightedImage = RCResourceImage(@"plugin_item_location_highlighted");
+    locationItem.normalImage = RCDynamicImage(@"conversation_plugin_item_location_img",@"plugin_item_location");
+    locationItem.highlightedImage = RCDynamicImage(@"conversation_plugin_item_location_highlighted_img",@"plugin_item_location_highlighted");
     locationItem.title = RCLocalizedString(@"Location");
     locationItem.tag = PLUGIN_BOARD_ITEM_LOCATION_TAG;
     locationItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {

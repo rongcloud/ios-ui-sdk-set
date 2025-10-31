@@ -76,7 +76,7 @@
 #pragma mark – Private Methods
 
 - (void)setBackAction {
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(cancelAction)];
 }
@@ -87,10 +87,10 @@
 
 - (void)setupTableHeaderView {
     UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 30)];
-    view.backgroundColor = HEXCOLOR(0xf0f0f6);
+    view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0xf0f0f6");
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, self.view.frame.size.width, 30)];
     label.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-    label.textColor = HEXCOLOR(0x999999);
+    label.textColor = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
     label.text = @"请您留言，我们会尽快回复您。";
     [view addSubview:label];
     self.tableView.tableHeaderView = view;

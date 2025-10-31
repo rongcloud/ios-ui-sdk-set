@@ -13,9 +13,11 @@
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
+#import "RCConversationListDataSource+RRS.h"
+
 #define PagingCount 100
 
-@interface RCConversationListDataSource ()
+@interface RCConversationListDataSource ()<RCReadReceiptV5Delegate>
 @property (nonatomic, strong) dispatch_queue_t updateEventQueue;
 @property (nonatomic, assign) NSInteger currentCount;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, RCConversationModel *> *collectedModelDict;
@@ -32,10 +34,8 @@
         self.currentCount = 0;
         self.dataList = [[NSMutableArray alloc] init];
         self.isConverstaionListAppear = NO;
-        self.cellBackgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                            darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
-        self.topCellBackgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xf2faff)
-                                                               darkColor:[HEXCOLOR(0x171717) colorWithAlphaComponent:0.8]];
+        self.cellBackgroundColor = RCDynamicColor(@"conversation-list_background_color", @"0xffffff", @"0x1c1c1e66");
+        self.topCellBackgroundColor = RCDynamicColor(@"common_background_color", @"0xf2faff", @"0x171717CC");
         [self registerNotifications];
     }
     return self;
@@ -83,6 +83,9 @@
                 }
                 modelList = [ws collectConversation:modelList collectionTypes:ws.collectionConversationTypeArray];
             }
+            
+            [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
+            
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(modelList.count > 0) {
                     [ws.dataList addObjectsFromArray:modelList.copy];
@@ -134,6 +137,8 @@
             modelList = [self.delegate dataSource:self willReloadTableData:modelList];
         }
         modelList = [self collectConversation:modelList collectionTypes:self.collectionConversationTypeArray];
+        
+        [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataList = modelList;
@@ -229,6 +234,9 @@
                     if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willInsertAtIndexPaths:)]) {
                         [self.delegate dataSource:self willInsertAtIndexPaths:@[ [NSIndexPath indexPathForRow:newIndex inSection:0] ]];
                     }
+                    if (newModel) {
+                        [self rrs_refreshCachedAndFetchReceiptInfo:@[newModel]];
+                    }
                 });
             }];
         }
@@ -263,7 +271,8 @@
         }
         dispatch_async(self.updateEventQueue, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                for (RCConversationModel *model in self.dataList) {
+                NSArray *arrayDataList = [self.dataList copy];
+                for (RCConversationModel *model in arrayDataList) {
                     if ([model.targetId isEqualToString:targetId]) {
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
@@ -271,6 +280,7 @@
                                                               completion:^(RCConversation * _Nullable conversation) {
                             dispatch_async(dispatch_get_main_queue(), ^{
                                 model.lastestMessage = conversation.latestMessage;
+                                model.latestMessageUId = conversation.latestMessageUId;
                                 model.sentStatus = conversation.sentStatus;
                                 updateInfo.model = model;
                                 updateInfo.updateType = RCConversationCell_MessageContent_Update;
@@ -485,6 +495,12 @@
                                              selector:@selector(didReceiveRecallMessageNotification:)
                                                  name:RCKitDispatchRecallMessageNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onMessagesModifiedNotification:)
+                                                 name:RCKitDispatchMessagesModifiedNotification
+                                               object:nil];
+    
+    [[RCCoreClient sharedCoreClient] addReadReceiptV5Delegate:self];
 }
 
 #pragma mark - helper
@@ -532,4 +548,49 @@
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
+
+#pragma mark - 消息编辑
+
+- (void)onMessagesModifiedNotification:(NSNotification *)notification {
+    if (!self.isConverstaionListAppear) {// 列表页不显示时无需处理
+        return;
+    }
+    NSArray<RCMessage *> *messages = notification.object;
+    // 将 dataList 快照转为哈希表，key 为 latestMessageUId
+    NSArray<RCConversationModel *> *arrayDataList = [self.dataList copy];
+    NSMutableDictionary<NSString *, RCConversationModel *> *uidToModel = [NSMutableDictionary dictionaryWithCapacity:arrayDataList.count];
+    for (RCConversationModel *model in arrayDataList) {
+        if (model.latestMessageUId.length > 0) {
+            uidToModel[model.latestMessageUId] = model;
+        }
+    }
+
+    for (RCMessage *message in messages) {
+        RCConversationModel *model = uidToModel[message.messageUId];
+        if (!model) {
+            continue;
+        }
+        // 更新最后一条消息的显示内容
+        model.lastestMessage = message.content;
+        
+        RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
+        updateInfo.model = model;
+        updateInfo.updateType = RCConversationCell_MessageContent_Update;
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:RCKitConversationCellUpdateNotification
+         object:updateInfo
+         userInfo:nil];
+    }
+}
+
+#pragma mark - 已读回执v5
+- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
+    if (!self.isConverstaionListAppear) {// 列表页不显示时无需处理
+        return;
+    }
+    dispatch_async(self.updateEventQueue, ^{
+        [self rrs_didReceiveMessageReadReceiptResponses:responses];
+    });
+}
+
 @end

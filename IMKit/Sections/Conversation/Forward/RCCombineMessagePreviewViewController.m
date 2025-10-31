@@ -53,6 +53,8 @@
 @property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
+//显示撤回消息对话框
+@property (nonatomic, assign) BOOL displayRecallDialog;
 
 @end
 
@@ -86,7 +88,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
     [self setNav];
     [self addSubViews];
     if (self.ifWebViewPush) {
@@ -101,6 +103,14 @@
     [super viewWillAppear:animated];
     [self.combineMsgWebView.configuration.userContentController addScriptMessageHandler:self name:FUNCTIONNAME];
     [self registerObserver];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if (self.displayRecallDialog) {
+        self.displayRecallDialog = NO;
+        [self showRecallDialog];
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -128,22 +138,30 @@
                                                object:nil];
 }
 
+- (void)showRecallDialog {
+    UIAlertController *alertController = [UIAlertController
+        alertControllerWithTitle:nil
+                         message:RCLocalizedString(@"MessageRecallAlert")
+                  preferredStyle:UIAlertControllerStyleAlert];
+    [alertController
+        addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                           style:UIAlertActionStyleDefault
+                                         handler:^(UIAlertAction *_Nonnull action) {
+                                             [self.navigationController popViewControllerAnimated:YES];
+                                         }]];
+    [self.navigationController presentViewController:alertController animated:YES completion:nil];
+}
+
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            UIAlertController *alertController = [UIAlertController
-                alertControllerWithTitle:nil
-                                 message:RCLocalizedString(@"MessageRecallAlert")
-                          preferredStyle:UIAlertControllerStyleAlert];
-            [alertController
-                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *_Nonnull action) {
-                                                     [self.navigationController popViewControllerAnimated:YES];
-                                                 }]];
-            [self.navigationController presentViewController:alertController animated:YES completion:nil];
+            if ([self isViewLoaded] && self.view.window != nil) {
+                [self showRecallDialog];
+            } else {
+                self.displayRecallDialog = YES;
+            }
         }
     });
 }
@@ -193,13 +211,29 @@
         } else if ([templateType isEqualToString:@"phone"]) {
             NSString *phoneNum = [dict objectForKey:@"phoneNum"];
             if (phoneNum) {
-                [[UIApplication sharedApplication]
-                    openURL:[NSURL URLWithString:[NSString stringWithFormat:@"tel://%@", phoneNum]]];
+                NSString *phoneStr = [NSString stringWithFormat:@"tel://%@", phoneNum];
+                if (@available(iOS 10.0, *)) {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]
+                                                         options:@{}
+                                               completionHandler:^(BOOL success) {
+                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:phoneStr]];
+                  }
             }
         } else if ([templateType isEqualToString:@"link"]) {
             NSString *url = [dict objectForKey:@"link"];
             if (url) {
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                if (@available(iOS 10.0, *)) {
+                    [RCKitUtility openURLInSafariViewOrWebView:url base:self];
+                    // 无法打开 a@126.com, 改为程序内加载
+//                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]
+//                                                         options:@{}
+//                                               completionHandler:^(BOOL success) {
+//                      }];
+                  } else {
+                      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                  }
             }
         } else if ([templateType isEqualToString:RCGIFMessageTypeIdentifier]) {
             [self presentGIFPreviewViewController:dict];
@@ -238,7 +272,7 @@
 
 #pragma mark - Private Methods
 - (void)setNav {
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     self.navigationItem.title = self.navTitle;
@@ -408,7 +442,7 @@
 
     RCSightSlideViewController *svc = [[RCSightSlideViewController alloc] init];
     svc.messageModel = model;
-//    svc.topRightBtnHidden = YES;
+    svc.topRightBtnHidden = YES;
     svc.onlyPreviewCurrentMessage = YES;
     RCBaseNavigationController *navc = [[RCBaseNavigationController alloc] initWithRootViewController:svc];
     navc.modalPresentationStyle = UIModalPresentationFullScreen;
@@ -505,7 +539,7 @@
                                                         self.view.bounds.size.height - navBarHeight - homeBarHeight)];
         _combineMsgWebView.UIDelegate = self;
         _combineMsgWebView.navigationDelegate = self;
-        _combineMsgWebView.backgroundColor = [UIColor whiteColor];
+        _combineMsgWebView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
     }
     return _combineMsgWebView;
 }
@@ -521,7 +555,7 @@
 - (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
         _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 27) / 2, 0, 27, 27)];
-        _loadingImageView.image = RCResourceImage(@"combine_loading");
+        _loadingImageView.image = RCDynamicImage(@"conversation_msg_combine_loading_img", @"combine_loading");
     }
     return _loadingImageView;
 }
@@ -533,7 +567,7 @@
         _loadingLabel.numberOfLines = 1;
         _loadingLabel.textAlignment = NSTextAlignmentCenter;
         _loadingLabel.backgroundColor = [UIColor clearColor];
-        _loadingLabel.textColor = [UIColor colorWithRed:102 / 255.0 green:102 / 255.0 blue:102 / 255.0 alpha:1 / 1.0];
+        _loadingLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x666666", @"0x666666");
         _loadingLabel.text = RCLocalizedString(@"CombineMessageLoading");
     }
     return _loadingLabel;
@@ -550,7 +584,7 @@
 - (RCBaseImageView *)loadFailedImageView {
     if (!_loadFailedImageView) {
         _loadFailedImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 45) / 2, 0, 45, 54)];
-        _loadFailedImageView.image = RCResourceImage(@"combine_failed");
+        _loadFailedImageView.image = RCDynamicImage(@"combine_msg_preview_failed_img", @"combine_failed");
         _loadFailedImageView.userInteractionEnabled = NO;
     }
     return _loadFailedImageView;
@@ -563,8 +597,7 @@
         _loadFailedLabel.numberOfLines = 1;
         _loadFailedLabel.textAlignment = NSTextAlignmentCenter;
         _loadFailedLabel.backgroundColor = [UIColor clearColor];
-        _loadFailedLabel.textColor =
-            [UIColor colorWithRed:102 / 255.0 green:102 / 255.0 blue:102 / 255.0 alpha:1 / 1.0];
+        _loadFailedLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x666666", @"0x666666");
         _loadFailedLabel.text = RCLocalizedString(@"CombineMessageLoadFailed");
     }
     return _loadFailedLabel;
