@@ -133,9 +133,9 @@
 - (UILabel *)locationNameLabel{
     if (!_locationNameLabel) {
         _locationNameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-        _locationNameLabel.backgroundColor = RCDynamicColor(@"mask_color", @"0x00000066", @"0x00000066");
+        _locationNameLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.34];
         _locationNameLabel.textAlignment = NSTextAlignmentLeft;
-        _locationNameLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _locationNameLabel.textColor = [UIColor whiteColor];
         _locationNameLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
         _locationNameLabel.clipsToBounds = YES;
     }

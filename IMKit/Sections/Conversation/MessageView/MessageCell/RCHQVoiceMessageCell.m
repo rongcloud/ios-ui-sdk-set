@@ -14,12 +14,10 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
-#import "RCSTTContentView.h"
-#import "RCMessageModel+STT.h"
-
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
+static long hq_messageId = 0;
 
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
@@ -33,9 +31,6 @@ static RCMessageDirection hq_previousMessageDirection;
 @property (nonatomic, strong) NSTimer *animationTimer;
 @property (nonatomic) int animationIndex;
 @property (nonatomic, strong) RCVoicePlayer *voicePlayer;
-@property (nonatomic, strong) RCSTTContentView *sttContentView;
-
-
 @end
 
 @implementation RCHQVoiceMessageCell
@@ -67,7 +62,6 @@ static RCMessageDirection hq_previousMessageDirection;
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
-    [RCSTTContentViewModel configureSTTIfNeeded:model];
     CGFloat __messagecontentview_height = Voice_Height;
 
     if (__messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
@@ -75,12 +69,11 @@ static RCMessageDirection hq_previousMessageDirection;
     }
 
     __messagecontentview_height += extraHeight;
-    __messagecontentview_height += [self sstInfoHeight:model];
+
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
-    RCSTTLog(@" model changed %p to %p  on %p ", self.model, model, self);
     [super setDataModel:model];
     [self resetAnimationTimer];
 
@@ -89,15 +82,27 @@ static RCMessageDirection hq_previousMessageDirection;
     [self setMessageInfo:voiceMessage];
     [self updateSubViewsLayout:voiceMessage];
     [self updateVoiceDownloadStatusView:voiceMessage];
-    [self configureSTTContentViewIfNeed];
 }
 
 #pragma mark - Public API
 - (void)playVoice {
-    [self removeUnreadTagView];
+
+    RCHQVoiceMessage *voiceMessage = (RCHQVoiceMessage *)self.model.content;
+
+    if (self.voiceUnreadTagView) {
+        self.voiceUnreadTagView.hidden = YES;
+        [self.voiceUnreadTagView removeFromSuperview];
+        self.voiceUnreadTagView = nil;
+    }
+    if (voiceMessage.localPath.length > 0) {
+        [self.model.receivedStatusInfo markAsListened];
+        [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
+                                               receivedStatusInfo:self.model.receivedStatusInfo
+                                                       completion:nil];
+    }
     [self disablePreviousAnimationTimer];
 
-    if (self.model.messageId == self.voicePlayer.messageId) {
+    if (self.model.messageId == hq_messageId) {
         if (self.voicePlayer.isPlaying) {
             [self.voicePlayer stopPlayVoice];
             [self startDestruct];
@@ -112,7 +117,7 @@ static RCMessageDirection hq_previousMessageDirection;
 }
 
 - (void)stopPlayingVoice {
-    if (self.model.messageId == self.voicePlayer.messageId) {
+    if (self.model.messageId == hq_messageId) {
         if (self.voicePlayer.isPlaying) {
             [self stopPlayingVoiceData];
             [self disableCurrentAnimationTimer];
@@ -164,21 +169,20 @@ static RCMessageDirection hq_previousMessageDirection;
                                                  name:@"RCKitExtensionModelResetVoicePlayingNotification"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(voiceWillPlay:)
-                                                 name:kNotificationVoiceWillPlayNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(voiceDidPlay:)
-                                                 name:kNotificationPlayVoice
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(stopPlayingVoiceDataIfNeed:)
-                                                 name:kNotificationStopVoicePlayer
+                                                 name:@"kNotificationStopVoicePlayer"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateDownloadStatus:)
                                                  name:RCHQDownloadStatusChangeNotify
                                                object:nil];
+}
+
+- (void)playVoiceNotification:(NSNotification *)notification {
+    long messageId = [notification.object longValue];
+    if (messageId == self.model.messageId) {
+        [self playVoice];
+    }
 }
 
 - (void)updateDownloadStatus:(NSNotification *)noti {
@@ -205,27 +209,11 @@ static RCMessageDirection hq_previousMessageDirection;
     }
 }
 
-- (void)voiceWillPlay:(NSNotification *)notification {
-    NSNumber *msgIdNum = notification.object;
-    if (msgIdNum && [msgIdNum longLongValue] == self.model.messageId) {
-        [self removeUnreadTagView];
-    }
-}
-
-- (void)voiceDidPlay:(NSNotification *)notification {
-    long messageId = [notification.object longValue];
-    if (messageId == self.model.messageId) {
-        [self disableCurrentAnimationTimer];
-        [self enableCurrentAnimationTimer];
-    }
-}
-
-
 #pragma mark - Private Methods
 
 - (void)initialize {
     [self showBubbleBackgroundView:YES];
-    self.messageContentView.accessibilityLabel = @"messageContentView";
+    
     [self.messageContentView addSubview:self.playVoiceView];
     [self.messageContentView addSubview:self.voiceDurationLabel];
     
@@ -251,7 +239,7 @@ static RCMessageDirection hq_previousMessageDirection;
 }
 
 - (void)resetAnimationTimer{
-    if (self.voicePlayer.messageId == self.model.messageId) {
+    if (hq_messageId == self.model.messageId) {
         if ((self.voicePlayer.isPlaying)) {
             [self disableCurrentAnimationTimer];
             [self enableCurrentAnimationTimer];
@@ -282,12 +270,17 @@ static RCMessageDirection hq_previousMessageDirection;
 
 - (void)updateSubViewsLayout:(RCHQVoiceMessage *)voiceMessage{
     CGFloat audioBubbleWidth = [self getBubbleWidth:voiceMessage.duration];
-    CGFloat voiceHeight = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
-    self.messageContentView.contentSize = CGSizeMake(audioBubbleWidth, voiceHeight);
+    CGSize size = self.messageContentView.contentSize;
+    size.width = audioBubbleWidth;
+    if (size.height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
+        size.height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
+    }
+    self.messageContentView.contentSize = size;
+    CGFloat voiceHeight = size.height;
     if ([RCKitUtility isRTL]) {
         if (self.model.messageDirection == MessageDirection_SEND) {
-            self.playVoiceView.image = RCDynamicImage(@"conversation_msg_cell_receive_voice_3_img",@"from_voice_3");
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
             self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
             self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
@@ -295,8 +288,8 @@ static RCMessageDirection hq_previousMessageDirection;
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
             self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
             self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
-            self.playVoiceView.image = RCDynamicImage(@"conversation_msg_cell_send_voice_3_img",@"to_voice_3");
+            [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
+            self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }
     } else {
         
@@ -304,11 +297,11 @@ static RCMessageDirection hq_previousMessageDirection;
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
             self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
             self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
-            self.playVoiceView.image = RCDynamicImage(@"conversation_msg_cell_send_voice_3_img",@"to_voice_3");
+            [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
+            self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }else{
-            self.playVoiceView.image = RCDynamicImage(@"conversation_msg_cell_receive_voice_3_img",@"from_voice_3");
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
             self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
             self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
@@ -364,16 +357,8 @@ static RCMessageDirection hq_previousMessageDirection;
                 [self.voiceUnreadTagView setHidden:YES];
             }
             [self.baseContentView addSubview:self.voiceUnreadTagView];
-            self.voiceUnreadTagView.image = RCDynamicImage(@"conversation_msg_cell_voice_unread_img",@"voice_unread");
+            self.voiceUnreadTagView.image = RCResourceImage(@"voice_unread");
         }
-    }
-}
-
-- (void)removeUnreadTagView {
-    if (self.voiceUnreadTagView) {
-        self.voiceUnreadTagView.hidden = YES;
-        [self.voiceUnreadTagView removeFromSuperview];
-        self.voiceUnreadTagView = nil;
     }
 }
 
@@ -395,42 +380,6 @@ static RCMessageDirection hq_previousMessageDirection;
         }
     }
 }
-
-#pragma mark - STT
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    if (self.sttContentView) {
-        [self.sttContentView bindCollectionView:self.hostCollectionView];
-        [self.sttContentView layoutContentView];
-    }
-}
-
-+ (CGFloat)sstInfoHeight:(RCMessageModel *)model {
-    RCSTTContentViewModel *vm =  [model stt_sttViewModel];
-    return [vm speedToTextContentHeight]+4;
-}
-
-- (void)configureSTTContentViewIfNeed {
-    RCSTTContentViewModel *vm = [self.model stt_sttViewModel];
-    if (vm) {
-        if (!self.sttContentView) {
-            self.sttContentView = [RCSTTContentView new];
-            __weak __typeof(self)weakSelf = self;
-            self.sttContentView.sttFinishedBlock = ^(){
-                [weakSelf removeUnreadTagView];
-            };
-            [self.baseContentView addSubview:self.sttContentView];
-        }
-    }
-    [self.sttContentView bindViewModel:vm
-                             baseFrame:self.messageContentView.frame];
-}
-
-- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
-    [super setDelegate:delegate];
-    [self.sttContentView bindGestureDelegate:delegate];
-}
-
 #pragma mark - stop and disable timer during background mode.
 - (void)resetActiveEventInBackgroundMode {
     [self stopPlayingVoiceData];
@@ -444,6 +393,8 @@ static RCMessageDirection hq_previousMessageDirection;
         [self startDestruct];
     }
 }
+
+
 
 - (NSString *)getCorrectedPath:(NSString *)localPath {
     if (localPath.length > 0) {
@@ -491,6 +442,7 @@ static RCMessageDirection hq_previousMessageDirection;
         BOOL bPlay = [self.voicePlayer playVoice:self.model.conversationType
                                         targetId:self.model.targetId
                                        messageId:self.model.messageId
+                                       direction:self.model.messageDirection
                                        voiceData:wavAudioData
                                         observer:self];
         // if failed to play the voice message, reset all indicator.
@@ -499,6 +451,7 @@ static RCMessageDirection hq_previousMessageDirection;
         } else {
             [self enableCurrentAnimationTimer];
         }
+        hq_messageId = self.model.messageId;
     } else {
         self.model.receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
         self.statusContentView.hidden = NO;
@@ -601,17 +554,13 @@ static RCMessageDirection hq_previousMessageDirection;
 
     self.animationIndex++;
     NSString *playingIndicatorIndex;
-    NSString *playingIndicatorIndexKey;
     if (MessageDirection_SEND == self.model.messageDirection) {
         playingIndicatorIndex = [NSString stringWithFormat:@"to_voice_%d", (self.animationIndex % 4)];
-        playingIndicatorIndexKey = [NSString stringWithFormat:@"conversation_msg_cell_send_voice_%d_img", (self.animationIndex % 4)];
     } else {
         playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
-        playingIndicatorIndexKey = [NSString stringWithFormat:@"conversation_msg_cell_receive_voice_%d_img", (self.animationIndex % 4)];
-
     }
     DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
-    UIImage *image = RCDynamicImage(playingIndicatorIndexKey, playingIndicatorIndex);
+    UIImage *image = RCResourceImage(playingIndicatorIndex);;
     if ([RCKitUtility isRTL]) {
         image = [image imageFlippedForRightToLeftLayoutDirection];
     }
@@ -626,9 +575,9 @@ static RCMessageDirection hq_previousMessageDirection;
     }
     UIImage *image;
     if (MessageDirection_SEND == self.model.messageDirection) {
-        image = RCDynamicImage(@"conversation_msg_cell_send_voice_3_img",@"to_voice_3");
+        image = RCResourceImage(@"to_voice_3");
     } else {
-        image = RCDynamicImage(@"conversation_msg_cell_receive_voice_3_img",@"from_voice_3");
+        image = RCResourceImage(@"from_voice_3");
     }
     if ([RCKitUtility isRTL]) {
         self.playVoiceView.image = [image imageFlippedForRightToLeftLayoutDirection];
@@ -647,9 +596,9 @@ static RCMessageDirection hq_previousMessageDirection;
          */
         if (hq_previousPlayVoiceImageView) {
             if (MessageDirection_SEND == self.model.messageDirection) {
-                hq_previousPlayVoiceImageView.image = RCDynamicImage(@"conversation_msg_cell_send_voice_3_img",@"to_voice_3");
+                hq_previousPlayVoiceImageView.image = RCResourceImage(@"to_voice_3");
             } else {
-                hq_previousPlayVoiceImageView.image = RCDynamicImage(@"conversation_msg_cell_receive_voice_3_img",@"from_voice_3");
+                hq_previousPlayVoiceImageView.image = RCResourceImage(@"from_voice_3");
             }
             hq_previousPlayVoiceImageView = nil;
             hq_previousMessageDirection = 0;

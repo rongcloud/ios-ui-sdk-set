@@ -65,7 +65,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.collectionView.scrollsToTop = NO;
-    self.collectionView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+    self.collectionView.backgroundColor = [UIColor blackColor];
     self.collectionView.showsHorizontalScrollIndicator = NO;
     self.collectionView.contentSize = CGSizeMake(SCREEN_WIDTH * self.previewPhotosArr.count, SCREEN_HEIGHT);
     self.collectionView.pagingEnabled = YES;
@@ -164,10 +164,10 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     } else {
         cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
         //    [self _updateTopBarStatus];
-        __weak typeof(self) weakSelf = self;
+        //        __weak typeof(self) weakSelf = self;
         [cell setSingleTap:^{
-            weakSelf.topView.hidden = !weakSelf.topView.hidden;
-            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
+            //            weakSelf.topView.hidden = !weakSelf.topView.hidden;
+            //            weakSelf.bottomView.hidden = weakSelf.topView.hidden;
         }];
     }
     [cell configPreviewCellWithItem:model];
@@ -255,7 +255,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         return;
     }
     //如果预览页面当前的视频图片也无法 iCloud 下载，那么就得报错
-    if(selectModel.isDownloadFailFromiCloud ) {
+    if(selectModel.isDownloadFailFromiCloud || [selectModel isVideoAssetInvalid]) {
         [RCAlertView showAlertController:nil message:RCLocalizedString(@"DownloadFailFromiCloud") cancelTitle:RCLocalizedString(@"Confirm") inViewController:self];
         return;
     }
@@ -308,9 +308,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                               [self.selectedArr addObject:model];
                                           }
                                       }
-                                      if (!self.allPhotosArr[i].isSelect) {
-                                          self.allPhotosArr[i].isSelect = YES;
-                                      }
+                                      self.allPhotosArr[i].isSelect = YES;
                                       [self _updateTopBarStatus];
                                   } else {
                                       [RCAlertView showAlertController:nil message:RCLocalizedString(@"Max_Selected_Photos") cancelTitle:RCLocalizedString(@"i_know_it") inViewController:self];
@@ -360,10 +358,10 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         originY = 44;
     }
     self.topView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, originY + 44)];
-    _topView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x222222cc",  @"0x222222cc");
+    _topView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_topView];
     RCBaseButton *backButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-    UIImage *img = RCDynamicImage(@"photo_preview_navigator_white_back_img", @"navigator_white_back");
+    UIImage *img = RCResourceImage(@"navigator_white_back");
     img = [RCSemanticContext imageflippedForRTL:img];
     [backButton setImage:img forState:UIControlStateNormal];
     [backButton setContentEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 6)];
@@ -378,8 +376,8 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     [_topView addSubview:backButton];
 
     RCBaseButton *stateButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-    [stateButton setImage:RCDynamicImage(@"photo_preview_uncheck_img", @"photo_preview_unselected") forState:UIControlStateNormal];
-    [stateButton setImage:RCDynamicImage(@"photo_preview_check_img", @"photo_preview_selected") forState:UIControlStateSelected];
+    [stateButton setImage:RCResourceImage(@"photo_preview_unselected") forState:UIControlStateNormal];
+    [stateButton setImage:RCResourceImage(@"photo_preview_selected") forState:UIControlStateSelected];
     [stateButton sizeToFit];
     stateButton.imageEdgeInsets = (UIEdgeInsets){12, 12, 12, 12};
     if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
@@ -400,19 +398,13 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     _bottomView = [[UIView alloc]
         initWithFrame:CGRectMake(0, self.view.bounds.size.height - 49 - safeAreaHomeBarHeight,
                                  self.view.bounds.size.width, 49 + safeAreaHomeBarHeight)];
-    _bottomView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x222222cc",  @"0x222222cc");
+    _bottomView.backgroundColor = [HEXCOLOR(0x222222) colorWithAlphaComponent:0.8];
     [self.view addSubview:_bottomView];
     // add button for bottom bar
     _sendButton = [[RCBaseButton alloc] init];
-    _sendButton.layer.cornerRadius = 5.0f;
-    _sendButton.contentEdgeInsets = UIEdgeInsetsMake(5, 12, 5, 12);
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
-    [_sendButton setTitleColor:RCDynamicResourceColor(@"control_title_white_color",@"photoPreview_send_disable", @"0x959595")
-                   forState:UIControlStateDisabled];
-    [_sendButton setTitleColor:RCDynamicResourceColor(@"control_title_white_color", @"photoPicker_send_normal", @"0x0099ff")
-                      forState:UIControlStateNormal];
-    [_sendButton setBackgroundColor:RCDynamicColor(@"disabled_color", @"0x00000000", @"0x00000000")];
-
+    [_sendButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
+                      forState:UIControlStateDisabled];
     [_sendButton addTarget:self action:@selector(sendImageMessageButton:) forControlEvents:UIControlEventTouchUpInside];
     [_bottomView addSubview:_sendButton];
     [self _updateBottomSendImageCountButton];
@@ -426,7 +418,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
     _editButton = [RCBaseButton buttonWithType:(UIButtonTypeCustom)];
     [_editButton setTitle:RCLocalizedString(@"Edit") forState:(UIControlStateNormal)];
-    [_editButton setTitleColor:RCDynamicResourceColor(@"text_secondary_color", @"photoPreview_send_disable", @"0x959595")
+    [_editButton setTitleColor:RCResourceColor(@"photoPreview_send_disable", @"0x959595")
                       forState:UIControlStateNormal];
     [_editButton addTarget:self action:@selector(editBtnClick:) forControlEvents:(UIControlEventTouchUpInside)];
     [_bottomView addSubview:_editButton];
@@ -532,13 +524,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                                                  constant:0]];
     }
 
-  
-    [_fullButton setTitleColor:RCDynamicResourceColor(@"control_title_white_color",@"photoPreview_original_normal_text", @"0x999999")
+    [_sendButton setTitleColor:RCResourceColor(@"photoPreview_send_normal", @"0x0099ff")
                       forState:UIControlStateNormal];
-    [_fullButton setTitleColor:RCDynamicResourceColor(@"control_title_white_color",@"photoPreview_original_selected_text", @"0xffffff")
+    [_fullButton setTitleColor:RCResourceColor(@"photoPreview_original_normal_text", @"0x999999")
+                      forState:UIControlStateNormal];
+    [_fullButton setTitleColor:RCResourceColor(@"photoPreview_original_selected_text", @"0xffffff")
                       forState:UIControlStateSelected];
-    [_fullButton setImage:RCDynamicImage(@"photo_preview_uncheck_img",@"unselected_full") forState:UIControlStateNormal];
-    [_fullButton setImage:RCDynamicImage(@"photo_preview_check_img",@"selected_full") forState:UIControlStateSelected];
+    [_fullButton setImage:RCResourceImage(@"unselected_full") forState:UIControlStateNormal];
+    [_fullButton setImage:RCResourceImage(@"selected_full") forState:UIControlStateSelected];
     _fullButton.imageEdgeInsets = UIEdgeInsetsMake(5, 0, 5, 0);
     [self.bottomView setNeedsUpdateConstraints];
     [self.bottomView updateConstraintsIfNeeded];
@@ -628,8 +621,6 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.selectedArr.count && self.bottomView) {
             self.sendButton.enabled = YES;
-            [self.sendButton setBackgroundColor:RCDynamicColor(@"primary_color", @"0x00000000", @"0x00000000")];
-
             if ([RCKitUtility isRTL]) {
                 [self.sendButton setTitle:[NSString stringWithFormat:@"(%lu) %@", (unsigned long)self.selectedArr.count, RCLocalizedString(@"Send")] forState:(UIControlStateNormal)];
             } else {
@@ -637,8 +628,6 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
             }
         } else {
             self.sendButton.enabled = NO;
-            [self.sendButton setBackgroundColor:RCDynamicColor(@"disabled_color", @"0x00000000", @"0x00000000")];
-
             [self.sendButton setTitle:RCLocalizedString(@"Send") forState:(UIControlStateNormal)];
         }
     });

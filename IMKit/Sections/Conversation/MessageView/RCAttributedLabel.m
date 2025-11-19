@@ -10,7 +10,6 @@
 #import "RCKitCommonDefine.h"
 #import <CoreText/CoreText.h>
 #import "RCKitUtility.h"
-#import "RCMessageEditUtil.h"
 
 @interface RCAttributedLabel ()
 
@@ -20,7 +19,6 @@
 @property (nonatomic, assign) NSRange rangeOfTextHighlighted;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGestureRecognizer;
 @property (nonatomic, assign) NSTextCheckingType currentTextCheckingType;
-@property (nonatomic, assign) NSRange rc_editedSuffixRange;
 
 @end
 
@@ -51,26 +49,24 @@
     if (self.attributeDataSource) {
         return [self.attributeDataSource attributeDictionaryForTextType:textType];
     }
-    UIColor * linkColor = RCDynamicColor(@"link_color", @"0x0000FF", @"0xFFBE6a");
-    if (!linkColor) {
-        linkColor = [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)];
-    }
     switch (textType) {
     case NSTextCheckingTypePhoneNumber: {
         _currentTextCheckingType = NSTextCheckingTypePhoneNumber;
         return @{
-            NSForegroundColorAttributeName :linkColor
-                ,
+            NSForegroundColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
             NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName : linkColor
+            NSUnderlineColorAttributeName : [UIColor yellowColor]
         };
     }
     case NSTextCheckingTypeLink: {
         _currentTextCheckingType = NSTextCheckingTypeLink;
         return @{
-            NSForegroundColorAttributeName :linkColor,
+            NSForegroundColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
             NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName :linkColor
+            NSUnderlineColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)]
         };
     }
     default:
@@ -87,23 +83,19 @@
     if (self.attributeDataSource) {
         return [self.attributeDataSource highlightedAttributeDictionaryForTextType:textType];
     }
-    UIColor * linkColor = RCDynamicColor(@"link_color", @"0x0000FF", @"0xFFBE6a");
-    if (!linkColor) {
-        linkColor = [UIColor yellowColor];
-    }
     switch (textType) {
     case NSTextCheckingTypePhoneNumber: {
         _currentTextCheckingType = NSTextCheckingTypePhoneNumber;
         if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor yellowColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
             };
         } else {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor yellowColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-                NSUnderlineColorAttributeName : linkColor
+                NSUnderlineColorAttributeName : [UIColor yellowColor]
             };
         }
     }
@@ -111,14 +103,14 @@
         _currentTextCheckingType = NSTextCheckingTypeLink;
         if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor greenColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
             };
         } else {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor greenColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-                NSUnderlineColorAttributeName : linkColor
+                NSUnderlineColorAttributeName : [UIColor greenColor]
             };
         }
     }
@@ -205,34 +197,26 @@
         [super setText:self.originalString];
         return;
     }
-    // 统一为：收集匹配 -> 一次性生成，确保即便无匹配也会生成一次（用于应用“已编辑”样式等）
-    if (self.originalString.length < 500) {
-        NSMutableArray *allResults = [NSMutableArray array];
+    self.attributedStrings = [NSMutableArray array];
+
+    //文本少于 500 同步计算高亮结果，大于 500 异步计算
+    if(self.originalString.length < 500) {
         [dataDetector enumerateMatchesInString:self.originalString
-                                       options:kNilOptions
-                                         range:NSMakeRange(0, self.originalString.length)
-                                    usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-                                        if (result) {
-                                            [allResults addObject:result];
-                                        }
-                                    }];
-        self.attributedStrings = allResults;
-        [self generateAttributedString];
-    } else {
+           options:kNilOptions
+             range:NSMakeRange(0, self.originalString.length)
+        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+            [self updateTextCheckingResult:result];
+        }];
+    }else {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            NSMutableArray *allResults = [NSMutableArray array];
             [dataDetector enumerateMatchesInString:self.originalString
-                                           options:kNilOptions
-                                             range:NSMakeRange(0, self.originalString.length)
-                                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-                                            if (result) {
-                                                [allResults addObject:result];
-                                            }
-                                        }];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.attributedStrings = allResults;
-                [self generateAttributedString];
-            });
+               options:kNilOptions
+                 range:NSMakeRange(0, self.originalString.length)
+            usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self updateTextCheckingResult:result];
+                });
+            }];
         });
     }
 }
@@ -266,18 +250,6 @@
             }
         }
     }
-    // 根据外部标记范围追加“已编辑”样式，避免误判用户手动输入
-    @try {
-        if (self.rc_editedSuffixRange.location != NSNotFound &&
-            NSMaxRange(self.rc_editedSuffixRange) <= self.originalString.length) {
-            NSString *editedSuffix = [RCMessageEditUtil editedSuffix];
-            NSString *actual = [self.originalString substringWithRange:self.rc_editedSuffixRange];
-            if ([actual isEqualToString:editedSuffix]) {
-                UIColor *editedColor = [RCMessageEditUtil editedTextColor];
-                [attributedString addAttribute:NSForegroundColorAttributeName value:editedColor range:self.rc_editedSuffixRange];
-            }
-        }
-    } @catch (__unused NSException *exception) {}
     self.attributedText = attributedString;
 }
 

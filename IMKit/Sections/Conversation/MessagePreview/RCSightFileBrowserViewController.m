@@ -14,8 +14,6 @@
 #import "RCSemanticContext.h"
 #import "RCBaseTableViewCell.h"
 #import "RCBaseNavigationController.h"
-#import "RCUserInfoCacheManager.h"
-
 @interface RCSightFileBrowserViewController ()
 
 @property (nonatomic, strong) RCMessage *messageModel;
@@ -38,7 +36,7 @@
     self.tableView.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
     [self getMessageFromModel:self.messageModel];
     self.refreshControl = [[UIRefreshControl alloc] init];
-    self.refreshControl.tintColor = RCDynamicColor(@"disabled_color", @"0xD3D3D3", @"0xD3D3D3");
+    self.refreshControl.tintColor = [UIColor lightGrayColor];
     [self.refreshControl addTarget:self action:@selector(refreshAction:) forControlEvents:UIControlEventValueChanged];
     self.tableView.tableFooterView = [UIView new];
 }
@@ -84,8 +82,8 @@
     if (!cell) {
         cell = [[RCBaseTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier];
     }
-    cell.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
-    cell.detailTextLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xa0a5ab");
+    cell.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
+    cell.detailTextLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor lightGrayColor] darkColor:HEXCOLOR(0xa0a5ab)];
     return cell;
 }
 
@@ -98,7 +96,7 @@
 forRowAtIndexPath:(NSIndexPath *)indexPath {
     RCMessage *model = self.messageModelArray[indexPath.row];
     RCSightMessage *sightMessage = (RCSightMessage *)model.content;
-    UIImage *image = RCDynamicImage(@"video_files_list_icon_img", @"sight_file_icon");
+    UIImage *image = RCResourceImage(@"sight_file_icon");
     cell.imageView.image = image;
     cell.textLabel.text = sightMessage.name;
     long long milliseconds = model.messageDirection == MessageDirection_SEND ? model.sentTime : model.receivedTime;
@@ -110,17 +108,14 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                                : [NSString stringWithFormat:@"%0.1fKB", sightMessage.size / 1024.0f];
     RCUserInfo *userInfo;
     if (self.messageModel.conversationType == ConversationType_GROUP) {
-        userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId inGroupId:model.targetId];
-        RCUserInfo *tempUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:model.senderUserId];
-        if (userInfo) {
-            userInfo.alias = tempUserInfo.alias.length > 0 ? tempUserInfo.alias : userInfo.alias;
-        } else {
-            userInfo = tempUserInfo;
-        }
+        userInfo = [[RCIM sharedRCIM] getGroupUserInfoCache:model.senderUserId withGroupId:self.messageModel.targetId];
     } else {
         userInfo = [[RCIM sharedRCIM] getUserInfoCache:model.senderUserId];
     }
-    NSString *displayName = [RCKitUtility getDisplayName:userInfo];
+    NSString *displayName = userInfo.name;
+    if (userInfo.alias.length > 0) {
+        displayName = userInfo.alias;
+    }
     NSString *userName = displayName.length > 20
                              ? [NSString stringWithFormat:@"%@...", [displayName substringToIndex:20]]
                              : displayName;

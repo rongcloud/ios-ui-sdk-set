@@ -73,11 +73,10 @@
     if ([self respondsToSelector:@selector(setExtendedLayoutIncludesOpaqueBars:)]) {
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
+    
     self.conversationListTableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
-    self.conversationListTableView.backgroundColor =
-    RCDynamicColor(@"clear_color", @"0xffffff", @"0x000000");
-    self.view.backgroundColor = RCDynamicColor(@"view_background_color", @"0xffffff00", @"0xffffff00");
+    self.conversationListTableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     self.conversationListTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(1, 1, 0, CGFLOAT_MIN)];
     CGFloat leftOffset = 12 + [RCKitConfig defaultConfig].ui.globalConversationPortraitSize.width + 12;
     if ([self.conversationListTableView respondsToSelector:@selector(setSeparatorInset:)]) {
@@ -138,10 +137,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    RCConversationModel *model = nil;
-    if (indexPath.row < self.dataSource.dataList.count) {
-        model = self.dataSource.dataList[indexPath.row];
-    }
+    RCConversationModel *model = self.dataSource.dataList[indexPath.row];
 
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
         RCConversationBaseCell *userCustomCell =
@@ -458,10 +454,6 @@
                                              selector:@selector(conversationStatusChanged:)
                                                  name:RCKitDispatchConversationStatusChangeNotification
                                                object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(draftDidUpdate:)
-                                                 name:RCKitDispatchConversationDraftUpdateNotification
-                                               object:nil];
 }
 
 - (void)didReceiveMessageNotification:(NSNotification *)notification {
@@ -473,7 +465,9 @@
         [self updateConnectionStatusView];
         [self updateNetworkIndicatorView];
         if (ConnectionStatus_Connected == [status.object integerValue]) {
-            [self refreshConversationTableViewIfNeeded];
+            if (self.dataSource.dataList.count == 0) {
+                [self refreshConversationTableViewIfNeeded];
+            }
         }
     });
 }
@@ -534,45 +528,6 @@
     });
 }
 
-- (void)draftDidUpdate:(NSNotification *)notification {
-    NSDictionary *dict = notification.userInfo;
-    if (![dict isKindOfClass:[NSDictionary class]]) {
-        return;
-    }
-    RCConversationType type = [dict[@"conversationType"] integerValue];
-    NSString *targetId = dict[@"targetId"];
-    NSString *channelId = dict[@"channelId"];
-    NSString *draft = dict[@"draft"];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        RCConversationModel *conversationModel;
-        for (RCConversationModel *model in self.conversationListDataSource) {
-            if (type != model.conversationType) {
-                continue;
-            }
-            if (![model.targetId isEqualToString:targetId]) {
-                continue;
-            }
-            if (channelId.length) {
-                if (![model.channelId isEqualToString:channelId]) {
-                    continue;
-                }
-            }
-            conversationModel = model;
-            break;
-        }
-        if (conversationModel) {
-            NSInteger index = [self.conversationListDataSource indexOfObject:conversationModel];
-            if (NSNotFound == index) {
-                return;
-            }
-            conversationModel.draft = draft;
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-            [self.conversationListTableView reloadRowsAtIndexPaths:@[indexPath]
-                                                  withRowAnimation:UITableViewRowAnimationNone];
-        }
-    });
-}
-
 #pragma mark - View Setter&Getter
 
 - (RCMJRefreshAutoNormalFooter *)footer {
@@ -587,7 +542,7 @@
     if (!_networkIndicatorView) {
         _networkIndicatorView = [[RCNetworkIndicatorView alloc]
             initWithText:RCLocalizedString(@"ConnectionIsNotReachable")];
-        _networkIndicatorView.backgroundColor = RCDynamicColor(@"network_Indicator_view_bg_color", @"0xffdfdf", @"0x7D2C2C");
+        _networkIndicatorView.backgroundColor = RCDYCOLOR(0xffdfdf, 0x7D2C2C);
         [_networkIndicatorView setFrame:CGRectMake(0, 0, self.view.bounds.size.width, 48)];
         _networkIndicatorView.hidden = YES;
     }
@@ -618,6 +573,7 @@
         UILabel *label = [[UILabel alloc] initWithFrame:frame];
         [label setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         [label setText:loading];
+        //    [label setTextColor:[UIColor whiteColor]];
         [_connectionStatusView addSubview:label];
     }
     return _connectionStatusView;
@@ -626,19 +582,18 @@
 @synthesize emptyConversationView = _emptyConversationView;
 - (UIView *)emptyConversationView {
     if (!_emptyConversationView) {
-        _emptyConversationView = [[RCBaseImageView alloc] initWithImage:RCDynamicImage(@"conversation-list_no_message_img", @"no_message_img")];
+        _emptyConversationView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"no_message_img")];
         _emptyConversationView.center = self.view.center;
         CGRect emptyRect = _emptyConversationView.frame;
         emptyRect.origin.y -= 36;
         [_emptyConversationView setFrame:emptyRect];
         UILabel *emptyLabel =
-            [[UILabel alloc] init];
+            [[UILabel alloc] initWithFrame:CGRectMake(-10, _emptyConversationView.frame.size.height,
+                                                      _emptyConversationView.frame.size.width + 20, 20)];
         emptyLabel.text = RCLocalizedString(@"no_message");
         [emptyLabel setFont:[[RCKitConfig defaultConfig].font fontOfFourthLevel]];
-        [emptyLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0xD3D3D3", @"0xD3D3D3")];
+        [emptyLabel setTextColor:[UIColor lightGrayColor]];
         emptyLabel.textAlignment = NSTextAlignmentCenter;
-        [emptyLabel sizeToFit];
-        emptyLabel.center = CGPointMake(_emptyConversationView.bounds.size.width/2, _emptyConversationView.frame.size.height + emptyLabel.frame.size.height/2);
         [_emptyConversationView addSubview:emptyLabel];
         [self.conversationListTableView addSubview:_emptyConversationView];
     }
@@ -775,7 +730,7 @@
         return;
     }
     if (@available(iOS 13.0, *)) {
-        self.networkIndicatorView.networkUnreachableImageView.image = RCDynamicImage(@"network_unreachable_img", @"network_fail");
+        self.networkIndicatorView.networkUnreachableImageView.image = RCResourceImage(@"network_fail");
         if ([self.emptyConversationView isKindOfClass:[UIImageView class]]) {
             UIImageView *imageView = (UIImageView *)self.emptyConversationView;
             if (imageView.image.rc_imageLocalPath && imageView.image.rc_imageLocalPath.length > 0 &&

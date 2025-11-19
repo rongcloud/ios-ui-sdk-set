@@ -470,7 +470,7 @@
         _collectionView.delegate = self;
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
-        _collectionView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _collectionView.backgroundColor = [UIColor blackColor];
     }
     return _collectionView;
 }

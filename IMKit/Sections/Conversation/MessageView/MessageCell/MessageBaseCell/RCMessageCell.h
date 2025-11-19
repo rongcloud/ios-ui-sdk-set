@@ -13,13 +13,11 @@
 #import "RCButton.h"
 #import "RCBaseButton.h"
 #import "RCBaseImageView.h"
-#import "RCReadReceiptProgressView.h"
 #define HeadAndContentSpacing 8
 #define PortraitViewEdgeSpace 12//头像与屏幕边缘距离
 #define NameAndContentSpace 2
 #define NameHeight 14
 @class RCloudImageView;
-@class RCCircularLoadingView;
 
 /*!
  展示的消息Cell类
@@ -62,18 +60,6 @@
  */
 @property (nonatomic, strong) RCButton *messageFailedStatusView;
 
-/// 消息编辑状态的 view，包含更新中、更新失败等状态
-@property (nonatomic, strong) UIView *editStatusContentView;
-
-/// 消息编辑状态的 label
-@property (nonatomic, strong) UILabel *editStatusLabel;
-
-/// 消息编辑失败时，显示的按钮
-@property (nonatomic, strong) UIButton *editRetryButton;
-
-
-@property (nonatomic, strong) RCCircularLoadingView *editCircularLoadingView;
-
 /*!
  消息发送指示View
  */
@@ -98,18 +84,10 @@
 @property (nonatomic, strong) UILabel *receiptStatusLabel;
 
 /*!
- 已读回执进度视图（V5 版本）
- 用于显示群组消息已读进度
- */
-@property (strong, nonatomic) RCReadReceiptProgressView *receiptProgressView;
-
-/*!
  是否显示头像
 
  */
 @property (nonatomic, assign) BOOL showPortrait;
-
-@property (nonatomic, weak, readonly) UICollectionView *hostCollectionView;
 /*!
  设置当前消息Cell的数据模型
 
@@ -132,13 +110,6 @@
 - (void)showBubbleBackgroundView:(BOOL)show;
 
 /*!
- 获取默认的消息气泡背景图片
- 
- @return 消息气泡背景图片
- */
-- (UIImage *)getDefaultMessageCellBackgroundImage;
-
-/*!
 阅后即焚的回调
 
  阅后即焚的消息，每过 1 秒都会触发该回调更新时间
@@ -154,5 +125,4 @@
 点击消息视图 messageContentView 回调
 */
 - (void)didTapMessageContentView;
-
 @end

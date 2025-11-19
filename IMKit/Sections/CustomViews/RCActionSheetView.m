@@ -14,7 +14,7 @@
 #import "RCBaseTableViewCell.h"
 #define Space_Line 6
 @interface RCActionSheetView()
-@property (nonatomic, strong) UIView *maskCoverView; //背景
+@property (nonatomic, strong) UIView *maskView; //背景
 
 @property (nonatomic, strong) RCBaseTableView *tableView; //展示表格
 
@@ -95,7 +95,7 @@
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.font = [UIFont systemFontOfSize:14];
     titleLabel.numberOfLines = 0;
-    titleLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x8b8b8b", @"0x878787");
+    titleLabel.textColor = RCDYCOLOR(0x8b8b8b, 0x878787);
     titleLabel.text = self.title;
     [self.headView addSubview:titleLabel];
     self.tableView.tableHeaderView = self.headView;
@@ -103,18 +103,18 @@
 
 - (void)createUI {
     self.frame = [UIScreen mainScreen].bounds;
-    [self addSubview:self.maskCoverView];
+    [self addSubview:self.maskView];
     [self addSubview:self.tableView];
 }
 
-- (UIView *)maskCoverView {
-    if (!_maskCoverView) {
-        _maskCoverView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        _maskCoverView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
-        _maskCoverView.alpha = 0.4;
-        _maskCoverView.userInteractionEnabled = YES;
+- (UIView *)maskView {
+    if (!_maskView) {
+        _maskView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        _maskView.backgroundColor = [UIColor blackColor];
+        _maskView.alpha = 0.4;
+        _maskView.userInteractionEnabled = YES;
     }
-    return _maskCoverView;
+    return _maskView;
 }
 
 - (RCBaseTableView *)tableView {
@@ -125,12 +125,11 @@
         _tableView.estimatedSectionFooterHeight = 0;
         _tableView.delegate = self;
         _tableView.dataSource = self;
-        _tableView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1d1d1d");
+        _tableView.backgroundColor = RCDYCOLOR(0xffffff, 0x1d1d1d);
         _tableView.separatorInset = UIEdgeInsetsMake(0, -50, 0, 0);
-        _tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x2f2f2f");
+        _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x2f2f2f);
         _tableView.rowHeight = 56.0;
         _tableView.bounces = NO;
-        _tableView.scrollEnabled = NO;
         [_tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"OneCell"];
     }
     return _tableView;
@@ -149,15 +148,14 @@
     RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OneCell"];
     if (indexPath.section == 0) {
         cell.textLabel.text = _cellArray[indexPath.row];
-        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     } else {
         cell.textLabel.text = _cancelTitle;
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
-    cell.contentView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1d1d1d");
+    cell.contentView.backgroundColor = RCDYCOLOR(0xffffff, 0x1d1d1d);
     cell.textLabel.textAlignment = NSTextAlignmentCenter;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:17];
-    cell.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x333333", @"0xffffffe5");
+    cell.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x333333) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
     return cell;
 }
 
@@ -185,7 +183,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
     if (section == 0) {
         UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, Space_Line)];
-        footerView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf7f7f7", @"0x111111");
+        footerView.backgroundColor = RCDYCOLOR(0xf7f7f7, 0x111111);
         return footerView;
     } else {
         return nil;

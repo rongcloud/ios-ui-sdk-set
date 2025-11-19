@@ -168,7 +168,7 @@
 
 - (void)resetSightPlayer:(BOOL)inactivateAudioSession {
     self.canceling = YES;
-    [self.transport.centerPlayBtn setImage:RCDynamicImage(@"video_preview_play_btn_normal_img", @"play_btn_normal") forState:UIControlStateNormal];
+    [self.transport.centerPlayBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
     [self.errorTipsLabel removeFromSuperview];
     if (!self.isPlaying) {
         return;
@@ -192,7 +192,7 @@
 - (void)showDowndLoadFailedControl {
     dispatch_async(dispatch_get_main_queue(), ^{
         //[self.transport stopIndicatorViewAnimating];
-        [self.transport.centerPlayBtn setImage:RCDynamicImage(@"video_player_sight_download_failed_img", @"sight_download_failed")
+        [self.transport.centerPlayBtn setImage:RCResourceImage(@"sight_download_failed")
                                       forState:UIControlStateNormal];
         self.transport.centerPlayBtn.hidden = NO;
         self.transport.centerPlayBtn.selected = NO;
@@ -214,9 +214,9 @@
     if (!_errorTipsLabel) {
         _errorTipsLabel = [[UILabel alloc] init];
         _errorTipsLabel.font = [UIFont systemFontOfSize:14];
-        _errorTipsLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _errorTipsLabel.textColor = [UIColor whiteColor];
         _errorTipsLabel.backgroundColor =
-            [UIColor colorWithPatternImage:RCDynamicImage(@"video_player_sight_label_shadow_img", @"sight_label_shadow")];
+            [UIColor colorWithPatternImage:RCResourceImage(@"sight_label_shadow")];
         NSString *text = RCLocalizedString(@"downloadFailedClickToDownload");
         CGSize textSize = [text sizeWithAttributes:@{NSFontAttributeName : _errorTipsLabel.font}];
         _errorTipsLabel.textAlignment = NSTextAlignmentCenter;
@@ -691,7 +691,7 @@
                 CGPoint playBtnCenter = self.transport.centerPlayBtn.center;
                 self.errorTipsLabel.center =
                     CGPointMake(playBtnCenter.x, CGRectGetMaxY(self.transport.centerPlayBtn.frame) + 16);
-                self.errorTipsLabel.text = RCLocalizedString(@"VideoExpired");
+                self.errorTipsLabel.text = NSLocalizedStringFromTable(@"VideoExpired", @"RongCloudKit", nil);
                 [self.view addSubview:self.errorTipsLabel];
                 self.transport.centerPlayBtn.hidden = YES;
             });
@@ -713,7 +713,7 @@
         });
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.transport.centerPlayBtn setImage:RCDynamicImage(@"video_player_sight_play_btn_img", @"play_btn_normal")
+            [self.transport.centerPlayBtn setImage:RCResourceImage(@"play_btn_normal")
                                           forState:UIControlStateNormal];
         });
     }

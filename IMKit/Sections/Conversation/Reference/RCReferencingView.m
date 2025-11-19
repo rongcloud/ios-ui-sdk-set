@@ -11,9 +11,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCUserInfoCacheManager.h"
 #import "RCKitConfig.h"
-#import "RCIM.h"
-#import "RCStreamUtilities.h"
-#import "RCStreamMessage+Internal.h"
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;
 @end
@@ -25,7 +22,7 @@
 @implementation RCReferencingView
 - (instancetype)initWithModel:(RCMessageModel *)model inView:(UIView *)view {
     if (self = [super init]) {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c");
+        self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff) darkColor:HEXCOLOR(0x1c1c1c)];
         self.inView = view;
         self.referModel = model;
         [self addNotification];
@@ -78,18 +75,7 @@
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
-    } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
-        RCStreamMessage *msg = (RCStreamMessage *)self.referModel.content;
-        if (msg.isSync) {
-            messageInfo = msg.content;
-        } else {
-            RCStreamSummaryModel *summary = [RCStreamUtilities parserStreamSummary:self.referModel];
-            if (summary.isComplete) {
-                messageInfo = summary.summary;
-                msg.content = summary.summary;
-            }
-        }
-    }  else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
+    } else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
         messageInfo = [RCKitUtility formatMessage:self.referModel.content
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
@@ -119,9 +105,6 @@
 }
 
 - (NSString *)getUserDisplayName {
-    if ([self.referModel.content.senderUserInfo.userId isEqualToString:self.referModel.senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        return [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
-    }
     NSString *name;
     if (ConversationType_GROUP == self.referModel.conversationType) {
         RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId
@@ -186,7 +169,7 @@
 - (RCBaseButton *)dismissButton {
     if (!_dismissButton) {
         _dismissButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-        [_dismissButton setImage:RCDynamicImage(@"conversation_msg_referencing_dismiss_img", @"referencing_view_dismiss_icon") forState:UIControlStateNormal];
+        [_dismissButton setImage:RCResourceImage(@"referencing_view_dismiss_icon") forState:UIControlStateNormal];
         [_dismissButton addTarget:self
                            action:@selector(didClickDismissButton:)
                  forControlEvents:UIControlEventTouchUpInside];
@@ -197,7 +180,7 @@
 - (RCBaseLabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[RCBaseLabel alloc] init];
-        _nameLabel.textColor =  RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
+        _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
     }
     return _nameLabel;
@@ -209,7 +192,7 @@
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
-        _textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
+        _textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
         UITapGestureRecognizer *messageTap =
             [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapContentView:)];
         messageTap.numberOfTapsRequired = 1;

@@ -50,7 +50,7 @@
 - (void)setDataModel:(RCMessageModel *)model {
     if (self.model && self.model.messageId != model.messageId) {
         [self showProgressView];
-        [self.progressView updateProgress:model.uploadProgress];
+        [self.progressView updateProgress:0];
     }
     [super setDataModel:model];
 
@@ -80,16 +80,16 @@
     self.destructBackgroundView.hidden = NO;
     self.pictureView.frame = CGRectZero;
     self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundHeight);
-    self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
+    self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
     self.destructBackgroundView.frame = CGRectMake(0, 0, DestructBackGroundWidth, DestructBackGroundHeight);
     self.destructPicture.frame = CGRectMake(50, 43, 31, 25);
     self.destructLabel.frame = CGRectMake(0,CGRectGetMaxY(self.destructPicture.frame)+4, self.destructBackgroundView.frame.size.width, 17);
     if (self.model.messageDirection == MessageDirection_SEND) {
-        [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_pic_img",@"burnPicture");
+        [self.destructLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040a0f)];
+        self.destructPicture.image = RCResourceImage(@"burnPicture");
     }else{
-        [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_pic_img", @"from_burn_picture");
+        [self.destructLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+        self.destructPicture.image = RCResourceImage(@"from_burn_picture");
     }
 }
 
@@ -114,9 +114,9 @@
         return imageMessage.thumbnailImage;
     }
     if (model.messageDirection == MessageDirection_SEND) {
-        return RCDynamicImage(@"conversation_msg_cell_to_thumb_broken_img", @"to_thumb_image_broken");
+        return RCResourceImage(@"to_thumb_image_broken");
     } else {
-        return RCDynamicImage(@"conversation_msg_cell_from_thumb_broken_img",@"from_thumb_image_broken");
+        return RCResourceImage(@"from_thumb_image_broken");
     }
 }
 
@@ -179,7 +179,6 @@
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self showProgressView];
-                self.model.uploadProgress = progress;
                 [self.progressView updateProgress:progress];
             });
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {

@@ -28,10 +28,6 @@
     return self;
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-}
-
 - (void)setFrame:(CGRect)frame {
     [super setFrame:frame];
     self.contentSize = frame.size;

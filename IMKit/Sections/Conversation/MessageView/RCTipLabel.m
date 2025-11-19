@@ -16,14 +16,14 @@
     RCTipLabel *tip = [[RCTipLabel alloc] init];
     if (tip) {
         tip.marginInsets = UIEdgeInsetsMake(5.f, 5.f, 5.f, 5.f);
-        tip.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        tip.textColor = [UIColor whiteColor];
         tip.numberOfLines = 0;
         tip.lineBreakMode = NSLineBreakByTruncatingTail;
         tip.textAlignment = NSTextAlignmentCenter;
         tip.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         tip.layer.masksToBounds = YES;
         tip.layer.cornerRadius = 4.f;
-        tip.backgroundColor = RCDynamicColor(@"common_background_color", @"0xc9c9c9", @"0xc9c9c9");
+        tip.backgroundColor = HEXCOLOR(0xc9c9c9);
         
     }
     return tip;

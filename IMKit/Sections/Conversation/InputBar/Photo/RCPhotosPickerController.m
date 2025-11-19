@@ -47,7 +47,7 @@ static NSString *const reuseIdentifier = @"Cell";
     if (self) {
         self.assetArray = [NSMutableArray new];
         self.selectedAssets = [NSMutableArray new];
-        self.collectionView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
+        self.collectionView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
@@ -95,11 +95,23 @@ static NSString *const reuseIdentifier = @"Cell";
     }
     self.collectionView.alpha = self.disableFirstAppear?1:0;
     [self.collectionView reloadData];
+    if (!self.disableFirstAppear) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            CGSize size = self.collectionView.frame.size;
+            CGSize contentSize = self.collectionView.contentSize;
+            CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
+            [self.collectionView scrollRectToVisible:frame animated:NO];
+            [UIView animateWithDuration:0.1 animations:^{
+                self.collectionView.alpha = 1;
+            }];
+        });
+        self.disableFirstAppear = YES;
+    }
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
+    self.view.backgroundColor = [UIColor whiteColor];
     self.previousPreheatRect = CGRectZero;
     CGFloat scale = [UIScreen mainScreen].scale;
     self.thumbnailSize = (CGSize){WIDTH * scale, WIDTH * scale};
@@ -127,19 +139,6 @@ static NSString *const reuseIdentifier = @"Cell";
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self updateCachedAssets];
-    
-    if (!self.disableFirstAppear) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            CGSize size = self.collectionView.frame.size;
-            CGSize contentSize = self.collectionView.contentSize;
-            CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
-            [self.collectionView scrollRectToVisible:frame animated:NO];
-            [UIView animateWithDuration:0.1 animations:^{
-                self.collectionView.alpha = 1;
-            }];
-        });
-        self.disableFirstAppear = YES;
-    }
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -376,30 +375,34 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)setNaviItem{
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-    UIColor *color = RCDynamicResourceColor(@"primary_color", @"photoPicker_cancel", @"0x0099ff");
-    [btn setTitleColor:color forState:UIControlStateNormal];
-    [btn addTarget:self
-            action:@selector(dismissCurrentModelViewController)
-  forControlEvents:UIControlEventTouchUpInside];
-    [btn setTitle:RCLocalizedString(@"Cancel") forState:UIControlStateNormal];
-    [btn sizeToFit];
-    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    UIView *rightBarView = [[UIView alloc] init];
+    rightBarView.frame = CGRectMake(0, 0, 80, 40);
+    UILabel *doneTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 80, 40)];
+    doneTitleLabel.text = RCLocalizedString(@"Cancel");
+    if([RCKitUtility isRTL]){
+        doneTitleLabel.textAlignment = NSTextAlignmentLeft;
+    }else{
+        doneTitleLabel.textAlignment = NSTextAlignmentRight;
+    }
+    doneTitleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
+    doneTitleLabel.textColor = [RCKitUtility
+                                generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
+                                darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
+    [rightBarView addSubview:doneTitleLabel];
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissCurrentModelViewController)];
+    [rightBarView addGestureRecognizer:tap];
+    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:rightBarView];
     [self.navigationItem setRightBarButtonItem:rightItem];
 }
 
 - (void)createTopView {
     CGFloat height = 49 + [self getSafeAreaExtraBottomHeight];
     _toolBar = [[UIView alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT - height, SCREEN_WIDTH, height)];
-    _toolBar.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
+    _toolBar.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     [self.view addSubview:_toolBar];
     
     // add button for bottom bar
     _btnSend = [[RCBaseButton alloc] init];
-    _btnSend.layer.cornerRadius = 5.0f;
-    _btnSend.contentEdgeInsets = UIEdgeInsetsMake(5, 12, 5, 12);
-
     [_btnSend setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_btnSend addTarget:self action:@selector(btnSendCliced:) forControlEvents:UIControlEventTouchUpInside];
     _btnSend.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
@@ -477,35 +480,28 @@ static NSString *const reuseIdentifier = @"Cell";
                                                               constant:10]];
     }
     
-    [_btnSend setTitleColor:RCDynamicResourceColor(@"control_title_white_color",@"photoPicker_send_disable", @"0x9fcdfd")
+    [_btnSend setTitleColor:RCResourceColor(@"photoPicker_send_disable", @"0x9fcdfd")
                    forState:UIControlStateDisabled];
-    [_btnSend setTitleColor:RCDynamicResourceColor(@"control_title_white_color",@"photoPicker_send_normal", @"0x0099ff")
+    [_btnSend setTitleColor:RCResourceColor(@"photoPicker_send_normal", @"0x0099ff")
                    forState:UIControlStateNormal];
-    [_btnSend setBackgroundColor:RCDynamicColor(@"disabled_color", @"0x00000000", @"0x00000000")];
     [self.btnSend setEnabled:NO];
-    [_previewBtn setTitleColor:RCDynamicResourceColor(@"text_secondary_color", @"photoPreview_send_disable", @"0x959595")
+    [_previewBtn setTitleColor:RCResourceColor(@"photoPicker_preview_disable", @"0x959595")
                       forState:UIControlStateDisabled];
-    UIColor *titleColor = nil;
-    if ([RCKitUtility isTraditionInnerThemes]) {
-        titleColor = [RCKitUtility
-                      generateDynamicColor:RCResourceColor(@"photoPicker_preview_normal", @"0x000000")
-                      darkColor:RCResourceColor(@"photoPicker_preview_normal_dark",
-                                                @"0xffffff")];
-    } else {
-        titleColor = RCDynamicColor(@"primary_color", @"0x000000", @"0xffffff");
-    }
-    [_previewBtn setTitleColor:titleColor forState:UIControlStateNormal];
+    [_previewBtn
+     setTitleColor:[RCKitUtility
+                    generateDynamicColor:RCResourceColor(@"photoPicker_preview_normal", @"0x000000")
+                    darkColor:RCResourceColor(@"photoPicker_preview_normal_dark",
+                                              @"0xffffff")]
+     forState:UIControlStateNormal];
     [self.previewBtn setEnabled:NO];
 }
 
 - (void)setButtonEnable {
     if (self.selectedAssets.count > 0) {
         [self.btnSend setEnabled:YES];
-        [self.btnSend setBackgroundColor:RCDynamicColor(@"primary_color", @"0x00000000", @"0x00000000")];
         [self.previewBtn setEnabled:YES];
     } else {
         [self.btnSend setEnabled:NO];
-        [self.btnSend setBackgroundColor:RCDynamicColor(@"disabled_color", @"0x00000000", @"0x00000000")];
         [self.previewBtn setEnabled:NO];
     }
 }

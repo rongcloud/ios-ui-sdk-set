@@ -30,7 +30,7 @@
     if (self) {
         self.selectionStyle = UITableViewCellSelectionStyleNone;
         [self.contentView addSubview:self.commonPhrasesLable];
-        self.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF5F6F9", @"0x1c1c1c");
+        self.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
     }
     return self;
 }
@@ -62,8 +62,9 @@
             initWithFrame:CGRectMake(CPLeadingEdges, 0, CPScreenSize.width - CPLeadingEdges * 2, CPLableHeight)];
         _commonPhrasesLable.font = [[RCKitConfig defaultConfig].font fontOfThirdLevel];
         _commonPhrasesLable.textAlignment = NSTextAlignmentCenter;
-        UIColor *textColor = RCDynamicColor(@"text_primary_color", @"0x333333", @"0x9f9f9f");
-        _commonPhrasesLable.textColor = textColor;
+        _commonPhrasesLable.textColor = [RCKitUtility
+            generateDynamicColor:[UIColor colorWithRed:51 / 255.0 green:51 / 255.0 blue:51 / 255.0 alpha:1 / 1.0]
+                       darkColor:HEXCOLOR(0x9f9f9f)];
         _commonPhrasesLable.numberOfLines = 0;
     }
     return _commonPhrasesLable;

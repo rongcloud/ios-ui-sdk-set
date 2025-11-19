@@ -29,7 +29,7 @@
     CGFloat yCenter = rect.size.height * 0.5;
     CGFloat radius = MIN(rect.size.width, rect.size.height) * 0.5 ;
     
-    UIColor *maskColor = RCDynamicColor(@"mask_color", @"0x00000066", @"0x00000066");
+    UIColor *maskColor = [HEXCOLOR(0x000000) colorWithAlphaComponent:0.4];
     //背景遮罩
     [maskColor set];
     CGFloat lineW = MAX(rect.size.width, rect.size.height) * 0.5;

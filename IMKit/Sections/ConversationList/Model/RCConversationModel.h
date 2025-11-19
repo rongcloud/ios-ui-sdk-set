@@ -31,8 +31,6 @@ typedef NS_ENUM(NSUInteger, RCConversationModelType) {
     RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE = 4
 };
 
-NS_ASSUME_NONNULL_BEGIN
-
 /*!
  会话Cell的数据模型类
  */
@@ -46,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  用户自定义的扩展数据
  */
-@property (nonatomic, strong, nullable) id extend;
+@property (nonatomic, strong) id extend;
 
 /*!
  会话类型
@@ -61,12 +59,12 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  目标频道会话ID
  */
-@property (nonatomic, copy, nullable) NSString *channelId;
+@property (nonatomic, copy) NSString *channelId;
 
 /*!
  会话的标题
  */
-@property (nonatomic, copy, nullable) NSString *conversationTitle;
+@property (nonatomic, copy) NSString *conversationTitle;
 
 /*!
  会话中的未读消息数
@@ -86,12 +84,12 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  置顶Cell的背景颜色
  */
-@property (nonatomic, strong, nullable) UIColor *topCellBackgroundColor;
+@property (nonatomic, strong) UIColor *topCellBackgroundColor;
 
 /*!
  非置顶的Cell的背景颜色
  */
-@property (nonatomic, strong, nullable) UIColor *cellBackgroundColor;
+@property (nonatomic, strong) UIColor *cellBackgroundColor;
 
 /*!
  会话中最后一条消息的接收状态
@@ -99,7 +97,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
 
 /// 消息的接收状态类(针对接收的消息生效)
-@property (nonatomic, strong, nullable) RCReceivedStatusInfo *receivedStatusInfo;
+@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
 
 /*!
  会话中最后一条消息的发送状态
@@ -124,20 +122,17 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  会话中存在的草稿
  */
-@property (nonatomic, copy, nullable) NSString *draft;
-
-/// 会话中存在的编辑草稿
-@property (nonatomic, strong, nullable) RCEditedMessageDraft *editedMessageDraft;
+@property (nonatomic, copy) NSString *draft;
 
 /*!
  会话中最后一条消息的类型名
  */
-@property (nonatomic, copy, nullable) NSString *objectName;
+@property (nonatomic, copy) NSString *objectName;
 
 /*!
  会话中最后一条消息的发送者用户ID
  */
-@property (nonatomic, copy, nullable) NSString *senderUserId;
+@property (nonatomic, copy) NSString *senderUserId;
 
 /*!
  会话中最后一条消息的消息ID
@@ -147,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  会话中最后一条消息的内容
  */
-@property (nonatomic, strong, nullable) RCMessageContent *lastestMessage;
+@property (nonatomic, strong) RCMessageContent *lastestMessage;
 
 /*!
  会话中最后一条消息的方向
@@ -157,7 +152,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  会话中最后一条消息的json Dictionary
  */
-@property (nonatomic, strong, nullable) NSDictionary *jsonDict;
+@property (nonatomic, strong) NSDictionary *jsonDict;
 
 /*!
  会话中有被提及的消息（有@你的消息）
@@ -184,18 +179,6 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @property (nonatomic, assign) long long firstUnreadMsgSendTime;
 
-/// 最后一条消息 messageUId。
-///
-/// - Since: 5.20.0
-@property (nonatomic, copy, nullable) NSString *latestMessageUId;
-
-/// 消息已读回执 v5 操作标识。
-///
-/// - Since: 5.30.0
-@property (nonatomic, assign) BOOL needReceipt;
-
-/// 消息已读回执 v5 信息
-@property (nonatomic, strong) RCReadReceiptInfoV5 *readReceiptInfoV5;
 
 /*!
  初始化会话显示数据模型
@@ -204,7 +187,7 @@ NS_ASSUME_NONNULL_BEGIN
  - Parameter extend:                用户自定义的扩展数据
  - Returns: 会话Cell的数据模型对象
  */
-- (instancetype)initWithConversation:(RCConversation *)conversation extend:(nullable id)extend;
+- (instancetype)initWithConversation:(RCConversation *)conversation extend:(id)extend;
 
 /*!
  更新数据模型中的消息
@@ -222,4 +205,3 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (BOOL)isMatching:(RCConversationType)conversationType targetId:(NSString *)targetId;
 @end
-NS_ASSUME_NONNULL_END
