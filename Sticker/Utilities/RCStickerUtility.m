@@ -48,4 +48,60 @@
     return sessionConfiguration;
 }
 
++ (NSString *)localizedString:(NSString *)key table:(NSString *)table {
+    
+    NSString *language = [[NSLocale preferredLanguages] firstObject];
+    if (language.length == 0) {
+        return key;
+    }
+    NSString *fileNamePrefix = @"en";
+    if([language hasPrefix:@"zh"]) {
+        fileNamePrefix = @"zh-Hans";
+    } else if ([language hasPrefix:@"ar"]) {
+        fileNamePrefix = @"ar";
+    }
+    NSString *fullName = [NSString stringWithFormat:@"%@.strings", table];
+  
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    NSString *path = [mainBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *filePath = [path stringByAppendingPathComponent:fullName];
+    if (![fileManager fileExistsAtPath:filePath]) {
+        NSBundle *frameworkBundle = [NSBundle bundleForClass:[self class]];
+        path = [frameworkBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    }
+    
+    NSBundle *bundle = [NSBundle bundleWithPath:path];
+    NSString *localizedString = [bundle localizedStringForKey:key value:nil table:table];
+    if (!localizedString) {
+        localizedString = key;
+    }
+    return localizedString;
+}
+
+
++ (UIImage *)imageNamed:(NSString *)name ofBundle:(NSString *)bundleName {
+    UIImage *image = nil;
+    NSString *image_name = name;
+    if (![image_name hasSuffix:@".png"]) {
+        image_name = [NSString stringWithFormat:@"%@.png", name];
+    }
+    
+    NSString *bundlePath = nil;
+
+    NSString *bundleNameString = [bundleName stringByDeletingPathExtension];
+    NSURL *rootBundleURL = [[NSBundle mainBundle] URLForResource:bundleNameString withExtension:@"bundle"];
+    if (rootBundleURL) {
+        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
+    } else {
+        NSBundle *innerBundle = [NSBundle bundleForClass:[self class]];
+        NSString *resourcePath = [innerBundle resourcePath];
+        bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
+    }
+    NSString *image_path = [bundlePath stringByAppendingPathComponent:image_name];
+    image = [UIImage imageWithContentsOfFile:image_path];
+    return image;
+}
+
 @end

@@ -8,8 +8,16 @@
 
 #import "RCIM+Deprecated.h"
 #import "RCKitConfig.h"
-
+#import "RCInfoManagement.h"
 @implementation RCIM (Deprecated)
+
+#pragma mark -- 初始化
+
+- (void)initWithAppKey:(NSString *)appKey {
+    [self initWithAppKey:appKey option:nil];
+}
+
+
 #pragma mark - config 接口兼容
 
 - (BOOL)disableMessageNotificaiton {
@@ -200,5 +208,34 @@
 }
 - (void)setSightRecordMaxDuration:(NSUInteger)sightRecordMaxDuration {
     RCKitConfigCenter.message.sightRecordMaxDuration = sightRecordMaxDuration;
+}
+
+- (void)updateGroupInfo:(RCGroupInfo *)groupInfo
+                success:(void (^)(void))successBlock
+                  error:(void (^)(RCErrorCode errorCode, NSString *errorKey))errorBlock {
+    [[RCInfoManagement sharedInstance] updateGroupInfo:groupInfo success:successBlock error:errorBlock];
+}
+
+- (void)setGroupMemberInfo:(NSString *)groupId
+                    userId:(NSString *)userId
+                  nickname:(nullable NSString *)nickname
+                     extra:(nullable NSString *)extra
+                   success:(void (^)(void))successBlock
+                     error:(void (^)(RCErrorCode errorCode))errorBlock {
+    [[RCInfoManagement sharedInstance] setGroupMemberInfo:groupId userId:userId nickname:nickname extra:extra success:successBlock error:errorBlock];
+}
+
+- (void)updateMyUserProfile:(RCUserProfile *)profile
+                    success:(void (^)(void))successBlock
+                      error:(nullable void (^)(RCErrorCode errorCode, NSString * _Nullable errorKey))errorBlock {
+    [[RCInfoManagement sharedInstance] updateMyUserProfile:profile success:successBlock error:errorBlock];
+}
+
+- (void)setFriendInfo:(NSString *)userId
+               remark:(nullable NSString *)remark
+           extProfile:(nullable NSDictionary<NSString *, NSString*> *)extProfile
+              success:(void (^)(void))successBlock
+                error:(void (^)(RCErrorCode errorCode))errorBlock {
+    [[RCInfoManagement sharedInstance] setFriendInfo:userId remark:remark extProfile:extProfile success:successBlock error:errorBlock];
 }
 @end

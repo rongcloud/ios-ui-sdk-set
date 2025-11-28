@@ -14,12 +14,12 @@
 + (UIImage *)getDefaultMessageCellBackgroundImage:(RCMessageModel *)model{
     UIImage *bubbleImage;
     if (MessageDirection_RECEIVE == model.messageDirection) {
-        bubbleImage = RCResourceImage(@"chat_from_bg_normal");
+        bubbleImage = RCDynamicImage(@"conversation_msg_cell_bg_from_img", @"chat_from_bg_normal");
     } else {
         if ([self isWhiteBubbleImageWithSendMesageCell:model.objectName]) {
-            bubbleImage = RCResourceImage(@"chat_to_bg_white");
+            bubbleImage = RCDynamicImage(@"conversation_msg_cell_bg_white_img", @"chat_to_bg_white");
         }else{
-            bubbleImage = RCResourceImage(@"chat_to_bg_normal");
+            bubbleImage = RCDynamicImage(@"conversation_msg_cell_bg_to_img", @"chat_to_bg_normal");
         }
     }
     if ([RCKitUtility isRTL]) {
@@ -30,7 +30,7 @@
 }
 
 + (UIImage *)translationTextBackgroundImage {
-    UIImage *bubbleImage = RCResourceImage(@"translation_from_bg_normal");
+    UIImage *bubbleImage = RCDynamicImage(@"conversation_msg_cell_bg_to_img", @"translation_from_bg_normal");
     bubbleImage = [self getResizableImage:bubbleImage];
     return bubbleImage;
 }
@@ -137,12 +137,25 @@
 }
 
 + (NSDictionary *)getTextLinkOrPhoneNumberAttributeDictionary:(RCMessageDirection)msgDirection{
+
     if (msgDirection == MessageDirection_SEND ) {
+        UIColor *linkColor = RCDynamicColor(@"link_color", @"0x0099ff", @"0x005F9E");
+        if (linkColor) {
+            return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : linkColor},
+                     @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : linkColor}
+            };
+        }
         return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x005F9E)},
                  @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x005F9E)]
                  }
         };
     }else{
+        UIColor *linkColor = RCDynamicColor(@"link_color", @"0x0099ff", @"0x1290e2");
+        if (linkColor) {
+            return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : linkColor},
+                     @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : linkColor}
+            };
+        }
         return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x1290e2)},
                  @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x1290e2)]
                  }

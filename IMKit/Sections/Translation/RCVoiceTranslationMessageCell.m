@@ -86,7 +86,7 @@
     [super setDataModel:model];
     self.translationLabel.text = model.translationString;
     self.textLabel.text = model.voiceString;
-    self.translationBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+    self.translationBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
     
 }
 
@@ -135,8 +135,17 @@
 //        _textLabel.delegate = self;
         _textLabel.textColor = [UIColor darkTextColor];
         _textLabel.userInteractionEnabled = YES;
-      NSDictionary *info =  @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : RCDYCOLOR(0x0099ff, 0x1290e2)},
-                 @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x1000e2)]
+        UIColor *foreColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x1290e2");
+        if (!foreColor) {
+            foreColor = RCDYCOLOR(0x0099ff, 0x1290e2);
+        }
+        
+        UIColor *numColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x1000e2");
+        if (!numColor) {
+            numColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x0099ff) darkColor:HEXCOLOR(0x1000e2)];
+        }
+      NSDictionary *info =  @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : foreColor},
+                 @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName :numColor
                  }
         };
         _textLabel.attributeDictionary = info;

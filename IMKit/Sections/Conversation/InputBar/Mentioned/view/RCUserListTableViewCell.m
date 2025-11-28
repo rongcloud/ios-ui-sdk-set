@@ -14,9 +14,7 @@
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.contentView.backgroundColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                           darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+        self.contentView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
         //布局View
         [self setUpView];
     }
@@ -49,7 +47,7 @@
         _nameLabel = [[RCBaseLabel alloc] init];
         [_nameLabel setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         _nameLabel.textAlignment = [RCKitUtility isRTL] ? NSTextAlignmentRight : NSTextAlignmentLeft;
-        _nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
         CGRect frame = CGRectMake(60.0, 5.0, self.bounds.size.width - 60.0, 40.0);
         _nameLabel.frame = frame;
     }

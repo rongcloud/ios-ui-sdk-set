@@ -88,7 +88,7 @@
     [cell.contentView addSubview:imageView];
     
     if (self.currentIndex == indexPath.row) {
-        cell.contentView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
+        cell.contentView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF5F6F9", @"0x1c1c1c");
     }else{
         cell.contentView.backgroundColor = [UIColor clearColor];
     }
@@ -180,7 +180,7 @@
 - (RCBaseButton *)addBtn{
     if (!_addBtn) {
         _addBtn = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        [_addBtn setImage:RCResourceImage(@"add") forState:UIControlStateNormal];
+        [_addBtn setImage:RCDynamicImage(@"emoji_tab_add_img", @"add") forState:UIControlStateNormal];
         [_addBtn addTarget:self action:@selector(addBtnHandle:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _addBtn;
@@ -189,7 +189,7 @@
 - (RCBaseButton *)settingBtn{
     if (!_settingBtn) {
         _settingBtn = [[RCBaseButton alloc] init];
-        [_settingBtn setImage:RCResourceImage(@"rc_setting") forState:UIControlStateNormal];
+        [_settingBtn setImage:RCDynamicImage(@"conversation_setting_img",@"rc_setting") forState:UIControlStateNormal];
         [_settingBtn addTarget:self
                             action:@selector(settingBtnHandle:)
                   forControlEvents:UIControlEventTouchUpInside];
@@ -209,7 +209,8 @@
         _emotionsListView.delegate = self;
         _emotionsListView.dataSource = self;
         _emotionsListView.scrollEnabled = YES;
-        _emotionsListView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
+        _emotionsListView.backgroundColor = RCDynamicColor(@"common_background_color",@"0xffffff", @"0x000000");
+        _emotionsListView.accessibilityLabel = @"emotionsListView";
         [_emotionsListView registerClass:[RCBaseCollectionViewCell class]
                          forCellWithReuseIdentifier:RCEmotionCollectCellIdentifier];
     }
