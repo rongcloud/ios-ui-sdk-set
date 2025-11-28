@@ -7,10 +7,10 @@
 #Release_Node=113
 
 ## 1. 更新 git 仓库
-#git checkout main
-#git reset --hard origin/main
-#git clean -dfx
-#git pull
+git checkout main
+git reset --hard origin/main
+git clean -dfx
+git pull
 
 ## 2. 更新所有的代码
 function update_sdk(){
