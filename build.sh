@@ -60,18 +60,13 @@ fi
 python delete_existed_header.py
 #python delete_unuse_callkit.py
 
-## 4. 统一管理资源文件
+## 4. 统一资源文件目录名称
 
 res_path="Resources"
 
-if [ ! -d $res_path ];then
-	mkdir $res_path
-fi
-
-rsync -a IMKit/Resource/* $res_path/ && rm -rf IMKit/Resource/
-rsync -a Sticker/Resource/* $res_path/ && rm -rf Sticker/Resource/
-rsync -a iFlyKit/Resource/* $res_path/ && rm -rf iFlyKit/Resource/
-#rsync -a CallKit/Resources/* $res_path/ && rm -rf CallKit/Resources/
+mv IMKit/Resource IMKit/$res_path
+mv Sticker/Resource Sticker/$res_path
+mv iFlyKit/Resource iFlyKit/$res_path
 
 #sed -i ""  -e 's/[0-9]\.[0-9]\{1,2\}\.[0-9]\{1,2\}/'"$Version"'/' RongCloudOpenSource.podspec
 
