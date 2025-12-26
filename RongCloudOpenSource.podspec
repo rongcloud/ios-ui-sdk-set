@@ -26,7 +26,7 @@ Pod::Spec.new do |s|
   s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
 
   s.subspec 'IMKit' do |kit|
-    kit.resources = "Resources/RongCloud.bundle", "Resources/RongCloudLively.bundle", "Resources/en.lproj", "Resources/zh-Hans.lproj", "Resources/ar.lproj", "Resources/Emoji.plist", "Resources/RCColor.plist", "IMKit/Supporting\ Files/PrivacyInfo.xcprivacy"
+    kit.resources = "IMKit/Resources/*.bundle", "IMKit/Resources/*.lproj", "IMKit/Resources/*.plist", "IMKit/Supporting Files/PrivacyInfo.xcprivacy"
     kit.source_files = 'IMKit/RongIMKit.h','IMKit/**/*.{h,m,c}'
     kit.private_header_files = 'IMKit/Utility/Extension/*.h'
     kit.frameworks = "AssetsLibrary", "MapKit", "ImageIO", "CoreLocation", "SystemConfiguration", "QuartzCore", "OpenGLES", "CoreVideo", "CoreTelephony", "CoreMedia", "CoreAudio", "CFNetwork", "AudioToolbox", "AVFoundation", "UIKit", "CoreGraphics", "SafariServices"
@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'RongSticker' do |rs|
-  	rs.resources = "Resources/RongSticker.bundle"
+    rs.resources = "Sticker/Resources/*.bundle"
     rs.source_files = 'Sticker/RongSticker.h','Sticker/**/*.{h,m,c}'
     rs.private_header_files = 'Sticker/Extension/*.h','Sticker/Utilities/RCUnzip.h'
     rs.dependency 'RongCloudOpenSource/IMKit'
@@ -49,7 +49,7 @@ Pod::Spec.new do |s|
   s.subspec 'IFly' do |fly|
     fly.libraries = "z"
     fly.frameworks = "AddressBook", "SystemConfiguration", "CoreTelephony", "CoreServices", "Contacts"
-    fly.resources = "Resources/RongCloudiFly.bundle"
+    fly.resources = "iFlyKit/Resources/*.bundle"
     fly.source_files = 'iFlyKit/RongiFlyKit.h','iFlyKit/**/*.{h,m}'
     fly.dependency 'RongCloudOpenSource/IMKit'
     fly.vendored_frameworks = "iFlyKit/Engine/iflyMSC.framework"
