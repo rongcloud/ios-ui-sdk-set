@@ -420,7 +420,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseButton *)loadBackButton {
     if (!_loadBackButton) {
         _loadBackButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        _loadBackButton.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0xd8d8d8", @"0xd8d8d8");
+        _loadBackButton.backgroundColor = RCDynamicColor(@"text_secondary_color", @"0xd8d8d8", @"0xd8d8d8");
         [_loadBackButton addTarget:self
                             action:@selector(didClickLoadBackButton:)
                   forControlEvents:(UIControlEventTouchUpInside)];

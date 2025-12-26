@@ -101,7 +101,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 }
 
 - (void)rcinit {
-    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.backgroundColor = RCDynamicColor(@"clear_color", @"0xF5F6F9", @"0x1c1c1c");
     self.keyboardFrame = CGRectZero;
     self.isNew = 0;
     [self addBottomAreaView];
@@ -834,7 +834,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_commonPhrasesView) {
         _commonPhrasesView =
             [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width, RC_CommonPhrasesView_Height)];
-        _commonPhrasesView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf5f5f5", @"0x1c1c1c");
+        _commonPhrasesView.backgroundColor = RCDynamicColor(@"clear_color", @"0xf5f5f5", @"0x1c1c1c");
         [_commonPhrasesView addSubview:self.commonPhrasesButton];
     }
     return _commonPhrasesView;
@@ -842,12 +842,12 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (RCBaseButton *)commonPhrasesButton {
     if (!_commonPhrasesButton) {
-        CGRect rect = CGRectMake(16, 10, 66, 25);
+        CGRect rect = CGRectMake(16, 5, 66, 30);
         if ([RCKitUtility isRTL]) {
-            rect = CGRectMake(self.bounds.size.width-16-66, 10, 66, 25);
+            rect = CGRectMake(self.bounds.size.width-16-66, 5, 66, 30);
         }
         _commonPhrasesButton = [[RCBaseButton alloc] initWithFrame:rect];
-        _commonPhrasesButton.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x1a1a1a");
+        _commonPhrasesButton.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1a1a1a");
         [_commonPhrasesButton.titleLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
         [_commonPhrasesButton setTitle:RCLocalizedString(@"common_phrases")
                               forState:UIControlStateNormal];
@@ -855,7 +855,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         [_commonPhrasesButton addTarget:self
                                  action:@selector(commonPhrasesButtonAction:)
                        forControlEvents:UIControlEventTouchUpInside];
-        _commonPhrasesButton.layer.cornerRadius = 12.5f;
+        _commonPhrasesButton.layer.cornerRadius = 6;
         UIColor *borderColor = RCDynamicColor(@"clear_color", @"0x979797", @"0x8080804c");
         _commonPhrasesButton.layer.borderColor = borderColor.CGColor;
         _commonPhrasesButton.layer.borderWidth = 0.5f; //设置边框颜色
@@ -906,18 +906,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
         return;
     }
-    //接口向后兼容--]]
-
-    RCUserListViewController *userListVC = [[RCUserListViewController alloc] init];
-    userListVC.selectedBlock = selectedBlock;
-    userListVC.cancelBlock = cancelBlock;
-    userListVC.dataSource = self;
-    userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
-    userListVC.maxSelectedUserNumber = 1;
-    RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:userListVC];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate presentViewController:rootVC functionTag:INPUT_MENTIONED_SELECT_TAG];
-    });
 }
 
 - (BOOL)willUpdateInputTextMetionedInfo:(NSString *)text range:(NSRange)range{
@@ -1358,6 +1346,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_inputContainerView) {
         _inputContainerView = [[RCInputContainerView alloc] initWithFrame:self.bounds];
         _inputContainerView.delegate = self;
+        _inputContainerView.backgroundColor = RCDynamicColor(@"common_background_color", @"0x00000000", @"0x00000000");
     }
     return _inputContainerView;
 }
@@ -1607,7 +1596,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_topLineLayer) {
         CALayer *layer = [CALayer layer];
         layer.frame = CGRectMake(0, 0, self.frame.size.width, 0.5);
-        layer.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x2f2f2f").CGColor;
+        layer.backgroundColor = RCDynamicColor(@"clear_color", @"0xe3e5e6", @"0x2f2f2f").CGColor;
         _topLineLayer = layer;
     }
     return _topLineLayer;

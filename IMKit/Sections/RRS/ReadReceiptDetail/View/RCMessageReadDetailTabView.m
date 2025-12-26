@@ -51,7 +51,7 @@
     [self addSubview:self.indicatorView];
     
     // 设置约束
-    [self setupConstraints];
+    [self setupViewConstraints];
     
     // 更新标题
     [self updateButtonTitles];
@@ -61,7 +61,7 @@
 }
 
 /// 设置约束布局
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     // 常量定义
     CGFloat horizontalMargin = 16;
     CGFloat lineHeight = 1;

@@ -762,20 +762,20 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         }
     }
     
+    // 处理动态图片：先获取当前trait对应的图片
+    // 注意：必须在RTL翻转之前处理imageAsset，因为imageFlippedForRightToLeftLayoutDirection
+    // 返回的新图片的imageAsset中注册的仍是原始图片，会导致RTL翻转失效
+    if (bubbleImage.imageAsset) {
+        bubbleImage = [bubbleImage.imageAsset imageWithTraitCollection:self.traitCollection];
+    }
+    
     // 处理RTL布局
     if ([RCKitUtility isRTL]) {
         bubbleImage = [bubbleImage imageFlippedForRightToLeftLayoutDirection];
     }
     
-    // 处理动态图片的resizable操作
-    if (bubbleImage.imageAsset) {
-        // 对于动态图片，需要先获取当前trait对应的图片再应用resizable
-        UIImage *currentTraitImage = [bubbleImage.imageAsset imageWithTraitCollection:self.traitCollection];
-        bubbleImage = [self applyResizableCapInsets:currentTraitImage];
-    } else {
-        // 对于静态图片，直接应用resizable
-        bubbleImage = [self applyResizableCapInsets:bubbleImage];
-    }
+    // 应用resizable
+    bubbleImage = [self applyResizableCapInsets:bubbleImage];
     
     return bubbleImage;
 }

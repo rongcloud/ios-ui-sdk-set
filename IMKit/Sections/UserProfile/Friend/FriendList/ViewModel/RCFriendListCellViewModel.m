@@ -60,6 +60,7 @@
     self.indexPath = indexPath;
     self.tableView = tableView;
     RCFriendListCell *cell = [tableView dequeueReusableCellWithIdentifier:RCFriendListCellIdentifier forIndexPath:indexPath];
+    cell.hideSeparatorLine = self.hideSeparatorLine;
     if (self.friendInfo) {
         [cell showPortrait:self.friendInfo.portraitUri];
         cell.labName.text = self.friendInfo.remark.length > 0 ? self.friendInfo.remark : self.friendInfo.name;

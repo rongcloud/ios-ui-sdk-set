@@ -52,6 +52,9 @@ static const NSInteger kRCOnlineStatusSubscribeMinBatchSize = 1;
 /// 批量请求默认重试延迟 500 毫秒（纳秒，用于 dispatch_after）
 static const int64_t kRCOnlineStatusBatchRetryDelay = (500 * NSEC_PER_MSEC);
 
+/// cacheQueue 特定 key，用于检测当前是否在队列内执行，避免递归死锁
+static const void *kRCOnlineStatusCacheQueueKey = &kRCOnlineStatusCacheQueueKey;
+
 typedef void (^RCBatchRetryBlock)(NSArray * _Nullable retryItems);
 typedef void (^RCBatchFailBlock)(RCErrorCode status);
 typedef NSArray * _Nonnull (^RCBatchPendingSnapshotBlock)(void);
@@ -136,6 +139,8 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         
         // 创建串行队列，保证线程安全
         _cacheQueue = dispatch_queue_create("com.rongcloud.onlinestatus.cache", DISPATCH_QUEUE_SERIAL);
+        // 标记 queue specific，便于递归调用时识别当前线程上下文
+        dispatch_queue_set_specific(_cacheQueue, kRCOnlineStatusCacheQueueKey, (void *)kRCOnlineStatusCacheQueueKey, NULL);
         
         // 注册为订阅事件的监听者
         [[RCCoreClient sharedCoreClient] addSubscribeEventDelegate:self];
@@ -180,27 +185,28 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         RCLogD(@"fetchFriendOnlineStatus, friend online status subscribe is not enabled");
         return;
     }
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(self.cacheQueue, ^{
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        
-        if (!strongSelf.friendOnlineStatusSyncCompleted) {
-            // 好友在线状态尚未同步完成，将用户ID加入待处理集合（保持顺序、自动去重）
-            NSUInteger beforeCount = strongSelf.pendingFriendOnlineStatusUserIds.count;
-            [strongSelf.pendingFriendOnlineStatusUserIds addObjectsFromArray:userIds];
-            NSUInteger addedCount = strongSelf.pendingFriendOnlineStatusUserIds.count - beforeCount;
-            
-            RCLogD(@"Friend online status sync not completed, queuing %lu users (%lu new, %lu duplicates, total pending: %lu)", 
-                   (unsigned long)userIds.count, (unsigned long)addedCount, (unsigned long)(userIds.count - addedCount), 
-                   (unsigned long)strongSelf.pendingFriendOnlineStatusUserIds.count);
-        } else {
-            // 好友在线状态已同步完成，切换到全局队列执行请求（避免在 cacheQueue 中调用会再次访问 cacheQueue 的方法导致死锁）
-            dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                [strongSelf getSubscribeUsersOnlineStatus:userIds];
-            });
+    __block BOOL syncCompleted = NO;
+    __block NSUInteger addedCount = 0;
+
+    [self performOnCacheQueueSyncSafe:^{
+        syncCompleted = self.friendOnlineStatusSyncCompleted;
+        if (!syncCompleted) {
+            NSUInteger beforeCount = self.pendingFriendOnlineStatusUserIds.count;
+            [self.pendingFriendOnlineStatusUserIds addObjectsFromArray:userIds];
+            addedCount = self.pendingFriendOnlineStatusUserIds.count - beforeCount;
         }
-    });
+    }];
+
+    if (!syncCompleted) {
+        RCLogD(@"Friend online status sync not completed, queuing %lu users (%lu new, %lu duplicates, total pending: %lu)",
+               (unsigned long)userIds.count,
+               (unsigned long)addedCount,
+               (unsigned long)(userIds.count - addedCount),
+               (unsigned long)self.pendingFriendOnlineStatusUserIds.count);
+        return;
+    }
+
+    [self getSubscribeUsersOnlineStatus:userIds];
 }
 
 - (RCSubscribeUserOnlineStatus *)getCachedOnlineStatus:(NSString *)userId {
@@ -208,9 +214,9 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         return nil;
     }
     __block RCSubscribeUserOnlineStatus *status = nil;
-    dispatch_sync(self.cacheQueue, ^{
+    [self performOnCacheQueueSyncSafe:^{
         status = [self.statusCache objectForKey:userId];
-    });
+    }];
     if (status) {
         RCLogD(@"Get cached online status, user:%@, isOnline:%@", userId, status.isOnline ? @"YES" : @"NO");
     }
@@ -250,13 +256,11 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     if (type == RCSubscribeTypeFriendOnlineStatus) {
         RCLogD(@"Friend online status sync completed");
         
-        // 在串行队列中原子性地设置标志并处理待处理请求
         dispatch_async(self.cacheQueue, ^{
             // 设置同步完成标志
             self.friendOnlineStatusSyncCompleted = YES;
-            
-            [self handlePendingFetchOnlineStatus];
         });
+        [self handlePendingFetchOnlineStatus];
     }
 }
 
@@ -277,23 +281,26 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     
     NSArray<NSString *> *addSnapshot = [subscribedUsers copy];
     NSArray<NSString *> *removeSnapshot = [unsubscribedUsers copy];
+
     dispatch_async(self.cacheQueue, ^{
-        // 处理订阅事件：主动获取在线状态
+        // 仅在队列内维护状态
         if (addSnapshot.count > 0) {
             [self.subscribedUserIds addObjectsFromArray:addSnapshot];
-            
-            RCLogD(@"Other device subscribed users:%@, fetching online status", addSnapshot);
-            [self getSubscribeUsersOnlineStatus:addSnapshot];
         }
-        
-        // 处理取消订阅事件：清除缓存并通知 UI
         if (removeSnapshot.count > 0) {
             [self.subscribedUserIds minusSet:[NSSet setWithArray:removeSnapshot]];
-            
-            RCLogD(@"Other device unsubscribed users:%@, clearing cache", removeSnapshot);
-            [self clearOnlineStatusCache:removeSnapshot];
         }
     });
+
+    // 队列外执行耗时/通知逻辑，避免再入 cacheQueue
+    if (addSnapshot.count > 0) {
+        RCLogD(@"Other device subscribed users:%@, fetching online status", addSnapshot);
+        [self getSubscribeUsersOnlineStatus:addSnapshot];
+    }
+    if (removeSnapshot.count > 0) {
+        RCLogD(@"Other device unsubscribed users:%@, clearing cache", removeSnapshot);
+        [self clearOnlineStatusCache:removeSnapshot];
+    }
 }
 
 /**
@@ -371,12 +378,16 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
 /// 清空好友回调
 /// 清空所有好友时，缓存中的所有用户都变成了非好友，需要订阅
 - (void)onFriendCleared:(long long)operationTime {
-    dispatch_async(self.cacheQueue, ^{
-        NSArray *subscribeUserIds = [self.friendUserIds copy];
+    __block NSArray *subscribeUserIds = nil;
+    [self performOnCacheQueueSyncSafe:^{
+        subscribeUserIds = [self.friendUserIds copy];
         [self.friendUserIds removeAllObjects];
-        // 订阅这些用户（因为他们从好友变成了非好友，需要订阅才能继续获取在线状态）
+    }];
+
+    if (subscribeUserIds.count > 0) {
+        // 队列外发起订阅，避免在 cacheQueue 内再入
         [self subscribeUsers:subscribeUserIds pageSize:0 processSubscribeLimit:YES];
-    });
+    }
 }
 
 #pragma mark - 私有方法
@@ -387,30 +398,32 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
 }
 
 - (void)handlePendingFetchOnlineStatus {
-    // 处理所有待处理的用户ID
-    if (self.pendingFriendProfileUserIds.count > 0) {
-        RCLogD(@"Processing %lu pending users after friend profile sync completed",
-               (unsigned long)self.pendingFriendProfileUserIds.count);
-        
-        NSArray<NSString *> *userIdsToProcess = [self.pendingFriendProfileUserIds.array copy];
-        [self.pendingFriendProfileUserIds removeAllObjects];
-        
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [self filterAndFetchOnlineStatus:userIdsToProcess processSubscribeLimit:YES];
-        });
+    __block NSArray<NSString *> *profileSnapshot = nil;
+    __block NSArray<NSString *> *friendStatusSnapshot = nil;
+
+    // 在 cacheQueue 内原子地获取并清空待处理列表
+    [self performOnCacheQueueSyncSafe:^{
+        if (self.pendingFriendProfileUserIds.count > 0) {
+            RCLogD(@"Processing %lu pending users after friend profile sync completed",
+                   (unsigned long)self.pendingFriendProfileUserIds.count);
+            profileSnapshot = [self.pendingFriendProfileUserIds.array copy];
+            [self.pendingFriendProfileUserIds removeAllObjects];
+        }
+
+        if (self.pendingFriendOnlineStatusUserIds.count > 0) {
+            RCLogD(@"Processing %lu pending friend online status users after sync completed",
+                   (unsigned long)self.pendingFriendOnlineStatusUserIds.count);
+            friendStatusSnapshot = [self.pendingFriendOnlineStatusUserIds.array copy];
+            [self.pendingFriendOnlineStatusUserIds removeAllObjects];
+        }
+    }];
+
+    if (profileSnapshot.count > 0) {
+        [self filterAndFetchOnlineStatus:profileSnapshot processSubscribeLimit:YES];
     }
-    
-    // 处理所有待处理的好友在线状态用户ID
-    if (self.pendingFriendOnlineStatusUserIds.count > 0) {
-        RCLogD(@"Processing %lu pending friend online status users after sync completed",
-               (unsigned long)self.pendingFriendOnlineStatusUserIds.count);
-        
-        NSArray<NSString *> *userIdsToProcess = [self.pendingFriendOnlineStatusUserIds.array copy];
-        [self.pendingFriendOnlineStatusUserIds removeAllObjects];
-        
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [self getSubscribeUsersOnlineStatus:userIdsToProcess];
-        });
+
+    if (friendStatusSnapshot.count > 0) {
+        [self getSubscribeUsersOnlineStatus:friendStatusSnapshot];
     }
 }
 
@@ -421,27 +434,32 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         return;
     }
     RCLogD(@"Fetch online status, users:%@", userIds);
-    
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(self.cacheQueue, ^{
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        
-        if (![strongSelf friendOnlineStatusSyncCompleted]) {
-            // 好友信息尚未同步完成，将用户ID加入待处理集合
-            NSUInteger beforeCount = strongSelf.pendingFriendProfileUserIds.count;
-            [strongSelf.pendingFriendProfileUserIds addObjectsFromArray:userIds];
-            NSUInteger addedCount = strongSelf.pendingFriendProfileUserIds.count - beforeCount;
-            
-            RCLogD(@"Friend sync not completed, queuing %lu users (%lu new, %lu duplicates, total pending: %lu)",
-                   (unsigned long)userIds.count, (unsigned long)addedCount, (unsigned long)(userIds.count - addedCount),
-                   (unsigned long)strongSelf.pendingFriendProfileUserIds.count);
-        } else {
-            dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                [strongSelf filterAndFetchOnlineStatus:userIds processSubscribeLimit:processSubscribeLimit];
-            });
+
+    __block BOOL syncCompleted = NO;
+    __block NSUInteger addedCount = 0;
+    __block NSUInteger pendingCount = 0;
+
+    [self performOnCacheQueueSyncSafe:^{
+        syncCompleted = self.friendOnlineStatusSyncCompleted;
+        if (!syncCompleted) {
+            NSUInteger beforeCount = self.pendingFriendProfileUserIds.count;
+            [self.pendingFriendProfileUserIds addObjectsFromArray:userIds];
+            addedCount = self.pendingFriendProfileUserIds.count - beforeCount;
+            pendingCount = self.pendingFriendProfileUserIds.count;
         }
-    });
+    }];
+
+    if (!syncCompleted) {
+        RCLogD(@"Friend sync not completed, queuing %lu users (%lu new, %lu duplicates, total pending: %lu)",
+               (unsigned long)userIds.count,
+               (unsigned long)addedCount,
+               (unsigned long)(userIds.count - addedCount),
+               (unsigned long)pendingCount);
+        return;
+    }
+
+    // 同步已完成，直接处理
+    [self filterAndFetchOnlineStatus:userIds processSubscribeLimit:processSubscribeLimit];
 }
 
 - (void)filterAndFetchOnlineStatus:(NSArray<NSString *> *)userIds
@@ -449,22 +467,17 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     if (userIds.count == 0) {
         return;
     }
-    __weak typeof(self) weakSelf = self;
     [self filterFriendAndNonFriendUserIds:userIds
                            perBatchResult:^(NSArray<NSString *> * _Nullable friendUserIds,
                                              NSArray<NSString *> * _Nullable nonFriendUserIds) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
         if (nonFriendUserIds.count > 0) {
-            [strongSelf subscribeUsers:nonFriendUserIds pageSize:0 processSubscribeLimit:processSubscribeLimit];
+            [self subscribeUsers:nonFriendUserIds pageSize:0 processSubscribeLimit:processSubscribeLimit];
         }
         // 如果《客户端好友在线状态变更通知》没有打开，获取好友在线状态是获取不到的
-        if (friendUserIds.count > 0 && [strongSelf isFriendOnlineStatusSubscribeEnable]) {
-            [strongSelf getSubscribeUsersOnlineStatus:friendUserIds];
+        if (friendUserIds.count > 0 && [self isFriendOnlineStatusSubscribeEnable]) {
+            [self getSubscribeUsersOnlineStatus:friendUserIds];
         } else {
-            RCLogD(@"filterAndFetchOnlineStatus, friend online status subscribe is %@", [strongSelf isFriendOnlineStatusSubscribeEnable] ? @"enabled" : @"disabled");
+            RCLogD(@"filterAndFetchOnlineStatus, friend online status subscribe is %@", [self isFriendOnlineStatusSubscribeEnable] ? @"enabled" : @"disabled");
         }
     } completion:^(BOOL success) {
         if (!success) {
@@ -496,9 +509,9 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     
     // 先从本地缓存 self.friendUserIds 中筛选出已知好友
     __block NSSet *friendCacheSnapshot = nil;
-    dispatch_sync(self.cacheQueue, ^{
+    [self performOnCacheQueueSyncSafe:^{
         friendCacheSnapshot = [self.friendUserIds copy];
-    });
+    }];
     NSMutableOrderedSet<NSString *> *knownFriendIds = [NSMutableOrderedSet orderedSet];
     NSMutableOrderedSet<NSString *> *unknownUserIds = [NSMutableOrderedSet orderedSet];
     for (NSString *userId in userIds) {
@@ -576,7 +589,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         }
         return;
     }
-    __weak typeof(self) weakSelf = self;
     [self processQueueItems:userIds
                   batchSize:kRCOnlineStatusFriendQueryBatchSize
                     context:nil
@@ -586,11 +598,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
                               RCBatchCompletion batchCompletion,
                               RCBatchRetryBlock retry,
                               RCBatchFailBlock fail) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            fail(ERRORCODE_UNKNOWN);
-            return;
-        }
         RCLogD(@"Querying friends batch users:%@", batch);
         
         [[RCCoreClient sharedCoreClient] getFriendsInfo:batch
@@ -640,14 +647,14 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
 - (void)getSubscribeUsersOnlineStatus:(NSArray<NSString *> *)userIds {
     // 过滤掉正在请求的用户ID，避免重复请求
     __block NSMutableArray *needFetchUserIds = [NSMutableArray array];
-    dispatch_sync(self.cacheQueue, ^{
+    [self performOnCacheQueueSyncSafe:^{
         for (NSString *userId in userIds) {
             if (userId.length > 0 && ![self.fetchingUserIds containsObject:userId]) {
                 [needFetchUserIds addObject:userId];
                 [self.fetchingUserIds addObject:userId];
             }
         }
-    });
+    }];
     
     // 如果所有用户都在请求中
     if (needFetchUserIds.count == 0) {
@@ -763,8 +770,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     }
     NSInteger batchSize = pageSize > 0 ? pageSize : kRCOnlineStatusSubscribeBatchSize;
     
-    __weak typeof(self) weakSelf = self;
-    
     [self processQueueItems:userIds
                   batchSize:batchSize
                     context:nil
@@ -774,11 +779,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
                               RCBatchCompletion batchCompletion,
                               RCBatchRetryBlock retry,
                               RCBatchFailBlock fail) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            fail(ERRORCODE_UNKNOWN);
-            return;
-        }
         
         RCLogD(@"Subscribing batch users:%@", batch);
         RCSubscribeEventRequest *request = [[RCSubscribeEventRequest alloc] init];
@@ -790,8 +790,8 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
             RCLogD(@"subscribeEvent completion code:%ld, users:%@", (long)status, batch);
             switch (status) {
                 case RC_SUCCESS: {
-                    [strongSelf recordSubscribedUsers:batch];
-                    [strongSelf getSubscribeUsersOnlineStatus:batch];
+                    [self recordSubscribedUsers:batch];
+                    [self getSubscribeUsersOnlineStatus:batch];
                     // 成功，当前批次无需重试
                     batchCompletion();
                     break;
@@ -820,7 +820,7 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
                     if (processSubscribeLimit) {
                         // 已经是逐个订阅仍然超限，终止订阅流程
                         // 订阅触发超限，交由淘汰策略处理
-                        [strongSelf handleSubscribeExceedLimit];
+                        [self handleSubscribeExceedLimit];
                     }
                     fail(status);
                     break;
@@ -872,7 +872,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     
     NSInteger batchSize = pageSize > 0 ? pageSize : kRCOnlineStatusSubscribeBatchSize;
     
-    __weak typeof(self) weakSelf = self;
     [self processQueueItems:userIds
                   batchSize:batchSize
                     context:collectedFailed
@@ -882,11 +881,6 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
                               RCBatchCompletion batchCompletion,
                               RCBatchRetryBlock retry,
                               RCBatchFailBlock fail) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) {
-            fail(ERRORCODE_UNKNOWN);
-            return;
-        }
         
         RCLogD(@"Unsubscribing batch users:%@", batch);
         RCSubscribeEventRequest *request = [[RCSubscribeEventRequest alloc] init];
@@ -896,7 +890,7 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         [[RCCoreClient sharedCoreClient] unSubscribeEvent:request completion:^(RCErrorCode status, NSArray<NSString *> * _Nullable failedUserIds) {
             RCLogD(@"unSubscribeEvent completion code:%ld, users:%@, failedUserIds:%@", (long)status, batch, failedUserIds);
             if (status == RC_SUCCESS) {
-                [strongSelf removeSubscribedUsers:batch];
+                [self removeSubscribedUsers:batch];
                 
                 NSArray<NSString *> *successUserIds = batch;
                 if (failedUserIds.count > 0) {
@@ -905,7 +899,7 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
                     successUserIds = [successful copy];
                     [failedContext addObjectsFromArray:failedUserIds];
                 }
-                [strongSelf clearOnlineStatusCache:successUserIds];                
+                [self clearOnlineStatusCache:successUserIds];                
                 // 成功，当前批次无需重试
                 batchCompletion();
             } else if (status == RC_REQUEST_OVERFREQUENCY) {
@@ -970,13 +964,13 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     // 使用缓存的好友ID过滤出非好友用户
     // 注意：能走到这里，说明已经通过 p_filterAndFetchOnlineStatus 查询过好友关系，缓存是准确的
     __block NSMutableArray *nonFriendUserIds = [NSMutableArray array];
-    dispatch_sync(self.cacheQueue, ^{
+    [self performOnCacheQueueSyncSafe:^{
         for (NSString *userId in allUserIds) {
             if (userId && userId.length > 0 && ![self.friendUserIds containsObject:userId]) {
                 [nonFriendUserIds addObject:userId];
             }
         }
-    });
+    }];
     
     if (nonFriendUserIds.count > 0) {
         // 使用基于优先级的处理策略（只处理非好友）
@@ -1044,7 +1038,7 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     __block NSArray<NSString *> *usersToSubscribe = nil;
     __block NSArray<NSString *> *usersToResubscribe = nil;
     
-    dispatch_sync(self.cacheQueue, ^{
+    [self performOnCacheQueueSyncSafe:^{
         // 1. 截取优先级列表，确保不超过最大订阅数量
         NSInteger maxCount = kRCOnlineStatusMaxSubscribeCount;
         usersToKeep = nonFriendUserIds.count > maxCount
@@ -1078,7 +1072,7 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
         
         RCLogD(@"Priority-based handling - keep: %@, unsubscribe: %@, subscribe: %@, resubscribe: %@, limit: %ld",
             usersToKeep, usersToUnsubscribe, usersToSubscribe, usersToResubscribe, (long)maxCount);
-    });
+    }];
     
     // 5. 合并需要订阅的用户和需要重新订阅的用户
     NSMutableSet *allUsersToSubscribeSet = [NSMutableSet set];
@@ -1219,15 +1213,14 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
     // 使用串行队列驱动批处理，避免递归 block 造成的 retain cycle，并统一控制线程上下文
     dispatch_queue_t workerQueue = dispatch_queue_create("com.rongcloud.rcbatch.queue", DISPATCH_QUEUE_SERIAL);
     
-    __weak typeof(self) weakSelf = self;
     dispatch_async(workerQueue, ^{
-        [weakSelf executeBatchItems:fullItems
-                          batchSize:safeBatchSize
-                          startIndex:0
-                            context:context
-                           executor:executor
-                         completion:completion
-                        workerQueue:workerQueue];
+        [self executeBatchItems:fullItems
+                       batchSize:safeBatchSize
+                       startIndex:0
+                         context:context
+                        executor:executor
+                      completion:completion
+                     workerQueue:workerQueue];
     });
 }
 
@@ -1279,50 +1272,41 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
              executor:(RCBatchExecutorBlock)executor
            completion:(void (^)(RCErrorCode status))completion
           workerQueue:(dispatch_queue_t)workerQueue {
-    __weak typeof(self) weakSelf = self;
     executor(currentItems, context, snapshotBlock, ^{
         dispatch_async(workerQueue, ^{
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf) {
-                return;
-            }
             NSInteger nextStartIndex = NSMaxRange(batchRange);
-            [strongSelf executeBatchItems:fullItems
-                                batchSize:batchSize
-                                startIndex:nextStartIndex
-                                  context:context
-                                 executor:executor
-                               completion:completion
-                              workerQueue:workerQueue];
+            [self executeBatchItems:fullItems
+                           batchSize:batchSize
+                           startIndex:nextStartIndex
+                             context:context
+                            executor:executor
+                          completion:completion
+                         workerQueue:workerQueue];
         });
     }, ^(NSArray *retryItems) {
         dispatch_async(workerQueue, ^{
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf) {
-                return;
-            }
             if (retryItems.count > 0) {
                 // 部分重试时，不是接口调用超频，无需延时
-                [strongSelf runBatchItems:retryItems
-                                fullItems:fullItems
-                               batchRange:batchRange
-                                batchSize:batchSize
-                                  context:context
-                         snapshotProvider:snapshotBlock
-                                 executor:executor
-                               completion:completion
-                              workerQueue:workerQueue];
+                [self runBatchItems:retryItems
+                           fullItems:fullItems
+                          batchRange:batchRange
+                           batchSize:batchSize
+                             context:context
+                    snapshotProvider:snapshotBlock
+                            executor:executor
+                          completion:completion
+                         workerQueue:workerQueue];
             } else {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kRCOnlineStatusBatchRetryDelay), workerQueue, ^{
-                    [strongSelf runBatchItems:currentItems
-                                     fullItems:fullItems
-                                    batchRange:batchRange
-                                    batchSize:batchSize
-                                      context:context
-                             snapshotProvider:snapshotBlock
-                                     executor:executor
-                                   completion:completion
-                                  workerQueue:workerQueue];
+                    [self runBatchItems:currentItems
+                                  fullItems:fullItems
+                                 batchRange:batchRange
+                                 batchSize:batchSize
+                                   context:context
+                          snapshotProvider:snapshotBlock
+                                  executor:executor
+                                completion:completion
+                               workerQueue:workerQueue];
                 });
             }
         });
@@ -1333,6 +1317,21 @@ typedef void (^RCBatchExecutorBlock)(NSArray *batch,
             });
         }
     });
+}
+
+/// 判断当前是否已处于 cacheQueue 内
+- (BOOL)isOnCacheQueue {
+    return dispatch_get_specific(kRCOnlineStatusCacheQueueKey) != NULL;
+}
+
+/// 在 cacheQueue 上同步执行 block；若已在队列内则直接执行，避免死锁
+- (void)performOnCacheQueueSyncSafe:(dispatch_block_t)block {
+    if (!block) return;
+    if ([self isOnCacheQueue]) {
+        block();
+    } else {
+        dispatch_sync(self.cacheQueue, block);
+    }
 }
 
 @end

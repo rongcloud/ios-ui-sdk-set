@@ -40,12 +40,10 @@
 }
 
 - (void)setupView {
-    self.edgesForExtendedLayout = UIRectEdgeNone;
     if (!self.title) {
         self.title = RCLocalizedString(@"UserSearchAddNew");
     }
     [self configureSearchBar];
-//    [self configureRightNaviItems];
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
@@ -67,7 +65,7 @@
 
 #pragma mark - RCFriendListViewModelResponder
 - (void)reloadData:(BOOL)isEmpty {
-    self.listView.labEmpty.hidden = !isEmpty;
+    [self.listView displayEmptyView:isEmpty];
 }
 
 #pragma mark - UITableViewDelegate

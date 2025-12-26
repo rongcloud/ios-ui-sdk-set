@@ -43,7 +43,7 @@
     if (self = [super initWithFrame:frame]) {
         self.currentLayoutState = KBottomBarDefaultStatus;
         [self setupUI];
-        [self setupConstraints];
+        [self setupViewConstraints];
     }
     return self;
 }
@@ -71,7 +71,7 @@
     [self.backgroundView addSubview:self.bottomPlaceholderView];
 }
 
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     CGFloat safeAreaTop = [RCKitUtility getWindowSafeAreaInsets].top;
     CGFloat safeAreaBottom = [RCKitUtility getWindowSafeAreaInsets].bottom;
     CGFloat topOffset = safeAreaTop;

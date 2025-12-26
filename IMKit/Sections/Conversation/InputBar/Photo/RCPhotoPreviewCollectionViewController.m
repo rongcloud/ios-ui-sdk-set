@@ -454,12 +454,6 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                                                    metrics:nil
                                                                      views:NSDictionaryOfVariableBindings(_editButton)]];
 
-        [_bottomView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_sendButton]-32-[_fullButton]"
-                                                                            options:kNilOptions
-                                                                            metrics:nil
-                                                                              views:NSDictionaryOfVariableBindings(
-                                                                                        _fullButton, _sendButton)]];
-
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_fullButton
                                                                 attribute:NSLayoutAttributeRight
                                                                 relatedBy:NSLayoutRelationEqual
@@ -500,12 +494,6 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
                                                                    options:kNilOptions
                                                                    metrics:nil
                                                                      views:NSDictionaryOfVariableBindings(_editButton)]];
-
-        [_bottomView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_fullButton]-32-[_sendButton]"
-                                                                            options:kNilOptions
-                                                                            metrics:nil
-                                                                              views:NSDictionaryOfVariableBindings(
-                                                                                        _fullButton, _sendButton)]];
 
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_sendButton
                                                                 attribute:NSLayoutAttributeRight

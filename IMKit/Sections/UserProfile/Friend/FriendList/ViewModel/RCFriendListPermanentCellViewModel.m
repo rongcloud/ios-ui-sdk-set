@@ -39,6 +39,7 @@
     RCFriendListPermanentCell *cell = [tableView dequeueReusableCellWithIdentifier:RCFriendListPermanentCellIdentifier
                                                                       forIndexPath:indexPath];
     cell.labName.text = self.title;
+    cell.hideSeparatorLine = self.hideSeparatorLine;
     [cell showPortraitByImage:self.portrait];
     return cell;
 }
@@ -49,5 +50,9 @@
             self.touchBlock(vc);
         });
     }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 64;
 }
 @end

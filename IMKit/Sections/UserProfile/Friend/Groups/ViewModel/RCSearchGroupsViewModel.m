@@ -179,6 +179,9 @@ static void *__rc_searchgroups_operation_queueTag = &__rc_searchgroups_operation
                     items = [self.delegate searchGroupsViewModel:self willLoadItemsInDataSource:array];
                 }
             }
+            if (items) {
+                [self removeSeparatorLineIfNeed:@[items]];
+            }
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.dataSource addObjectsFromArray:items];
                 [self reloadData:self.dataSource.count == 0];

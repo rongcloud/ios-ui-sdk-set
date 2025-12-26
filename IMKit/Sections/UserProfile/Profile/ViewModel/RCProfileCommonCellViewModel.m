@@ -11,7 +11,6 @@
 #import "RCNameEditViewController.h"
 #import "RCKitCommonDefine.h"
 
-#define RCUProfileCommonCellHeight 44
 
 @implementation RCProfileCommonCellViewModel
 
@@ -38,11 +37,7 @@
         cell.detailLabel.text = self.detail;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         cell.arrowView.hidden = self.hiddenArrow;
-        if(self.hiddenSeparatorLine) {
-            cell.separatorInset = UIEdgeInsetsMake(0, CGRectGetWidth(tableView.bounds), 0, 0);
-        } else {
-            cell.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);
-        }
+        cell.hideSeparatorLine = self.hideSeparatorLine;
         return cell;
     }
     
@@ -57,13 +52,14 @@
         [cell.portraitImageView setImageURL:[NSURL URLWithString:self.detail]];
         [cell hiddenArrow:self.hiddenArrow];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        cell.hideSeparatorLine = self.hideSeparatorLine;
         return cell;
     }
     return nil;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUProfileCommonCellHeight;
+    return RCUserManagementCellHeight;
 }
 
 @end

@@ -23,7 +23,7 @@
 - (void)setupView {
     [super setupView];
     [self addSubview:self.labContent];
-    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e");
+    self.backgroundColor = RCDynamicColor(@"auxiliary_view_color", @"0xffffff", @"0x1c1c1e");
     self.layer.cornerRadius = 8;
     [self.layer masksToBounds];
     self.layer.mask = self.textMaskLayer;
@@ -34,7 +34,7 @@
     if (highlight) {
         self.backgroundColor = RCDynamicColor(@"selected_background_color", @"0xEAEAEA", @"0x343438");
     } else {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e");
+        self.backgroundColor = RCDynamicColor(@"auxiliary_view_color", @"0xffffff", @"0x1c1c1e");
     }
 }
 
@@ -133,17 +133,33 @@
     
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    if (self.messageSent) {
-        self.textMaskLayer.frame = CGRectMake(CGRectGetMaxX(self.bounds),
-                                              -CGRectGetMaxY(self.bounds),
-                                              CGRectGetWidth(self.bounds),
-                                              CGRectGetHeight(self.bounds));
-    }else {
-        self.textMaskLayer.frame = CGRectMake(-CGRectGetMaxX(self.bounds),
-                                              -CGRectGetMaxY(self.bounds),
-                                              CGRectGetWidth(self.bounds),
-                                              CGRectGetHeight(self.bounds));
+    if ([RCKitUtility isRTL]) {
+        if (self.messageSent) {
+            self.textMaskLayer.frame = CGRectMake(-CGRectGetMaxX(self.bounds),
+                                                  -CGRectGetMaxY(self.bounds),
+                                                  CGRectGetWidth(self.bounds),
+                                                  CGRectGetHeight(self.bounds));
+        }else {
+            self.textMaskLayer.frame = CGRectMake(CGRectGetMaxX(self.bounds),
+                                                  -CGRectGetMaxY(self.bounds),
+                                                  CGRectGetWidth(self.bounds),
+                                                  CGRectGetHeight(self.bounds));
+           
+        }
+    } else {
+        if (self.messageSent) {
+            self.textMaskLayer.frame = CGRectMake(CGRectGetMaxX(self.bounds),
+                                                  -CGRectGetMaxY(self.bounds),
+                                                  CGRectGetWidth(self.bounds),
+                                                  CGRectGetHeight(self.bounds));
+        }else {
+            self.textMaskLayer.frame = CGRectMake(-CGRectGetMaxX(self.bounds),
+                                                  -CGRectGetMaxY(self.bounds),
+                                                  CGRectGetWidth(self.bounds),
+                                                  CGRectGetHeight(self.bounds));
+        }
     }
+  
     [CATransaction commit];
     [self.textMaskLayer setNeedsDisplay];
     [self.textMaskLayer layoutIfNeeded];

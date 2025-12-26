@@ -823,28 +823,7 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
         dispatch_async(dispatch_get_main_queue(), ^{
             [self showChooseUserViewController:wrappedCompletion cancel:wrappedCancelBlock];
         });
-        return;
     }
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        // 创建用户选择控制器
-        RCUserListViewController *userListVC = [[RCUserListViewController alloc] init];
-        userListVC.selectedBlock = wrappedCompletion;
-        userListVC.cancelBlock = wrappedCancelBlock;
-        userListVC.dataSource = self;
-        userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
-        userListVC.maxSelectedUserNumber = 1;
-        
-        // 创建导航控制器并展示
-        RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:userListVC];
-        rootVC.modalPresentationStyle = UIModalPresentationFullScreen;
-        UIViewController *presentedVC = self.navigationController.presentedViewController;
-        if (presentedVC) {
-            [presentedVC presentViewController:rootVC animated:YES completion:nil];
-        } else {
-            [self.navigationController presentViewController:rootVC animated:YES completion:nil];
-        }
-    });
 }
 
 - (nullable RCUserInfo *)edit_editInputBarControl:(RCEditInputBarControl *)editInputBarControl getUserInfo:(NSString *)userId {

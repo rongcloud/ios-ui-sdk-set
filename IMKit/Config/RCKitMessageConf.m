@@ -53,7 +53,7 @@
 
 - (UIColor *)editedTextColor {
     if (!_editedTextColor) {
-        _editedTextColor = RCDYCOLOR(0x7C838E, 0xFFFFFF);
+        _editedTextColor = RCDynamicColor(@"text_primary_color", @"0x7C838E", @"0xFFFFFF");
     }
     return _editedTextColor;
 }

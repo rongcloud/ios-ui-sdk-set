@@ -72,7 +72,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 - (void)setSubViews {
     _contentView = [[RCBaseView alloc] initWithFrame:CGRectMake(0, 0, 280, 280)];
     _contentView.center = self.center;
-    _contentView.backgroundColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"ffffff" alpha:1] darkColor:HEXCOLOR(0x2c2c2c)];
+    _contentView.backgroundColor =  RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2c2c2c"); 
     _contentView.layer.masksToBounds = YES;
     _contentView.layer.cornerRadius = 8;
     [self addSubview:_contentView];
@@ -80,8 +80,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     //发送给：
     _sendToLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     _sendToLabel.font = [UIFont systemFontOfSize:18.f];
-    _sendToLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]
-                                                      darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.9]];
+    _sendToLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
     _sendToLabel.text = RCLocalizedString(@"SendTo");
     //[_sendToLabel sizeToFit];
     _sendToLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -98,69 +97,73 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     _portraitView.layer.masksToBounds = YES;
     _portraitView.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_portraitView];
-    [_portraitView setPlaceholderImage:[RCCCUtilities imageNamed:@"default_portrait_msg" ofBundle:@"RongCloud.bundle"]];
+    [_portraitView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
 
     //昵称
     _nicknameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     _nicknameLabel.font = [UIFont systemFontOfSize:17.f];
-    _nicknameLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.9]];
+    _nicknameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
     _nicknameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     _nicknameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_nicknameLabel];
 
     //分割线1
     _separationView1 = [[UIView alloc] initWithFrame:CGRectZero];
-    _separationView1.backgroundColor =
-        [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"dfdfdf" alpha:1]
-                                 darkColor:[UIColor colorWithHexString:@"373737" alpha:1]];
+    _separationView1.backgroundColor = RCDynamicColor(@"line_background_color", @"0xdfdfdf", @"0x373737");
     _separationView1.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_separationView1];
 
     //个人名片
     _cardLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     _cardLabel.font = [UIFont systemFontOfSize:14.f];
-    _cardLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"999999" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.6]];
+    _cardLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x999999", @"0xffffff99");
     _cardLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_cardLabel];
 
     //留言
     _messageTextField = [[UITextField alloc] initWithFrame:CGRectZero];
     _messageTextField.font = [UIFont systemFontOfSize:13.f];
-    _messageTextField.backgroundColor = RCDYCOLOR(0xf3f3f3, 0x363636);
+    _messageTextField.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf3f3f3", @"0x363636");
     _messageTextField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 12, 36)];
     _messageTextField.leftViewMode = UITextFieldViewModeAlways;
-    _messageTextField.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.4]];
-    NSAttributedString *attrString = [[NSAttributedString alloc]
-        initWithString:RCLocalizedString(@"LeaveAMessage")
-            attributes:@{
-                NSForegroundColorAttributeName :RCDYCOLOR(0xa0a5ab, 0x666666),
-                NSFontAttributeName : _messageTextField.font
-            }];
+    _messageTextField.textColor = RCDynamicColor(@"text_primary_color", @"0x999999", @"0xffffff66");
+    UIColor *color = RCDynamicColor(@"text_secondary_color", @"0xa0a5ab", @"0x666666");
+    NSAttributedString *attrString;
+    if (color) {
+        attrString = [[NSAttributedString alloc]
+            initWithString:RCLocalizedString(@"LeaveAMessage")
+                attributes:@{
+                    NSForegroundColorAttributeName :color,
+                    NSFontAttributeName : _messageTextField.font
+                }];
+    } else {
+        attrString = [[NSAttributedString alloc]
+            initWithString:RCLocalizedString(@"LeaveAMessage")
+                attributes:@{
+                    NSForegroundColorAttributeName :RCDYCOLOR(0xa0a5ab, 0x666666),
+                    NSFontAttributeName : _messageTextField.font
+                }];
+    }
     _messageTextField.attributedPlaceholder = attrString;
     _messageTextField.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_messageTextField];
 
     //分割线2
     _separationView2 = [[UIView alloc] initWithFrame:CGRectZero];
-    _separationView2.backgroundColor =
-        [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"dfdfdf" alpha:1]
-                                 darkColor:[UIColor colorWithHexString:@"373737" alpha:1]];
+    _separationView2.backgroundColor =RCDynamicColor(@"line_background_color", @"0xdfdfdf", @"0x373737");;
     _separationView2.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_separationView2];
 
     //分割线3
     _separationView3 = [[UIView alloc] initWithFrame:CGRectZero];
-    _separationView3.backgroundColor =
-        [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"dfdfdf" alpha:1]
-                                 darkColor:[UIColor colorWithHexString:@"323232" alpha:1]];
+    _separationView3.backgroundColor = RCDynamicColor(@"line_background_color", @"0xdfdfdf", @"0x373737");
     _separationView3.translatesAutoresizingMaskIntoConstraints = NO;
     [_contentView addSubview:_separationView3];
 
     //取消按钮
     _cancleButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
     _cancleButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
-    [_cancleButton setTitleColor:[RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"000000" alpha:1]
-                                                          darkColor:[UIColor colorWithHexString:@"aaaaaa" alpha:1]]
+    [_cancleButton setTitleColor: RCDynamicColor(@"text_primary_color", @"0x000000", @"0xaaaaaa")
                         forState:UIControlStateNormal];
     [_cancleButton setTitle:RCLocalizedString(@"Cancel") forState:UIControlStateNormal];
     [_cancleButton addTarget:self action:@selector(clickCancleBtn) forControlEvents:UIControlEventTouchUpInside];
@@ -170,7 +173,8 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     //发送按钮
     _sendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
     _sendButton.titleLabel.font = [UIFont systemFontOfSize:18.f];
-    [_sendButton setTitleColor:[UIColor colorWithHexString:@"0099ff" alpha:1.f] forState:UIControlStateNormal];
+    [_sendButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x0099ff")
+ forState:UIControlStateNormal];
     [_sendButton setTitle:RCLocalizedString(@"Send") forState:UIControlStateNormal];
     [_sendButton addTarget:self action:@selector(clickSendBtn) forControlEvents:UIControlEventTouchUpInside];
     _sendButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -380,9 +384,12 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
         _conversationType = conversationType;
         _targetId = targetId;
         if (conversationType == ConversationType_PRIVATE) {
-            RCUserInfo *userInfo = [[RCIM sharedRCIM] getUserInfoCache:_targetId];
-            _nicknameLabel.text = userInfo.name;
-            [_portraitView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+            [[RCIM sharedRCIM] getUserInfo:_targetId complete:^(RCUserInfo * _Nonnull userInfo) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _nicknameLabel.text = userInfo.name;
+                    [_portraitView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
+                });
+            }];
         }
         if (conversationType == ConversationType_GROUP) {
             __weak typeof(self) ws = self;
@@ -403,6 +410,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 }
 - (void)updateGroupInfo:(RCCCGroupInfo *)groupInfo {
     self.groupInfo = groupInfo;
+    [self.portraitView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_group_portrait_img", @"default_group_portrait")];
     [self.portraitView setImageURL:[NSURL URLWithString:groupInfo.portraitUri]];
     self.nicknameLabel.text = [NSString stringWithFormat:@"%@ (%@%@)", groupInfo.groupName, groupInfo.number,
                                                          RCLocalizedString(@"Person")];

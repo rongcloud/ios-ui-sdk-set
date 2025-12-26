@@ -84,7 +84,8 @@
 #import "RCConversationTitleView.h"
 #import "RCUserOnlineStatusManager.h"
 #import "RCUserOnlineStatusUtil.h"
-
+#import "RCGroupMentionViewController.h"
+#import "RCIM.h"
 #define UNREAD_MESSAGE_MAX_COUNT 99
 #define COLLECTION_VIEW_REFRESH_CONTROL_HEIGHT 30
 
@@ -98,7 +99,7 @@ NSUInteger const RCStreamMessageTextLimit = 10000;
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
     UINavigationControllerDelegate, RCPublicServiceMessageCellDelegate, RCTypingStatusDelegate,
-RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol, RCReadReceiptV5Delegate> {
+RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCReferencingViewDelegate, RCTextPreviewViewDelegate, RCMessagesLoadProtocol, RCReadReceiptV5Delegate, RCSelectingUserDataSource> {
     int _defaultLocalHistoryMessageCount;
     int _defaultMessageCount;
     int _defaultRemoteHistoryMessageCount;
@@ -1124,6 +1125,46 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self rrs_didReceiveMessageReadReceiptResponses:responses];
 }
 
+
+#pragma mark -  输入框内输入了 @ 符号
+- (void)showChooseUserViewController:(void (^)(RCUserInfo *selectedUserInfo))selectedBlock
+                              cancel:(void (^)(void))cancelBlock {
+    RCBaseNavigationController *rootVC = nil;
+    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        RCGroupMentionViewModel *vm = [RCGroupMentionViewModel viewModelWithGroupId:self.targetId
+                                                                      selectedBlock:selectedBlock
+                                                                             cancel:cancelBlock];
+        RCGroupMentionViewController *vc = [[RCGroupMentionViewController alloc] initWithViewModel:vm];
+        rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:vc];
+    }else {
+        RCUserListViewController *userListVC = [[RCUserListViewController alloc] init];
+        userListVC.selectedBlock = selectedBlock;
+        userListVC.cancelBlock = cancelBlock;
+        userListVC.dataSource = self;
+        userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
+        userListVC.maxSelectedUserNumber = 1;
+        rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:userListVC];
+    }
+    //接口向后兼容--]]
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self presentViewController:rootVC functionTag:INPUT_MENTIONED_SELECT_TAG];
+    });
+}
+
+#pragma mark RCSelectingUserDataSource
+
+- (void)getSelectingUserIdList:(void (^)(NSArray<NSString *> *userIdList))completion {
+    [self getSelectingUserIdList:completion functionTag:INPUT_MENTIONED_SELECT_TAG];
+}
+
+- (RCUserInfo *)getSelectingUserInfo:(NSString *)userId {
+    if (self.conversationType == ConversationType_GROUP) {
+        return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId inGroupId:self.targetId];
+    } else {
+        return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+    }
+}
+
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
     self.isTouchScrolled = YES;
@@ -2061,13 +2102,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
-- (RCUserInfo *)getSelectingUserInfo:(NSString *)userId {
-    if (self.conversationType == ConversationType_GROUP) {
-        return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId inGroupId:self.targetId];
-    } else {
-        return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
-    }
-}
 
 - (NSDictionary *)getDraftExtraInfo {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
@@ -4062,11 +4096,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         CGFloat height = 48;
         if (![RCKitUtility isTraditionInnerThemes]) {
             height = 32;
-            // 设置阴影
-            _unReadButton.layer.shadowColor = HEXCOLOR(0x1d1d1d).CGColor; // 阴影颜色（注意用 CGColor）
-            _unReadButton.layer.shadowOpacity = 1; // 透明度（0~1）
-            _unReadButton.layer.shadowRadius = 4; // 模糊半径
-            _unReadButton.layer.shadowOffset = CGSizeMake(0, 4); // 偏移（x:0 向右偏移0，y:4 向下偏移4）
         }
         _unReadButton.frame = CGRectMake(0, [RCKitUtility getWindowSafeAreaInsets].top + self.navigationController.navigationBar.frame.size.height + 14, 0, height);
         [_unReadButton setBackgroundImage:RCDynamicImage(@"conversation_unread_button_bg_img", @"up") forState:UIControlStateNormal];
@@ -4103,11 +4132,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         CGFloat height = 48;
         if (![RCKitUtility isTraditionInnerThemes]) {
             height = 32;
-            // 设置阴影
-            _unReadMentionedButton.layer.shadowColor = HEXCOLOR(0x1d1d1d).CGColor;
-            _unReadMentionedButton.layer.shadowOpacity = 1; // 透明度（0~1）
-            _unReadMentionedButton.layer.shadowRadius = 4; // 模糊半径
-            _unReadMentionedButton.layer.shadowOffset = CGSizeMake(0, 4); // 偏移（x:0 向右偏移0，y:4 向下偏移4）
         }
         _unReadMentionedButton.frame = CGRectMake(0, CGRectGetMaxY(self.unReadButton.frame) + 15, 0, height);
         [_unReadMentionedButton setBackgroundImage:RCDynamicImage(@"conversation_unread_button_bg_img", @"up") forState:UIControlStateNormal];
@@ -4387,10 +4411,5 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     return [self edit_editInputBarControl:editInputBarControl getUserInfo:userId];
 }
 
-#pragma mark RCSelectingUserDataSource
-
-- (void)getSelectingUserIdList:(void (^)(NSArray<NSString *> *userIdList))completion {
-    [self getSelectingUserIdList:completion functionTag:INPUT_MENTIONED_SELECT_TAG];
-}
 
 @end

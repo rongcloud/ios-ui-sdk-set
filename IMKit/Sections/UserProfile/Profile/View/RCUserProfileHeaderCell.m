@@ -34,9 +34,10 @@ NSString  * const RCUUserProfileHeaderCellIdentifier = @"RCUUserProfileHeaderCel
 
 - (void)setupView {
     [super setupView];
-    [self.contentView addSubview:self.portraitImageView];
-    [self.contentView addSubview:self.labelStackView];
-    
+
+    [self.contentStackView addArrangedSubview:self.portraitImageView];
+    [self.contentStackView addArrangedSubview:self.labelStackView];
+    self.paddingContainerView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x000000");
     // 将在线状态和备注添加到水平 StackView
     [self.remarkStackView addArrangedSubview:self.onlineStatusView];
     [self.remarkStackView addArrangedSubview:self.remarkLabel];
@@ -44,12 +45,12 @@ NSString  * const RCUUserProfileHeaderCellIdentifier = @"RCUUserProfileHeaderCel
     // 将 remarkStackView 和 nameLabel 添加到垂直 StackView
     [self.labelStackView addArrangedSubview:self.remarkStackView];
     [self.labelStackView addArrangedSubview:self.nameLabel];
-    
-    // 设置约束
-    [self setupConstraints];
+
 }
 
 - (void)setupConstraints {
+    [super setupConstraints];
+    
     self.portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.labelStackView.translatesAutoresizingMaskIntoConstraints = NO;
     
@@ -57,17 +58,8 @@ NSString  * const RCUUserProfileHeaderCellIdentifier = @"RCUUserProfileHeaderCel
                                            forAxis:UILayoutConstraintAxisHorizontal];
     
     [NSLayoutConstraint activateConstraints:@[
-        // portraitImageView 约束
-        [self.portraitImageView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:RCUUserProfileHeaderCellPortraitLeft],
-        [self.portraitImageView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:RCUUserProfileHeaderCellPortraitTop],
         [self.portraitImageView.widthAnchor constraintEqualToConstant:RCUUserProfileHeaderCellSize],
         [self.portraitImageView.heightAnchor constraintEqualToConstant:RCUUserProfileHeaderCellSize],
-        [self.portraitImageView.bottomAnchor constraintLessThanOrEqualToAnchor:self.contentView.bottomAnchor constant:-RCUUserProfileHeaderCellPortraitTop],
-        
-        // labelStackView 约束
-        [self.labelStackView.leadingAnchor constraintEqualToAnchor:self.portraitImageView.trailingAnchor constant:RCUUserProfileHeaderCellRemarkLeadingSpace],
-        [self.labelStackView.trailingAnchor constraintLessThanOrEqualToAnchor:self.contentView.trailingAnchor constant:-RCUUserProfileHeaderCellRemarkLeadingSpace],
-        [self.labelStackView.centerYAnchor constraintEqualToAnchor:self.portraitImageView.centerYAnchor]
     ]];
 }
 
@@ -133,7 +125,7 @@ NSString  * const RCUUserProfileHeaderCellIdentifier = @"RCUUserProfileHeaderCel
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[UILabel alloc] init];
-        _nameLabel.textColor = RCDYCOLOR(0xA0A5Ab, 0x878787);
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0xA0A5Ab", @"0x878787");
         _nameLabel.font = [UIFont systemFontOfSize:RCUUserProfileHeaderCellNameFont];
     }
     return _nameLabel;
@@ -142,7 +134,7 @@ NSString  * const RCUUserProfileHeaderCellIdentifier = @"RCUUserProfileHeaderCel
 - (UILabel *)remarkLabel {
     if (!_remarkLabel) {
         _remarkLabel = [[UILabel alloc] init];
-        _remarkLabel.textColor =RCDYCOLOR(0x111f2c, 0x9f9f9f);
+        _remarkLabel.textColor =RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x9f9f9f");
         _remarkLabel.font = [UIFont systemFontOfSize:RCUUserProfileHeaderCellRemarkFont];
     }
     return _remarkLabel;

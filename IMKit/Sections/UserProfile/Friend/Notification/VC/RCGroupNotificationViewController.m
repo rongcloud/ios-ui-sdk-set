@@ -34,7 +34,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.edgesForExtendedLayout = UIRectEdgeNone;
+//    self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setupView];
     [self.viewModel fetchData];
 }
@@ -106,10 +106,6 @@
     return  [self.viewModel tableView:tableView cellForRowAtIndexPath:indexPath];
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return [self.viewModel tableView:tableView heightForRowAtIndexPath:indexPath];
-}
-
 #pragma mark - Property
 
 - (RCGroupNotificationView *)listView {
@@ -117,6 +113,7 @@
         RCGroupNotificationView *listView = [RCGroupNotificationView new];
         listView.tableView.dataSource = self;
         listView.tableView.delegate = self;
+        listView.tableView.estimatedRowHeight = 115;
         [listView addRefreshingTarget:self withSelector:@selector(loadMore)];
         _listView = listView;
     }

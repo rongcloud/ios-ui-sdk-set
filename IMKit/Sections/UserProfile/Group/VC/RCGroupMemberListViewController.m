@@ -9,18 +9,16 @@
 #import "RCGroupMemberListViewController.h"
 #import "RCGroupMemberListViewModel.h"
 #import "RCKitCommonDefine.h"
-#import "RCBaseTableView.h"
+#import "RCSelectUserView.h"
 @interface RCGroupMemberListViewController ()<
 UITableViewDelegate,
 UITableViewDataSource,
 RCListViewModelResponder
 >
 
-@property (nonatomic, strong) RCBaseTableView *membersView;
+@property (nonatomic, strong) RCSelectUserView *membersView;
 
 @property (nonatomic, strong) RCGroupMemberListViewModel *viewModel;
-
-@property (nonatomic, strong) UILabel *emptyLabel;
 
 @end
 
@@ -42,7 +40,7 @@ RCListViewModelResponder
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.viewModel registerCellForTableView:self.membersView];
+    [self.viewModel registerCellForTableView:self.membersView.tableView];
     [self setNavigationBarItems];
     [self setupView];
 }
@@ -65,8 +63,7 @@ RCListViewModelResponder
 }
 
 - (void)setupView {
-    self.membersView.tableHeaderView = [self.viewModel configureSearchBar];
-    [self.membersView addSubview:self.emptyLabel];
+    [self.membersView configureSearchBar:[self.viewModel configureSearchBar]];
 }
 
 #pragma mark -- action
@@ -78,13 +75,8 @@ RCListViewModelResponder
 #pragma mark -- RCListViewModelResponder
 
 - (void)reloadData:(BOOL)isEmpty {
-    [self.membersView reloadData];
-    self.emptyLabel.hidden = !isEmpty;
-    if (!self.emptyLabel.hidden) {
-        self.emptyLabel.text = RCLocalizedString(@"NotUserFound");
-        [self.emptyLabel sizeToFit];
-        self.emptyLabel.center = CGPointMake(self.view.center.x, 150);
-    }
+    [self.membersView.tableView reloadData];
+    self.membersView.emptyLabel.hidden = !isEmpty;
 }
 
 - (UIViewController *)currentViewController {
@@ -123,33 +115,15 @@ RCListViewModelResponder
 
 #pragma mark -- getter
 
-- (RCBaseTableView *)membersView {
+- (RCSelectUserView *)membersView {
     if (!_membersView) {
-        _membersView = [RCBaseTableView new];
-        _membersView.delegate = self;
-        _membersView.dataSource = self;
-        _membersView.tableFooterView = [UIView new];
-        if ([_membersView respondsToSelector:@selector(setSeparatorInset:)]) {
-            _membersView.separatorInset = UIEdgeInsetsMake(0, 64, 0, 0);
-        }
-        if ([_membersView respondsToSelector:@selector(setLayoutMargins:)]) {
-            _membersView.layoutMargins = UIEdgeInsetsMake(0, 64, 0, 0);
-        }
+        _membersView = [RCSelectUserView new];
+        _membersView.tableView.delegate = self;
+        _membersView.tableView.dataSource = self;
+        _membersView.emptyLabel.text = RCLocalizedString(@"NotUserFound");
     }
     return _membersView;
 }
 
-- (UILabel *)emptyLabel {
-    if (!_emptyLabel) {
-        UILabel *lab = [[UILabel alloc] init];
-        lab.textColor = RCDYCOLOR(0x939393, 0x666666);
-        lab.font = [UIFont systemFontOfSize:17];
-        lab.textAlignment = NSTextAlignmentCenter;
-        lab.hidden = YES;
-        [lab sizeToFit];
-        _emptyLabel = lab;
-    }
-    return _emptyLabel;
-}
 
 @end

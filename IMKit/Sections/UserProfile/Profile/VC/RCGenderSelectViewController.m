@@ -93,30 +93,24 @@ UITableViewDataSource
 - (RCBaseTableView *)genderView {
     if (!_genderView) {
         _genderView = [[RCBaseTableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
-        _genderView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
-        _genderView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);
+        _genderView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
         _genderView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 15)];
         _genderView.sectionHeaderHeight = 0;
+        _genderView.separatorStyle = UITableViewCellSeparatorStyleNone;
         if (@available(iOS 15.0, *)) {
             _genderView.sectionHeaderTopPadding = 15;
         }
         _genderView.delegate = self;
         _genderView.dataSource = self;
-        if ([_genderView respondsToSelector:@selector(setSeparatorInset:)]) {
-            _genderView.separatorInset = UIEdgeInsetsMake(0, 12, 0, 0);
-        }
-        if ([self respondsToSelector:@selector(setLayoutMargins:)]) {
-            _genderView.layoutMargins = UIEdgeInsetsMake(0, 12, 0, 0);
-        }
     }
     return _genderView;
 }
 
 - (RCBaseButton *)confirmButton {
     if (!_confirmButton) {
-        _confirmButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, RCUGenderSelectViewControllerConfirmWidth, RCUGenderSelectViewControllerConfirmHeight)];
+        _confirmButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
         [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDYCOLOR(0x0099ff, 0x007acc) forState:(UIControlStateNormal)];
+        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
         [_confirmButton addTarget:self action:@selector(confirmButtonDidClick) forControlEvents:UIControlEventTouchUpInside];
         [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:15]];
         _confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;

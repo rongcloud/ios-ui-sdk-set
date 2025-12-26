@@ -35,6 +35,8 @@ static void *__rc_friendApplyList_operation_queueTag = &__rc_friendApplyList_ope
 @property (nonatomic, strong) RCPagingQueryOption *option;
 @property (nonatomic, strong) NSArray<NSNumber *> *types;
 @property (nonatomic, strong) NSArray<NSNumber *> *status;
+@property (nonatomic, weak) RCBaseCellViewModel *lastBottomCellVM;
+
 @end
 
 @implementation RCApplyFriendListViewModel
@@ -210,13 +212,23 @@ static void *__rc_friendApplyList_operation_queueTag = &__rc_friendApplyList_ope
     dispatch_async(dispatch_get_main_queue(), ^{
         for (int i=0 ; i<count; i++) {
             RCApplyFriendSectionItem *item = self.sectionItems[i];
-            [item appendItems:array[i]];
+            NSArray *tmp = array[i];
+            [self removeSeparatorWithArray:tmp];
+            [item appendItems:tmp];
         }
         [self reloadData:self.dataSource.count == 0];
     });
 }
 
-
+- (void)removeSeparatorWithArray:(NSArray *)array {
+    if (array.count) {
+        [self removeSeparatorLineIfNeed:@[array]];
+        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
+            self.lastBottomCellVM.hideSeparatorLine = NO; // 加载更多时, 上次的last cell 需要显示line
+        }
+        self.lastBottomCellVM = array.lastObject;
+    }
+}
 #pragma mark - Protocol
 
 - (void)registerCellForTableView:(UITableView *)tableView {
@@ -272,21 +284,27 @@ static void *__rc_friendApplyList_operation_queueTag = &__rc_friendApplyList_ope
     }
     UIView *view = [[UIView alloc] initWithFrame:CGRectZero];
     view.frame = CGRectMake(0, 0, tableView.frame.size.width, 32);
-    view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
+    view.backgroundColor = RCDynamicColor(@"clear_color", @"0xf0f0f6", @"0x000000");
     UILabel *lab = [[UILabel alloc] initWithFrame:CGRectZero];
     lab.font = [UIFont systemFontOfSize:14.f];
-    lab.textColor = RCDYCOLOR(0x3b3b3b, 0xA7a7a7);
+    lab.textColor = RCDynamicColor(@"text_primary_color", @"0x3b3b3b", @"0xA7a7a7");
     lab.text = item.title;
     [view addSubview:lab];
 
     [lab sizeToFit];
-    lab.center = CGPointMake(13+lab.bounds.size.width/2, 16);
+    lab.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [NSLayoutConstraint activateConstraints:@[
+        [lab.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
+        [lab.centerYAnchor constraintEqualToAnchor:view.centerYAnchor]
+    ]];
     return view;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     RCApplyFriendSectionItem *item = [self.sectionItems objectAtIndex:indexPath.section];
-    RCApplyFriendCellViewModel *vm = [item itemAtIndex:indexPath.row];    return [vm cellHeight];
+    RCApplyFriendCellViewModel *vm = [item itemAtIndex:indexPath.row];
+    return [vm cellHeight];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
@@ -309,8 +327,6 @@ static void *__rc_friendApplyList_operation_queueTag = &__rc_friendApplyList_ope
             [tableView reloadSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationFade];
         });
     }];
- 
-
 }
 
 - (NSArray<UITableViewRowAction *> *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath {

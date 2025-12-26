@@ -5,7 +5,7 @@
 //  Created by zgh on 2024/8/19.
 //
 
-#import "RCBaseTableViewCell.h"
+#import "RCStackTableViewCell.h"
 #import "RCloudImageView.h"
 #import "RCOnlineStatusView.h"
 
@@ -13,7 +13,7 @@ UIKIT_EXTERN NSString  * _Nullable const RCUUserProfileHeaderCellIdentifier;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCUserProfileHeaderCell : RCBaseTableViewCell
+@interface RCUserProfileHeaderCell : RCStackTableViewCell
 
 @property (nonatomic, strong) RCloudImageView *portraitImageView;
 

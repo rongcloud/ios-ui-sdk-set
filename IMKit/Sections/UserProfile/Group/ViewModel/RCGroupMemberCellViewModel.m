@@ -11,7 +11,6 @@
 #import "RCGroupManager.h"
 #import "RCKitCommonDefine.h"
 
-#define RCGroupMemberCellHeight 56
 
 @interface RCGroupMemberCellViewModel ()
 
@@ -36,7 +35,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     RCGroupMemberCell *cell = [tableView dequeueReusableCellWithIdentifier:RCGroupMemberCellIdentifier];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    cell.portraitImageView.imageURL = [NSURL URLWithString:self.memberInfo.portraitUri];
+    if (self.cellPortraitImage) {
+        cell.portraitImageView.image = self.cellPortraitImage;
+
+    } else {
+        cell.portraitImageView.imageURL = [NSURL URLWithString:self.memberInfo.portraitUri];
+    }
     if (self.remark.length > 0) {
         cell.nameLabel.text = self.remark;
     } else if (self.memberInfo.nickname.length > 0) {
@@ -45,12 +49,13 @@
         cell.nameLabel.text = self.memberInfo.name;
     }
     cell.roleLabel.text = [self getRoleString:self.memberInfo.role];
+    cell.hideSeparatorLine = self.hideSeparatorLine;
     [cell hiddenArrow:self.hiddenArrow];
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCGroupMemberCellHeight;
+    return RCUserManagementCellHeight;
 }
 
 #pragma mark -- private

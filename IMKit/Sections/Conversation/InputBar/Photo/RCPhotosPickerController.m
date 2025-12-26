@@ -99,7 +99,8 @@ static NSString *const reuseIdentifier = @"Cell";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
+    self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF3F6F9", @"0x191A1F");
+    self.collectionView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFFFFFF", @"0x2D2D32");
     self.previousPreheatRect = CGRectZero;
     CGFloat scale = [UIScreen mainScreen].scale;
     self.thumbnailSize = (CGSize){WIDTH * scale, WIDTH * scale};
@@ -392,7 +393,7 @@ static NSString *const reuseIdentifier = @"Cell";
 - (void)createTopView {
     CGFloat height = 49 + [self getSafeAreaExtraBottomHeight];
     _toolBar = [[UIView alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT - height, SCREEN_WIDTH, height)];
-    _toolBar.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
+    _toolBar.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF3F6F9", @"0x191A1F");
     [self.view addSubview:_toolBar];
     
     // add button for bottom bar

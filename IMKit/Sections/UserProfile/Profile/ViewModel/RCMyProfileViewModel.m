@@ -89,6 +89,7 @@
     uniqueIdViewModel.hiddenArrow = YES;
     
     RCProfileCommonCellViewModel *genderViewModel = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"Gender") detail:[self getGenderString:self.userProfile.gender]];
+    genderViewModel.hideSeparatorLine = YES;
     NSArray *array = @[
         @[portraitViewModel, nameViewModel, uniqueIdViewModel, genderViewModel]
     ];

@@ -15,12 +15,14 @@
 #import "RCBaseTableViewCell.h"
 #import "RCBaseNavigationController.h"
 #import "RCUserInfoCacheManager.h"
+#import "RCSightFileBrowserCell.h"
+#import "RCIMKitThemeManager.h"
 
 @interface RCSightFileBrowserViewController ()
 
 @property (nonatomic, strong) RCMessage *messageModel;
 @property (nonatomic, strong) NSMutableArray<RCMessage *> *messageModelArray;
-
+@property (nonatomic, assign) RCIMKitInnerThemesType themesType;
 @end
 
 @implementation RCSightFileBrowserViewController
@@ -35,12 +37,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
-    self.tableView.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
+    self.themesType = [RCIMKitThemeManager currentInnerThemesType];
+    if (self.themesType == RCIMKitInnerThemesTypeLively) {
+        self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    } else {
+        self.tableView.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
+    }
     [self getMessageFromModel:self.messageModel];
     self.refreshControl = [[UIRefreshControl alloc] init];
     self.refreshControl.tintColor = RCDynamicColor(@"disabled_color", @"0xD3D3D3", @"0xD3D3D3");
     [self.refreshControl addTarget:self action:@selector(refreshAction:) forControlEvents:UIControlEventValueChanged];
     self.tableView.tableFooterView = [UIView new];
+    [self.tableView registerClass:[RCSightFileBrowserCell class] forCellReuseIdentifier:RCSightFileBrowserCellIdentifier];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -79,17 +87,25 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSString *const identifier = @"RCSightFileCell";
-    RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
-    if (!cell) {
-        cell = [[RCBaseTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier];
+    if (self.themesType == RCIMKitInnerThemesTypeLively) {
+        RCSightFileBrowserCell *cell = [tableView dequeueReusableCellWithIdentifier:RCSightFileBrowserCellIdentifier];
+        return cell;
+    } else {
+        NSString *const identifier = @"RCSightFileCell";
+        RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+        if (!cell) {
+            cell = [[RCBaseTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier];
+        }
+        cell.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
+        cell.detailTextLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xa0a5ab");
+        return cell;
     }
-    cell.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
-    cell.detailTextLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xa0a5ab");
-    return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (self.themesType == RCIMKitInnerThemesTypeLively) {
+        return 76;
+    }
     return 64;
 }
 
@@ -99,8 +115,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     RCMessage *model = self.messageModelArray[indexPath.row];
     RCSightMessage *sightMessage = (RCSightMessage *)model.content;
     UIImage *image = RCDynamicImage(@"video_files_list_icon_img", @"sight_file_icon");
-    cell.imageView.image = image;
-    cell.textLabel.text = sightMessage.name;
+  
     long long milliseconds = model.messageDirection == MessageDirection_SEND ? model.sentTime : model.receivedTime;
 
     long long timeSecond = milliseconds / 1000;
@@ -124,7 +139,20 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString *userName = displayName.length > 20
                              ? [NSString stringWithFormat:@"%@...", [displayName substringToIndex:20]]
                              : displayName;
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@ %@", userName, timeString, sizeString];
+    if (self.themesType == RCIMKitInnerThemesTypeLively) {
+        if ([cell isKindOfClass:[RCSightFileBrowserCell class]]) {
+            RCSightFileBrowserCell *browserCell = (RCSightFileBrowserCell *)cell;
+            browserCell.imageIcon.image = image;
+            browserCell.labelTitle.text = sightMessage.name;
+            browserCell.labelTime.text = timeString;
+            browserCell.labelSubtitle.text = [NSString stringWithFormat:@"%@  %@", sizeString, userName];
+        }
+    } else {
+        cell.imageView.image = image;
+        cell.textLabel.text = sightMessage.name;
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@ %@", userName, timeString, sizeString];
+    }
+
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

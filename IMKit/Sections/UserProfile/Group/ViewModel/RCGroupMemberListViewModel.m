@@ -7,7 +7,6 @@
 //
 
 #import "RCGroupMemberListViewModel.h"
-#import "RCGroupMemberCellViewModel.h"
 #import "RCGroupMemberCell.h"
 #import "RCGroupManager.h"
 #import "RCProfileViewController.h"
@@ -35,6 +34,7 @@
 
 @property (nonatomic, assign) BOOL isLoadingSearchMembers;
 
+@property (nonatomic, weak) RCGroupMemberCellViewModel *lastBottomCellVM;
 @end
 
 @implementation RCGroupMemberListViewModel
@@ -89,6 +89,8 @@
     self.searchQueryResult = nil;
     [self.matchMemberList removeAllObjects];
     if (searchText.length == 0) {
+        [self removeSeparatorWithArray:self.memberList];
+
         [self.responder reloadData:NO];
     } else {
         [self filterDataSourceWithQueryResult:nil];
@@ -99,6 +101,8 @@
     if (!inSearching) {
         [self endEditingState];
     }
+    [self removeSeparatorWithArray:self.memberList];
+
     [self.responder reloadData:NO];
 }
 
@@ -127,6 +131,15 @@
 
 #pragma mark -- private
 
+- (void)removeSeparatorWithArray:(NSArray *)array {
+    if (array.count) {
+        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
+            self.lastBottomCellVM.hideSeparatorLine = NO;
+        }
+        [self removeSeparatorLineIfNeed:@[array]];
+        self.lastBottomCellVM = array.lastObject;
+    }
+}
 - (void)filterDataSourceWithQueryResult:(RCPagingQueryResult *)result {
     // 添加搜索加载状态检查，防止并发请求
     if (self.isLoadingSearchMembers) {
@@ -151,6 +164,7 @@
                 self.isLoadingSearchMembers = NO;
                 self.searchQueryResult = result;
                 [self.matchMemberList addObjectsFromArray:list];
+                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:self.matchMemberList.count == 0];
             });
         }];
@@ -197,6 +211,7 @@
                 self.isLoadingMembers = NO;
                 self.queryResult = result;
                 [self.mutableMemberList addObjectsFromArray:list];
+                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:NO];
             });
         }];
@@ -232,7 +247,7 @@
 #pragma mark -- getter
 
 - (NSArray<RCGroupMemberCellViewModel *> *)memberList {
-    if ([self.searchBarVM isCurrentFirstResponder]) {
+    if (self.searchBarVM.searchBar.text.length > 0) {
         return self.matchMemberList;
     }
     return self.mutableMemberList;

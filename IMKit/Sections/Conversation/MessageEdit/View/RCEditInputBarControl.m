@@ -98,10 +98,10 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     self.currentBottomBarStatus = KBottomBarDefaultStatus;
     [self addSubview:self.editInputContainer];
     // 设置约束
-    [self setupConstraints];
+    [self setupViewConstraints];
 }
 
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     // 编辑容器填充整个控件
     self.editInputContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[

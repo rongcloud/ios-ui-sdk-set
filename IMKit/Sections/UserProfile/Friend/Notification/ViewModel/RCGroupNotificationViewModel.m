@@ -118,6 +118,9 @@ static void *__rc_group_notification_operation_queueTag = &__rc_group_notificati
                     items = [self.delegate groupNotificationViewModel:self willLoadItemsInDataSource:array];
                 }
             }
+            if (items) {
+                [self removeSeparatorLineIfNeed:@[items]];
+            }
             [self.dataSource addObjectsFromArray:items];
             [self reloadData:self.dataSource.count == 0];
             [self refreshingFinished:YES withTips:nil];

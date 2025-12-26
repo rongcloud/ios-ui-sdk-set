@@ -39,6 +39,7 @@
 }
 
 - (void)setupView {
+    [super setupView];
     self.selectionStyle = UITableViewCellSelectionStyleNone;
     
     // 头像
@@ -50,10 +51,10 @@
     // 时间
     [self.contentView addSubview:self.timeLabel];
     
-    [self setupConstraints];
 }
 
 - (void)setupConstraints {
+    [super setupConstraints];
     self.portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.timeLabel.translatesAutoresizingMaskIntoConstraints = NO;

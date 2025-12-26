@@ -12,29 +12,31 @@
 
 NSString  * const RCGroupMemberHeaderCellIdentifier = @"RCGroupMemberHeaderCellIdentifier";
 
-#define RCGroupMemberHeaderCellPortraitSize 51
+#define RCGroupMemberHeaderCellPortraitSize 48
 #define RCGroupMemberHeaderCellNameHeight 15
-#define RCGroupMemberHeaderCellNameFont 11
+#define RCGroupMemberHeaderCellNameFont 12
 @implementation RCGroupMemberHeaderCell
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         [self setupView];
+        [self setupViewConstraints];
     }
     return self;
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    self.portraitImageView.frame = CGRectMake((self.contentView.frame.size.width-RCGroupMemberHeaderCellPortraitSize)/2, 0, RCGroupMemberHeaderCellPortraitSize, RCGroupMemberHeaderCellPortraitSize);
-    if (RCKitConfigCenter.ui.globalConversationAvatarStyle == RC_USER_AVATAR_CYCLE &&
-        RCKitConfigCenter.ui.globalMessageAvatarStyle == RC_USER_AVATAR_CYCLE) {
-        self.portraitImageView.layer.cornerRadius = RCGroupMemberHeaderCellPortraitSize / 2;
-    }else{
-        self.portraitImageView.layer.cornerRadius = 5.f;
-    }
-    self.nameLabel.frame = CGRectMake(0, self.contentView.frame.size.height - RCGroupMemberHeaderCellNameHeight, self.contentView.frame.size.width, RCGroupMemberHeaderCellNameHeight);
+- (void)setupViewConstraints {
+    [NSLayoutConstraint activateConstraints:@[
+           [self.portraitImageView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+           [self.portraitImageView.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor],
+           [self.portraitImageView.heightAnchor constraintEqualToConstant:RCGroupMemberHeaderCellPortraitSize],
+           [self.portraitImageView.widthAnchor constraintEqualToConstant:RCGroupMemberHeaderCellPortraitSize],
+           
+           [self.nameLabel.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+           [self.nameLabel.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+           [self.nameLabel.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor]
+       ]];
 }
 
 - (void)setupView {
@@ -47,6 +49,13 @@ NSString  * const RCGroupMemberHeaderCellIdentifier = @"RCGroupMemberHeaderCellI
     if (!_portraitImageView) {
         _portraitImageView = [[RCloudImageView alloc] init];
         _portraitImageView.layer.masksToBounds = YES;
+        _portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
+        if (RCKitConfigCenter.ui.globalConversationAvatarStyle == RC_USER_AVATAR_CYCLE &&
+            RCKitConfigCenter.ui.globalMessageAvatarStyle == RC_USER_AVATAR_CYCLE) {
+            _portraitImageView.layer.cornerRadius = RCGroupMemberHeaderCellPortraitSize / 2;
+        }else{
+            _portraitImageView.layer.cornerRadius = 5.f;
+        }
     }
     return _portraitImageView;
 }
@@ -54,7 +63,8 @@ NSString  * const RCGroupMemberHeaderCellIdentifier = @"RCGroupMemberHeaderCellI
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[UILabel alloc] init];
-        _nameLabel.textColor = RCDYCOLOR(0x111f2c, 0x9f9f9f);
+        _nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        _nameLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x111f2c", @"0x9f9f9f");
         _nameLabel.font = [UIFont systemFontOfSize:RCGroupMemberHeaderCellNameFont];
         _nameLabel.textAlignment = NSTextAlignmentCenter;
     }

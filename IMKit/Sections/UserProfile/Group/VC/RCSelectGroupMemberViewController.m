@@ -10,6 +10,7 @@
 #import "RCBaseButton.h"
 #import "RCBaseTableView.h"
 #import "RCKitCommonDefine.h"
+#import "RCSelectUserView.h"
 
 @interface RCSelectGroupMemberViewController ()<
 UITableViewDelegate,
@@ -19,11 +20,9 @@ RCListViewModelResponder
 
 @property (nonatomic, strong) RCBaseButton *confirmButton;
 
-@property (nonatomic, strong) RCBaseTableView *listView;
+@property (nonatomic, strong) RCSelectUserView *listView;
 
 @property (nonatomic, strong) RCSelectGroupMemberViewModel *viewModel;
-
-@property (nonatomic, strong) UILabel *emptyLabel;
 
 @end
 
@@ -44,7 +43,7 @@ RCListViewModelResponder
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.viewModel registerCellForTableView:self.listView];
+    [self.viewModel registerCellForTableView:self.listView.tableView];
     [self setNavigationBarItems];
     [self setupView];
 }
@@ -70,8 +69,7 @@ RCListViewModelResponder
 }
 
 - (void)setupView {
-    self.listView.tableHeaderView = [self.viewModel configureSearchBar];
-    [self.listView addSubview:self.emptyLabel];
+    [self.listView configureSearchBar:[self.viewModel configureSearchBar]];
 }
 
 #pragma mark -- action
@@ -95,13 +93,8 @@ RCListViewModelResponder
 #pragma mark -- RCListViewModelResponder
 
 - (void)reloadData:(BOOL)isEmpty {
-    [self.listView reloadData];
-    self.emptyLabel.hidden = !isEmpty;
-    if (!self.emptyLabel.hidden) {
-        self.emptyLabel.text = RCLocalizedString(@"NotUserFound");
-        [self.emptyLabel sizeToFit];
-        self.emptyLabel.center = CGPointMake(self.view.center.x, 150);
-    }
+    [self.listView.tableView reloadData];
+    self.listView.emptyLabel.hidden = !isEmpty;
 }
 
 - (void)updateItem:(NSIndexPath *)indexPath {
@@ -139,49 +132,27 @@ RCListViewModelResponder
 
 #pragma mark -- getter
 
-- (RCBaseTableView *)listView {
+- (RCSelectUserView *)listView {
     if (!_listView) {
-        _listView = [RCBaseTableView new];
-        _listView.delegate = self;
-        _listView.dataSource = self;
-        _listView.tableFooterView = [UIView new];
-        if (@available(iOS 15.0, *)) {
-            _listView.sectionHeaderTopPadding = 0;
-        }
-        if ([_listView respondsToSelector:@selector(setSeparatorInset:)]) {
-            _listView.separatorInset = UIEdgeInsetsMake(0, 64, 0, 0);
-        }
-        if ([_listView respondsToSelector:@selector(setLayoutMargins:)]) {
-            _listView.layoutMargins = UIEdgeInsetsMake(0, 64, 0, 0);
-        }
+        _listView = [RCSelectUserView new];
+        _listView.tableView.delegate = self;
+        _listView.tableView.dataSource = self;
+        _listView.emptyLabel.text = RCLocalizedString(@"NotUserFound");
     }
     return _listView;
 }
 
 - (RCBaseButton *)confirmButton {
     if (!_confirmButton) {
-        _confirmButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 100, 40)];
+        _confirmButton = [[RCBaseButton alloc] init];
         [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDYCOLOR(0x0099ff, 0x007acc) forState:(UIControlStateNormal)];
-        [_confirmButton setTitleColor:HEXCOLOR(0xa0a5ab) forState:(UIControlStateDisabled)];
+        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
+        [_confirmButton setTitleColor:RCDynamicColor(@"disabled_color",@"0xa0a5ab", @"0xa0a5ab") forState:(UIControlStateDisabled)];
         [_confirmButton addTarget:self action:@selector(confirmButtonDidClick) forControlEvents:UIControlEventTouchUpInside];
-        [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:15]];
+        [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:17]];
         _confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     }
     return _confirmButton;
-}
-
-- (UILabel *)emptyLabel {
-    if (!_emptyLabel) {
-        UILabel *lab = [[UILabel alloc] init];
-        lab.textColor = RCDYCOLOR(0x939393, 0x666666);
-        lab.font = [UIFont systemFontOfSize:17];
-        lab.textAlignment = NSTextAlignmentCenter;
-        lab.hidden = YES;
-        [lab sizeToFit];
-        _emptyLabel = lab;
-    }
-    return _emptyLabel;
 }
 
 @end

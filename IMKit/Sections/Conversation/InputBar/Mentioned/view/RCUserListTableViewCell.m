@@ -23,6 +23,8 @@
 
 #pragma mark - setUpView
 - (void)setUpView {
+    [super setupView];
+
     //头像
     [self.contentView addSubview:self.headImageView];
     //姓名

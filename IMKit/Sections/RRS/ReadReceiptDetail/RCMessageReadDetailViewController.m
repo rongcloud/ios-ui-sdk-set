@@ -67,7 +67,7 @@
     [self.view addSubview:self.mainView];
     
     // 设置约束
-    [self setupConstraints];
+    [self setupViewConstraints];
     
     // 设置已读/未读数量
     NSInteger readCount = self.viewModel.messageModel.readReceiptInfoV5.readCount;
@@ -75,7 +75,7 @@
     [self.mainView setupReadCount:readCount unreadCount:unreadCount];
 }
 
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     NSLayoutAnchor *topAnchor;
     if (@available(iOS 11.0, *)) {
         topAnchor = self.view.safeAreaLayoutGuide.topAnchor;

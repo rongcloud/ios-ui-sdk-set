@@ -141,7 +141,11 @@
     if (msgDirection == MessageDirection_SEND ) {
         UIColor *linkColor = RCDynamicColor(@"link_color", @"0x0099ff", @"0x005F9E");
         if (linkColor) {
-            return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : linkColor},
+            return @{@(NSTextCheckingTypeLink) :
+                         @{NSForegroundColorAttributeName : linkColor,
+                           NSUnderlineColorAttributeName :linkColor,
+                           NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
+                         },
                      @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : linkColor}
             };
         }
@@ -152,7 +156,9 @@
     }else{
         UIColor *linkColor = RCDynamicColor(@"link_color", @"0x0099ff", @"0x1290e2");
         if (linkColor) {
-            return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : linkColor},
+            return @{@(NSTextCheckingTypeLink) : @{NSForegroundColorAttributeName : linkColor,
+                                                   NSUnderlineColorAttributeName :linkColor,
+                                                   NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)},
                      @(NSTextCheckingTypePhoneNumber) : @{ NSForegroundColorAttributeName : linkColor}
             };
         }

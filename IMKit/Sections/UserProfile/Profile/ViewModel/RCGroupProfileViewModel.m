@@ -186,7 +186,7 @@
     }
     
     RCProfileCommonCellViewModel *memberVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:[NSString stringWithFormat: RCLocalizedString(@"GroupMembersWithCount"), @(group.membersCount)] detail:nil];
-    memberVM.hiddenSeparatorLine = YES;
+    memberVM.hideSeparatorLine = YES;
     
     self.membersViewModel = [[RCGroupProfileMembersCellViewModel alloc] initWithItemCount:[self showItemCount:group]];
     

@@ -31,7 +31,7 @@ NSString  * const RCFriendListCellIdentifier = @"RCFriendListCellIdentifier";
 - (void)setupView {
     [super setupView];
     self.line = [UIView new];
-    self.line.backgroundColor = RCDYCOLOR(0xE3E5E6, 0x272727);;
+    self.line.backgroundColor = RCDynamicColor(@"line_background_color",@"0xE3E5E6", @"0x272727");;
 //    [self.contentView addSubview:self.line];
 }
 

@@ -191,6 +191,7 @@
     [self setupViewModelOnlineStatus:headerVM];
     
     RCProfileCommonCellViewModel *setRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"SetRemark") detail:nil];
+    setRemarkVM.hideSeparatorLine = YES;
     
     [profileList addObject:@[headerVM]];
     [profileList addObject:@[setRemarkVM]];

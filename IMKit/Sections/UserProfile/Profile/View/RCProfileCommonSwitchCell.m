@@ -9,8 +9,6 @@
 #import "RCProfileCommonSwitchCell.h"
 #import "RCKitCommonDefine.h"
 
-#define RCProfileCommonSwitchTrailing 15
-#define RCProfileCommonSwitchTopSpace 50
 
 NSString  * const RCProfileCommonSwitchCellIdentifier = @"RCProfileCommonSwitchCellIdentifier";
 
@@ -18,15 +16,9 @@ NSString  * const RCProfileCommonSwitchCellIdentifier = @"RCProfileCommonSwitchC
 
 - (void)setupView {
     [super setupView];
-    [self.contentView addSubview:self.switchView];
-}
-
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    self.switchView.center = CGPointMake(self.contentView.frame.size.width - self.switchView.frame.size.width/2 - RCProfileCommonSwitchTrailing, self.contentView.center.y);
-    CGRect frame = self.titleLabel.frame;
-    frame.size.width = self.switchView.frame.origin.x - frame.origin.x - RCProfileCommonSwitchTopSpace;
-    self.titleLabel.frame = frame;
+    [self.contentStackView addArrangedSubview:self.titleLabel];
+    [self.contentStackView addArrangedSubview:self.switchView];
+    [self.contentStackView addArrangedSubview:self.arrowView];
 }
 
 - (void)switchValueChanged:(UISwitch *)sender {
@@ -38,8 +30,9 @@ NSString  * const RCProfileCommonSwitchCellIdentifier = @"RCProfileCommonSwitchC
 - (UISwitch *)switchView {
     if (!_switchView) {
         _switchView = [[UISwitch alloc] init];
-        _switchView.onTintColor = HEXCOLOR(0x0099ff);
+        _switchView.onTintColor = RCDynamicColor(@"success_color", @"0x0099ff", @"0x0099ff");
         [_switchView addTarget:self action:@selector(switchValueChanged:) forControlEvents:UIControlEventValueChanged];
+        _switchView.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _switchView;
 }

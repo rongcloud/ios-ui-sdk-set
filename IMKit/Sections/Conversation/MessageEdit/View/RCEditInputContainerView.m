@@ -61,7 +61,7 @@
 
 - (void)updateConstraints {
     if (!_didSetupConstraints) {
-        [self setupConstraints];
+        [self setupViewConstraints];
         _didSetupConstraints = YES;
     }
     [super updateConstraints];
@@ -111,7 +111,7 @@
 
 #pragma mark - 约束设置
 
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     // 清除所有视图的自动调整掩码
     self.topBorderView.translatesAutoresizingMaskIntoConstraints = NO;
     self.referencedLabel.translatesAutoresizingMaskIntoConstraints = NO;

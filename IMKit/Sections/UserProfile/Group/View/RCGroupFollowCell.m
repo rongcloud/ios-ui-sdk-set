@@ -13,34 +13,43 @@
 
 NSString  * const RCGroupFollowCellIdentifier = @"RCGroupFollowCellIdentifier";
 
-NSInteger const RCGroupFollowCellPortraitLeading = 12;
-NSInteger const RCGroupFollowCellPortraitSize = 40;
+NSInteger const RCGroupFollowCellPortraitLeading = 16;
+NSInteger const RCGroupFollowCellPortraitSize = 32;
 NSInteger const RCGroupFollowCellNameFont = 17;
 NSInteger const RCGroupFollowCellNameLeadingSpace = 12;
 NSInteger const RCGroupFollowCellActionButtonHeight = 24;
-NSInteger const RCGroupFollowCellActionButtonMinWidth = 45;
 NSInteger const RCGroupFollowCellActionButtonSpace = 10;
-NSInteger const RCGroupFollowCellActionButtonTrailingSpace = 16;
+NSInteger const RCGroupFollowCellActionButtonTrailingSpace = 3;
 @implementation RCGroupFollowCell
 
 - (void)setupView {
-    self.contentView.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                           darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
-    [self.contentView addSubview:self.portraitImageView];
-    [self.contentView addSubview:self.nameLabel];
-    [self.contentView addSubview:self.actionButton];
+    [super setupView];
+    self.contentStackView.spacing = 12;
+    [self.contentStackView addArrangedSubview:self.portraitImageView];
+    [self.contentStackView addArrangedSubview:self.nameLabel];
+    [self.contentStackView addArrangedSubview:self.actionButton];
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    self.portraitImageView.frame = CGRectMake(RCGroupFollowCellPortraitLeading, (self.frame.size.height - RCGroupFollowCellPortraitSize)/2, RCGroupFollowCellPortraitSize, RCGroupFollowCellPortraitSize);
-    [self.actionButton sizeToFit];
+- (void)setupConstraints {
+    [super setupConstraints];
+    [self updateLineViewConstraints:RCUserManagementImageCellLineLeading
+                           trailing:-RCUserManagementImageCellLineTrailing];
+    // 禁用自动转换 autoresizing mask
+    self.portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.actionButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.nameLabel setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+    [self.actionButton setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [NSLayoutConstraint activateConstraints:@[
+        // 宽高 32x32
+        [self.portraitImageView.widthAnchor constraintEqualToConstant:RCGroupFollowCellPortraitSize],
+        [self.portraitImageView.heightAnchor constraintEqualToConstant:RCGroupFollowCellPortraitSize],
+        // 高度 24
+        [self.actionButton.heightAnchor constraintEqualToConstant:RCGroupFollowCellActionButtonHeight],
+        // 最小宽度 45
+    ]];
     
-    CGFloat width = MAX(self.actionButton.frame.size.width + RCGroupFollowCellActionButtonSpace, RCGroupFollowCellActionButtonMinWidth);
-    self.actionButton.frame = CGRectMake(self.contentView.frame.size.width - RCGroupFollowCellActionButtonTrailingSpace - width, (self.contentView.frame.size.height - RCGroupFollowCellActionButtonHeight)/2, width, RCGroupFollowCellActionButtonHeight);
     
-    CGFloat x = RCGroupFollowCellNameLeadingSpace + CGRectGetMaxX(self.portraitImageView.frame);
-    self.nameLabel.frame = CGRectMake(x, 0, self.actionButton.frame.origin.x - x, self.contentView.frame.size.height); CGPointMake(CGRectGetMaxX(self.portraitImageView.frame)+RCGroupFollowCellNameLeadingSpace+self.nameLabel.frame.size.width/2, self.portraitImageView.center.y);
 }
 
 #pragma mark -- action
@@ -69,8 +78,10 @@ NSInteger const RCGroupFollowCellActionButtonTrailingSpace = 16;
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[UILabel alloc] init];
-        _nameLabel.textColor = RCDYCOLOR(0x111f2c, 0x9f9f9f);
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x9f9f9f");
         _nameLabel.font = [UIFont systemFontOfSize:RCGroupFollowCellNameFont];
+        [_nameLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+        [_nameLabel setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     }
     return _nameLabel;
 }
@@ -78,18 +89,20 @@ NSInteger const RCGroupFollowCellActionButtonTrailingSpace = 16;
 - (RCButton *)actionButton {
     if (!_actionButton) {
         RCButton *btn = [RCButton buttonWithType:UIButtonTypeCustom];
-        [btn setTitle:RCLocalizedString(@"Remove") forState:UIControlStateNormal];
-        btn.backgroundColor = RCDYCOLOR(0xDDDDDD, 0x3C3C3C);
-        [btn setTitleColor:RCDYCOLOR(0x000000, 0xD3E1EE) forState:UIControlStateNormal];
-        btn.titleLabel.font = [UIFont systemFontOfSize:13];
-        btn.layer.cornerRadius = 6;
-        btn.layer.masksToBounds = YES;
+        [btn setImage:RCDynamicImage(@"group_follow_remove_btn_img", @"group_follow_remove_btn")
+             forState:UIControlStateNormal];
         [btn addTarget:self
                 action:@selector(actionButtonDidTap)
       forControlEvents:UIControlEventTouchUpInside];
-        _actionButton = btn;
+        if ([RCKitUtility isRTL]) {
+            btn.contentEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 22);
+        } else {
+            btn.contentEdgeInsets = UIEdgeInsetsMake(0, 22, 0, 0);
+        }
+         _actionButton = btn;
     }
     return _actionButton;
 }
+
 
 @end

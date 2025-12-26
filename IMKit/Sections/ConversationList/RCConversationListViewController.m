@@ -79,6 +79,7 @@
     RCDynamicColor(@"clear_color", @"0xffffff", @"0x000000");
     self.view.backgroundColor = RCDynamicColor(@"view_background_color", @"0xffffff00", @"0xffffff00");
     self.conversationListTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(1, 1, 0, CGFLOAT_MIN)];
+    self.conversationListTableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
     CGFloat leftOffset = 12 + [RCKitConfig defaultConfig].ui.globalConversationPortraitSize.width + 12;
     if ([self.conversationListTableView respondsToSelector:@selector(setSeparatorInset:)]) {
         self.conversationListTableView.separatorInset = UIEdgeInsetsMake(0, leftOffset, 0, 0);

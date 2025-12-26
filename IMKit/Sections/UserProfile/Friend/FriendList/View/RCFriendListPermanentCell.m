@@ -13,6 +13,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 NSString  * const RCFriendListPermanentCellIdentifier = @"RCFriendListPermanentCellIdentifier";
+NSInteger const RCFriendListPermanentCellPortraitWidth = 32;
 
 @implementation RCFriendListPermanentCell
 
@@ -32,41 +33,35 @@ NSString  * const RCFriendListPermanentCellIdentifier = @"RCFriendListPermanentC
 
 - (void)setupView {
     [super setupView];
-    self.contentView.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                        darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
     self.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    [self.contentView addSubview:self.portraitImageView];
-    [self.contentView addSubview:self.contentStackView];
-    
     // 将在线状态和名称添加到 StackView
+    UIView *portraitContainerView = [self portraitContainerView];
+    [self.contentStackView addArrangedSubview:portraitContainerView];
     [self.contentStackView addArrangedSubview:self.onlineStatusView];
     [self.contentStackView addArrangedSubview:self.labName];
 }
 
+- (UIView *)portraitContainerView {
+    UIView *view = [UIView new];
+    view.translatesAutoresizingMaskIntoConstraints = NO;
+    [view setContentHuggingPriority:UILayoutPriorityRequired
+                            forAxis:UILayoutConstraintAxisHorizontal];
+    [view addSubview:self.portraitImageView];
+    [NSLayoutConstraint activateConstraints:@[
+            [self.portraitImageView.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
+            [self.portraitImageView.trailingAnchor constraintEqualToAnchor:view.trailingAnchor constant:-8],
+            [self.portraitImageView.centerYAnchor constraintEqualToAnchor:view.centerYAnchor],
+            [self.portraitImageView.widthAnchor constraintEqualToConstant:RCFriendListPermanentCellPortraitWidth],
+            [self.portraitImageView.heightAnchor constraintEqualToConstant:RCFriendListPermanentCellPortraitWidth],
+        ]];
+    return view;
+}
+
 - (void)setupConstraints {
     [super setupConstraints];
-    CGFloat portraitWidth = 40;
-    CGFloat marginWidth = 15;
-    
-    self.portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
-    self.contentStackView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // onlineStatusView 压缩优先级
-    [self.onlineStatusView setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        // portraitImageView 约束
-        [self.portraitImageView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:marginWidth],
-        [self.portraitImageView.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor],
-        [self.portraitImageView.widthAnchor constraintEqualToConstant:portraitWidth],
-        [self.portraitImageView.heightAnchor constraintEqualToConstant:portraitWidth],
-        
-        // contentStackView 约束
-        [self.contentStackView.leadingAnchor constraintEqualToAnchor:self.portraitImageView.trailingAnchor constant:marginWidth],
-        [self.contentStackView.trailingAnchor constraintLessThanOrEqualToAnchor:self.contentView.trailingAnchor constant:-marginWidth],
-        [self.contentStackView.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor]
-    ]];
+    [self updateLineViewConstraints:RCUserManagementImageCellLineLeading
+                           trailing:-RCUserManagementImageCellLineTrailing];
 }
 
 - (void)showPortraitByImage:(UIImage *)image {
@@ -78,30 +73,23 @@ NSString  * const RCFriendListPermanentCellIdentifier = @"RCFriendListPermanentC
         _portraitImageView = [RCloudImageView new];
         if (RCKitConfigCenter.ui.globalConversationAvatarStyle == RC_USER_AVATAR_CYCLE &&
             RCKitConfigCenter.ui.globalMessageAvatarStyle == RC_USER_AVATAR_CYCLE) {
-            _portraitImageView.layer.cornerRadius = 20.f;
+            _portraitImageView.layer.cornerRadius = RCFriendListPermanentCellPortraitWidth/2;
         } else {
             _portraitImageView.layer.cornerRadius = 5.f;
         }
         _portraitImageView.layer.masksToBounds = YES;
+        _portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
         [_portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
     }
     return _portraitImageView;
 }
 
-- (UIStackView *)contentStackView {
-    if (!_contentStackView) {
-        _contentStackView = [[UIStackView alloc] init];
-        _contentStackView.axis = UILayoutConstraintAxisHorizontal;
-        _contentStackView.alignment = UIStackViewAlignmentCenter;
-        _contentStackView.distribution = UIStackViewDistributionFill;
-        _contentStackView.spacing = 5;
-    }
-    return _contentStackView;
-}
-
 - (RCOnlineStatusView *)onlineStatusView {
     if (!_onlineStatusView) {
         _onlineStatusView = [[RCOnlineStatusView alloc] init];
+        [_onlineStatusView setContentHuggingPriority:UILayoutPriorityRequired
+                                forAxis:UILayoutConstraintAxisHorizontal];
+        _onlineStatusView.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _onlineStatusView;
 }
@@ -109,6 +97,10 @@ NSString  * const RCFriendListPermanentCellIdentifier = @"RCFriendListPermanentC
 - (UILabel *)labName {
     if (!_labName) {
         UILabel *lab = [UILabel new];
+        lab.textColor = RCDynamicColor(@"text_primary_color", @"0x020814", @"0xFFFFFF"); 
+        lab.translatesAutoresizingMaskIntoConstraints = NO;
+        [lab setContentHuggingPriority:UILayoutPriorityDefaultLow
+                               forAxis:UILayoutConstraintAxisHorizontal];
         _labName = lab;
     }
     return _labName;

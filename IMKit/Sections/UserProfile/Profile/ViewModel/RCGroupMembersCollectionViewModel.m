@@ -83,10 +83,10 @@
         }
     } else if ([self isAddItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
-        cell.portraitImageView.placeholderImage = RCResourceImage(@"group_member_add");
+        cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_add_img",@"group_member_add");
     } else if ([self isRemoveItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
-        cell.portraitImageView.placeholderImage = RCResourceImage(@"group_member_remove");
+        cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_remove_img",@"group_member_remove");
     }
     return cell;
 }

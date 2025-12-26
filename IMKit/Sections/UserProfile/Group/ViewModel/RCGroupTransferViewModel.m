@@ -7,7 +7,6 @@
 //
 
 #import "RCGroupTransferViewModel.h"
-#import "RCGroupMemberCellViewModel.h"
 #import "RCGroupMemberCell.h"
 #import "RCGroupManager.h"
 #import "RCProfileViewController.h"
@@ -32,6 +31,7 @@
 
 @property (nonatomic, copy) NSString *groupId;
 
+@property (nonatomic, weak) RCGroupMemberCellViewModel *lastBottomCellVM;
 @end
 
 @implementation RCGroupTransferViewModel
@@ -86,6 +86,7 @@
     self.searchQueryResult = nil;
     [self.matchMemberList removeAllObjects];
     if (searchText.length == 0) {
+        [self removeSeparatorWithArray:[self memberList]];
         [self.responder reloadData:NO];
     } else {
         [self filterDataSourceWithQueryResult:nil];
@@ -96,6 +97,7 @@
     if (!inSearching) {
         [self endEditingState];
     }
+    [self removeSeparatorWithArray:[self memberList]];
     [self.responder reloadData:NO];
 }
 
@@ -146,6 +148,7 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.searchQueryResult = result;
                 [self.matchMemberList addObjectsFromArray:list];
+                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:self.matchMemberList.count == 0];
             });
         }];
@@ -178,10 +181,21 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.queryResult = result;
                 [self.mutableMemberList addObjectsFromArray:list];
+                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:NO];
             });
         }];
     }];
+}
+
+- (void)removeSeparatorWithArray:(NSArray *)array {
+    if (array.count) {
+        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
+            self.lastBottomCellVM.hideSeparatorLine = NO;
+        }
+        [self removeSeparatorLineIfNeed:@[array]];
+        self.lastBottomCellVM = array.lastObject;
+    }
 }
 
 - (NSArray<RCRemoveGroupMemberCellViewModel *> *)getViewModelsWithMembers:(NSArray<RCGroupMemberInfo *> *)members friendInfos:(NSArray<RCFriendInfo *> *)friendInfos {
@@ -241,7 +255,7 @@
 #pragma mark -- getter
 
 - (NSArray<RCGroupMemberCellViewModel *> *)memberList {
-    if ([self.searchBarVM isCurrentFirstResponder]) {
+    if (self.searchBarVM.searchBar.text.length > 0) {
         return self.matchMemberList;
     }
     return self.mutableMemberList;

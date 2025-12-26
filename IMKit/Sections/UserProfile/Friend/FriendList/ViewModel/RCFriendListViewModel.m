@@ -26,7 +26,7 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 @property (nonatomic, strong) NSArray *indexTitles;
 // 分组cell
 @property (nonatomic, strong) NSDictionary *dicInfo;
-// 常熟cell
+// 常驻cell
 @property (nonatomic, strong) NSArray *permanentViewModels;
 // 搜索匹配cell
 @property (nonatomic, strong) NSArray *matchFriendList;
@@ -133,13 +133,12 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 }
 
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIView *view = [[UIView alloc] initWithFrame:CGRectZero];
-    view.frame = CGRectMake(0, 0, tableView.frame.size.width, 32);
-    view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 32)];
+    view.backgroundColor = [UIColor clearColor];
 
     UILabel *title = [[UILabel alloc] initWithFrame:CGRectZero];
     title.font = [UIFont systemFontOfSize:14.f];
-    title.textColor = RCDYCOLOR(0x3b3b3b, 0xA7a7a7);
+    title.textColor = RCDynamicColor(@"text_primary_color", @"0x3b3b3b", @"0xA7a7a7");
     [view addSubview:title];
     
     NSString *text = nil;
@@ -147,8 +146,13 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
         text = self.indexTitles[section-1];
     }
     title.text = text;
+    title.textAlignment = NSTextAlignmentNatural;
     [title sizeToFit];
-    title.center = CGPointMake(13+title.bounds.size.width/2, 16);
+    title.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+        [title.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
+        [title.centerYAnchor constraintEqualToAnchor:view.centerYAnchor]
+    ]];
     return view;
 }
 
@@ -201,6 +205,9 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
         if (vms.count) {
             [permanents addObjectsFromArray:vms];
         }
+    }
+    if (permanents) {
+        [self removeSeparatorLineIfNeed:@[permanents]];
     }
     self.permanentViewModels = permanents;
     
@@ -304,7 +311,7 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
             }
             return [obj1 compare:obj2 options:NSNumericSearch];
         }];
-       
+        [self removeSeparatorLineIfNeed:[dicInfo allValues]];
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataSource = array;
             // 都在主线程切换数据源, 避免多线程操作引起crash
@@ -319,7 +326,7 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 - (void)reloadData {
     if ([self.responder respondsToSelector:@selector(reloadData:)]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            BOOL empty = self.dataSource.count == 0;;
+            BOOL empty = (self.dataSource.count == 0) && (self.permanentViewModels.count == 0);
             [self.responder reloadData:empty];
         });
     }

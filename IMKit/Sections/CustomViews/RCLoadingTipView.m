@@ -123,7 +123,7 @@
 - (UIView *)containerView {
     if (!_containerView) {
         _containerView = [UIView new];
-        _containerView.backgroundColor = RCDynamicColor(@"disabled_color", @"0xD3D3D3", @"0xD3D3D3");
+        _containerView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0xD3D3D3", @"0xD3D3D3");
         _containerView.layer.cornerRadius = 3;
         [_containerView.layer masksToBounds];
     }

@@ -87,8 +87,9 @@
             _commmonPhrasesTableView.insetsContentViewsToSafeArea = NO;
         }
         _commmonPhrasesTableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0);
-        _commmonPhrasesTableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
+        _commmonPhrasesTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
         _commmonPhrasesTableView.showsVerticalScrollIndicator = NO;
+        _commmonPhrasesTableView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1a1a1a");
     }
     return _commmonPhrasesTableView;
 }

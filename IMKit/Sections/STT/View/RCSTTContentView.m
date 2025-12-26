@@ -12,6 +12,8 @@
 #import "RCSTTDetailView.h"
 #import "RCMessageCellTool.h"
 #import "RCMessageModel+STT.h"
+#import "RCKitUtility.h"
+
 @interface RCSTTContentView()<RCSTTContentViewModelDelegate> {
     RCSTTContentStatus _status;
 }
@@ -53,14 +55,27 @@
 - (void)refreshViewFrameForMessageDirection:(RCMessageDirection)direction
                                   baseFrame:(CGRect)frame {
     CGFloat width = [RCMessageCellTool getMessageContentViewMaxWidth];
-    if (direction == MessageDirection_SEND) {
-        CGFloat xOffset = CGRectGetMaxX(frame);
-        self.frame = CGRectMake(xOffset - width,
-                                CGRectGetMaxY(frame)+4,
-                                width,
-                                [self.viewModel speedToTextContentHeight]);
+    
+    if ([RCKitUtility isRTL]) {
+        if (direction == MessageDirection_SEND) {
+            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width,  [self.viewModel speedToTextContentHeight]);
+        } else {
+            CGFloat xOffset = CGRectGetMaxX(frame);
+            self.frame = CGRectMake(xOffset - width,
+                                    CGRectGetMaxY(frame)+4,
+                                    width,
+                                   0);
+        }
     } else {
-        self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width, 0);
+        if (direction == MessageDirection_SEND) {
+            CGFloat xOffset = CGRectGetMaxX(frame);
+            self.frame = CGRectMake(xOffset - width,
+                                    CGRectGetMaxY(frame)+4,
+                                    width,
+                                    [self.viewModel speedToTextContentHeight]);
+        } else {
+            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width, 0);
+        }
     }
 }
 
@@ -146,7 +161,6 @@
         return;
     }
     [self.detailView detailViewHighlight:NO];
-    
 }
 
 - (void)scrollToCurrentMessageIfNeeded {
@@ -172,10 +186,10 @@
         newOffset.y = MAX(0, newOffset.y);
         
         [self.collectionView setContentOffset:newOffset animated:YES];
-        RCSTTLog(@"UID:%@, detailView bottom: %f, visible bottom: %f, scrolling offset: %f", 
+        RCSTTLog(@"UID:%@, detailView bottom: %f, visible bottom: %f, scrolling offset: %f",
                  self.viewModel.model.messageUId, detailViewBottom, visibleBottom, scrollOffset);
     } else {
-        RCSTTLog(@"UID:%@, detailView is fully visible, no need to scroll (bottom: %f, visible: %f)", 
+        RCSTTLog(@"UID:%@, detailView is fully visible, no need to scroll (bottom: %f, visible: %f)",
                  self.viewModel.model.messageUId, detailViewBottom, visibleBottom);
     }
 }
@@ -194,10 +208,10 @@
             UICollectionView *collectionView = [self collectionView];
             if (!collectionView) {
                 RCSTTLog("UID:%@, collectionView is nil, retry after delay", self.viewModel.model.messageUId);
-        
+                
                 return;
             }
-
+            
             // 再执行UIView动画进行布局更新
             [UIView animateWithDuration:0.35
                              animations:^{
@@ -225,16 +239,16 @@
         if (self.viewModel != viewModel) {
             return;
         }
-
+        
         RCSTTLog("UID:%@, changeSTTContentViewStatus: %ld", self.viewModel.model.messageUId, (long)status);
         self.status = status;
     });
 }
 
 - (void)sttViewModel:(RCSTTContentViewModel *)viewModel
-        displayText:(NSString *)text
-               size:(CGSize)size
-          animation:(BOOL)animation {
+         displayText:(NSString *)text
+                size:(CGSize)size
+           animation:(BOOL)animation {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.viewModel != viewModel) {
             return;
@@ -281,11 +295,26 @@
 - (void)setStatus:(RCSTTContentStatus)status {
     if (_status != status) {
         _status = status;
-            [self showViewByStatus:status];
+        [self showViewByStatus:status];
     }
     if (!self.contentView) {
         return;
     }
+    if ([RCKitUtility isRTL]) {
+        if (self.viewModel.model.messageDirection == MessageDirection_SEND) {
+            self.contentView.frame = CGRectMake(0,
+                                                0,
+                                                self.contentView.frame.size.width,
+                                                self.contentView.frame.size.height);
+            RCSTTLog(@"UID:%@,  contentView left :%@ ", self.viewModel.model.messageUId,self.contentView.description);
+        } else {
+            self.contentView.frame = CGRectMake(CGRectGetMaxX(self.containerView.bounds) - self.contentView.frame.size.width,
+                                                0,
+                                                self.contentView.frame.size.width,
+                                                self.contentView.frame.size.height);
+            RCSTTLog(@"UID:%@, contentView right:%@ ", self.viewModel.model.messageUId, self.contentView.description);
+        }
+    } else {
         if (self.viewModel.model.messageDirection == MessageDirection_SEND) {
             self.contentView.frame = CGRectMake(CGRectGetMaxX(self.containerView.bounds) - self.contentView.frame.size.width,
                                                 0,
@@ -300,6 +329,8 @@
             RCSTTLog(@"UID:%@,  contentView left :%@ ", self.viewModel.model.messageUId,self.contentView.description);
             
         }
+    }
+ 
     [self setNeedsDisplay];
     [self layoutIfNeeded];
 }

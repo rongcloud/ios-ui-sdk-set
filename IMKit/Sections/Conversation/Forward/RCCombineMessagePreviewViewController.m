@@ -88,7 +88,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
+    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x2D2D32");
     [self setNav];
     [self addSubViews];
     if (self.ifWebViewPush) {
@@ -529,19 +529,109 @@
 #pragma mark subViews
 - (WKWebView *)combineMsgWebView {
     if (!_combineMsgWebView) {
-        CGFloat navBarHeight = 64;
-        CGFloat homeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
-        if (homeBarHeight > 0) {
-            navBarHeight = 88;
+        WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+        WKUserContentController *userContentController = [[WKUserContentController alloc] init];
+        
+        // 在文档开始时注入深色模式 CSS，避免闪屏
+        NSString *darkModeScript = [self darkModeInjectionScript];
+        if (darkModeScript.length > 0) {
+            WKUserScript *darkModeUserScript = [[WKUserScript alloc] initWithSource:darkModeScript
+                                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+                                                                   forMainFrameOnly:YES];
+            [userContentController addUserScript:darkModeUserScript];
         }
-        _combineMsgWebView =
-            [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width,
-                                                        self.view.bounds.size.height - navBarHeight - homeBarHeight)];
+        
+        config.userContentController = userContentController;
+        
+        _combineMsgWebView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
         _combineMsgWebView.UIDelegate = self;
         _combineMsgWebView.navigationDelegate = self;
-        _combineMsgWebView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
+        _combineMsgWebView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x2D2D32");
+        _combineMsgWebView.opaque = NO;
     }
     return _combineMsgWebView;
+}
+
+- (NSString *)darkModeInjectionScript {
+    BOOL isDarkMode = NO;
+    if (@available(iOS 13.0, *)) {
+        isDarkMode = (UITraitCollection.currentTraitCollection.userInterfaceStyle == UIUserInterfaceStyleDark);
+    }
+    
+    if (!isDarkMode) {
+        return nil;
+    }
+    
+    return [self darkModeCSSScript];
+}
+
+- (NSString *)darkModeCSSScript {
+    // 深色模式 CSS 样式
+    NSString *script = @"(function() {"
+        "var style = document.getElementById('rc-dark-mode-style');"
+        "if (!style) {"
+        "  style = document.createElement('style');"
+        "  style.id = 'rc-dark-mode-style';"
+        "  document.documentElement.appendChild(style);"
+        "}"
+        "style.innerHTML = '"
+        "html, body { background-color: #2D2D32 !important; color: #E5E5E5 !important; }"
+        ".rong-link-site { color: #58a6ff !important; }"
+        ".rong-pc { border-left-color: #3A3A3A !important; border-right-color: #3A3A3A !important; }"
+        ".rong-time { color: #8E8E93 !important; }"
+        ".rong-hr { border-bottom-color: #3A3A3A !important; }"
+        ".rong-time-value { background: #2D2D32 !important; }"
+        ".rong-message { border-bottom-color: #3A3A3A !important; color: #8E8E93 !important; }"
+        ".rong-message-user-bg { background: #3A3A3A !important; }"
+        ".rongcloud-message-user-name { color: #E5E5E5 !important; }"
+        ".rong-message-time { color: #8E8E93 !important; }"
+        ".rongcloud-message-combinemsg { border-top-color: #3A3A3A !important; }"
+        ".rong-message-combine { border-color: #3A3A3A !important; }"
+        "a { color: #8E8E93 !important; }"
+        ".rong-combine-title { color: #E5E5E5 !important; }"
+        ".rong-conbine-foot { border-top-color: #3A3A3A !important; }"
+        ".rong-big-img { background: #2D2D32 !important; }"
+        ".rong-big-video { background: #2D2D32 !important; }"
+        "';"
+        "})();";
+    
+    return script;
+}
+
+- (NSString *)lightModeCSSScript {
+    // 移除深色模式样式，恢复浅色模式
+    NSString *script = @"(function() {"
+        "var style = document.getElementById('rc-dark-mode-style');"
+        "if (style) {"
+        "  style.innerHTML = '';"
+        "}"
+        "})();";
+    
+    return script;
+}
+
+- (void)updateWebViewColorScheme {
+    if (!_combineMsgWebView) {
+        return;
+    }
+    
+    BOOL isDarkMode = NO;
+    if (@available(iOS 13.0, *)) {
+        isDarkMode = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark);
+    }
+    
+    NSString *script = isDarkMode ? [self darkModeCSSScript] : [self lightModeCSSScript];
+    [self.combineMsgWebView evaluateJavaScript:script completionHandler:nil];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    
+    if (@available(iOS 13.0, *)) {
+        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+            [self updateWebViewColorScheme];
+        }
+    }
 }
 
 - (UIView *)loadingTipView {

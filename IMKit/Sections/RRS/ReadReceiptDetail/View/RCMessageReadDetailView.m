@@ -84,7 +84,7 @@
     // 5. 空状态视图
     [self.tableContainerView addSubview:self.emptyContainerView];
     
-    [self setupConstraints];
+    [self setupViewConstraints];
 }
 
 - (UITableView *)createTableView {
@@ -120,7 +120,7 @@
     return tableView;
 }
 
-- (void)setupConstraints {
+- (void)setupViewConstraints {
     // Tab 视图约束
     [NSLayoutConstraint activateConstraints:@[
         [self.tabView.topAnchor constraintEqualToAnchor:self.topAnchor],

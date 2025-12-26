@@ -16,6 +16,9 @@
 #import "RCConversationListDataSource+RRS.h"
 #import "RCUserOnlineStatusManager.h"
 #import "RCUserOnlineStatusUtil.h"
+#import "RCUserInfoCacheManager.h"
+#import "NSMutableArray+RCOperation.h"
+#import "NSMutableDictionary+RCOperation.h"
 
 #define PagingCount 100
 
@@ -37,7 +40,7 @@
         self.dataList = [[NSMutableArray alloc] init];
         self.isConverstaionListAppear = NO;
         self.cellBackgroundColor = RCDynamicColor(@"conversation-list_background_color", @"0xffffff", @"0x1c1c1e66");
-        self.topCellBackgroundColor = RCDynamicColor(@"common_background_color", @"0xf2faff", @"0x171717CC");
+        self.topCellBackgroundColor = RCDynamicColor(@"conversation_stick_color", @"0xf2faff", @"0x171717CC");
         [self registerNotifications];
         
         [RCUserOnlineStatusManager sharedManager].delegate = self;
@@ -90,16 +93,15 @@
             
             [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
             
+            [self fetchUserProfile:modelList];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(modelList.count > 0) {
                     [ws.dataList addObjectsFromArray:modelList.copy];
                 }
+                [self fetchUserOnlineStatus:modelList.copy];
                 if(completion) {
                     completion(modelList);
                 }
-                dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                    [self fetchUserOnlineStatus:modelList.copy];
-                });
             });
         });
     }];
@@ -146,15 +148,14 @@
         modelList = [self collectConversation:modelList collectionTypes:self.collectionConversationTypeArray];
         
         [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
+        [self fetchUserProfile:modelList];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataList = modelList;
+            [self fetchUserOnlineStatus:modelList.copy];
             if (completion) {
                 completion(modelList);
             }
-            dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                [self fetchUserOnlineStatus:modelList.copy];
-            });
         });
     });
 }
@@ -664,4 +665,31 @@
     }
 }
 
+- (void)fetchUserProfile:(NSArray <RCConversationModel *>*)modelList {
+    NSMutableArray<NSString *> *userIds = [NSMutableArray arrayWithCapacity:modelList.count];
+    NSMutableArray<NSString *> *groupIds = [NSMutableArray arrayWithCapacity:modelList.count];
+    NSMutableDictionary<NSString *, NSString*> *groupMember = [NSMutableDictionary dictionary];
+    for (RCConversationModel *model in modelList) {
+        if (model.conversationType == ConversationType_PRIVATE) {
+            [userIds rclib_addObject:model.targetId];
+        } else if (model.conversationType == ConversationType_GROUP) {
+            [groupIds rclib_addObject:model.targetId];
+            [groupMember rclib_setObject:model.senderUserId forKey:model.targetId];
+        }
+    }
+    if (userIds.count > 0) {
+        [RCUserInfoCacheManager.sharedManager preloadUserInfos:userIds];
+    }
+    if (groupIds.count > 0) {
+        [RCUserInfoCacheManager.sharedManager preloadGroupInfos:groupIds];
+    }
+    
+    for (NSString *groupId in [groupMember.allKeys copy]) {
+        NSString *member = [groupMember valueForKey:groupId];
+        if (member) {
+            [RCUserInfoCacheManager.sharedManager preloadGroupMembers:@[member] inGroup:groupId];
+        }
+    }
+    
+}
 @end

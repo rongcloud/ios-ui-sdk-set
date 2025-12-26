@@ -67,6 +67,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updatePublicServiceProfileInfo:(RCPublicServiceProfile *)profileInfo forServiceId:(NSString *)serviceId;
 
+
+#pragma mark - preload
+
+/// 预加载用户信息（优先使用缓存，缓存未命中自动触发请求）
+/// @param userIds 用户ID数组
+- (void)preloadUserInfos:(NSArray<NSString *> *)userIds;
+
+/// 预加载群成员信息（优先使用缓存，缓存未命中自动触发请求）
+- (void)preloadGroupMembers:(NSArray<NSString *> *)userIds
+                    inGroup:(NSString *)groupId;
+
+/// 预加载群组信息（优先使用缓存，缓存未命中自动触发请求）
+/// @param groupIds 群组ID数组
+- (void)preloadGroupInfos:(NSArray<NSString *> *)groupIds;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -62,7 +62,7 @@ NSString *const RCKitUserOnlineStatusChangedUserIdsKey = @"RCKitUserOnlineStatus
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.32.0_opensource";
+static NSString *const RCIMKitVersion = @"5.34.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -737,6 +737,18 @@ static NSString *const RCIMKitVersion = @"5.32.0_opensource";
 
 - (RCUserInfo *)getUserInfoCache:(NSString *)userId {
     return [[RCUserInfoCacheManager sharedManager] getUserInfo:userId];
+}
+//从cache和用户信息提供者取
+- (void)getUserInfo:(NSString *)userId complete:(void (^)(RCUserInfo *userInfo))completeBlock {
+    RCUserInfo *user = [[RCUserInfoCacheManager sharedManager] getUserInfoFromCacheOnly:userId];
+    if (user) {
+        if (completeBlock) {
+            completeBlock(user);
+        }
+    } else {
+        [[RCUserInfoCacheManager sharedManager] getUserInfo:userId
+                                                   complete:completeBlock];
+    }
 }
 
 - (void)refreshUserInfoCache:(RCUserInfo *)userInfo withUserId:(NSString *)userId {

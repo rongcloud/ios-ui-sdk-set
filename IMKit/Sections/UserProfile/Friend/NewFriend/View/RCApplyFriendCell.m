@@ -12,97 +12,69 @@
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
+
 NSString  * const RCFriendApplyCellIdentifier = @"RCFriendApplyCellIdentifier";
-NSInteger const RCFriendApplyCellMargin = 15;
-NSInteger const RCFriendApplyCellPortraitWidth = 40;
-NSInteger const RCFriendApplyCellBtnExpandWidth = 28;
-NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
+NSInteger const RCFriendApplyCellMargin = 10;
+NSInteger const RCFriendApplyCellPortraitWidth = 32;
 
-@interface RCApplyFriendCell()
 
+@interface RCApplyFriendCell()<RCSizeCalculateLabelDelegate>
+
+/// 底部容器 subtitle + btnExpan
+@property (nonatomic, strong) UIStackView *bottomStackView;
+
+/// 右侧容器 topStackView + bottomStackView
+@property (nonatomic, strong) UIStackView *rightStackView;
+
+/// 内容容器 portraitImageView + rightStackView
+@property (nonatomic, strong) UIStackView *contentStackView;
 @end
-
 
 @implementation RCApplyFriendCell
 
-- (void)awakeFromNib {
-    [super awakeFromNib];
-    // Initialization code
-}
-
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
-    [super setSelected:selected animated:animated];
-}
 
 - (void)setupView {
     [super setupView];
-    self.contentView.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                         darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
     self.selectionStyle = UITableViewCellSelectionStyleNone;
-    [self.contentView addSubview:self.portraitImageView];
-    [self.contentView addSubview:self.labName];
-    [self.contentView addSubview:self.labRemark];
-    [self.contentView addSubview:self.btnExpand];
-    [self.contentView addSubview:self.buttonsContainer];
-    [self.contentView addSubview:self.labStatus];
+    [self.paddingContainerView addSubview:self.contentStackView];
+    
+    [self.contentStackView addArrangedSubview:self.portraitImageView];
+    [self.contentStackView addArrangedSubview:self.rightStackView];
+    
+    [self.rightStackView addArrangedSubview:self.topStackView];
+    [self.topStackView addArrangedSubview:self.labName];
+    [self.topStackView addArrangedSubview:self.labStatus];
+    
+    [self.rightStackView addArrangedSubview:self.bottomStackView];
+    [self.bottomStackView addArrangedSubview:self.labRemark];
+    
+    UIView *viewHolder = [UIView new];
+    viewHolder.translatesAutoresizingMaskIntoConstraints = NO;
+    [viewHolder addSubview:self.btnExpand];
+    [NSLayoutConstraint activateConstraints:@[
+            [self.btnExpand.leadingAnchor constraintEqualToAnchor:viewHolder.leadingAnchor],
+            [self.btnExpand.trailingAnchor constraintEqualToAnchor:viewHolder.trailingAnchor],
+            [self.btnExpand.topAnchor constraintEqualToAnchor:viewHolder.topAnchor],
+            [self.btnExpand.bottomAnchor constraintEqualToAnchor:viewHolder.bottomAnchor]
+        ]];
+    [self.bottomStackView addArrangedSubview:viewHolder];
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    CGFloat portraitWidth = RCFriendApplyCellPortraitWidth;
-    CGFloat marginWidth = RCFriendApplyCellMargin;
-    CGFloat width = self.contentView.bounds.size.width;
-    
-    self.portraitImageView.frame = CGRectMake(marginWidth, 8, portraitWidth, portraitWidth);
-    
-    CGFloat xCenter = width - marginWidth - CGRectGetWidth(self.buttonsContainer.bounds)/2;
-    self.buttonsContainer.center =  CGPointMake(xCenter, self.portraitImageView.center.y);
-    CGFloat btnExpandWidth = CGRectGetWidth(self.btnExpand.bounds);
-    CGFloat xOffset = CGRectGetMinX(self.buttonsContainer.frame)-btnExpandWidth-marginWidth;
-    CGFloat yOffset = CGRectGetMaxY(self.portraitImageView.frame)-14;
-    self.btnExpand.frame = CGRectMake(xOffset, yOffset, btnExpandWidth, 14);
-    
-    [self.labStatus sizeToFit];
-    xCenter = width-marginWidth-CGRectGetWidth(self.labStatus.frame)/2;
-    self.labStatus.center = CGPointMake(xCenter, self.portraitImageView.center.y);
-    
-    xOffset = CGRectGetMaxX(self.portraitImageView.frame) + marginWidth;
-    CGFloat labWidth = CGRectGetMinX(self.labStatus.frame) - marginWidth - xOffset;
-    self.labName.frame = CGRectMake(xOffset, CGRectGetMinY(self.portraitImageView.frame), labWidth, 24);
-    
-    yOffset = CGRectGetMaxY(self.portraitImageView.frame) - 14;
-    // 收起时的长度
-    CGFloat labRemarkWidth = CGRectGetMinX(self.btnExpand.frame) -  CGRectGetMinX(self.labName.frame)-marginWidth;
-    // 展开后的长度
-    CGFloat labRemarkExpandWidth = CGRectGetMinX(self.buttonsContainer.frame) -  CGRectGetMinX(self.labName.frame)-marginWidth;
-    
-    if (self.viewModel.style == RCFriendApplyCellStyleNone) { // 还没计算过宽度
-        self.labRemark.numberOfLines = 1;
-        [self.labRemark sizeToFit];
-        CGSize size = CGSizeMake(labRemarkWidth, CGRectGetHeight(self.labRemark.frame));
-        // 首次计算,以确定是否显示展开
-        [self.viewModel configureFolderRemarkSize:size];
-        // 同时计算展开后的高度
-        [self.viewModel configureExpandRemarkSize:CGSizeMake(labRemarkExpandWidth, size.height)];
-    }
-// 不是首次计算
-    if (self.viewModel.style != RCFriendApplyCellStyleExpand) {// 非展开状态
-        self.labRemark.numberOfLines = 1;
-        self.labRemark.frame = CGRectMake(CGRectGetMinX(self.labName.frame),
-                                           yOffset,
-                                          labRemarkWidth,
-                                           16);
-        self.btnExpand.hidden = !(self.viewModel.style == RCFriendApplyCellStyleFolder);
-    } else { // 展开状态
-        self.labRemark.numberOfLines = 0;
-        self.labRemark.frame = CGRectMake(CGRectGetMinX(self.labName.frame),
-                                          yOffset,
-                                          labRemarkExpandWidth,
-                                          10000);
-        [self.labRemark sizeToFit];
-        self.btnExpand.hidden = YES;
-    }
-
+- (void)setupConstraints {
+    [super setupConstraints];
+    [self updateLineViewConstraints:RCUserManagementImageCellLineLeading
+                           trailing:-RCUserManagementImageCellLineTrailing];
+    [NSLayoutConstraint activateConstraints:@[
+           [self.contentStackView.leadingAnchor constraintEqualToAnchor:self.paddingContainerView.leadingAnchor constant:RCUserManagementPadding],
+           [self.contentStackView.trailingAnchor constraintEqualToAnchor:self.paddingContainerView.trailingAnchor constant:-RCUserManagementPadding],
+           [self.contentStackView.topAnchor constraintEqualToAnchor:self.paddingContainerView.topAnchor constant:RCFriendApplyCellMargin],
+           [self.contentStackView.bottomAnchor constraintEqualToAnchor:self.paddingContainerView.bottomAnchor constant:-RCFriendApplyCellMargin],
+           
+           [self.portraitImageView.widthAnchor constraintEqualToConstant:RCFriendApplyCellPortraitWidth],
+           [self.portraitImageView.heightAnchor constraintEqualToConstant:RCFriendApplyCellPortraitWidth],
+           [self.topStackView.heightAnchor constraintEqualToConstant:34]
+           
+       ]];
 }
 
 - (void)showPortrait:(NSString *)url {
@@ -132,10 +104,20 @@ NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
             self.labStatus.text = RCLocalizedString(@"FriendApplicationUnHandled");
             break;
     }
+    
 }
 
 - (void)btnExpandClick:(id)sender {
     [self.viewModel expandRemark];
+}
+
+#pragma mark - RCSizeCalculateLabelDelegate
+
+- (void)labelLayoutFinished:(UILabel *)label
+                 natureSize:(CGSize)natureSize {
+    BOOL ret = [self.viewModel shouldHideExpandButton:label.bounds.size
+                                           natureSize:natureSize];
+    self.btnExpand.hidden = ret;
 }
 #pragma mark - GETTER
 
@@ -144,14 +126,13 @@ NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
         _portraitImageView = [RCloudImageView new];
         if (RCKitConfigCenter.ui.globalConversationAvatarStyle == RC_USER_AVATAR_CYCLE &&
             RCKitConfigCenter.ui.globalMessageAvatarStyle == RC_USER_AVATAR_CYCLE) {
-            _portraitImageView.layer.cornerRadius = 20.f;
+            _portraitImageView.layer.cornerRadius = RCFriendApplyCellPortraitWidth/2;
         } else {
             _portraitImageView.layer.cornerRadius = 5.f;
         }
-        _portraitImageView.bounds = CGRectMake(0, 0, RCFriendApplyCellPortraitWidth, RCFriendApplyCellPortraitWidth);
         _portraitImageView.layer.masksToBounds = YES;
         [_portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
-
+        _portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _portraitImageView;
 }
@@ -160,18 +141,25 @@ NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
     if (!_labName) {
         UILabel *lab = [UILabel new];
         lab.font = [UIFont boldSystemFontOfSize:17];
+        lab.translatesAutoresizingMaskIntoConstraints = NO;
+        [lab setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+        [lab setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
         _labName = lab;
     }
     return _labName;
 }
 
-- (UILabel *)labRemark {
+- (RCSizeCalculateLabel *)labRemark {
     if (!_labRemark) {
-        UILabel *lab = [UILabel new];
-        lab.textColor = RCDYCOLOR(0xA0A5Ab, 0x878787);
+        RCSizeCalculateLabel *lab = [RCSizeCalculateLabel new];
+        lab.delegate = self;
+        lab.textColor = RCDynamicColor(@"text_secondary_color", @"0xA0A5Ab", @"0x878787");
         lab.font = [UIFont systemFontOfSize:14];
         lab.numberOfLines = 0;
-        lab.userInteractionEnabled = YES;
+        lab.translatesAutoresizingMaskIntoConstraints = NO;
+        [lab setContentHuggingPriority:UILayoutPriorityDefaultLow
+                               forAxis:UILayoutConstraintAxisHorizontal];
+
         _labRemark = lab;
     }
     return _labRemark;
@@ -181,8 +169,12 @@ NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
 - (UILabel *)labStatus {
     if (!_labStatus) {
         UILabel *lab = [UILabel new];
-        lab.textColor = RCDYCOLOR(0xA0A5Ab, 0x878787);
+        lab.textColor = RCDynamicColor(@"text_primary_color", @"0xA0A5Ab", @"0x878787");
         lab.font = [UIFont systemFontOfSize:13];
+        lab.translatesAutoresizingMaskIntoConstraints = NO;
+        [lab setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [lab setContentHuggingPriority:UILayoutPriorityRequired
+                               forAxis:UILayoutConstraintAxisHorizontal];
         _labStatus = lab;
     }
     return _labStatus;
@@ -195,22 +187,69 @@ NSInteger const RCFriendApplyCellBtnContainerWidth = 105;
              forState:UIControlStateNormal];
         btn.hidden = YES;
         btn.titleLabel.font = [UIFont systemFontOfSize:14];
-        btn.bounds = CGRectMake(0, 0, RCFriendApplyCellBtnExpandWidth, 14);
         [btn addTarget:self
                 action:@selector(btnExpandClick:)
       forControlEvents:UIControlEventTouchUpInside];
-        [btn setTitleColor:HEXCOLOR(0x0099FF) forState:UIControlStateNormal];
+        [btn setTitleColor:RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff") forState:UIControlStateNormal];
         [btn sizeToFit];
+        btn.translatesAutoresizingMaskIntoConstraints = NO;
+        [btn setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [btn setContentHuggingPriority:UILayoutPriorityRequired
+                               forAxis:UILayoutConstraintAxisHorizontal];
         _btnExpand = btn;
     }
     return _btnExpand;
 }
 
-- (UIView *)buttonsContainer {
-    if (!_buttonsContainer) {
-        _buttonsContainer = [UIView new];
-        _buttonsContainer.bounds = CGRectMake(0, 0, RCFriendApplyCellBtnContainerWidth, 24);
+- (UIStackView *)topStackView {
+    if (!_topStackView) {
+        _topStackView = [[UIStackView alloc] init];
+        _topStackView.axis = UILayoutConstraintAxisHorizontal;
+        _topStackView.alignment = UIStackViewAlignmentFill;
+        _topStackView.distribution = UIStackViewDistributionFill;
+        _topStackView.spacing = 10;
+        _topStackView.translatesAutoresizingMaskIntoConstraints = NO;
+        _topStackView.accessibilityLabel = @"topStackView";
     }
-    return _buttonsContainer;
+    return _topStackView;
+}
+
+- (UIStackView *)bottomStackView {
+    if (!_bottomStackView) {
+        _bottomStackView = [[UIStackView alloc] init];
+        _bottomStackView.accessibilityLabel = @"bottomStackView";
+        _bottomStackView.axis = UILayoutConstraintAxisHorizontal;
+        _bottomStackView.alignment = UIStackViewAlignmentCenter;
+        _bottomStackView.distribution = UIStackViewDistributionFill;
+        _bottomStackView.spacing = 10;
+        _bottomStackView.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _bottomStackView;
+}
+
+- (UIStackView *)rightStackView {
+    if (!_rightStackView) {
+        _rightStackView = [[UIStackView alloc] init];
+        _rightStackView.accessibilityLabel = @"rightStackView";
+        _rightStackView.axis = UILayoutConstraintAxisVertical;
+        _rightStackView.alignment = UIStackViewAlignmentFill;
+        _rightStackView.distribution = UIStackViewDistributionFill;
+        _rightStackView.spacing = 3;
+        _rightStackView.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _rightStackView;
+}
+
+- (UIStackView *)contentStackView {
+    if (!_contentStackView) {
+        _contentStackView = [[UIStackView alloc] init];
+        _contentStackView.accessibilityLabel = @"contentStackView";
+        _contentStackView.axis = UILayoutConstraintAxisHorizontal;
+        _contentStackView.alignment = UIStackViewAlignmentCenter;
+        _contentStackView.distribution = UIStackViewDistributionFill;
+        _contentStackView.spacing = 12;
+        _contentStackView.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _contentStackView;
 }
 @end

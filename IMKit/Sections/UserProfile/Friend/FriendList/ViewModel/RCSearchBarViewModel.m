@@ -81,7 +81,6 @@
         return NO;
     }
     self.inSearching = YES;
-    self.searchBar.showsCancelButton = YES;
     for (UIView *view in [[[self.searchBar subviews] objectAtIndex:0] subviews]) {
         if ([view isKindOfClass:[NSClassFromString(@"UINavigationButton") class]]) {
             UIButton *cancel = (UIButton *)view;
@@ -123,7 +122,6 @@
     UISearchBar *bar = [[RCSearchBar alloc] initWithFrame:CGRectMake(0, 0, width, height)];
     bar.delegate = self;
     bar.keyboardType = UIKeyboardTypeDefault;
-    bar.placeholder = RCLocalizedString(@"ToSearch");
     return bar;
 }
 @end

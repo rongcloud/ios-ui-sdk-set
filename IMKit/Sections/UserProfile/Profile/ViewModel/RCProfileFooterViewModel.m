@@ -47,7 +47,7 @@
             space = 0;
             break;
         case RCProfileFooterViewTypeChat:
-            space = 85;
+            space = 56;
             break;
         case RCProfileFooterViewTypeGroupOwner:
         case RCProfileFooterViewTypeGroupMember:
@@ -60,7 +60,7 @@
 }
 
 - (CGFloat)buttonSpace {
-    return 24;
+    return 10;
 }
 
 - (NSArray *)items {
@@ -88,7 +88,9 @@
 }
 
 - (NSArray *)addFriendItems {
-    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"AddFriend") titleColor:RCDYCOLOR(0xffffff, 0x0D0D0D) backgroundColor:RCDYCOLOR(0x0099ff, 0x1AA3FF)];
+    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"AddFriend")
+                                          titleColor:RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF")
+                                     backgroundColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x1AA3FF")];
     __weak typeof(self) weakSelf = self;
     [item setClickBlock:^{
         [RCApplyFriendAlertView showAlert:RCLocalizedString(@"AddFriend")
@@ -102,23 +104,30 @@
 }
 
 - (NSArray *)userItems {
-    RCButtonItem *chatItem = [RCButtonItem itemWithTitle:RCLocalizedString(@"StartChat") titleColor:RCDYCOLOR(0xffffff, 0x0D0D0D) backgroundColor:RCDYCOLOR(0x0099ff, 0x1AA3FF)];
+    RCButtonItem *chatItem = [RCButtonItem itemWithTitle:RCLocalizedString(@"StartChat")
+                                              titleColor:RCDynamicColor(@"primary_color", @"0xffffff", @"0xFFFFFF")
+                                         backgroundColor:RCDynamicColor(@"common_background_color",@"0x0099ff", @"0x1AA3FF")];
     __weak typeof(self) weakSelf = self;
+    UIImage *icon = RCDynamicImage(@"user_profile_start_chat_img", @"");
+    chatItem.buttonIcon = icon;
     [chatItem setClickBlock:^{
-        RCConversationViewController *conversationVC = [[RCConversationViewController alloc] initWithConversationType:ConversationType_PRIVATE targetId:self.targetId];
+        RCConversationViewController *conversationVC = [[RCConversationViewController alloc] initWithConversationType:ConversationType_PRIVATE targetId:weakSelf.targetId];
         [weakSelf.responder.navigationController pushViewController:conversationVC animated:YES];
     }];
     
     if (self.verifyFriend) {
-        RCButtonItem *deleteItem = [RCButtonItem itemWithTitle:RCLocalizedString(@"DeleteFriend") titleColor:RCDYCOLOR(0xff0000, 0xFF1A1A) backgroundColor:RCDYCOLOR(0xffffff, 0x3C3C3C)];
-        deleteItem.borderColor = RCDYCOLOR(0xCFCFCF, 0x3C3C3C);
+        RCButtonItem *deleteItem = [RCButtonItem itemWithTitle:RCLocalizedString(@"DeleteFriend")
+                                                    titleColor:RCDynamicColor(@"hint_color", @"0xFF0000", @"0xFF1A1A")
+                                               backgroundColor:RCDynamicColor(@"common_background_color", @"0xffffff", @"0x3C3C3C")];
+        deleteItem.borderColor =
+        RCDynamicColor(@"clear_color", @"0xCFCFCF", @"0x3C3C3C");
         [deleteItem setClickBlock:^{
             [[RCCoreClient sharedCoreClient] getUserProfiles:@[weakSelf.targetId] success:^(NSArray<RCUserProfile *> * _Nonnull userProfiles) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [RCAlertView showAlertController:nil message:[NSString stringWithFormat:RCLocalizedString(@"DeleteFriendAlert"),userProfiles.firstObject.name] actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"Confirm") preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:^{
+                    [RCAlertView showAlertController:RCLocalizedString(@"Tip") message:[NSString stringWithFormat:RCLocalizedString(@"DeleteFriendAlert"),userProfiles.firstObject.name] actionTitles:nil cancelTitle:RCLocalizedString(@"Cancel") confirmTitle:RCLocalizedString(@"Confirm") preferredStyle:UIAlertControllerStyleAlert actionsBlock:nil cancelBlock:^{
                     } confirmBlock:^{
                         [weakSelf deleteFriend];
-                    } inViewController:self.responder];
+                    } inViewController:weakSelf.responder];
                 });
             } error:^(RCErrorCode errorCode) {
                 
@@ -151,8 +160,10 @@
 }
 
 - (NSArray *)groupOwnerItems {
-    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"GroupActionDismiss") titleColor:RCDYCOLOR(0xFF0000, 0xFF1A1A) backgroundColor:RCDYCOLOR(0xffffff, 0x3C3C3C)];
-    item.borderColor = RCDYCOLOR(0xCFCFCF, 0x3C3C3C);
+    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"GroupActionDismiss")
+                                          titleColor:RCDynamicColor(@"control_title_white_color", @"0xFF0000", @"0xFF1A1A")
+                                     backgroundColor:RCDynamicColor(@"hint_color", @"0xffffff", @"0x3C3C3C")];
+    item.borderColor = RCDynamicColor(@"clear_color", @"0xCFCFCF", @"0x3C3C3C");
     __weak typeof(self) weakSelf = self;
     [item setClickBlock:^{
         [weakSelf dismissGroup];
@@ -161,8 +172,9 @@
 }
 
 - (NSArray *)groupMemberItems {
-    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"GroupActionQuit") titleColor:RCDYCOLOR(0xFF0000, 0xFF1A1A) backgroundColor:RCDYCOLOR(0xffffff, 0x3C3C3C)];
-    item.borderColor = RCDYCOLOR(0xCFCFCF, 0x3C3C3C);
+    RCButtonItem *item = [RCButtonItem itemWithTitle:RCLocalizedString(@"GroupActionQuit") titleColor:RCDynamicColor(@"control_title_white_color", @"0xFF0000", @"0xFF1A1A") backgroundColor:RCDynamicColor(@"hint_color", @"0xffffff", @"0x3C3C3C")];
+    item.borderColor =
+    RCDynamicColor(@"clear_color", @"0xCFCFCF", @"0x3C3C3C");
     __weak typeof(self) weakSelf = self;
     [item setClickBlock:^{
         [weakSelf quitGroup];
