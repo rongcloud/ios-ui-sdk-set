@@ -23,6 +23,9 @@ function update_sdk(){
         elif [ ${build_host} = "jenkinsdeMac-mini.local" ];
         then
                 cp /Users/jenkins/archives/iOS-SDK-Release/${Release_Node}/${src_name}_SourceCode_*.zip ./
+        elif [ ${build_host} = "jenkins-cideMac-mini.local" ];
+        then
+                cp /Users/jenkins_ci/archives/iOS-SDK-Release-150/${Release_Node}/${src_name}_SourceCode_*.zip ./
         else
                 exit 1
         fi
