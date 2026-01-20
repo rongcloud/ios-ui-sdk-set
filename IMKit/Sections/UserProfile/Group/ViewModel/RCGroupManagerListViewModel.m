@@ -9,10 +9,10 @@
 #import "RCGroupManagerListViewModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 #import "RCGroupFollowCellViewModel.h"
+#import "RCProfileCommonCellViewModel.h"
 #import "RCGroupManager.h"
 #import "RCKitCommonDefine.h"
 #import "RCSelectGroupMemberViewController.h"
-#import "RCGroupMemberAdditionalCellViewModel.h"
 #import "RCAlertView.h"
 @interface RCGroupManagerListViewModel ()<RCGroupFollowCellViewModelDelegate, RCGroupEventDelegate>
 @property (nonatomic, copy) NSString *groupId;
@@ -99,8 +99,8 @@
 #pragma mark -- RCListViewModelProtocol
 
 - (void)registerCellForTableView:(UITableView *)tableView {
+    [RCProfileCommonCellViewModel registerCellForTableView:tableView];
     [RCGroupFollowCellViewModel registerCellForTableView:tableView];
-    [RCGroupMemberAdditionalCellViewModel registerCellForTableView:tableView];
 }
 
 - (void)viewController:(UIViewController*)viewController
@@ -113,10 +113,10 @@
             return;
         }
     }
-    if (![cellViewModel isKindOfClass:RCGroupMemberAdditionalCellViewModel.class]) {
+    if (![cellViewModel isKindOfClass:RCProfileCommonCellViewModel.class]) {
         return;
     }
-    RCGroupMemberAdditionalCellViewModel *commonCellVM = (RCGroupMemberAdditionalCellViewModel *)cellViewModel;
+    RCProfileCommonCellViewModel *commonCellVM = (RCProfileCommonCellViewModel *)cellViewModel;
     if ([commonCellVM.title isEqualToString:RCLocalizedString(@"AddGroupManagers")]) {
         [self pushSelectVC:viewController];
     }
@@ -177,9 +177,7 @@
         }
         NSMutableArray *addList = [NSMutableArray array];
         if (groupInfos.firstObject.role == RCGroupMemberRoleOwner) {
-            UIImage *image = RCDynamicImage(@"group_manage_add_member_img", @"group_manage_add_member");
-            RCGroupMemberAdditionalCellViewModel *addVM = [[RCGroupMemberAdditionalCellViewModel alloc] initWithTitle:RCLocalizedString(@"AddGroupManagers")
-                                                                                                             portrait:image];
+            RCProfileCommonCellViewModel *addVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"AddGroupManagers") detail:nil];
             [addList addObject:addVM];
         }
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -188,13 +186,6 @@
             } else {
                 self.dataSources = @[managerslist];
             }
-            
-            if (managerslist.count == 0) {
-                [self removeSeparatorLineIfNeed:@[addList]];
-            } else {
-                [self removeSeparatorLineIfNeed:@[managerslist]];
-            }
-            
             [self.responder reloadData:managerslist.count == 0];
         });
     } error:^(RCErrorCode errorCode) {

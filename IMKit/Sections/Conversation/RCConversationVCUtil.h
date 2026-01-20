@@ -36,8 +36,6 @@
 //通知消息 cell 的状态
 - (void)sendMessageStatusNotification:(NSString *)actionNametatus messageId:(long)messageId progress:(NSInteger)progress;
 
-- (void)sendMessageReadReceiptV5Notification:(RCMessageModel *)model;
-
 #pragma mark - 阅后即焚
 //初次使用阅后即焚给用户提示
 - (BOOL)alertDestructMessageRemind;
@@ -82,7 +80,23 @@
 
 #pragma mark - Edit
 
+/**
+ * 判断消息是否可以编辑
+ * @param model 消息模型
+ * @return 是否可以编辑
+ */
+- (BOOL)isMessageEditable:(RCMessageModel *)model;
+
+/// 判断消息编辑时间是否过期
+- (BOOL)isEditTimeValid:(long long)sentTime;
+
+/// 保存编辑状态
+/// @param stateData 状态数据
+/// @param model 编辑的消息模型
+- (void)saveEditingStateWithEditConfig:(RCEditInputBarConfig *)config;
+
 /// 获取编辑状态
+/// @param completion 完成回调，包含消息模型和状态数据
 - (RCEditInputBarConfig *)getCacheEditConfig;
 
 /// 清理编辑状态

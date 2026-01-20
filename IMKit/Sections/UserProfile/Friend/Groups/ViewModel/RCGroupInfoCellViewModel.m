@@ -37,7 +37,6 @@
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     RCGroupListCell *cell = [tableView dequeueReusableCellWithIdentifier:RCGroupListCellIdentifier
                                                                       forIndexPath:indexPath];
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     if (self.groupInfo) {
         [cell showPortrait:self.groupInfo.portraitUri];
         cell.labName.attributedText =  [self attributedString:self.groupInfo.groupName withKeyword:self.keyword];;
@@ -54,14 +53,11 @@
 -(NSMutableAttributedString*)attributedString:(NSString *)string
                                   withKeyword:(NSString *)keyword
 {
-    if (string == nil) {
-        return [[NSMutableAttributedString alloc] initWithString:@""];
-    }
     // 创建对象.
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:string];
    
     if (keyword.length > 0) {
-        UIColor *color = RCDynamicColor(@"primary_color", @"0x5a9cea", @"0x5a9cea");
+        UIColor *color = HEXCOLOR(0x5a9cea);
         NSRange range = [[string uppercaseString] rangeOfString:[keyword uppercaseString]];
         [attributedString addAttribute:NSForegroundColorAttributeName value:color range:range];
     }

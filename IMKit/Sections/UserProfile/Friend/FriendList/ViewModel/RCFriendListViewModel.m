@@ -11,9 +11,6 @@
 #import <RongIMLibCore/RongIMLibCore.h>
 #import "RCApplyFriendListViewController.h"
 #import "RCSearchFriendsViewController.h"
-#import "RCUserOnlineStatusManager.h"
-#import "RCUserOnlineStatusUtil.h"
-#import "RCIM.h"
 
 static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_queueTag;
 
@@ -26,13 +23,10 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 @property (nonatomic, strong) NSArray *indexTitles;
 // 分组cell
 @property (nonatomic, strong) NSDictionary *dicInfo;
-// 常驻cell
+// 常熟cell
 @property (nonatomic, strong) NSArray *permanentViewModels;
 // 搜索匹配cell
 @property (nonatomic, strong) NSArray *matchFriendList;
-
-// userID:cellviewmodel
-@property (nonatomic, strong) NSMutableDictionary *userIDToCellViewModelMap;
 
 @property (nonatomic, weak) UIViewController <RCListViewModelResponder> *responder;
 
@@ -49,14 +43,8 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
     if (self) {
         self.queue = dispatch_queue_create("rc_friendlist_operation_queue", DISPATCH_QUEUE_SERIAL);
         dispatch_queue_set_specific(self.queue, __rc_friendlist_operation_queueTag, __rc_friendlist_operation_queueTag, NULL);
-        self.userIDToCellViewModelMap = [NSMutableDictionary dictionary];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onUserOnlineStatusChanged:) name:RCKitUserOnlineStatusChangedNotification object:nil];
     }
     return self;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)registerCellForTableView:(UITableView *)tableView {
@@ -133,12 +121,13 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 }
 
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 32)];
-    view.backgroundColor = [UIColor clearColor];
+    UIView *view = [[UIView alloc] initWithFrame:CGRectZero];
+    view.frame = CGRectMake(0, 0, tableView.frame.size.width, 32);
+    view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
 
     UILabel *title = [[UILabel alloc] initWithFrame:CGRectZero];
     title.font = [UIFont systemFontOfSize:14.f];
-    title.textColor = RCDynamicColor(@"text_primary_color", @"0x3b3b3b", @"0xA7a7a7");
+    title.textColor = RCDYCOLOR(0x3b3b3b, 0xA7a7a7);
     [view addSubview:title];
     
     NSString *text = nil;
@@ -146,13 +135,8 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
         text = self.indexTitles[section-1];
     }
     title.text = text;
-    title.textAlignment = NSTextAlignmentNatural;
     [title sizeToFit];
-    title.translatesAutoresizingMaskIntoConstraints = NO;
-    [NSLayoutConstraint activateConstraints:@[
-        [title.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
-        [title.centerYAnchor constraintEqualToAnchor:view.centerYAnchor]
-    ]];
+    title.center = CGPointMake(13+title.bounds.size.width/2, 16);
     return view;
 }
 
@@ -206,9 +190,6 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
             [permanents addObjectsFromArray:vms];
         }
     }
-    if (permanents) {
-        [self removeSeparatorLineIfNeed:@[permanents]];
-    }
     self.permanentViewModels = permanents;
     
     [[RCCoreClient sharedCoreClient] getFriends:RCQueryFriendsDirectionTypeBoth
@@ -222,42 +203,16 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
     }];
 }
 
-- (BOOL)isDisplayOnlineStatus:(RCFriendListCellViewModel *)viewModel {
-    if (![RCUserOnlineStatusUtil shouldDisplayOnlineStatus]) {
-        return NO;
-    }
-    NSString *currentUserId = [RCCoreClient sharedCoreClient].currentUserInfo.userId;
-    if ([currentUserId isEqualToString:viewModel.friendInfo.userId]) {
-        return NO;
-    }
-    return YES;
-}
-
 - (void)configureDataSourceWithArray:(NSArray *)friendInfos {
     [self performOperationQueueBlock:^{
             NSArray *array = nil;
             NSMutableArray *tmp = [NSMutableArray array];
-            NSMutableArray *needFetchOnlineStatusUserIds = [NSMutableArray array];
+            
             for (RCFriendInfo *friend in friendInfos) {
                 RCFriendListCellViewModel *vm = [[RCFriendListCellViewModel alloc] initWithFriend:friend];
-                
-                if (friend.userId.length > 0 && [self isDisplayOnlineStatus:vm]) {
-                    RCSubscribeUserOnlineStatus *onlineStatus = [RCUserOnlineStatusManager.sharedManager getCachedOnlineStatus:friend.userId];
-                    vm.displayOnlineStatus = YES;
-                    vm.onlineStatus = onlineStatus;
-                    if (!onlineStatus) {
-                        [needFetchOnlineStatusUserIds addObject:friend.userId];
-                    }
-                }
                 [tmp addObject:vm];
-                if (friend.userId.length > 0) {
-                    [self.userIDToCellViewModelMap setObject:vm forKey:friend.userId];
-                }
             }
             array = tmp;
-            if (needFetchOnlineStatusUserIds.count > 0) {
-                [RCUserOnlineStatusManager.sharedManager fetchFriendOnlineStatus:needFetchOnlineStatusUserIds];
-            }
             // 通知用户修改数据源
         if ([self.delegate respondsToSelector:@selector(friendListViewModel:willLoadItemsInDataSource:)]) {
                 array = [self.delegate friendListViewModel:self
@@ -269,21 +224,6 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 
 - (void)bindResponder:(UIViewController <RCListViewModelResponder>*)responder {
     self.responder = responder;
-}
-
-- (void)onUserOnlineStatusChanged:(NSNotification *)notification {
-    NSArray<NSString *> *changedUserIds = notification.userInfo[RCKitUserOnlineStatusChangedUserIdsKey];
-    for (NSString *userId in changedUserIds) {
-        RCFriendListCellViewModel *vm = [self.userIDToCellViewModelMap objectForKey:userId];
-        if (![self isDisplayOnlineStatus:vm]) {
-            return;
-        }
-        // 匹配好友ID
-        if ([vm.friendInfo.userId isEqualToString:userId]) {
-            RCSubscribeUserOnlineStatus *onlineStatus = [RCUserOnlineStatusManager.sharedManager getCachedOnlineStatus:userId];
-            [vm refreshOnlineStatus:onlineStatus];
-        }
-    }
 }
 
 #pragma mark - Private
@@ -311,7 +251,7 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
             }
             return [obj1 compare:obj2 options:NSNumericSearch];
         }];
-        [self removeSeparatorLineIfNeed:[dicInfo allValues]];
+       
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataSource = array;
             // 都在主线程切换数据源, 避免多线程操作引起crash
@@ -326,7 +266,7 @@ static void *__rc_friendlist_operation_queueTag = &__rc_friendlist_operation_que
 - (void)reloadData {
     if ([self.responder respondsToSelector:@selector(reloadData:)]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            BOOL empty = (self.dataSource.count == 0) && (self.permanentViewModels.count == 0);
+            BOOL empty = self.dataSource.count == 0;;
             [self.responder reloadData:empty];
         });
     }

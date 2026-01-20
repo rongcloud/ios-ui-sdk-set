@@ -14,9 +14,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setupView;
 
-/// 设置约束布局
-- (void)setupConstraints;
-
 @end
 
 NS_ASSUME_NONNULL_END

@@ -6,14 +6,14 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import "RCStackTableViewCell.h"
+#import "RCBaseTableViewCell.h"
 #import "RCloudImageView.h"
 #import "RCUserProfileDefine.h"
 UIKIT_EXTERN NSString  * _Nonnull const RCSelectUserCellIdentifier;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCSelectUserCell : RCStackTableViewCell
+@interface RCSelectUserCell : RCBaseTableViewCell
 
 @property (nonatomic, strong) RCBaseImageView *selectImageView;
 
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UILabel *nameLabel;
 
 - (void)updateSelectState:(RCSelectState)state;
-- (void)appendViewAtEnd:(UIView *)view;
+
 @end
 
 NS_ASSUME_NONNULL_END

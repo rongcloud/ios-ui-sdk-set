@@ -25,7 +25,6 @@
 #import "RCLocationPickerViewController+imkit.h"
 #import "RCSemanticContext.h"
 #import "RCBaseButton.h"
-#import "RCMenuController.h"
 //单个cell的高度是70（RCPlaginBoardCellSize）*2 + 上下padding的高度14*2 ＋
 //上下两个图标之间的padding
 #define Height_EmojBoardView 223.5f
@@ -101,7 +100,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 }
 
 - (void)rcinit {
-    self.backgroundColor = RCDynamicColor(@"clear_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.backgroundColor = RCDYCOLOR(0xF5F6F9, 0x1c1c1c);
     self.keyboardFrame = CGRectZero;
     self.isNew = 0;
     [self addBottomAreaView];
@@ -310,6 +309,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (_isNew == 0) {
         [self animationLayoutBottomBarWithStatus:KBottomBarDefaultStatus animated:NO];
     }
+    if (self.currentBottomBarStatus == KBottomBarKeyboardStatus) {
+        [self animationLayoutBottomBarWithStatus:KBottomBarKeyboardStatus animated:NO];
+    }
 }
 
 - (void)containerViewDidAppear {
@@ -318,9 +320,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
          (self.currentBottomBarStatus == KBottomBarDefaultStatus && _isNew == 0) ||
          self.currentBottomBarStatus == KBottomBarDestructStatus)) {
         [self changeTextViewHeight:self.inputTextView.text];
-    }
-    if (self.currentBottomBarStatus == KBottomBarKeyboardStatus) {
-        [self animationLayoutBottomBarWithStatus:KBottomBarKeyboardStatus animated:NO];
     }
     _isNew = 1;
 }
@@ -516,13 +515,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
             [attStr addAttribute:NSFontAttributeName
                            value:self.inputTextView.font
                            range:NSMakeRange(0, replaceString.length)];
-            UIColor *foreColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-            if (foreColor) {
-                [attStr addAttribute:NSForegroundColorAttributeName
-                               value:foreColor
-                               range:NSMakeRange(0, replaceString.length)];
-            }
-       
+            [attStr addAttribute:NSForegroundColorAttributeName
+                           value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
+                           range:NSMakeRange(0, replaceString.length)];
             NSInteger cursorPosition;
             if (self.inputTextView.selectedTextRange) {
                 cursorPosition = self.inputTextView.selectedRange.location;
@@ -735,9 +730,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (void)rcInputBar_didReceiveKeyboardWillShowNotification:(NSNotification *)notification {
     DebugLog(@"%s", __FUNCTION__);
-    if (self.isHidden) {
-        return;
-    }
     if (@available(iOS 15.0, *)) {
         UIApplicationState state = [UIApplication sharedApplication].applicationState;
         if (state == UIApplicationStateBackground) {
@@ -788,15 +780,10 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         [[UIMenuController sharedMenuController] setMenuItems:nil];
         [UIMenuController sharedMenuController].menuVisible = NO;
     }
-    [[RCMenuController sharedMenuController] hideMenuAnimated:NO];
-
 }
 
 - (void)rcInputBar_didReceiveKeyboardWillHideNotification:(NSNotification *)notification {
     DebugLog(@"%s", __FUNCTION__);
-    if (self.isHidden) {
-        return;
-    }
     if (self.currentBottomBarStatus == KBottomBarKeyboardStatus) {
         [self animationLayoutBottomBarWithStatus:KBottomBarDefaultStatus animated:NO];
     }
@@ -834,7 +821,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_commonPhrasesView) {
         _commonPhrasesView =
             [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width, RC_CommonPhrasesView_Height)];
-        _commonPhrasesView.backgroundColor = RCDynamicColor(@"clear_color", @"0xf5f5f5", @"0x1c1c1c");
+        _commonPhrasesView.backgroundColor =
+            [RCKitUtility generateDynamicColor:RGBCOLOR(245, 245, 245) darkColor:HEXCOLOR(0x1c1c1c)];
         [_commonPhrasesView addSubview:self.commonPhrasesButton];
     }
     return _commonPhrasesView;
@@ -842,12 +830,12 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (RCBaseButton *)commonPhrasesButton {
     if (!_commonPhrasesButton) {
-        CGRect rect = CGRectMake(16, 5, 66, 30);
+        CGRect rect = CGRectMake(16, 10, 66, 25);
         if ([RCKitUtility isRTL]) {
-            rect = CGRectMake(self.bounds.size.width-16-66, 5, 66, 30);
+            rect = CGRectMake(self.bounds.size.width-16-66, 10, 66, 25);
         }
         _commonPhrasesButton = [[RCBaseButton alloc] initWithFrame:rect];
-        _commonPhrasesButton.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1a1a1a");
+        _commonPhrasesButton.backgroundColor = RCDYCOLOR(0xffffff, 0x1a1a1a);
         [_commonPhrasesButton.titleLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
         [_commonPhrasesButton setTitle:RCLocalizedString(@"common_phrases")
                               forState:UIControlStateNormal];
@@ -855,11 +843,13 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         [_commonPhrasesButton addTarget:self
                                  action:@selector(commonPhrasesButtonAction:)
                        forControlEvents:UIControlEventTouchUpInside];
-        _commonPhrasesButton.layer.cornerRadius = 6;
-        UIColor *borderColor = RCDynamicColor(@"clear_color", @"0x979797", @"0x8080804c");
-        _commonPhrasesButton.layer.borderColor = borderColor.CGColor;
+        _commonPhrasesButton.layer.cornerRadius = 12.5f;
+        _commonPhrasesButton.layer.borderColor =
+            [RCKitUtility generateDynamicColor:RGBCOLOR(151, 151, 151)
+                                           darkColor:[HEXCOLOR(0x808080) colorWithAlphaComponent:0.3]]
+                .CGColor;
         _commonPhrasesButton.layer.borderWidth = 0.5f; //设置边框颜色
-        [_commonPhrasesButton setTitleColor:RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffff") forState:(UIControlStateNormal)];
+        [_commonPhrasesButton setTitleColor:RCDYCOLOR(0x000000, 0xffffff) forState:(UIControlStateNormal)];
     }
     return _commonPhrasesButton;
 }
@@ -906,6 +896,18 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
         return;
     }
+    //接口向后兼容--]]
+
+    RCUserListViewController *userListVC = [[RCUserListViewController alloc] init];
+    userListVC.selectedBlock = selectedBlock;
+    userListVC.cancelBlock = cancelBlock;
+    userListVC.dataSource = self;
+    userListVC.navigationTitle = RCLocalizedString(@"SelectMentionedUser");
+    userListVC.maxSelectedUserNumber = 1;
+    RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:userListVC];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate presentViewController:rootVC functionTag:INPUT_MENTIONED_SELECT_TAG];
+    });
 }
 
 - (BOOL)willUpdateInputTextMetionedInfo:(NSString *)text range:(NSRange)range{
@@ -1030,13 +1032,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         [attStr addAttribute:NSFontAttributeName
                        value:self.inputTextView.font
                        range:NSMakeRange(0, insertContent.length)];
-        UIColor *foreColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-        if (foreColor) {
-            [attStr addAttribute:NSForegroundColorAttributeName
-                           value:foreColor
-                           range:NSMakeRange(0, insertContent.length)];
-        }
-     
+        [attStr addAttribute:NSForegroundColorAttributeName
+                       value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
+                       range:NSMakeRange(0, insertContent.length)];
         [self.inputTextView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
         // 修改 textStorage 不会触发 inputTextViewDidChange, 需要手动调用
         [self inputTextViewDidChange:self.inputTextView];
@@ -1065,13 +1063,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         self.menuContainerView.hidden = YES;
         self.inputContainerView.hidden = NO;
     }
-    NSString *iconName = @"inputbar_keyboard";
-    NSString *iconKey = @"conversation_input_bar_keyboard_img";
-    if (self.menuContainerView.hidden) {
-        iconName = @"pub_menu";
-        iconKey = @"conversation_input_bar_pub_menu_img";
-    }
-    [self.pubSwitchButton setImage:RCDynamicImage(iconKey, iconName)
+
+    [self.pubSwitchButton setImage:RCResourceImage(self.menuContainerView.hidden ? @"pub_menu" : @"inputbar_keyboard")
                           forState:UIControlStateNormal];
     [self didTouchPubSwitchButton:_inputContainerView.hidden];
     [self dismissPublicServiceMenuPopupView];
@@ -1346,7 +1339,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_inputContainerView) {
         _inputContainerView = [[RCInputContainerView alloc] initWithFrame:self.bounds];
         _inputContainerView.delegate = self;
-        _inputContainerView.backgroundColor = RCDynamicColor(@"common_background_color", @"0x00000000", @"0x00000000");
     }
     return _inputContainerView;
 }
@@ -1373,7 +1365,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (UIView *)newLine {
     UIView *line = [UIView new];
-    line.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x2f2f2f");
+    line.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xe3e5e6) darkColor:HEXCOLOR(0x2f2f2f)];
     return line;
 }
 
@@ -1409,21 +1401,21 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                                      Height_PluginBoardView)];
 
         //添加底部多功能栏功能，可以根据需求自定义
-        [_pluginBoardView insertItem:RCDynamicImage(@"conversation_plugin_item_picture_img",@"plugin_item_picture")
-                    highlightedImage:RCDynamicImage(@"conversation_plugin_item_picture_highlighted_img",@"plugin_item_picture_highlighted")
+        [_pluginBoardView insertItem:RCResourceImage(@"plugin_item_picture")
+                    highlightedImage:RCResourceImage(@"plugin_item_picture_highlighted")
                                title:RCLocalizedString(@"Photos")
                              atIndex:0
                                  tag:PLUGIN_BOARD_ITEM_ALBUM_TAG];
         
-        [_pluginBoardView insertItem:RCDynamicImage(@"conversation_plugin_item_camera_img",@"plugin_item_camera")
-                    highlightedImage:RCDynamicImage(@"conversation_plugin_item_camera_highlighted_img",@"plugin_item_camera_highlighted")
+        [_pluginBoardView insertItem:RCResourceImage(@"plugin_item_camera")
+                    highlightedImage:RCResourceImage(@"plugin_item_camera_highlighted")
                                title:RCLocalizedString(@"Camera")
                              atIndex:1
                                  tag:PLUGIN_BOARD_ITEM_CAMERA_TAG];
 
         if (self.conversationType == ConversationType_PRIVATE) {
-            [_pluginBoardView insertItem:RCDynamicImage(@"conversation_plugin_item_destruct_img",@"plugin_item_burn")
-                        highlightedImage:RCDynamicImage(@"conversation_plugin_item_destruct_highlighted_img",@"plugin_item_burn_highlighted")
+            [_pluginBoardView insertItem:RCResourceImage(@"plugin_item_burn")
+                        highlightedImage:RCResourceImage(@"plugin_item_burn_highlighted")
                                    title:RCLocalizedString(@"Burn_After_Read")
                                  atIndex:3
                                      tag:PLUGIN_BOARD_ITEM_DESTRUCT_TAG];
@@ -1555,7 +1547,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_pubSwitchButton) {
         _pubSwitchButton = [[RCButton alloc] initWithFrame:CGRectZero];
         [_pubSwitchButton setFrame:CGRectMake(0, 0, SwitchButtonWidth, self.inputBarHeight)];
-        [_pubSwitchButton setImage:RCDynamicImage(@"conversation_input_bar_keyboard_img",@"inputbar_keyboard") forState:UIControlStateNormal];
+        [_pubSwitchButton setImage:RCResourceImage(@"inputbar_keyboard") forState:UIControlStateNormal];
         _pubSwitchButton.contentEdgeInsets = UIEdgeInsetsMake(8, 5, 8, 5);
         [_pubSwitchButton addTarget:self
                              action:@selector(pubSwitchValueChanged)
@@ -1573,7 +1565,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_robotSwitchButton) {
         _robotSwitchButton = [[RCButton alloc] initWithFrame:CGRectZero];
         [_robotSwitchButton setFrame:CGRectMake(0, 0, SwitchButtonWidth, self.inputBarHeight)];
-        [_robotSwitchButton setImage:RCDynamicImage(@"conversation_input_bar_cs_switch_img", @"custom_service_switch_to_admin")
+        [_robotSwitchButton setImage:RCResourceImage(@"custom_service_switch_to_admin")
                             forState:UIControlStateNormal];
         [_robotSwitchButton addTarget:self
                                action:@selector(onRobotSwitch:)
@@ -1596,7 +1588,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_topLineLayer) {
         CALayer *layer = [CALayer layer];
         layer.frame = CGRectMake(0, 0, self.frame.size.width, 0.5);
-        layer.backgroundColor = RCDynamicColor(@"clear_color", @"0xe3e5e6", @"0x2f2f2f").CGColor;
+        layer.backgroundColor = RCDYCOLOR(0xe3e5e6, 0x2f2f2f).CGColor;
         _topLineLayer = layer;
     }
     return _topLineLayer;
@@ -1607,7 +1599,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (bottom > 0) {
         UIView * bottomAreaView= [[UIView alloc] initWithFrame:CGRectMake(0, self.containerView.bounds.size.height - bottom,
                                                                           self.containerView.bounds.size.width, bottom)];
-        bottomAreaView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF8F8F8", @"0x0b0b0c");
+        bottomAreaView.backgroundColor = RCDYCOLOR(0xF8F8F8, 0x0b0b0c);
         self.safeAreaView = bottomAreaView;
         [self.containerView addSubview:bottomAreaView];
     }

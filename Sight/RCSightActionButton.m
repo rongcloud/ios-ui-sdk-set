@@ -47,7 +47,7 @@
     if (!_ringLayer) {
         _ringLayer = [[CAShapeLayer alloc] init];
         _ringLayer.frame = self.bounds;
-        _ringLayer.fillColor = RCDynamicColor(@"line_background_color", @"0xD3D3D3", @"0xD3D3D3").CGColor;
+        _ringLayer.fillColor = [UIColor lightGrayColor].CGColor;
     }
     return _ringLayer;
 }
@@ -56,8 +56,8 @@
     if (!_progressLayer) {
         _progressLayer = [[CAShapeLayer alloc] init];
         _progressLayer.fillColor = [UIColor clearColor].CGColor;
-        UIColor *color = RCDynamicColor(@"primary_color", @"0x4f91ec", @"0x4f91ec");
-        _progressLayer.strokeColor = color.CGColor;
+        _progressLayer.strokeColor =
+            [UIColor colorWithRed:79 / 255.0f green:145 / 255.0f blue:236.0 / 255.0f alpha:1].CGColor;
         _progressLayer.lineWidth = 5;
         _progressLayer.lineCap = kCALineCapRound;
     }
@@ -68,7 +68,7 @@
     if (!_centerLayer) {
         _centerLayer = [[CAShapeLayer alloc] init];
         _centerLayer.frame = self.bounds;
-        _centerLayer.fillColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff").CGColor;
+        _centerLayer.fillColor = [UIColor whiteColor].CGColor;
     }
     return _centerLayer;
 }

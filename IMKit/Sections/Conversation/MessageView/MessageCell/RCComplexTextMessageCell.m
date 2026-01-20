@@ -163,35 +163,36 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
         }
         self.separateLine =
             [[UIView alloc] initWithFrame:CGRectMake(15, bubbleHeight - 23, bubbleWidth - 15 - 5, 0.5)];
-        [self.separateLine setBackgroundColor:RCDynamicColor(@"line_background_color", @"0xD3D3D3", @"0xD3D3D3")];
+        [self.separateLine setBackgroundColor:[UIColor lightGrayColor]];
 
         if (csModel.alreadyEvaluated) {
             self.tipLablel =
                 [[UILabel alloc] initWithFrame:CGRectMake(bubbleWidth - 80 - 7, bubbleHeight - 18, 80, 15)];
             self.tipLablel.text = @"感谢您的评价";
-            self.tipLablel.textColor = RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xD3D3D3");
+            self.tipLablel.textColor = [UIColor lightGrayColor];
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
             self.acceptBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 95 - 7 - 3, bubbleHeight - 18, 15, 15)];
-            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_eva_complete_img",@"cs_eva_complete") forState:UIControlStateNormal];
-            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_eva_complete_hover_img",@"cs_eva_complete_hover") forState:UIControlStateHighlighted];
+            [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete") forState:UIControlStateNormal];
+            [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete_hover") forState:UIControlStateHighlighted];
 
             [self.messageContentView addSubview:self.acceptBtn];
         } else {
             self.tipLablel =
                 [[UILabel alloc] initWithFrame:CGRectMake(bubbleWidth - 118 - 10, bubbleHeight - 18, 80, 15)];
             self.tipLablel.text = @"您对我的回答";
-            self.tipLablel.textColor =  RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xD3D3D3");
+            self.tipLablel.textColor = [UIColor lightGrayColor];
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
 
             self.acceptBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 30 - 7 - 6, bubbleHeight - 18, 15, 15)];
             self.rejectBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 15 - 7, bubbleHeight - 18, 15, 15)];
-            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_yes_img", @"cs_yes") forState:UIControlStateNormal];
-            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_yes_hover_img",@"cs_yes_hover") forState:UIControlStateHighlighted];
+            [self.acceptBtn setImage:RCResourceImage(@"cs_yes") forState:UIControlStateNormal];
+            [self.acceptBtn setImage:RCResourceImage(@"cs_yes_hover") forState:UIControlStateHighlighted];
 
-            [self.self.rejectBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_no_img",@"cs_no") forState:UIControlStateNormal];
+            [self.self.rejectBtn setImage:RCResourceImage(@"cs_no") forState:UIControlStateNormal];
+            [self.self.rejectBtn setImage:RCResourceImage(@"cs_yes_no") forState:UIControlStateHighlighted];
             [self.messageContentView addSubview:self.acceptBtn];
             [self.messageContentView addSubview:self.rejectBtn];
 
@@ -265,7 +266,7 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 - (RCBaseImageView *)destructTextImage{
     if (!_destructTextImage) {
         _destructTextImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 13, 28)];
-        [_destructTextImage setImage:RCDynamicImage(@"conversation_msg_status_text_destruct_img", @"text_burn_img")];
+        [_destructTextImage setImage:RCResourceImage(@"text_burn_img")];
         _destructTextImage.contentMode = UIViewContentModeScaleAspectFit;
         _destructTextImage.hidden = YES;
     }
@@ -283,27 +284,26 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
         return self.attributeDictionary;
     }
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    UIColor *linkColor = RCDynamicColor(@"link_color", @"0x0000FF", @"0xFFBE6a");
-    if (linkColor) {
-        NSDictionary *numAttr =  @{
-             NSForegroundColorAttributeName :linkColor,
-             NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-             NSUnderlineColorAttributeName : linkColor
-         };
-         dic[@(NSTextCheckingTypePhoneNumber)] = numAttr;
-        NSDictionary *linkAttr =  @{
-            NSForegroundColorAttributeName :linkColor,
-            NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName :linkColor
-        };
-        dic[@(NSTextCheckingTypeLink)] = linkAttr;
-    }
-   
+   NSDictionary *numAttr =  @{
+        NSForegroundColorAttributeName :
+            [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
+        NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
+        NSUnderlineColorAttributeName : [UIColor yellowColor]
+    };
+    dic[@(NSTextCheckingTypePhoneNumber)] = numAttr;
+    NSDictionary *linkAttr =  @{
+        NSForegroundColorAttributeName :
+            [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
+        NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
+        NSUnderlineColorAttributeName :
+            [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)]
+    };
+    dic[@(NSTextCheckingTypeLink)] = linkAttr;
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
-        UIColor *color = RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc");
+        UIColor *color = [RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
         dic[NSForegroundColorAttributeName] = color;
     } else {
-        UIColor *color = RCDynamicColor(@"text_primary_color", @"0x262626", @"0x040A0F");
+        UIColor *color = RCDYCOLOR(0x262626, 0x040A0F);
         dic[NSForegroundColorAttributeName] = color;
     }
     return dic;

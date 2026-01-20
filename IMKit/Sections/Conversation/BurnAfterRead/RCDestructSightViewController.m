@@ -259,7 +259,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseImageView *)imageView {
     if (!_imageView) {
         _imageView = [[RCBaseImageView alloc] init];
-        _imageView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _imageView.backgroundColor = [UIColor blackColor];
     }
     return _imageView;
 }
@@ -272,7 +272,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         flowLayout.minimumInteritemSpacing = 0;
         _collectionView = [[RCSightCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:flowLayout];
         [_collectionView registerClass:[RCDestructSightCollectionCell class] forCellWithReuseIdentifier:@"RCSightCell"];
-        _collectionView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _collectionView.backgroundColor = [UIColor blackColor];
         _collectionView.dataSource = self;
         _collectionView.alwaysBounceHorizontal = YES;
         _collectionView.delegate = self;
@@ -287,7 +287,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (UIView *)backView {
     if (_backView == nil) {
         _backView = [[UIView alloc] init];
-        _backView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _backView.backgroundColor = [UIColor blackColor];
     }
     return _backView;
 }

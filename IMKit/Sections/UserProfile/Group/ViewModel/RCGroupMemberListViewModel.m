@@ -7,6 +7,7 @@
 //
 
 #import "RCGroupMemberListViewModel.h"
+#import "RCGroupMemberCellViewModel.h"
 #import "RCGroupMemberCell.h"
 #import "RCGroupManager.h"
 #import "RCProfileViewController.h"
@@ -30,11 +31,6 @@
 
 @property (nonatomic, copy) NSString *groupId;
 
-@property (nonatomic, assign) BOOL isLoadingMembers;
-
-@property (nonatomic, assign) BOOL isLoadingSearchMembers;
-
-@property (nonatomic, weak) RCGroupMemberCellViewModel *lastBottomCellVM;
 @end
 
 @implementation RCGroupMemberListViewModel
@@ -89,8 +85,6 @@
     self.searchQueryResult = nil;
     [self.matchMemberList removeAllObjects];
     if (searchText.length == 0) {
-        [self removeSeparatorWithArray:self.memberList];
-
         [self.responder reloadData:NO];
     } else {
         [self filterDataSourceWithQueryResult:nil];
@@ -101,8 +95,6 @@
     if (!inSearching) {
         [self endEditingState];
     }
-    [self removeSeparatorWithArray:self.memberList];
-
     [self.responder reloadData:NO];
 }
 
@@ -131,28 +123,10 @@
 
 #pragma mark -- private
 
-- (void)removeSeparatorWithArray:(NSArray *)array {
-    if (array.count) {
-        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
-            self.lastBottomCellVM.hideSeparatorLine = NO;
-        }
-        [self removeSeparatorLineIfNeed:@[array]];
-        self.lastBottomCellVM = array.lastObject;
-    }
-}
 - (void)filterDataSourceWithQueryResult:(RCPagingQueryResult *)result {
-    // 添加搜索加载状态检查，防止并发请求
-    if (self.isLoadingSearchMembers) {
-        return;
-    }
-    
     if (self.searchQueryResult && self.searchQueryResult.pageToken.length == 0) {
         return;
     }
-    
-    // 设置搜索加载状态
-    self.isLoadingSearchMembers = YES;
-    
     RCPagingQueryOption *option = [RCPagingQueryOption new];
     option.pageToken = self.searchQueryResult.pageToken;
     option.count = self.pageCount;
@@ -160,33 +134,20 @@
         [RCGroupManager fetchFriendInfos:result.data complete:^(NSArray<RCFriendInfo *> * _Nullable friendInfos) {
             NSArray *list = [self getViewModelsWithMembers:result.data friendInfos:friendInfos];
             dispatch_async(dispatch_get_main_queue(), ^{
-                // 重置搜索加载状态并更新数据
-                self.isLoadingSearchMembers = NO;
                 self.searchQueryResult = result;
                 [self.matchMemberList addObjectsFromArray:list];
-                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:self.matchMemberList.count == 0];
             });
         }];
     } error:^(RCErrorCode errorCode) {
-        // 重置搜索加载状态
-        self.isLoadingSearchMembers = NO;
+        
     }];
 }
 
 - (void)fetchGroupMembers {
-    // 添加加载状态检查，防止并发请求
-    if (self.isLoadingMembers) {
-        return;
-    }
-    
     if (self.queryResult && self.queryResult.pageToken.length == 0) {
         return;
     }
-    
-    // 设置加载状态
-    self.isLoadingMembers = YES;
-    
     RCPagingQueryOption *option = [RCPagingQueryOption new];
     option.pageToken = self.queryResult.pageToken;
     option.count = self.pageCount;
@@ -200,18 +161,13 @@
     option.order = YES;
     [RCGroupManager getGroupMembers:self.groupId option:option role:role complete:^(RCPagingQueryResult<RCGroupMemberInfo *> * _Nonnull result) {
         if (result.data.count == 0) {
-            // 重置加载状态
-            self.isLoadingMembers = NO;
             return;
         }
         [RCGroupManager fetchFriendInfos:result.data complete:^(NSArray<RCFriendInfo *> * _Nullable friendInfos) {
             NSArray *list = [self getViewModelsWithMembers:result.data friendInfos:friendInfos];
             dispatch_async(dispatch_get_main_queue(), ^{
-                // 重置加载状态并更新数据
-                self.isLoadingMembers = NO;
                 self.queryResult = result;
                 [self.mutableMemberList addObjectsFromArray:list];
-                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:NO];
             });
         }];
@@ -247,7 +203,7 @@
 #pragma mark -- getter
 
 - (NSArray<RCGroupMemberCellViewModel *> *)memberList {
-    if (self.searchBarVM.searchBar.text.length > 0) {
+    if ([self.searchBarVM isCurrentFirstResponder]) {
         return self.matchMemberList;
     }
     return self.mutableMemberList;

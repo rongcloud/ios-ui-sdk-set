@@ -18,9 +18,9 @@
     self = [super init];
     if (self) {
         self.networkUnreachableImageView = [[RCBaseImageView alloc] init];
-        self.networkUnreachableImageView.image = RCDynamicImage(@"network_unreachable_img", @"network_fail");
+        self.networkUnreachableImageView.image = RCResourceImage(@"network_fail");
         self.networkUnreachableDescriptionLabel = [[UILabel alloc] init];
-        self.networkUnreachableDescriptionLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xBE9393");
+        self.networkUnreachableDescriptionLabel.textColor = RCDYCOLOR(0x111f2c, 0xBE9393);
         self.networkUnreachableDescriptionLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         self.networkUnreachableDescriptionLabel.text = text;
         self.networkUnreachableDescriptionLabel.backgroundColor = [UIColor clearColor];

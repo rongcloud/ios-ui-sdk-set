@@ -126,9 +126,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, copy, nullable) NSString *draft;
 
-/// 会话中存在的编辑草稿
-@property (nonatomic, strong, nullable) RCEditedMessageDraft *editedMessageDraft;
-
 /*!
  会话中最后一条消息的类型名
  */
@@ -169,6 +166,12 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @property (nonatomic, assign) int mentionedCount;
 
+/*!
+ 已读人数
+
+ */
+@property (nonatomic, assign) NSInteger readReceiptCount;
+
 
 /*!
  免打扰级别
@@ -189,21 +192,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// - Since: 5.20.0
 @property (nonatomic, copy, nullable) NSString *latestMessageUId;
 
-/// 消息已读回执 v5 操作标识。
+/// 消息已读回执操作标识。
 ///
-/// - Since: 5.30.0
+/// - Since: 5.20.0
 @property (nonatomic, assign) BOOL needReceipt;
-
-/// 消息已读回执 v5 信息
-@property (nonatomic, strong) RCReadReceiptInfoV5 *readReceiptInfoV5;
-
-/// 是否显示用户在线状态
-@property (nonatomic, assign) BOOL displayOnlineStatus;
-
-/// 用户在线状态
-/// - Note: 只在单聊类型会话中显示在线状态，其他类型会话不显示在线状态
-/// - Since: 5.32.0
-@property (nonatomic, strong) RCSubscribeUserOnlineStatus *onlineStatus;
 
 /*!
  初始化会话显示数据模型

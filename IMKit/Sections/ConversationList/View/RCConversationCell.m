@@ -17,9 +17,6 @@
 #import <RongPublicService/RongPublicService.h>
 #import <RongDiscussion/RongDiscussion.h>
 #import "RCSemanticContext.h"
-#import "RCOnlineStatusView.h"
-#import "RCUserOnlineStatusUtil.h"
-
 @interface RCConversationCell ()
 
 @property (nonatomic, strong) RCConversationHeaderView *headerView;
@@ -27,10 +24,6 @@
 //cell 复用的时候，检测如果是即将刷新的是同一个用户信息，那么就跳过刷新
 //IMSDK-2705
 @property (nonatomic, strong) RCUserInfo *currentDisplayedUserInfo;
-
-// 包含在线状态图标和标题的 StackView（用于自动管理显示/隐藏时的布局）
-@property (nonatomic, strong) UIStackView *titleStackView;
-
 @end
 
 @implementation RCConversationCell
@@ -49,10 +42,11 @@
     self.selectionStyle = UITableViewCellSelectionStyleNone;
     self.selectedBackgroundView = [[UIView alloc] initWithFrame:self.frame];
     self.selectedBackgroundView.backgroundColor =
-    RCDynamicColor(@"highlight_color", @"0xf5f5f5", @"0x1c1c1eCC");
+        [RCKitUtility generateDynamicColor:HEXCOLOR(0xf5f5f5)
+                                 darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.8]];
 
     [self.contentView addSubview:self.headerView];
-    [self.contentView addSubview:self.titleStackView]; // 使用 StackView 包含在线状态和标题
+    [self.contentView addSubview:self.conversationTitle];
     [self.contentView addSubview:self.conversationTagView];
     [self.contentView addSubview:self.messageCreatedTimeLabel];
     [self.contentView addSubview:self.detailContentView];
@@ -82,10 +76,6 @@
                                              selector:@selector(updatePublicServiceIfNeed:)
                                                  name:RCKitDispatchPublicServiceInfoNotification
                                                object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(onUserOnlineStatusChanged:)
-                                                 name:RCKitConversationCellOnlineStatusUpdateNotification
-                                               object:nil];
 }
 
 - (void)dealloc {
@@ -98,23 +88,18 @@
     [self.conversationTitle setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     // fix: rce "部门"标签视图与时间视图重叠
     NSDictionary *cellSubViews =
-        NSDictionaryOfVariableBindings(_headerView, _titleStackView, _messageCreatedTimeLabel, _detailContentView,
+        NSDictionaryOfVariableBindings(_headerView, _conversationTitle, _messageCreatedTimeLabel, _detailContentView,
                                        _statusView, _conversationTagView);
-    
-    // 水平布局：头像 - StackView(在线状态+标题) - 标签 - 时间
-    // StackView 会自动管理在线状态图标的显示/隐藏，隐藏时不占用空间
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"H:|-12-[_headerView(width)]-12-"
-                                                       @"[_titleStackView]-5-[_conversationTagView(50)]-5-"
+                                                       @"[_conversationTitle]-5-[_conversationTagView(50)]-5-"
                                                        @"[_messageCreatedTimeLabel(>=80)]-12-|"
                                                options:0
                                                metrics:@{
                                                    @"width" : @(RCKitConfigCenter.ui.globalConversationPortraitSize.width)
                                                }
                                                  views:cellSubViews]];
-    
-    // 头像高度
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"V:[_headerView(height)]"
@@ -125,37 +110,29 @@
                                                }
                                                  views:cellSubViews]];
     
-    // StackView 高度（与标题高度一致）
     [self.contentView
         addConstraints:[NSLayoutConstraint
-                           constraintsWithVisualFormat:@"V:[_titleStackView(21)]"
+                           constraintsWithVisualFormat:@"V:[_conversationTitle(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
 
-    // 标签高度
     [self.contentView
         addConstraints:[NSLayoutConstraint
                            constraintsWithVisualFormat:@"V:[_conversationTagView(21)]"
                                                options:0
                                                metrics:nil
                                                  views:cellSubViews]];
-    
-    // 时间标签位置
     [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-16-[_messageCreatedTimeLabel]"
                                                                              options:0
                                                                              metrics:nil
                                                                                views:cellSubViews]];
-    
-    // 详细内容和状态视图水平布局
     [self.contentView
         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:
                                                @"H:[_headerView]-12-[_detailContentView]-(>=0)-[_statusView(55)]-5-|"
                                                                options:0
                                                                metrics:nil
                                                                  views:cellSubViews]];
-    
-    // 状态视图垂直居中于详细内容
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.statusView
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
@@ -163,17 +140,14 @@
                                                                  attribute:NSLayoutAttributeCenterY
                                                                 multiplier:1
                                                                   constant:0]];
-    
-    // 标签垂直居中于 StackView
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTagView
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
-                                                                    toItem:self.titleStackView
+                                                                    toItem:self.conversationTitle
                                                                  attribute:NSLayoutAttributeCenterY
                                                                 multiplier:1
                                                                   constant:0]];
     
-    // 头像底部对齐详细内容
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.headerView
                                                                  attribute:NSLayoutAttributeBottom
                                                                  relatedBy:NSLayoutRelationEqual
@@ -182,8 +156,7 @@
                                                                 multiplier:1
                                                                   constant:0]];
 
-    // StackView 顶部对齐时间
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.titleStackView
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.conversationTitle
                                                                  attribute:NSLayoutAttributeTop
                                                                  relatedBy:NSLayoutRelationEqual
                                                                     toItem:self.messageCreatedTimeLabel
@@ -191,7 +164,6 @@
                                                                 multiplier:1
                                                                   constant:0]];
 
-    // 头像垂直居中
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:_headerView
                                                                  attribute:NSLayoutAttributeCenterY
                                                                  relatedBy:NSLayoutRelationEqual
@@ -223,11 +195,8 @@
     } else if (model.operationTime > 0) {
         self.messageCreatedTimeLabel.text = [RCKitUtility convertConversationTime:model.operationTime / 1000];
     }
-    [self.statusView updateReadStatus:model];
     [self.statusView updateNotificationStatus:model];
-    
-    // 更新在线状态显示
-    [self updateOnlineStatusDisplay];
+    [self.statusView updateReadStatus:model];
 }
 
 - (void)p_displaySimaple:(RCConversationModel *)model {
@@ -394,30 +363,12 @@
     for (UIView *view in [self.conversationTagView subviews]) {
         [view removeFromSuperview];
     }
-    
-    // 重置在线状态圆点（默认隐藏，StackView 会自动不给它分配空间）
-    self.onlineStatusView.hidden = YES;
-    self.onlineStatusView.backgroundColor = nil;
 }
 
 - (void)updateConversationTitle:(NSString *)text {
     text = (text.length > 0) ? text : self.model.targetId;
     self.model.conversationTitle = text;
     self.conversationTitle.text = self.model.conversationTitle;
-}
-
-- (void)updateOnlineStatus:(BOOL)isOnline {
-    if (!self.model.displayOnlineStatus) {
-        self.onlineStatusView.hidden = YES;
-        return;
-    }
-    // 显示在线状态圆点，根据状态显示不同颜色
-    self.onlineStatusView.hidden = NO;
-    self.onlineStatusView.online = isOnline;
-}
-
-- (void)updateOnlineStatusDisplay {
-    [self updateOnlineStatus:self.model.onlineStatus.isOnline];
 }
 
 - (BOOL)hideSenderNameForDefault:(RCConversationModel *)model {
@@ -573,10 +524,8 @@
         dispatch_main_async_safe(^{
             if (updateInfo.updateType == RCConversationCell_MessageContent_Update) {
                 [self.detailContentView updateContent:self.model];
-                [self.statusView updateReadStatus:self.model];
             } else if (updateInfo.updateType == RCConversationCell_SentStatus_Update) {
                 [self.statusView updateReadStatus:self.model];
-                [self.detailContentView updateContent:self.model];
             } else if (updateInfo.updateType == RCConversationCell_UnreadCount_Update) {
                 [self.headerView updateBubbleUnreadNumber:(int)self.model.unreadMessageCount];
             }
@@ -592,23 +541,6 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [self updateConversationTitle:profile.name];
             self.headerView.headerImageView.imageURL = [NSURL URLWithString:profile.portraitUrl];
-        });
-    }
-}
-
-- (void)onUserOnlineStatusChanged:(NSNotification *)notification {
-    // 只在单聊类型会话中处理在线状态变化
-    if (self.model.conversationType != ConversationType_PRIVATE) {
-        return;
-    }
-    
-    // 获取变化的用户ID列表
-    NSArray<NSString *> *changedUserIds = notification.userInfo[RCKitUserOnlineStatusChangedUserIdsKey];
-    
-    // 检查当前会话的用户是否在变化列表中
-    if ([changedUserIds containsObject:self.model.targetId]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateOnlineStatusDisplay];
         });
     }
 }
@@ -641,35 +573,13 @@
     return _headerView;
 }
 
-- (UIStackView *)titleStackView {
-    if (!_titleStackView) {
-        _titleStackView = [[UIStackView alloc] init];
-        _titleStackView.translatesAutoresizingMaskIntoConstraints = NO;
-        _titleStackView.axis = UILayoutConstraintAxisHorizontal;
-        _titleStackView.alignment = UIStackViewAlignmentCenter;
-        _titleStackView.spacing = 4; // 在线状态圆点和标题之间的间距
-        
-        // 添加在线状态圆点和标题到 StackView
-        [_titleStackView addArrangedSubview:self.onlineStatusView];
-        [_titleStackView addArrangedSubview:self.conversationTitle];
-    }
-    return _titleStackView;
-}
-
-- (RCOnlineStatusView *)onlineStatusView {
-    if (!_onlineStatusView) {
-        _onlineStatusView = [[RCOnlineStatusView alloc] init];
-    }
-    return _onlineStatusView;
-}
-
 - (UILabel *)conversationTitle {
     if(!_conversationTitle) {
         _conversationTitle = [[UILabel alloc] init];
         _conversationTitle.translatesAutoresizingMaskIntoConstraints = NO;
         _conversationTitle.backgroundColor = [UIColor clearColor];
         _conversationTitle.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-        _conversationTitle.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffE5");
+        _conversationTitle.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
     }
     return _conversationTitle;
 }
@@ -689,7 +599,7 @@
         _messageCreatedTimeLabel.translatesAutoresizingMaskIntoConstraints = NO;
         _messageCreatedTimeLabel.backgroundColor = [UIColor clearColor];
         _messageCreatedTimeLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
-        _messageCreatedTimeLabel.textColor = RCDynamicColor(@"text_secondary_color",@"0xC7CbCe", @"0x3c3c3c");
+        _messageCreatedTimeLabel.textColor = RCDYCOLOR(0xC7CbCe, 0x3c3c3c);
         BOOL isRTL = [RCSemanticContext isRTL];
         _messageCreatedTimeLabel.textAlignment = isRTL ? NSTextAlignmentLeft : NSTextAlignmentRight;
         _messageCreatedTimeLabel.accessibilityLabel = @"messageCreatedTimeLabel";

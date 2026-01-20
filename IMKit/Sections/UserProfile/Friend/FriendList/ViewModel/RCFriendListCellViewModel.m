@@ -41,18 +41,7 @@
             }
         }
     });
-}
-
-- (void)refreshOnlineStatus:(RCSubscribeUserOnlineStatus *)onlineStatus {
-    self.onlineStatus = onlineStatus;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.indexPath) {
-            RCFriendListCell *cell = [self.tableView cellForRowAtIndexPath:self.indexPath];
-            if (cell && [cell isKindOfClass:[RCFriendListCell class]]) {
-                cell.onlineStatusView.online = onlineStatus.isOnline;
-            }
-        }
-    });
+   
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
@@ -60,14 +49,9 @@
     self.indexPath = indexPath;
     self.tableView = tableView;
     RCFriendListCell *cell = [tableView dequeueReusableCellWithIdentifier:RCFriendListCellIdentifier forIndexPath:indexPath];
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     if (self.friendInfo) {
         [cell showPortrait:self.friendInfo.portraitUri];
         cell.labName.text = self.friendInfo.remark.length > 0 ? self.friendInfo.remark : self.friendInfo.name;
-        cell.onlineStatusView.hidden = !self.displayOnlineStatus;
-        if (self.displayOnlineStatus) {
-            cell.onlineStatusView.online = self.onlineStatus.isOnline;
-        }
     }
     return cell;
 }

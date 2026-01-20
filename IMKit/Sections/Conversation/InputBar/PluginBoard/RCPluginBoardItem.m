@@ -36,7 +36,7 @@
 
     UILabel *label = [UILabel new];
     [label setText:_title];
-    [label setTextColor:RCDynamicColor(@"text_secondary_color", @"0xA0A5Ab", @"0x9f9f9f")];
+    [label setTextColor:RCDYCOLOR(0xA0A5Ab, 0x9f9f9f)];
     [label setFont:[[RCKitConfig defaultConfig].font fontOfAssistantLevel]];
     [label setTextAlignment:NSTextAlignmentCenter];
     [myView addSubview:label];

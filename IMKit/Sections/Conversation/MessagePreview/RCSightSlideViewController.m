@@ -531,7 +531,7 @@
         _collectionView.delegate = self;
         [_collectionView setPagingEnabled:YES];
         _collectionView.showsHorizontalScrollIndicator = NO;
-        _collectionView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _collectionView.backgroundColor = [UIColor blackColor];
     }
     return _collectionView;
 }
@@ -539,7 +539,7 @@
 - (RCBaseImageView *)imageView {
     if (!_imageView) {
         _imageView = [[RCBaseImageView alloc] init];
-        _imageView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _imageView.backgroundColor = [UIColor blackColor];
     }
     return _imageView;
 }
@@ -547,7 +547,7 @@
 - (RCBaseButton *)rightTopButton {
     if (!_rightTopButton) {
         _rightTopButton = [[RCBaseButton alloc] init];
-        UIImage *image = RCDynamicImage(@"video_preview_list_btn_img", @"sight_list_button");
+        UIImage *image = RCResourceImage(@"sight_list_button");
         [_rightTopButton setImage:image forState:UIControlStateNormal];
         _rightTopButton.hidden = self.topRightBtnHidden;
         [_rightTopButton addTarget:self

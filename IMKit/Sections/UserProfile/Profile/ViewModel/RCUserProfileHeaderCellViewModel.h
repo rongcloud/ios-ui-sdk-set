@@ -17,13 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy) NSString *remark;
 
-/// 是否显示在线状态
-/// 默认 NO 不显示
-@property (nonatomic, assign) BOOL displayOnlineStatus;
-
-/// 默认 NO 不在线状态
-@property (nonatomic, assign) BOOL isOnline;
-
 - (instancetype)initWithPortrait:(NSString *)portrait
                             name:(NSString *)name
                           remark:(NSString *)remark;

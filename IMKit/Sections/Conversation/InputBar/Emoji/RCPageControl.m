@@ -18,8 +18,8 @@
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization code
-        self.currentPageIndicatorTintColor = RCDynamicColor(@"text_secondary_color", @"0x868686", @"0xcccccc");
-        self.pageIndicatorTintColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xBFBFBF", @"0x666666");
+        self.currentPageIndicatorTintColor = RCDYCOLOR(0x868686, 0xcccccc);
+        self.pageIndicatorTintColor = RCDYCOLOR(0xBFBFBF,0x666666);
         self.hidesForSinglePage = YES;
         self.enabled = NO;
         self.currentPage = 0;

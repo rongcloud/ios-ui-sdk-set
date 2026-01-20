@@ -111,7 +111,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         } else {
             _stillImageView.contentMode = UIViewContentModeScaleAspectFit;
         }
-        _stillImageView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        _stillImageView.backgroundColor = [UIColor blackColor];
     }
     return _stillImageView;
 }
@@ -119,8 +119,8 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (RCBaseButton *)switchCameraBtn {
     if (!_switchCameraBtn) {
         _switchCameraBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, CommonBtnSize, CommonBtnSize)];
-        [_switchCameraBtn setImage:RCDynamicImage(@"sight_camera_switch_img", @"sight_camera_switch") forState:UIControlStateNormal];
-        [_switchCameraBtn setTitleColor:RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff") forState:UIControlStateNormal];
+        [_switchCameraBtn setImage:RCResourceImage(@"sight_camera_switch") forState:UIControlStateNormal];
+        [_switchCameraBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         _switchCameraBtn.backgroundColor = [UIColor clearColor];
         [_switchCameraBtn addTarget:self
                              action:@selector(switchCameraAction:)
@@ -132,8 +132,8 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (RCBaseButton *)playBtn {
     if (!_playBtn) {
         _playBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
-        [_playBtn setImage:RCDynamicImage(@"video_player_play_btn_img", @"sight_play_btn") forState:UIControlStateNormal];
-        [_playBtn setImage:RCDynamicImage(@"video_player_pause_btn_img",    @"sight_pause_btn") forState:UIControlStateSelected];
+        [_playBtn setImage:RCResourceImage(@"sight_play_btn") forState:UIControlStateNormal];
+        [_playBtn setImage:RCResourceImage(@"sight_pause_btn") forState:UIControlStateSelected];
         [_playBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
         _playBtn.enabled = NO;
     }
@@ -151,8 +151,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (RCBaseButton *)dismissBtn {
     if (!_dismissBtn) {
         _dismissBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
-        [_dismissBtn setImage:RCDynamicImage(@"video_player_top_close_button_img",  @"sight_top_toolbar_close")
-                     forState:UIControlStateNormal];
+        [_dismissBtn setImage:RCResourceImage(@"sight_top_toolbar_close") forState:UIControlStateNormal];
         _dismissBtn.backgroundColor = [UIColor clearColor];
         [_dismissBtn addTarget:self action:@selector(dismissAction:) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -162,7 +161,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (RCBaseButton *)cancelBtn {
     if (!_cancelBtn) {
         _cancelBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
-        [_cancelBtn setImage:RCDynamicImage(@"video_player_cancel_btn_img", @"sight_preview_cancel") forState:UIControlStateNormal];
+        [_cancelBtn setImage:RCResourceImage(@"sight_preview_cancel") forState:UIControlStateNormal];
         [_cancelBtn addTarget:self action:@selector(cancelAction:) forControlEvents:UIControlEventTouchUpInside];
         _cancelBtn.enabled = NO;
     }
@@ -172,7 +171,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 - (RCBaseButton *)okBtn {
     if (!_okBtn) {
         _okBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, OKBtnSize, OKBtnSize)];
-        [_okBtn setImage:RCDynamicImage(@"video_player_done_btn_img",   @"sight_preview_done") forState:UIControlStateNormal];
+        [_okBtn setImage:RCResourceImage(@"sight_preview_done") forState:UIControlStateNormal];
         [_okBtn addTarget:self action:@selector(okAction:) forControlEvents:UIControlEventTouchUpInside];
         _okBtn.enabled = NO;
     }
@@ -198,7 +197,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         CGSize textSize = [text sizeWithAttributes:@{NSFontAttributeName : _tipsLable.font}];
         _tipsLable.frame = CGRectMake(0, 0, textSize.width, textSize.height);
         _tipsLable.text = text;
-        _tipsLable.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _tipsLable.textColor = [UIColor whiteColor];
     }
     return _tipsLable;
 }

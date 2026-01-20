@@ -21,6 +21,7 @@
 
 #import "RCStreamUtilities.h"
 
+// TODO: zgh
 NSUInteger const RCStreamMessageCellDisplayTextLimit = 10000;
 NSUInteger const RCStreamMessageCellLoadingLimit = 20;
 CGFloat const rcUnfoldButtonHeight = 42;

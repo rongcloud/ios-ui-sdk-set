@@ -16,8 +16,12 @@
 /// 关联的文本输入框
 @property (nonatomic, weak) UITextView *textView;
 
-/// @ 信息列表
+/// @信息列表（核心数据）
 @property (nonatomic, strong) NSMutableArray<RCMentionedStringRangeInfo *> *mentionedRangeInfoList;
+
+/// 引用消息信息（新增）
+@property (nonatomic, strong, nullable) NSString *referencedSenderName;
+@property (nonatomic, strong, nullable) NSString *referencedContent;
 
 @end
 
@@ -178,13 +182,10 @@
         [attStr addAttribute:NSFontAttributeName
                        value:self.textView.font
                        range:NSMakeRange(0, insertContent.length)];
-        UIColor *foreColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-        if (foreColor) {
-            [attStr addAttribute:NSForegroundColorAttributeName
-                           value:foreColor
-                           range:NSMakeRange(0, insertContent.length)];
-        }
-
+        [attStr addAttribute:NSForegroundColorAttributeName
+                       value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
+                       range:NSMakeRange(0, insertContent.length)];
+        
         // 插入文本
         [self.textView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
         
@@ -231,14 +232,42 @@
     [self notifyMentionsDidUpdate];
 }
 
-- (void)setupMentionedRangeInfo:(NSArray<RCMentionedStringRangeInfo *> *)mentionedRangeInfo {
-    [self.mentionedRangeInfoList removeAllObjects];
-    [self.mentionedRangeInfoList addObjectsFromArray:mentionedRangeInfo];
-    
-    // 更新用户信息到最新
-    [self updateMentionedInfoWithLatestUserInfo];
-    [self notifyMentionsDidUpdate];
+#pragma mark - @信息属性
+
+- (RCMentionedInfo *)mentionedInfo {
+    if (self.mentionedRangeInfoList.count > 0) {
+        NSMutableSet *mentionedUserIdList = [[NSMutableSet alloc] init];
+        for (RCMentionedStringRangeInfo *mentionedInfo in self.mentionedRangeInfoList) {
+            if (mentionedInfo.userId) {
+                [mentionedUserIdList addObject:mentionedInfo.userId];
+            }
+        }
+        RCMentionedInfo *mentionedInfo = [[RCMentionedInfo alloc] initWithMentionedType:RC_Mentioned_Users
+                                                                             userIdList:[mentionedUserIdList allObjects]
+                                                                       mentionedContent:nil];
+        return mentionedInfo;
+    }
+    return nil;
 }
+
+#pragma mark - 引用消息状态管理（新增功能）
+
+- (void)setReferenceInfo:(NSString *)senderName content:(NSString *)content {
+    self.referencedSenderName = senderName;
+    self.referencedContent = content;
+}
+
+- (void)clearReferenceInfo {
+    self.referencedSenderName = nil;
+    self.referencedContent = nil;
+}
+
+- (BOOL)hasReferenceInfo {
+    return (self.referencedSenderName.length > 0 || 
+            self.referencedContent.length > 0);
+}
+
+#pragma mark - 完整状态管理（增强版）
 
 - (BOOL)hasContent {
     // 检查文本内容
@@ -246,7 +275,168 @@
     return hasText;
 }
 
-// 将输入框中的 @ 用户名更新为最新的
+- (NSDictionary *)stateData {
+    // 使用统一的 hasContent 判断
+    if (!self.hasContent) {
+        return nil;
+    }
+    
+    NSString *textContent = self.textView.text ?: @"";
+    NSMutableDictionary *stateData = [NSMutableDictionary dictionary];
+    [stateData setObject:textContent forKey:@"textContent"];
+    
+    // 保存 @ 信息列表
+    if (self.mentionedRangeInfoList.count > 0) {
+        NSMutableArray *mentionedRangeInfoList = [NSMutableArray array];
+        for (RCMentionedStringRangeInfo *info in self.mentionedRangeInfoList) {
+            NSString *encodedInfo = [info encodeToString];
+            if (encodedInfo) {
+                [mentionedRangeInfoList addObject:encodedInfo];
+            }
+        }
+        [stateData setObject:mentionedRangeInfoList forKey:@"mentionedRangeInfoList"];
+    }
+    
+    // 引用消息信息
+    if (self.hasReferenceInfo) {
+        NSMutableDictionary *referenceInfo = [NSMutableDictionary dictionary];
+        if (self.referencedSenderName) referenceInfo[@"senderName"] = self.referencedSenderName;
+        if (self.referencedContent) referenceInfo[@"content"] = self.referencedContent;
+        
+        [stateData setObject:referenceInfo forKey:@"referenceInfo"];
+    }
+    
+    return [stateData copy];
+}
+
+- (BOOL)restoreFromStateData:(NSDictionary *)stateData {
+    if (!stateData || ![stateData isKindOfClass:[NSDictionary class]]) {
+        return NO;
+    }
+    
+    // 恢复文本内容
+    NSString *textContent = stateData[@"textContent"];
+    if (textContent && textContent.length > 0) {
+        self.textView.text = textContent;
+    }
+    
+    // 恢复'@'信息
+    NSArray *mentionedRangeInfoList = stateData[@"mentionedRangeInfoList"];
+    [self.mentionedRangeInfoList removeAllObjects];
+    
+    for (NSString *encodedInfo in mentionedRangeInfoList) {
+        RCMentionedStringRangeInfo *info = [[RCMentionedStringRangeInfo alloc] initWithDecodeString:encodedInfo];
+        if (info) {
+            [self.mentionedRangeInfoList addObject:info];
+        }
+    }
+
+    // 如果从缓存恢复时,将输入框中的 @ 用户名更新为最新的   
+    [self updateMentionedInfoWithLatestUserInfo];
+    
+    // 恢复引用消息信息
+    NSDictionary *referenceInfo = stateData[@"referenceInfo"];
+    if (referenceInfo) {
+        [self setReferenceInfo:referenceInfo[@"senderName"]
+                       content:referenceInfo[@"content"]];
+    } else {
+        [self clearReferenceInfo];
+    }
+    
+    [self notifyMentionsDidUpdate];
+    
+    return YES;
+}
+
+- (void)restoreFromOriginalMessage:(RCMentionedInfo *)mentionedInfo {
+    if (!mentionedInfo) {
+        return;
+    }
+    // 清空现有'@'信息
+    [self.mentionedRangeInfoList removeAllObjects];
+    
+    if (mentionedInfo.userIdList.count == 0) {
+        [self notifyMentionsDidUpdate];
+        return;
+    }
+    // 重建'@'信息位置映射 - 支持重复用户名的正确定位
+    NSString *currentText = [self currentText];
+    if (!currentText || currentText.length == 0) {
+        return;
+    }
+    
+    // 预处理：获取所有用户信息，避免重复调用delegate
+    NSMutableDictionary *userDisplayNames = [NSMutableDictionary dictionary];
+    for (NSString *userId in mentionedInfo.userIdList) {
+        RCUserInfo *userInfo = nil;
+        if ([self.delegate respondsToSelector:@selector(inputStateManager:getUserInfoForUserId:)]) {
+            userInfo = [self.delegate inputStateManager:self getUserInfoForUserId:userId];
+        }
+        if (userInfo) {
+            userDisplayNames[userId] = userInfo.name ?: userId;
+        }
+    }
+    
+    // 一次扫描找到所有可能的@匹配位置
+    NSMutableArray *allFoundMatches = [NSMutableArray array];
+    NSRange searchRange = NSMakeRange(0, currentText.length);
+    
+    while (searchRange.location < currentText.length) {
+        NSRange atRange = [currentText rangeOfString:@"@" options:0 range:searchRange];
+        if (atRange.location == NSNotFound) {
+            break; // 没有更多@符号
+        }
+        
+        // 检查这个@位置是否匹配任何用户名
+        for (NSString *userId in mentionedInfo.userIdList) {
+            NSString *displayName = userDisplayNames[userId];
+            if (!displayName) continue;
+            
+            NSString *pattern = [NSString stringWithFormat:@"@%@ ", displayName];
+            if ([self text:currentText hasPrefix:pattern atIndex:atRange.location]) {
+                NSRange matchRange = NSMakeRange(atRange.location, pattern.length);
+                
+                // 检查这个位置是否已经被记录（避免重复）
+                if (![self isRangeAlreadyInMatches:matchRange matches:allFoundMatches]) {
+                    [allFoundMatches addObject:@{
+                        @"range": [NSValue valueWithRange:matchRange],
+                        @"userId": userId ?: @"",
+                        @"content": pattern ?: @""
+                    }];
+                    break; // 找到匹配就跳出内层循环
+                }
+            }
+        }
+        
+        // 移动到下一个字符位置继续搜索
+        searchRange.location = atRange.location + 1;
+        searchRange.length = currentText.length - searchRange.location;
+    }
+    
+    // 按位置排序所有匹配项
+    [allFoundMatches sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+        NSRange range1 = [obj1[@"range"] rangeValue];
+        NSRange range2 = [obj2[@"range"] rangeValue];
+        if (range1.location < range2.location) return NSOrderedAscending;
+        if (range1.location > range2.location) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+
+    for (NSDictionary *match in allFoundMatches) {
+        NSString *matchedUserId = match[@"userId"];
+            // 创建RangeInfo
+            RCMentionedStringRangeInfo *rangeInfo = [[RCMentionedStringRangeInfo alloc] init];
+            rangeInfo.range = [match[@"range"] rangeValue];
+            rangeInfo.userId = matchedUserId;
+            rangeInfo.content = match[@"content"];
+            
+            [self.mentionedRangeInfoList addObject:rangeInfo];
+    }
+    
+    [self notifyMentionsDidUpdate];
+}
+
+// 如果从缓存恢复时,将输入框中的 @ 用户名更新为最新的
 - (void)updateMentionedInfoWithLatestUserInfo {
     for (RCMentionedStringRangeInfo *mentionedInfo in self.mentionedRangeInfoList) {
         NSString *userId = mentionedInfo.userId;
@@ -276,6 +466,9 @@
     
     // 清除'@'信息
     [self clearAllMentions];
+    
+    // 清除引用消息信息
+    [self clearReferenceInfo];
 }
 
 #pragma mark - 私有方法
@@ -358,28 +551,6 @@
         }
     }
     return NO;
-}
-
-#pragma mark - getter
-
-- (RCMentionedInfo *)mentionedInfo {
-    if (self.mentionedRangeInfoList.count > 0) {
-        NSMutableSet *mentionedUserIdList = [[NSMutableSet alloc] init];
-        for (RCMentionedStringRangeInfo *mentionedInfo in self.mentionedRangeInfoList) {
-            if (mentionedInfo.userId) {
-                [mentionedUserIdList addObject:mentionedInfo.userId];
-            }
-        }
-        RCMentionedInfo *mentionedInfo = [[RCMentionedInfo alloc] initWithMentionedType:RC_Mentioned_Users
-                                                                             userIdList:[mentionedUserIdList allObjects]
-                                                                       mentionedContent:nil];
-        return mentionedInfo;
-    }
-    return nil;
-}
-
-- (NSArray<RCMentionedStringRangeInfo *> *)mentionedRangeInfo {
-    return [self.mentionedRangeInfoList copy];
 }
 
 @end 

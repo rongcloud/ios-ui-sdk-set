@@ -18,8 +18,8 @@ NSInteger const RCApplyFriendOperationCellBtnSpace = 10;
 - (void)setupView {
     [super setupView];
     self.labStatus.hidden = YES;
-    [self.topStackView addArrangedSubview:self.btnReject];
-    [self.topStackView addArrangedSubview:self.btnApprove];
+    [self.buttonsContainer addSubview:self.btnReject];
+    [self.buttonsContainer addSubview:self.btnApprove];
 }
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
@@ -27,11 +27,31 @@ NSInteger const RCApplyFriendOperationCellBtnSpace = 10;
     [self updateCGColorUI];
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [self updateCGColorUI];
+    CGPoint point = self.labName.frame.origin;
+    CGFloat labWidth = CGRectGetMinX(self.buttonsContainer.frame) - CGRectGetMinX(self.portraitImageView.frame) - point.x;
+    self.labName.frame = CGRectMake(point.x,point.y, labWidth, 24);
+    [self.btnApprove sizeToFit];
+    [self.btnReject sizeToFit];
+    
+    CGFloat rejectWidth = MAX(self.btnReject.frame.size.width + RCApplyFriendOperationCellBtnSpace, RCApplyFriendOperationCellBtnMinWidth);
+    CGFloat approveWidth = MAX(self.btnApprove.frame.size.width + RCApplyFriendOperationCellBtnSpace, RCApplyFriendOperationCellBtnMinWidth);
+    CGRect frame = self.buttonsContainer.frame;
+    frame.size.width = approveWidth + rejectWidth + RCFriendApplyCellMargin;
+    CGFloat xCenter = self.contentView.frame.size.width - RCFriendApplyCellMargin - frame.size.width/2;
+    self.buttonsContainer.frame = frame;
+    self.buttonsContainer.center =  CGPointMake(xCenter, self.portraitImageView.center.y);
+    
+    self.btnReject.frame = CGRectMake(0, 0, rejectWidth, CGRectGetHeight(self.buttonsContainer.frame));
+    self.btnApprove.frame = CGRectMake(CGRectGetWidth(self.buttonsContainer.frame)-approveWidth, 0, approveWidth, CGRectGetHeight(self.buttonsContainer.frame));
+}
+
 #pragma mark -- private
 
 - (void)updateCGColorUI {
-    UIColor *borderColor = RCDynamicColor(@"line_background_color", @"0xCFCFCF", @"0x3C3C3C");
-    self.btnReject.layer.borderColor = borderColor.CGColor;
+    self.btnReject.layer.borderColor = RCDYCOLOR(0xCFCFCF, 0x3C3C3C).CGColor;
 }
 
 #pragma mark -- getter
@@ -40,24 +60,14 @@ NSInteger const RCApplyFriendOperationCellBtnSpace = 10;
     if (!_btnReject) {
         UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
         [btn setTitle:RCLocalizedString(@"FriendApplicationRefuse") forState:UIControlStateNormal];
-        btn.backgroundColor =
-        RCDynamicColor(@"common_background_color", @"0xffffff", @"0x3C3C3C");
-        [btn setTitleColor:RCDynamicColor(@"hint_color",@"0x000000", @"0xD3E1EE") forState:UIControlStateNormal];
-        UIColor *borderColor = RCDynamicColor(@"line_background_color", @"0x0000001A", @"0xFFFFFF1A");
-        btn.layer.borderColor = borderColor.CGColor;
-        btn.titleLabel.font = [UIFont systemFontOfSize:14];
+        btn.backgroundColor = RCDYCOLOR(0xFFFFFF, 0x3C3C3C);
+        [btn setTitleColor:RCDYCOLOR(0x000000, 0xD3E1EE) forState:UIControlStateNormal];
+        btn.titleLabel.font = [UIFont systemFontOfSize:13];
         btn.layer.borderWidth = 1;
         btn.layer.cornerRadius = 4;
-        btn.contentEdgeInsets = UIEdgeInsetsMake(5, 17, 5, 17);
-        [btn sizeToFit];
-
         [btn addTarget:self
                 action:@selector(rejectApplication)
       forControlEvents:UIControlEventTouchUpInside];
-        btn.translatesAutoresizingMaskIntoConstraints = NO;
-        [btn setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-        [btn setContentHuggingPriority:UILayoutPriorityRequired
-                               forAxis:UILayoutConstraintAxisHorizontal];
         _btnReject = btn;
     }
     return _btnReject;
@@ -67,20 +77,13 @@ NSInteger const RCApplyFriendOperationCellBtnSpace = 10;
     if (!_btnApprove) {
         UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
         [btn setTitle:RCLocalizedString(@"FriendApplicationAccept") forState:UIControlStateNormal];
-        [btn setBackgroundColor:RCDynamicColor(@"primary_color",@"0x0099FF", @"0x1AA3FF")];
-        [btn setTitleColor:RCDynamicColor(@"control_title_white_color",@"0xFFFFFF", @"0x0D0D0D") forState:UIControlStateNormal];
+        [btn setBackgroundColor:RCDYCOLOR(0x0099FF, 0x1AA3FF)];
+        [btn setTitleColor:RCDYCOLOR(0xFFFFFF, 0x0D0D0D) forState:UIControlStateNormal];
         btn.layer.cornerRadius = 4;
-        btn.contentEdgeInsets = UIEdgeInsetsMake(5, 17, 5, 17);
-        btn.titleLabel.font = [UIFont systemFontOfSize:14];
-        [btn sizeToFit];
+        btn.titleLabel.font = [UIFont systemFontOfSize:13];
         [btn addTarget:self
                 action:@selector(approveApplication)
       forControlEvents:UIControlEventTouchUpInside];
-        btn.translatesAutoresizingMaskIntoConstraints = NO;
-        [btn setContentCompressionResistancePriority:UILayoutPriorityRequired
-                                             forAxis:UILayoutConstraintAxisHorizontal];
-        [btn setContentHuggingPriority:UILayoutPriorityRequired
-                               forAxis:UILayoutConstraintAxisHorizontal];
         _btnApprove = btn;
     }
     return _btnApprove;
