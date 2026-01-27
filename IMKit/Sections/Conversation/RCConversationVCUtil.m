@@ -180,28 +180,17 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)saveDraftIfNeed {
-    RCConversationType type = self.chatVC.conversationType;
-    NSString *targetId = self.chatVC.targetId?:@"";
-    NSString *channelId = self.chatVC.channelId?:@"";
-    NSString *draft = self.chatVC.chatSessionInputBarControl.draft?:@"";
-    NSDictionary *userInfo = @{
-        @"conversationType": @(type),
-        @"targetId": targetId,
-        @"channelId": channelId,
-        @"draft": draft,
-    };
-    [[RCChannelClient sharedChannelManager] getTextMessageDraft:type targetId:targetId channelId:channelId completion:^(NSString * _Nullable draftInDB) {
+    NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
         if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
-                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:type targetId:targetId channelId:channelId content:draft completion:^(BOOL result) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
-                                                                        object:nil userInfo:userInfo];
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
+                    
                 }];
             }
         } else if (draftInDB.length > 0){
             [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
-                                                                    object:nil userInfo:userInfo];
+                
             }];
         }
     }];
@@ -240,16 +229,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
         RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
         if (msg.messageId == messageID && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
-            return msg;
-        }
-    }
-    return nil;
-}
-
-- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId {
-    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
-        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
-        if ([msg.messageUId isEqualToString:messageUId] && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
             return msg;
         }
     }
@@ -307,12 +286,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 
 - (BOOL)canReferenceMessage:(RCMessageModel *)message {
-    BOOL inputHidden = self.chatVC.chatSessionInputBarControl.hidden;
-    if (self.chatVC.editInputBarControl.isVisible) {
-        inputHidden = self.chatVC.editInputBarControl.hidden;
-    }
-    
-    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || inputHidden ||
+    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || self.chatVC.chatSessionInputBarControl.hidden ||
         self.chatVC.chatSessionInputBarControl.destructMessageMode) {
         return NO;
     }
@@ -344,7 +318,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
     RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
-    message.needReceipt = YES;
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
         [[RCIM sharedRCIM] sendMediaMessage:message
                                 pushContent:pushContent
@@ -543,7 +516,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         return;
     }
     //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
-    if (self.chatVC.conversationType == ConversationType_PRIVATE ||
+    if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
+         ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
         self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
         self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
         self.chatVC.conversationType == ConversationType_SYSTEM) {
@@ -563,24 +537,20 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)startSyncConversationReadStatus:(long long)sentTime needDelay:(BOOL)needDelay{
-    void (^syncConversationReadStatus)(void) = ^{
-        if ([RCCoreClient sharedCoreClient].getAppSettings.serverSaveUnreadEnabled) {
-            RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc] initWithConversationIdentifier:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId];
-            [[RCCoreClient sharedCoreClient] markRemoteConversationAsRead:identifier success:nil error:nil];
-        } else {
-            [[RCCoreClient sharedCoreClient] syncConversationReadStatus:self.chatVC.conversationType
-                                                               targetId:self.chatVC.targetId
-                                                                   time:sentTime
-                                                                success:nil
-                                                                  error:nil];
-        }
-    };
     if (needDelay) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            syncConversationReadStatus();
+            [[RCCoreClient sharedCoreClient] syncConversationReadStatus:self.chatVC.conversationType
+                                                             targetId:self.chatVC.targetId
+                                                                 time:sentTime
+                                                              success:nil
+                                                                error:nil];
         });
     }else{
-        syncConversationReadStatus();
+        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:self.chatVC.conversationType
+                                                         targetId:self.chatVC.targetId
+                                                             time:sentTime
+                                                          success:nil
+                                                            error:nil];
     }
 }
 
@@ -598,10 +568,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
-            // -1 无需发送已读回执
-            if (self.lastReadReceiptTime == -1) {
-                return;
-            }
             [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }
@@ -616,8 +582,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)canSendReadReceipt {
-    // 屏蔽已读回执V1
-    return NO;
     if((self.chatVC.conversationType == ConversationType_PRIVATE || self.chatVC.conversationType == ConversationType_Encrypted) &&
        [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         return YES;
@@ -631,8 +595,6 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
  *  @param array 需要回执响应的消息的列表
  */
 - (void)sendReadReceiptResponseForMessages:(NSArray *)array {
-    // 屏蔽已读回执v1
-    return;
     if ([RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
         NSMutableArray *readReceiptarray = [NSMutableArray array];
         for (int i = 0; i < array.count; i++) {
@@ -654,110 +616,9 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (BOOL)enabledReadReceiptMessage:(RCMessageModel *)model {
-    return model.needReceipt;
+    if ([self.enabledReadReceiptMessageTypeList containsObject:model.objectName]) {
+        return YES;
+    }
+    return NO;
 }
-
-- (RCMessageModel *)messageModelByUId:(NSString *)messageUId {
-    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
-        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
-        if (msg.messageUId == messageUId && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
-            return msg;
-        }
-    }
-    return nil;
-}
-
-#pragma mark - 编辑状态管理
-
-// 判断消息是否可以编辑
-- (BOOL)isMessageEditable:(RCMessageModel *)model {
-    if (!RCKitConfigCenter.message.enableEditMessage) {
-        return NO;
-    }
-    if (model.conversationType != ConversationType_PRIVATE
-        && model.conversationType != ConversationType_GROUP) {
-        return NO;
-    }
-    // 只有文本消息和引用消息可以编辑
-    if (![model.content isMemberOfClass:[RCTextMessage class]] &&
-        ![model.content isMemberOfClass:[RCReferenceMessage class]]) {
-        return NO;
-    }
-    
-    // 只能编辑自己发送的消息
-    if (model.messageDirection != MessageDirection_SEND) {
-        return NO;
-    }
-    
-    // 只能编辑已发送成功的消息
-    if (model.messageUId.length == 0) {
-        return NO;
-    }
-    
-    return [self isEditTimeValid:model.sentTime];
-}
-
-// 编辑时间是否过期
-- (BOOL)isEditTimeValid:(long long)sentTime {
-    if (sentTime <= 0) {
-        return NO;
-    }
-    RCAppSettings *appSettings = [[RCCoreClient sharedCoreClient] getAppSettings];
-    NSTimeInterval appSettingsTime = appSettings.messageModifiableMinutes * 60 * 1000;
-    if (appSettingsTime <= 0) {
-        return NO;
-    }
-    // 获取当前手机与服务器的时间差
-    NSTimeInterval deltaTime = [[RCCoreClient sharedCoreClient] getDeltaTime];
-    NSTimeInterval currentTimestamp = ([[NSDate date] timeIntervalSince1970] * 1000) - deltaTime;
-    // 时间间隔， 当前准确时间 - 消息发送时间
-    NSTimeInterval timeInterval = currentTimestamp - sentTime;
-    // 如果时间差大于 appSettingsTime，则不能编辑
-    if (timeInterval > appSettingsTime) {
-        return NO;
-    }
-    return YES;
-}
-
-- (void)saveEditingStateWithEditConfig:(RCEditInputBarConfig *)config {
-    if (!config) {
-        return;
-    }
-    if (!config.cachedStateData || config.cachedStateData.count == 0) {
-        return;
-    }
-    NSMutableDictionary *stateData = [NSMutableDictionary dictionary];
-    [stateData setObject:config.messageUId forKey:@"messageUId"];
-    [stateData setObject:@(config.sentTime) forKey:@"sentTime"];
-    [stateData setObject:config.cachedStateData forKey:@"stateData"];
-    
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    // 保存状态数据
-    [userDefaults setObject:stateData forKey:[self editingStateDataKey]];
-    [userDefaults synchronize];
-}
-
-- (RCEditInputBarConfig *)getCacheEditConfig {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSDictionary *stateData = [userDefaults objectForKey:[self editingStateDataKey]];
-    if (stateData && stateData.count > 0) {
-        RCEditInputBarConfig *editConfig = [[RCEditInputBarConfig alloc] init];
-        editConfig.messageUId = [stateData objectForKey:@"messageUId"];
-        editConfig.sentTime = [[stateData objectForKey:@"sentTime"] longLongValue];
-        editConfig.cachedStateData = [stateData objectForKey:@"stateData"];
-        return editConfig;
-    }
-    return nil;
-}
-
-- (void)clearEditingState {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults removeObjectForKey:[self editingStateDataKey]];
-    [userDefaults synchronize];
-}
-
-- (NSString *)editingStateDataKey {
-    return [NSString stringWithFormat:@"rc_editing_state_%@_%@", @(self.chatVC.conversationType), self.chatVC.targetId];
-}
-
 @end

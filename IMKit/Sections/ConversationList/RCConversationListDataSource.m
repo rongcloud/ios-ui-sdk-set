@@ -13,11 +13,9 @@
 #import "RCConversationCellUpdateInfo.h"
 #import "RCKitConfig.h"
 #import "RCIMNotificationDataContext.h"
-#import "RCConversationListDataSource+RRS.h"
-
 #define PagingCount 100
 
-@interface RCConversationListDataSource ()<RCReadReceiptV5Delegate, RCRemoteConversationUnreadDelegate>
+@interface RCConversationListDataSource ()
 @property (nonatomic, strong) dispatch_queue_t updateEventQueue;
 @property (nonatomic, assign) NSInteger currentCount;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, RCConversationModel *> *collectedModelDict;
@@ -85,7 +83,6 @@
                 }
                 modelList = [ws collectConversation:modelList collectionTypes:ws.collectionConversationTypeArray];
             }
-            [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(modelList.count > 0) {
                     [ws.dataList addObjectsFromArray:modelList.copy];
@@ -137,7 +134,7 @@
             modelList = [self.delegate dataSource:self willReloadTableData:modelList];
         }
         modelList = [self collectConversation:modelList collectionTypes:self.collectionConversationTypeArray];
-        [self rrs_refreshCachedAndFetchReceiptInfo:modelList];
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataList = modelList;
             if (completion) {
@@ -232,9 +229,6 @@
                     if (self.delegate && [self.delegate respondsToSelector:@selector(dataSource:willInsertAtIndexPaths:)]) {
                         [self.delegate dataSource:self willInsertAtIndexPaths:@[ [NSIndexPath indexPathForRow:newIndex inSection:0] ]];
                     }
-                    if (newModel) {
-                        [self rrs_refreshCachedAndFetchReceiptInfo:@[newModel]];
-                    }
                 });
             }];
         }
@@ -269,8 +263,7 @@
         }
         dispatch_async(self.updateEventQueue, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSArray *arrayDataList = [self.dataList copy];
-                for (RCConversationModel *model in arrayDataList) {
+                for (RCConversationModel *model in self.dataList) {
                     if ([model.targetId isEqualToString:targetId]) {
                         RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
                         [[RCCoreClient sharedCoreClient] getConversation:model.conversationType
@@ -492,15 +485,6 @@
                                              selector:@selector(didReceiveRecallMessageNotification:)
                                                  name:RCKitDispatchRecallMessageNotification
                                                object:nil];
-    [[RCCoreClient sharedCoreClient] addReadReceiptV5Delegate:self];
-    
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(onMessagesModifiedNotification:)
-                                                 name:RCKitDispatchMessagesModifiedNotification
-                                               object:nil];
-    
-    [[RCCoreClient sharedCoreClient] addRemoteConversationUnreadDelegate:self];
 }
 
 #pragma mark - helper
@@ -547,89 +531,5 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [[RCCoreClient sharedCoreClient] removeReadReceiptV5Delegate:self];
-    [[RCCoreClient sharedCoreClient] removeRemoteConversationUnreadDelegate:self];
 }
-
-#pragma mark - 已读回执v5
-- (void)didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses {
-    if (!self.isConverstaionListAppear) {// 列表页不显示时无需处理
-        return;
-    }
-    dispatch_async(self.updateEventQueue, ^{
-        [self rrs_didReceiveMessageReadReceiptResponses:responses];
-    });
-}
-
-#pragma mark - 消息编辑
-
-- (void)onMessagesModifiedNotification:(NSNotification *)notification {
-    NSArray<RCMessage *> *messages = notification.object;
-    for (RCMessage *message in messages) {
-        // 更新最后一条消息的显示内容
-        [[RCCoreClient sharedCoreClient] getConversation:message.conversationType targetId:message.targetId completion:^(RCConversation * _Nullable conversation) {
-            for (RCConversationModel *model in self.dataList) {
-                // 只替换最后一条消息
-                if ([model.latestMessageUId isEqualToString:message.messageUId]) {
-                    model.lastestMessage = conversation.latestMessage;
-        
-                    RCConversationCellUpdateInfo *updateInfo = [[RCConversationCellUpdateInfo alloc] init];
-                    updateInfo.model = model;
-                    updateInfo.updateType = RCConversationCell_MessageContent_Update;
-                    [[NSNotificationCenter defaultCenter]
-                     postNotificationName:RCKitConversationCellUpdateNotification
-                     object:updateInfo
-                     userInfo:nil];
-                }
-            }
-        }];
-    }
-}
-
-#pragma mark 服务端维护未读数
-
-- (NSString *)conversationKeyWithType:(RCConversationType)type targetId:(NSString *)targetId channelId:(NSString *)channelId {
-    return [NSString stringWithFormat:@"%@:%@:%@", @(type), targetId, channelId];
-}
-
-- (void)onRemoteConversationUnreadInfoSyncCompleted {
-    if(self.delegate && [self.delegate respondsToSelector:@selector(refreshConversationTableViewIfNeededInDataSource:)]){
-        [self.delegate refreshConversationTableViewIfNeededInDataSource:self];
-    }
-    if(self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]){
-        [self.delegate notifyUpdateUnreadMessageCountInDataSource];
-    }
-}
-
-- (void)onRemoteConversationUnreadInfoChanged:(NSArray<RCConversation *> *)conversations {
-    NSMutableDictionary<NSString *, RCConversationModel *> *conversationModels = [NSMutableDictionary dictionary];
-
-    for (RCConversationModel *model in self.dataList) {
-        NSString *key = [self conversationKeyWithType:model.conversationType targetId:model.targetId channelId:model.channelId];
-        conversationModels[key] = model;
-    }
-    for (RCConversation *conversation in conversations) {
-        NSString *key = [self conversationKeyWithType:conversation.conversationType targetId:conversation.targetId channelId:conversation.channelId];
-        RCConversationModel *model = conversationModels[key];
-        if (model) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (conversation.unreadMessageCount != model.unreadMessageCount) {
-                    model.unreadMessageCount = conversation.unreadMessageCount;
-                    RCConversationCellUpdateInfo *updateInfo =
-                    [[RCConversationCellUpdateInfo alloc] init];
-                    updateInfo.model = model;
-                    updateInfo.updateType = RCConversationCell_UnreadCount_Update;
-                    [[NSNotificationCenter defaultCenter]
-                     postNotificationName:RCKitConversationCellUpdateNotification
-                     object:updateInfo
-                     userInfo:nil];
-                }
-            });
-        }
-    }
-    if(self.delegate && [self.delegate respondsToSelector:@selector(notifyUpdateUnreadMessageCountInDataSource)]){
-        [self.delegate notifyUpdateUnreadMessageCountInDataSource];
-    }
-}
-
 @end

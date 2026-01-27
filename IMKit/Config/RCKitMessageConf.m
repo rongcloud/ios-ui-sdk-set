@@ -8,7 +8,6 @@
 
 #import "RCKitMessageConf.h"
 #import <RongIMLibCore/RongIMLibCore.h>
-#import "RCKitCommonDefine.h"
 
 @implementation RCKitMessageConf
 - (instancetype)init
@@ -37,7 +36,6 @@
         self.enableMessageReference = YES;
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
-        self.enableEditMessage = NO;
     }
     return self;
 }
@@ -49,13 +47,6 @@
 }
 - (NSTimeInterval)uploadVideoDurationLimit {
     return [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
-}
-
-- (UIColor *)editedTextColor {
-    if (!_editedTextColor) {
-        _editedTextColor = RCDYCOLOR(0x7C838E, 0xFFFFFF);
-    }
-    return _editedTextColor;
 }
 
 @end

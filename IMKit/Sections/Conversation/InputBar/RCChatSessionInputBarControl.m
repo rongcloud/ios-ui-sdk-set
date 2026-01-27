@@ -374,11 +374,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     }
 }
 
-- (void)clearInputData {
-    self.inputTextView.text = @"";
-    [self.mentionedRangeInfoList removeAllObjects];
-}
-
 #pragma mark - RCVoiceRecordControlDelegate
 - (BOOL)recordWillBegin{
     if ([self.delegate respondsToSelector:@selector(recordWillBegin)]) {
@@ -496,17 +491,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 #pragma mark -  RCEmojiViewDelegate
 - (void)didTouchEmojiView:(RCEmojiBoardView *)emojiView touchedEmoji:(NSString *)string {
     if (nil == string) {
-        NSRange range = NSMakeRange(self.inputTextView.selectedRange.location - 1, 1);
+        [self.inputTextView deleteBackward];
+        NSRange range = NSMakeRange(self.inputTextView.selectedRange.location, string.length);
         if (self.delegate &&
             [self.delegate respondsToSelector:@selector(inputTextView:shouldChangeTextInRange:replacementText:)]) {
             [self.delegate inputTextView:self.inputTextView shouldChangeTextInRange:range replacementText:string];
-        }
-        // 处理 @ 信息
-        if ([self.inputTextView.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
-            BOOL shouldChange = [self.inputTextView.delegate textView:self.inputTextView shouldChangeTextInRange:range replacementText:string];
-            if (shouldChange) {
-                [self.inputTextView deleteBackward];
-            }
         }
     } else {
         NSString *replaceString = string;
@@ -743,7 +732,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         NSDictionary *userInfo = [notification userInfo];
         CGRect keyboardBeginFrame = [userInfo[UIKeyboardFrameBeginUserInfoKey] CGRectValue];
         CGRect keyboardEndFrame = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-        if (!CGRectEqualToRect(keyboardBeginFrame, keyboardEndFrame) || self.inputContainerView.currentBottomBarStatus != KBottomBarKeyboardStatus) {
+        if (!CGRectEqualToRect(keyboardBeginFrame, keyboardEndFrame)) {
             UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
             NSInteger animationCurveOption = (animationCurve << 16);
             
@@ -925,8 +914,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                 if (range.length == 1 && (mentionedRange.location + mentionedRange.length == range.location + 1)) {
                     shouldUseDefaultChangeText = NO;
                     [self.inputTextView.textStorage deleteCharactersInRange:mentionedRange];
-                    // 修改 textStorage 不会触发 inputTextViewDidChange, 需要手动调用
-                    [self inputTextViewDidChange:self.inputTextView];
                     range.location = range.location - mentionedRange.length + 1;
                     range.length = 0;
                     self.inputTextView.selectedRange = NSMakeRange(mentionedRange.location, 0);
@@ -1036,8 +1023,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                        value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
                        range:NSMakeRange(0, insertContent.length)];
         [self.inputTextView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
-        // 修改 textStorage 不会触发 inputTextViewDidChange, 需要手动调用
-        [self inputTextViewDidChange:self.inputTextView];
         self.inputTextView.selectedRange = NSMakeRange(cursorPosition + insertContent.length, 0);
         [self updateAllMentionedRangeInfo:cursorPosition length:insertContent.length];
 
@@ -1082,14 +1067,9 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (float)getBoardViewBottomOriginY {
     float gap = (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) ? 64 : 0;
-    float bottom = [self getSafeAreaExtraBottomHeight];
-    gap += bottom;
-    if (bottom > 0) {// 刘海屏的热点栏不影响statusBar高度
-        return [UIScreen mainScreen].bounds.size.height - gap;
-    } else {
-        return IS_HOTSPOT_CONNECTED ? [UIScreen mainScreen].bounds.size.height - gap - 20
-        : [UIScreen mainScreen].bounds.size.height - gap;
-    }
+    gap += [self getSafeAreaExtraBottomHeight];
+    return IS_HOTSPOT_CONNECTED ? [UIScreen mainScreen].bounds.size.height - gap - 20
+                                : [UIScreen mainScreen].bounds.size.height - gap;
 }
 
 - (float)getSafeAreaExtraBottomHeight {
@@ -1470,9 +1450,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                         [self.mentionedRangeInfoList addObject:mentionedInfo];
                     }
                 }
-                if ([self.delegate respondsToSelector:@selector(didSetDraft:)]) {
-                    [self.delegate didSetDraft:draftDict];
-                }
             }
         }
 
@@ -1485,13 +1462,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (draft.length > 0) {
         NSMutableDictionary *dataDict = [NSMutableDictionary new];
         [dataDict setObject:draft forKey:@"draftContent"];
-
-        if ([self.dataSource respondsToSelector:@selector(getDraftExtraInfo)]) {
-            NSDictionary *dict = [self.dataSource getDraftExtraInfo];
-            if ([dict isKindOfClass:[NSDictionary class]]) {
-                [dataDict addEntriesFromDictionary:dict];
-            }
-        }
 
         NSMutableArray *mentionedRangeInfoList = [NSMutableArray new];
         for (RCMentionedStringRangeInfo *mentionedInfo in self.mentionedRangeInfoList) {

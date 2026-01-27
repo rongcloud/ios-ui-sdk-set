@@ -12,8 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// - Since: 5.4.0
 @interface RCBaseView : UIView
 
-- (void)setupView;
-
 @end
 
 NS_ASSUME_NONNULL_END
