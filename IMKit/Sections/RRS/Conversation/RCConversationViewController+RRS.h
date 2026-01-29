@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCConversationViewController (RRS)
 - (void)rrs_observeReadReceiptV5;
+- (void)rrs_responseReadReceiptV5IfNeed;
 - (void)rrs_didReceiveMessageReadReceiptResponses:(NSArray<RCReadReceiptResponseV5 *> *)responses;
 @end
 

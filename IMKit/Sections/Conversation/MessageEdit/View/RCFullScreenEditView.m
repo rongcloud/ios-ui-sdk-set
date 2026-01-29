@@ -43,7 +43,7 @@
     if (self = [super initWithFrame:frame]) {
         self.currentLayoutState = KBottomBarDefaultStatus;
         [self setupUI];
-        [self setupViewConstraints];
+        [self setupConstraints];
     }
     return self;
 }
@@ -61,7 +61,7 @@
     self.backgroundColor = [UIColor clearColor];
     
     self.backgroundView = [[UIView alloc] init];
-    self.backgroundView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.backgroundView.backgroundColor = RCDYCOLOR(0xF5F6F9, 0x1c1c1c);
     self.backgroundView.translatesAutoresizingMaskIntoConstraints = NO;
     [self addSubview:self.backgroundView];
     
@@ -71,7 +71,7 @@
     [self.backgroundView addSubview:self.bottomPlaceholderView];
 }
 
-- (void)setupViewConstraints {
+- (void)setupConstraints {
     CGFloat safeAreaTop = [RCKitUtility getWindowSafeAreaInsets].top;
     CGFloat safeAreaBottom = [RCKitUtility getWindowSafeAreaInsets].bottom;
     CGFloat topOffset = safeAreaTop;
@@ -141,7 +141,7 @@
 
 - (void)hideWithAnimation:(BOOL)animated completion:(void(^_Nullable)(void))completion {
     // 确保输入框失去焦点
-    [self.editInputBarControl.editInputContainer resignInputViewFirstResponder];
+    [self.editInputBarControl.editInputContainer resignFirstResponder];
     
     self.backgroundColor = [UIColor clearColor];
     

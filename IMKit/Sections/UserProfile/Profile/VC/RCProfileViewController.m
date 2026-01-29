@@ -109,7 +109,7 @@ RCListViewModelResponder
 #pragma mark -- private
 
 - (void)setNavigationBarItems {
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
@@ -118,16 +118,21 @@ RCListViewModelResponder
 - (RCProfileTableView *)profileView {
     if (!_profileView) {
         _profileView = [[RCProfileTableView alloc] initWithFrame:CGRectZero style:(UITableViewStyleGrouped)];
-        _profileView.backgroundColor =  RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
+        _profileView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+        _profileView.backgroundColor =  RCDYCOLOR(0xf5f6f9, 0x111111);
         _profileView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 15)];
         _profileView.sectionHeaderHeight = 0;
-        _profileView.separatorStyle = UITableViewCellSeparatorStyleNone;
         if (@available(iOS 15.0, *)) {
             _profileView.sectionHeaderTopPadding = 15;
         }
         _profileView.delegate = self;
         _profileView.dataSource = self;
-        
+        if ([_profileView respondsToSelector:@selector(setSeparatorInset:)]) {
+            _profileView.separatorInset = UIEdgeInsetsMake(0, 12, 0, 0);
+        }
+        if ([_profileView respondsToSelector:@selector(setLayoutMargins:)]) {
+            _profileView.layoutMargins = UIEdgeInsetsMake(0, 12, 0, 0);
+        }
     }
     return _profileView;
 }

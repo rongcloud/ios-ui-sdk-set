@@ -16,8 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) RCPlaceholderTextView *textView;
 
 @property (nonatomic, strong) UILabel *tipLabel;
+
 @property (nonatomic, strong) UILabel *emptyLabel;
-@property (nonatomic, strong) UIImageView *emptyImageView;
 
 - (void)updateTextViewHeight:(BOOL)canEdit;
 - (void)showEmptylabel:(BOOL)show;

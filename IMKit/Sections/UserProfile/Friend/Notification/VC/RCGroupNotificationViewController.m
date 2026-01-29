@@ -34,7 +34,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-//    self.edgesForExtendedLayout = UIRectEdgeNone;
+    self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setupView];
     [self.viewModel fetchData];
 }
@@ -45,7 +45,7 @@
         self.title = RCLocalizedString(@"GroupNotificationAll");
     }
     [self configureRightNaviItems];
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
@@ -106,6 +106,10 @@
     return  [self.viewModel tableView:tableView cellForRowAtIndexPath:indexPath];
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [self.viewModel tableView:tableView heightForRowAtIndexPath:indexPath];
+}
+
 #pragma mark - Property
 
 - (RCGroupNotificationView *)listView {
@@ -113,7 +117,6 @@
         RCGroupNotificationView *listView = [RCGroupNotificationView new];
         listView.tableView.dataSource = self;
         listView.tableView.delegate = self;
-        listView.tableView.estimatedRowHeight = 115;
         [listView addRefreshingTarget:self withSelector:@selector(loadMore)];
         _listView = listView;
     }

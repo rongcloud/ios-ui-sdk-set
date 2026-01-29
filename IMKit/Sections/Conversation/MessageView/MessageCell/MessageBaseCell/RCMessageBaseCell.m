@@ -18,9 +18,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 #define SelectButtonSpaceLeft 8 //选择按钮据屏幕左侧 5
 
 @interface RCMessageBaseCell ()
-{
-    __weak id<RCMessageCellDelegate> _delegate;
-}
+
 @property (nonatomic, strong) UITapGestureRecognizer *multiSelectTap;
 @property (nonatomic, strong) RCBaseButton *selectButton;
 
@@ -46,14 +44,6 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
-    _delegate = delegate;
-}
-
-- (id<RCMessageCellDelegate>)delegate {
-    return _delegate;
 }
 
 - (void)layoutSubviews {
@@ -199,10 +189,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
     NSString *imgName = [[RCMessageSelectionUtility sharedManager] isContainMessage:self.model]
                             ? @"message_cell_select"
                             : @"message_cell_unselect";
-    NSString *imgNameKey = [[RCMessageSelectionUtility sharedManager] isContainMessage:self.model]
-                            ? @"conversation_msg_cell_select_img"
-                            : @"conversation_msg_cell_unselect_img";
-    UIImage *image = RCDynamicImage(imgNameKey, imgName);
+    UIImage *image = RCResourceImage(imgName);
     [self.selectButton setImage:image forState:UIControlStateNormal];
 }
 
@@ -211,7 +198,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 - (RCBaseButton *)selectButton {
     if (!_selectButton) {
         _selectButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        [_selectButton setImage:RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect") forState:UIControlStateNormal];
+        [_selectButton setImage:RCResourceImage(@"message_cell_unselect") forState:UIControlStateNormal];
         [_selectButton addTarget:self
                           action:@selector(onSelectMessageEvent)
                 forControlEvents:UIControlEventTouchUpInside];
@@ -237,7 +224,7 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
     if (!_messageTimeLabel) {
         _messageTimeLabel = [RCTipLabel greyTipLabel];
         _messageTimeLabel.backgroundColor = [UIColor clearColor];
-        _messageTimeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xA0A5AB", @"0x585858");
+        _messageTimeLabel.textColor = RCDYCOLOR(0xA0A5AB, 0x585858);
         _messageTimeLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         [self.contentView addSubview:_messageTimeLabel];
     }

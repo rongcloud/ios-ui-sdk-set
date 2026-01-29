@@ -33,7 +33,6 @@
 
 @property (nonatomic, strong) RCGroupInfo *group;
 
-@property (nonatomic, weak) RCRemoveGroupMemberCellViewModel *lastBottomCellVM;
 @end
 
 @implementation RCRemoveGroupMembersViewModel
@@ -80,8 +79,6 @@
     [self.matchMemberList removeAllObjects];
     if (searchText.length == 0) {
         [self.responder reloadData:NO];
-        [self removeSeparatorWithArray:self.memberList];
-
     } else {
         [self filterDataSourceWithQueryResult:nil];
     }
@@ -91,7 +88,6 @@
     if (!inSearching) {
         [self endEditingState];
     }
-    [self removeSeparatorWithArray:self.memberList];
     [self.responder reloadData:NO];
 }
 
@@ -155,7 +151,6 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.searchQueryResult = result;
                 [self.matchMemberList addObjectsFromArray:list];
-                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:self.matchMemberList.count == 0];
             });
         }];
@@ -188,22 +183,12 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.queryResult = result;
                 [self.mutableMemberList addObjectsFromArray:list];
-                [self removeSeparatorWithArray:list];
                 [self.responder reloadData:NO];
             });
         }];
     }];
 }
 
-- (void)removeSeparatorWithArray:(NSArray *)array {
-    if (array.count) {
-        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
-            self.lastBottomCellVM.hideSeparatorLine = NO;
-        }
-        [self removeSeparatorLineIfNeed:@[array]];
-        self.lastBottomCellVM = [array lastObject];
-    }
-}
 #pragma mark -- public
 
 - (UISearchBar *)configureSearchBar {
@@ -314,7 +299,7 @@
 }
 
 - (NSArray<RCRemoveGroupMemberCellViewModel *> *)memberList {
-    if (self.searchBarVM.searchBar.text.length !=0) {
+    if ([self.searchBarVM isCurrentFirstResponder]) {
         return self.matchMemberList;
     }
     return self.mutableMemberList;

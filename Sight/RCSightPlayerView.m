@@ -8,7 +8,6 @@
 
 #import "RCSightPlayerView.h"
 #import "RCSightPlayerOverlayView.h"
-#import "RongSightAdaptiveHeader.h"
 
 @interface RCSightPlayerView ()
 @property (strong, nonatomic) RCSightPlayerOverlayView *overlayView;
@@ -32,7 +31,7 @@
 
 - (instancetype)init {
     if (self = [super initWithFrame:CGRectZero]) {
-        self.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        self.backgroundColor = [UIColor blackColor];
         self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
         [self addSubview:self.overlayView];
     }
@@ -42,7 +41,7 @@
 - (instancetype)initWithPlayer:(AVPlayer *)player {
     self = [super initWithFrame:CGRectZero];
     if (self) {
-        self.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        self.backgroundColor = [UIColor blackColor];
         self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
         [(AVPlayerLayer *)[self layer] setPlayer:player];

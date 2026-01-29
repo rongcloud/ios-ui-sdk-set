@@ -10,7 +10,7 @@
 #import "RCKitCommonDefine.h"
 #import <CoreText/CoreText.h>
 #import "RCKitUtility.h"
-#import "RCMessageEditUtil.h"
+#import "RCEditedStateUtil.h"
 
 @interface RCAttributedLabel ()
 
@@ -51,26 +51,24 @@
     if (self.attributeDataSource) {
         return [self.attributeDataSource attributeDictionaryForTextType:textType];
     }
-    UIColor * linkColor = RCDynamicColor(@"link_color", @"0x0000FF", @"0xFFBE6a");
-    if (!linkColor) {
-        linkColor = [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)];
-    }
     switch (textType) {
     case NSTextCheckingTypePhoneNumber: {
         _currentTextCheckingType = NSTextCheckingTypePhoneNumber;
         return @{
-            NSForegroundColorAttributeName :linkColor
-                ,
+            NSForegroundColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
             NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName : linkColor
+            NSUnderlineColorAttributeName : [UIColor yellowColor]
         };
     }
     case NSTextCheckingTypeLink: {
         _currentTextCheckingType = NSTextCheckingTypeLink;
         return @{
-            NSForegroundColorAttributeName :linkColor,
+            NSForegroundColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)],
             NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-            NSUnderlineColorAttributeName :linkColor
+            NSUnderlineColorAttributeName :
+                [RCKitUtility generateDynamicColor:[UIColor blueColor] darkColor:HEXCOLOR(0xFFBE6a)]
         };
     }
     default:
@@ -87,23 +85,19 @@
     if (self.attributeDataSource) {
         return [self.attributeDataSource highlightedAttributeDictionaryForTextType:textType];
     }
-    UIColor * linkColor = RCDynamicColor(@"link_color", @"0x0000FF", @"0xFFBE6a");
-    if (!linkColor) {
-        linkColor = [UIColor yellowColor];
-    }
     switch (textType) {
     case NSTextCheckingTypePhoneNumber: {
         _currentTextCheckingType = NSTextCheckingTypePhoneNumber;
         if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor yellowColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
             };
         } else {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor yellowColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-                NSUnderlineColorAttributeName : linkColor
+                NSUnderlineColorAttributeName : [UIColor yellowColor]
             };
         }
     }
@@ -111,14 +105,14 @@
         _currentTextCheckingType = NSTextCheckingTypeLink;
         if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor greenColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle)
             };
         } else {
             return @{
-                NSForegroundColorAttributeName : linkColor,
+                NSForegroundColorAttributeName : [UIColor greenColor],
                 NSUnderlineStyleAttributeName : @(NSUnderlineStyleSingle),
-                NSUnderlineColorAttributeName : linkColor
+                NSUnderlineColorAttributeName : [UIColor greenColor]
             };
         }
     }
@@ -270,10 +264,10 @@
     @try {
         if (self.rc_editedSuffixRange.location != NSNotFound &&
             NSMaxRange(self.rc_editedSuffixRange) <= self.originalString.length) {
-            NSString *editedSuffix = [RCMessageEditUtil editedSuffix];
+            NSString *editedSuffix = [RCEditedStateUtil editedSuffix];
             NSString *actual = [self.originalString substringWithRange:self.rc_editedSuffixRange];
             if ([actual isEqualToString:editedSuffix]) {
-                UIColor *editedColor = [RCMessageEditUtil editedTextColor];
+                UIColor *editedColor = [RCEditedStateUtil editedTextColor];
                 [attributedString addAttribute:NSForegroundColorAttributeName value:editedColor range:self.rc_editedSuffixRange];
             }
         }

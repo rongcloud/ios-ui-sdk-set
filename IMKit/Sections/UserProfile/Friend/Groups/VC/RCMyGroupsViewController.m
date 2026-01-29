@@ -36,13 +36,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // iOS 11 以下系统需要设置 edgesForExtendedLayout 避免被 navbar 遮挡
-    // iOS 11+ 使用 safeAreaLayoutGuide 自动处理
-    if (@available(iOS 11.0, *)) {
-        // iOS 11+ 不需要特殊处理
-    } else {
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    }
+    self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setupView];
     [self.viewModel fetchData];
 }
@@ -54,7 +48,7 @@
     }
     [self configureSearchBar];
     [self configureRightNaviItems];
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 

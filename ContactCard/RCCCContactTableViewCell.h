@@ -17,5 +17,4 @@
 
 @property (nonatomic, strong) RCBaseLabel *userIdLabel;
 
-@property (nonatomic, strong) UIView *lineView;
 @end

@@ -7,14 +7,9 @@
 //
 
 #import "RCMessageModel+RRS.h"
-#import "RCKitConfig.h"
-#import "RCRRSUtil.h"
 
 @implementation RCMessageModel (RRS)
 - (BOOL)rrs_shouldResponseReadReceiptV5 {
-    if (![RCRRSUtil isSupportReadReceiptV5]) {
-        return NO;
-    }
     if (self.messageUId.length == 0) {
         return NO;
     }
@@ -22,37 +17,33 @@
         || self.conversationType == ConversationType_PRIVATE)) {
         return NO;
     }
-    if (![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.conversationType)]) {
+    
+    if (self.needReceipt && !self.sentReceipt && self.messageDirection == MessageDirection_RECEIVE) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)rrs_couldFetchReadReceiptV5 {
+    if (self.messageUId.length == 0) {
         return NO;
     }
-    
-    if (self.needReceipt
-        && !self.sentReceipt
-        && self.messageDirection == MessageDirection_RECEIVE) {
+    if (!(self.conversationType == ConversationType_GROUP
+        || self.conversationType == ConversationType_PRIVATE)) {
+        return NO;
+    }
+    if (self.needReceipt && self.messageDirection == MessageDirection_SEND) {
         return YES;
     }
     return NO;
 }
 
 - (BOOL)rrs_shouldFetchReadReceiptV5 {
-    if (![RCRRSUtil isSupportReadReceiptV5]) {
-        return NO;
+    if ([self rrs_couldFetchReadReceiptV5]) {
+        return self.readReceiptCount == 0;
     }
-    if (self.messageUId.length == 0) {
-        return NO;
-    }
-    if (!(self.conversationType == ConversationType_GROUP
-        || self.conversationType == ConversationType_PRIVATE)) {
-        return NO;
-    }
-    if (![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.conversationType)]) {
-        return NO;
-    }
-    if (self.needReceipt && self.messageDirection == MessageDirection_SEND) {
-        return YES;
-    }
-    
     return NO;
 }
+
 
 @end

@@ -37,7 +37,7 @@
 }
 
 - (void)initialize {
-    self.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x1c1c1c");
+    self.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
     [self addSubview:self.coverView];
     [self addSubview:self.nameLabel];
     [self addSubview:self.downloadView];
@@ -146,7 +146,7 @@
 - (UILabel *)nameLabel {
     if (_nameLabel == nil) {
         _nameLabel = [[UILabel alloc] init];
-        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x333333", @"0x9f9f9f");
+        _nameLabel.textColor = RCDYCOLOR(0x333333, 0x9f9f9f);
         _nameLabel.font = [UIFont systemFontOfSize:22];
         _nameLabel.textAlignment = NSTextAlignmentLeft;
     }

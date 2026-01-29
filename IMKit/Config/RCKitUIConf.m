@@ -7,7 +7,6 @@
 //
 
 #import "RCKitUIConf.h"
-#import "RCKitLanguageManager.h"
 
 @interface RCKitUIConf ()
 
@@ -49,14 +48,6 @@
 
     _globalMessagePortraitSize.width = width;
     _globalMessagePortraitSize.height = height;
-}
-
-- (void)setPreferredLanguage:(NSString *)preferredLanguage {
-    if (![_preferredLanguage isEqualToString:preferredLanguage]) {
-        _preferredLanguage = [preferredLanguage copy];
-        // 通知语言管理器重新加载上下文
-        [[RCKitLanguageManager sharedManager] reloadLanguageContext];
-    }
 }
 
 - (BOOL)registerFileSuffixTypes:(NSDictionary<NSString *, NSString *> *)types {

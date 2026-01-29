@@ -12,8 +12,6 @@
 #import "RCPublicServiceViewConstants.h"
 #import <RongPublicService/RongPublicService.h>
 #import "RCBaseTableView.h"
-#import "RCKitCommonDefine.h"
-
 @interface RCPublicServiceMultiImgTxtCell () <UITableViewDataSource, UITableViewDelegate,
                                               RCPublicServiceMultiImgTxtCellContentCellDelegate,
                                               RCPublicServiceMultiImgTxtCellHeaderCellDelegate>
@@ -158,8 +156,7 @@
         _tableView.dataSource = self;
         _tableView.delegate = self;
         _tableView.scrollEnabled = NO;
-        UIColor *color = RCDynamicColor(@"line_background_color", @"0xe5e5e5", @"0xe5e5e5");
-        _tableView.separatorColor = color;
+        _tableView.separatorColor = [UIColor colorWithRed:229 / 255.0 green:229 / 255.0 blue:229 / 255.0 alpha:1];
         _tableView.tableFooterView = [UIView new];
     }
     return _tableView;

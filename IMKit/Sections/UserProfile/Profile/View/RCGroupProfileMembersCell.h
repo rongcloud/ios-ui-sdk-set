@@ -6,7 +6,7 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import "RCPaddingTableViewCell.h"
+#import "RCBaseTableViewCell.h"
 #import "RCGroupMembersCollectionView.h"
 
 UIKIT_EXTERN NSString  * _Nonnull const RCGroupProfileMembersCellIdentifier;
@@ -16,7 +16,7 @@ UIKIT_EXTERN NSString  * _Nonnull const RCGroupProfileMembersCellIdentifier;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCGroupProfileMembersCell : RCPaddingTableViewCell
+@interface RCGroupProfileMembersCell : RCBaseTableViewCell
 
 @property (nonatomic, strong) RCGroupMembersCollectionView *membersView;
 

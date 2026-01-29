@@ -50,96 +50,49 @@
 
 - (void)setupView {
     [super setupView];
-    self.backgroundColor =RCDynamicColor(@"mask_color", @"0x00000059", @"0x00000059");
+    self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.35];
     self.containerView = [self configureContainerView];
     [self addSubview:self.containerView];
 }
 
-- (void)setupConstraints {
-    [super setupConstraints];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [self.containerView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
-        [self.containerView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-100],
-        [self.containerView.widthAnchor constraintEqualToConstant:288]
-    ]];
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    self.containerView.center = CGPointMake(self.center.x, self.center.y-self.containerView.frame.size.height/2);
 }
 
 #pragma mark - Private
 
 - (UIView *)configureContainerView {
+    CGFloat width = 280;
+    CGFloat height = 199;
     UIView *view = [UIView new];
-    view.translatesAutoresizingMaskIntoConstraints = NO;
-    
     view.accessibilityLabel = @"container";
-    view.layer.cornerRadius = 10;
-    view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFAFAFA", @"0x2c2c2c");
+    view.layer.cornerRadius = 7;
+    view.backgroundColor = RCDYCOLOR(0xFAFAFA, 0x2c2c2c);
     view.layer.masksToBounds = YES;
+    view.bounds = CGRectMake(0, 0, width, height);
     
-    UIStackView *contentStackView = [[UIStackView alloc] init];
-    contentStackView.axis = UILayoutConstraintAxisVertical;
-    contentStackView.alignment = UIStackViewAlignmentFill;
-    contentStackView.distribution = UIStackViewDistributionFill;
-    contentStackView.translatesAutoresizingMaskIntoConstraints = NO;
-    [view addSubview:contentStackView];
+    self.labTitle.frame = CGRectMake(15, 10, 250, 24);
+    [view addSubview:self.labTitle];
     
-    UIView *titleContainer = [UIView new];
-    titleContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [titleContainer addSubview:self.labTitle];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.labTitle.centerXAnchor constraintEqualToAnchor:titleContainer.centerXAnchor],
-        [self.labTitle.topAnchor constraintEqualToAnchor:titleContainer.topAnchor constant:24],
-        [self.labTitle.bottomAnchor constraintEqualToAnchor:titleContainer.bottomAnchor constant:-20]
-    ]];
-    [contentStackView addArrangedSubview:titleContainer];
+    self.txtView.frame = CGRectMake(8, CGRectGetMaxY(self.labTitle.frame)+10, 264, 85);
+    [view addSubview:self.txtView];
     
-    UIView *txtContainer = [UIView new];
-    txtContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [txtContainer addSubview:self.txtView];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.txtView.leadingAnchor constraintEqualToAnchor:txtContainer.leadingAnchor constant:16],
-        [self.txtView.trailingAnchor constraintEqualToAnchor:txtContainer.trailingAnchor constant:-16],
-        [self.txtView.topAnchor constraintEqualToAnchor:txtContainer.topAnchor],
-        [self.txtView.bottomAnchor constraintEqualToAnchor:txtContainer.bottomAnchor constant:-28],
-        [self.txtView.heightAnchor constraintEqualToConstant:110]
-    ]];
-    [contentStackView addArrangedSubview:txtContainer];
-    
-    UIView *line1 = [[UIView alloc] init];
-    line1.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe5e6e7", @"0x323232");
-    line1.translatesAutoresizingMaskIntoConstraints = NO;
-    [contentStackView addArrangedSubview:line1];
-    [NSLayoutConstraint activateConstraints:@[
-        [line1.heightAnchor constraintEqualToConstant:1]
-    ]];
-    
-    UIView *line2 = [[UIView alloc] init];
-    line2.translatesAutoresizingMaskIntoConstraints = NO;
-    line2.backgroundColor =  RCDynamicColor(@"line_background_color", @"0xe5e6e7", @"0x323232");
-    
-    UIStackView *bottomStackView = [[UIStackView alloc] init];
-    [contentStackView addArrangedSubview:bottomStackView];
-
-    bottomStackView.axis = UILayoutConstraintAxisHorizontal;
-    bottomStackView.alignment = UIStackViewAlignmentFill;
-    bottomStackView.distribution = UIStackViewDistributionFill;
-    bottomStackView.translatesAutoresizingMaskIntoConstraints = NO;
-    [bottomStackView addArrangedSubview:self.cancelButton];
-    [bottomStackView addArrangedSubview:line2];
-    [bottomStackView addArrangedSubview:self.confirmButton];
+ 
     CGFloat buttonHeight = 55;
+    UIView *line1 = [[UIView alloc] initWithFrame:CGRectMake(0, height-buttonHeight-1, width, 1)];
+    line1.backgroundColor = RCDYCOLOR(0xe5e6e7, 0x323232);
+    [view addSubview:line1];
 
-    [NSLayoutConstraint activateConstraints:@[
-        [line2.widthAnchor constraintEqualToConstant:1],
-        [line2.heightAnchor constraintEqualToConstant:buttonHeight],
-        [self.cancelButton.widthAnchor constraintEqualToAnchor:self.confirmButton.widthAnchor],
-
-        [contentStackView.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
-        [contentStackView.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
-        [contentStackView.topAnchor constraintEqualToAnchor:view.topAnchor],
-        [contentStackView.bottomAnchor constraintEqualToAnchor:view.bottomAnchor],
-    ]];
+    self.cancelButton.frame = CGRectMake(0, height-buttonHeight, (width-1)/2, buttonHeight);
+    [view addSubview:self.cancelButton];
     
+    UIView *line2 = [[UIView alloc] initWithFrame:CGRectMake((width+1)/2, CGRectGetMinY(self.cancelButton.frame), 1, CGRectGetHeight(self.cancelButton.frame))];
+    line2.backgroundColor =  RCDYCOLOR(0xe5e6e7, 0x323232);
+    [view addSubview:line2];
+
+    self.confirmButton.frame = CGRectMake((width+1)/2+1,CGRectGetMinY(self.cancelButton.frame), CGRectGetWidth(self.cancelButton.frame), CGRectGetHeight(self.cancelButton.frame));
+    [view addSubview:self.confirmButton];
     return view;
 }
 
@@ -170,9 +123,9 @@
     if (!_labTitle) {
         UILabel *lab = [UILabel new];
         lab.font = [UIFont systemFontOfSize:17];
-        lab.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
+        lab.textColor =  [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c)
+                                                  darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.8]];
         lab.textAlignment = NSTextAlignmentCenter;
-        lab.translatesAutoresizingMaskIntoConstraints = NO;
         _labTitle = lab;
     }
     return _labTitle;
@@ -181,15 +134,13 @@
 - (RCPlaceholderTextView *)txtView {
     if (!_txtView) {
         RCPlaceholderTextView *txt = [[RCPlaceholderTextView alloc] init];
-        txt.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xe5e5e5", @"0x1a1a1a");
-        [txt setTextColor:RCDynamicColor(@"text_primary_color", @"0x333333", @"0x9f9f9f")];
-        txt.layer.cornerRadius = 4;
+        txt.backgroundColor = RCDYCOLOR(0xe5e5e5, 0x1a1a1a);
+        [txt setTextColor:RCDYCOLOR(0x333333, 0x9f9f9f)];
+        txt.layer.cornerRadius = 7;
         txt.delegate = self;
         txt.font = [UIFont systemFontOfSize:14];
         txt.contentInset = UIEdgeInsetsMake(6, 6, 6, 6);
         txt.delegate = self;
-        txt.translatesAutoresizingMaskIntoConstraints = NO;
-        [txt setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
         _txtView = txt;
     }
     return _txtView;
@@ -199,12 +150,11 @@
     if (!_confirmButton) {
         _confirmButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 99, 40)];
         [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
+        [_confirmButton setTitleColor:RCDYCOLOR(0x0099ff, 0x007acc) forState:(UIControlStateNormal)];
         [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:17]];
         [_confirmButton addTarget:self
                            action:@selector(confirmButtonClick)
                  forControlEvents:UIControlEventTouchUpInside];
-        _confirmButton.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _confirmButton;
 }
@@ -213,13 +163,12 @@
     if (!_cancelButton) {
         _cancelButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 99, 40)];
         [_cancelButton setTitle:RCLocalizedString(@"Cancel") forState:UIControlStateNormal];
-        [_cancelButton setTitleColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xAAAAAA")
+        [_cancelButton setTitleColor:RCDYCOLOR(0x111f2c, 0xAAAAAA)
                             forState:(UIControlStateNormal)];
         [_cancelButton.titleLabel setFont:[UIFont systemFontOfSize:17]];
         [_cancelButton addTarget:self
                            action:@selector(cancelButtonClick)
                  forControlEvents:UIControlEventTouchUpInside];
-        _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _cancelButton;
 }

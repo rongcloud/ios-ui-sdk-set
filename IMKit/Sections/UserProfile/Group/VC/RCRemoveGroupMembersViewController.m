@@ -10,7 +10,6 @@
 #import "RCBaseButton.h"
 #import "RCBaseTableView.h"
 #import "RCKitCommonDefine.h"
-#import "RCSelectUserView.h"
 @interface RCRemoveGroupMembersViewController ()<
 UITableViewDelegate,
 UITableViewDataSource,
@@ -19,10 +18,11 @@ RCListViewModelResponder
 
 @property (nonatomic, strong) RCBaseButton *confirmButton;
 
-@property (nonatomic, strong) RCSelectUserView *listView;
+@property (nonatomic, strong) RCBaseTableView *listView;
 
 @property (nonatomic, strong) RCRemoveGroupMembersViewModel *viewModel;
 
+@property (nonatomic, strong) UILabel *emptyLabel;
 
 @end
 
@@ -44,7 +44,7 @@ RCListViewModelResponder
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.viewModel registerCellForTableView:self.listView.tableView];
+    [self.viewModel registerCellForTableView:self.listView];
     [self setNavigationBarItems];
     [self setupView];
 }
@@ -65,12 +65,13 @@ RCListViewModelResponder
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.confirmButton];
     self.confirmButton.enabled = NO;
     
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
 - (void)setupView {
-    [self.listView configureSearchBar:[self.viewModel configureSearchBar]];
+    self.listView.tableHeaderView = [self.viewModel configureSearchBar];
+    [self.listView addSubview:self.emptyLabel];
 }
 
 #pragma mark -- action
@@ -94,8 +95,13 @@ RCListViewModelResponder
 #pragma mark -- RCListViewModelResponder
 
 - (void)reloadData:(BOOL)isEmpty {
-    [self.listView.tableView reloadData];
-    self.listView.emptyLabel.hidden = !isEmpty;
+    [self.listView reloadData];
+    self.emptyLabel.hidden = !isEmpty;
+    if (!self.emptyLabel.hidden) {
+        self.emptyLabel.text = RCLocalizedString(@"NotUserFound");
+        [self.emptyLabel sizeToFit];
+        self.emptyLabel.center = CGPointMake(self.view.center.x, 150);
+    }
 }
 
 - (void)updateItem:(NSIndexPath *)indexPath {
@@ -133,26 +139,49 @@ RCListViewModelResponder
 
 #pragma mark -- getter
 
-- (RCSelectUserView *)listView {
+- (RCBaseTableView *)listView {
     if (!_listView) {
-        _listView = [RCSelectUserView new];
-        _listView.emptyLabel.text = RCLocalizedString(@"NotUserFound");
-        _listView.tableView.delegate = self;
-        _listView.tableView.dataSource = self;
+        _listView = [RCBaseTableView new];
+        _listView.delegate = self;
+        _listView.dataSource = self;
+        _listView.tableFooterView = [UIView new];
+        if (@available(iOS 15.0, *)) {
+            _listView.sectionHeaderTopPadding = 0;
+        }
+        if ([_listView respondsToSelector:@selector(setSeparatorInset:)]) {
+            _listView.separatorInset = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
+        if ([_listView respondsToSelector:@selector(setLayoutMargins:)]) {
+            _listView.layoutMargins = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
     }
     return _listView;
 }
 
 - (RCBaseButton *)confirmButton {
     if (!_confirmButton) {
-        _confirmButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
+        _confirmButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 100, 40)];
         [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
-        [_confirmButton setTitleColor:RCDynamicColor(@"disabled_color",@"0xa0a5ab", @"0xa0a5ab") forState:(UIControlStateDisabled)];
+        [_confirmButton setTitleColor:RCDYCOLOR(0x0099ff, 0x007acc) forState:(UIControlStateNormal)];
+        [_confirmButton setTitleColor:HEXCOLOR(0xa0a5ab) forState:(UIControlStateDisabled)];
         [_confirmButton addTarget:self action:@selector(confirmButtonDidClick) forControlEvents:UIControlEventTouchUpInside];
-        [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:17]];
+        [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:15]];
         _confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     }
     return _confirmButton;
 }
+
+- (UILabel *)emptyLabel {
+    if (!_emptyLabel) {
+        UILabel *lab = [[UILabel alloc] init];
+        lab.textColor = RCDYCOLOR(0x939393, 0x666666);
+        lab.font = [UIFont systemFontOfSize:17];
+        lab.textAlignment = NSTextAlignmentCenter;
+        lab.hidden = YES;
+        [lab sizeToFit];
+        _emptyLabel = lab;
+    }
+    return _emptyLabel;
+}
+
 @end

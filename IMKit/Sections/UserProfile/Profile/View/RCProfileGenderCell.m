@@ -12,30 +12,33 @@
 NSString  * const RCProfileGenderCellIdentifier = @"RCProfileGenderCellIdentifier";
 
 #define RCProfileGenderCellTitleFontSize 17
+#define RCProfileGenderCellTitleLeading 12
+#define RCProfileGenderCellTitleTop 12
+#define RCProfileGenderCellTitleWidth 150
+#define RCProfileGenderCellTitleHeight 20
+
+#define RCProfileGenderCellArrowTop 12
+#define RCProfileGenderCellArrowTrailing 18
+#define RCProfileGenderCellArrowLeading (SCREEN_WIDTH-RCProfileGenderCellArrowTrailing-RCProfileGenderCellArrowWidth)
 #define RCProfileGenderCellArrowWidth 20
 #define RCProfileGenderCellArrowHeight 20
 
 @implementation RCProfileGenderCell
 
 - (void)setupView {
-    [super setupView];
-    [self.contentStackView addArrangedSubview:self.titleLabel];
-    [self.contentStackView addArrangedSubview:self.selectView];
+    [self.contentView addSubview:self.titleLabel];
+    [self.contentView addSubview:self.selectView];
 }
 
-- (void)setupConstraints {
-    [super setupConstraints];
-    [self updateLineViewConstraints:RCUserManagementPadding
-                           trailing:-RCUserManagementPadding];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [self.selectView.widthAnchor constraintEqualToConstant:RCProfileGenderCellArrowWidth],
-        [self.selectView.heightAnchor constraintEqualToConstant:RCProfileGenderCellArrowHeight],
-    ]];
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    self.titleLabel.frame = CGRectMake(RCProfileGenderCellTitleLeading, RCProfileGenderCellTitleTop, RCProfileGenderCellTitleWidth, RCProfileGenderCellTitleHeight);
+    self.selectView.frame = CGRectMake(RCProfileGenderCellArrowLeading, RCProfileGenderCellArrowTop, RCProfileGenderCellArrowWidth, RCProfileGenderCellArrowHeight);
 }
 
 - (void)setSelected:(BOOL)selected {
     [super setSelected:selected];
+//    self.selectView.hidden = !selected;
 }
 
 #pragma mark - getter
@@ -43,21 +46,15 @@ NSString  * const RCProfileGenderCellIdentifier = @"RCProfileGenderCellIdentifie
 - (UILabel *)titleLabel {
     if (!_titleLabel) {
         _titleLabel = [[UILabel alloc] init];
-        _titleLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x9f9f9f");
+        _titleLabel.textColor = RCDYCOLOR(0x11f2c, 0x9f9f9f);
         _titleLabel.font = [UIFont systemFontOfSize:RCProfileGenderCellTitleFontSize];
-        _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        [_titleLabel setContentHuggingPriority:UILayoutPriorityDefaultLow
-                                       forAxis:UILayoutConstraintAxisHorizontal];
     }
     return _titleLabel;
 }
 
 - (RCBaseImageView *)selectView {
     if (!_selectView) {
-        _selectView = [[RCBaseImageView alloc] initWithImage:RCDynamicImage(@"group_manage_gender_cell_check_img", @"message_cell_select")];
-        _selectView.translatesAutoresizingMaskIntoConstraints = NO;
-        [_selectView setContentHuggingPriority:UILayoutPriorityDefaultHigh
-                                       forAxis:UILayoutConstraintAxisHorizontal];
+        _selectView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"message_cell_select")];
     }
     return _selectView;
 }

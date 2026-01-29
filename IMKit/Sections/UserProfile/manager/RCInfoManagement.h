@@ -25,11 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)getUserInfo:(NSString *)userId complete:(nullable void (^)(RCUserInfo *user))complete;
 
-/// 加载用户信息（优先使用缓存，缓存未命中自动触发网络请求）
-/// @param userIds 用户ID数组
-/// @note 数据更新后会发送通知
-- (void)loadUserInfos:(NSArray<NSString *> *)userIds;
-
 - (void)refreshUserInfo:(RCUserInfo *)userInfo;
 
 - (void)clearUserInfo:(NSString *)userId;
@@ -46,13 +41,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)getGroupMember:(NSString *)userId withGroupId:(NSString *)groupId complete:(nullable void (^)( RCUserInfo *_Nullable user))complete;
 
-/// 加载群成员信息（优先使用缓存，缓存未命中自动触发网络请求）
-/// @param userIds 用户ID数组
-/// @param groupId 群组ID
-/// @note 数据更新后会发送通知
-- (void)preloadGroupMembers:(NSArray<NSString *> *)userIds
-                 inGroup:(NSString *)groupId;
-
 - (void)refreshGroupMember:(RCUserInfo *)userInfo withGroupId:(NSString *)groupId;
 
 - (void)clearGroupMember:(NSString *)userId inGroup:(NSString *)groupId;
@@ -68,11 +56,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable RCGroup *)getGroupInfoFromCacheOnly:(NSString *)groupId;
 
 - (void)getGroupInfo:(NSString *)groupId complete:(nullable void (^)(RCGroup * _Nullable group))complete;
-
-/// 加载群组信息（优先使用缓存，缓存未命中自动触发网络请求）
-/// @param groupIds 群组ID数组
-/// @note 数据更新后会发送通知
-- (void)preloadGroupInfos:(NSArray<NSString *> *)groupIds;
 
 - (void)refreshGroupInfo:(RCGroup *)groupInfo;
 

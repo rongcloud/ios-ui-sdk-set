@@ -11,6 +11,7 @@
 #import "RCGroupManager.h"
 #import "RCKitCommonDefine.h"
 
+#define RCSelectUserCellHeight 56
 
 @interface RCRemoveGroupMemberCellViewModel()
 
@@ -59,13 +60,12 @@
     } else {
         cell.nameLabel.text = self.member.name;
     }
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     [cell updateSelectState:self.selectState];
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return RCSelectUserCellHeight;
 }
 
 #pragma mark -- private

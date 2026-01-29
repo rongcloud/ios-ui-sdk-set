@@ -20,12 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @required
 /// 编辑确认
-/// - Parameter editInputBarControl: 编辑控件
-/// - Parameter text: 编辑后的文本
+/// @param editInputBarControl 编辑控件
+/// @param text 编辑后的文本
 - (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl didConfirmWithText:(NSString *)text;
 
 /// 编辑取消
-/// - Parameter editInputBarControl: 编辑控件
+/// @param editInputBarControl 编辑控件
 - (void)editInputBarControlDidCancel:(RCEditInputBarControl *)editInputBarControl;
 
 /// 请求全屏编辑
@@ -36,17 +36,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
-/// 请求显示用户选择界面（用于 @ 功能）
-/// - Parameter editInputBarControl: 编辑控件
-/// - Parameter selectedBlock: 用户选择完成回调
-/// - Parameter cancelBlock: 取消回调
+/// 请求显示用户选择界面（用于@功能）
+/// @param editInputBarControl 编辑控件
+/// @param selectedBlock 用户选择完成回调
+/// @param cancelBlock 取消回调
 - (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl
            showUserSelector:(void (^)(RCUserInfo *selectedUser))selectedBlock
                      cancel:(void (^)(void))cancelBlock;
 
 /// 编辑控件高度变化
-/// - Parameter editInputBarControl: 编辑控件
-/// - Parameter frame: 新的frame
+/// @param editInputBarControl 编辑控件
+/// @param frame 新的frame
 - (void)editInputBarControl:(RCEditInputBarControl *)editInputBarControl shouldChangeFrame:(CGRect)frame;
 
 @end
@@ -55,10 +55,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
-/// 获取用户信息（用于 @ 功能）
-/// - Parameter editInputBarControl: 编辑控件
-/// - Parameter userId: 用户ID
-/// - Returns 用户信息
+/// 获取用户信息（用于@功能）
+/// @param editInputBarControl 编辑控件
+/// @param userId 用户ID
+/// @return 用户信息
 - (nullable RCUserInfo *)editInputBarControl:(RCEditInputBarControl *)editInputBarControl
                                  getUserInfo:(NSString *)userId;
 
@@ -101,29 +101,23 @@ NS_ASSUME_NONNULL_BEGIN
 /// 是否启用 @ 功能
 @property (nonatomic, assign) BOOL isMentionedEnabled;
 
-/// 当前底部面板的状态
-@property (nonatomic, assign, readonly) KBottomBarStatus currentBottomBarStatus;
-
-/// 编辑输入框的配置信息
-@property (nonatomic, strong) RCEditInputBarConfig *inputBarConfig;
-
 /// 初始化方法
 - (instancetype)initWithIsFullScreen:(BOOL)isFullScreen;
 
-/// 添加 @ 用户（支持symbolRequest参数）
-/// - Parameter userInfo: 用户信息
-/// - Parameter symbolRequest: 是否需要插入@符号（YES=插入@符号+用户名，NO=只插入用户名，假设@符号已存在）
-- (void)addMentionedUser:(RCUserInfo *)userInfo symbolRequest:(BOOL)symbolRequest;
+/// 手动添加 @ 用户（公开接口），默认插入 @ 符号
+/// @param userInfo 用户信息
+- (void)addMentionedUser:(RCUserInfo *)userInfo;
 
-/// 设置引用消息信息，一般用来更新引用消息的内容显示
-/// - Parameter senderName: 引用消息发送者姓名
-/// - Parameter content:    引用消息内容
-- (void)setReferenceInfo:(NSString *)senderName content:(NSString *)content;
+/// 添加 @ 用户（支持symbolRequest参数）
+/// @param userInfo 用户信息
+/// @param symbolRequest 是否需要插入@符号（YES=插入@符号+用户名，NO=只插入用户名，假设@符号已存在）
+- (void)addMentionedUser:(RCUserInfo *)userInfo symbolRequest:(BOOL)symbolRequest;
 
 #pragma mark - 核心组件
 
 /// 编辑输入容器
 @property (nonatomic, strong, readonly) RCEditInputContainerView *editInputContainer;
+
 
 /// 表情面板
 @property (nonatomic, strong, readonly, nullable) RCEmojiBoardView *emojiBoardView;
@@ -138,43 +132,46 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - 公共方法
 
-/// 显示编辑输入框
 - (void)showWithConfig:(RCEditInputBarConfig *)config;
 
-/// 退出编辑输入框
 - (void)exitWithAnimation:(BOOL)animated completion:(void (^ _Nullable)(void))completion;
 
 /// 获取当前编辑文本
 - (NSString *)currentEditText;
 
 /// 设置编辑文本
-/// - Parameter text: 文本内容
+/// @param text 文本内容
 - (void)setEditText:(NSString *)text;
 
-/// 恢复输入焦点
+/// 按需恢复焦点，如果当前显示为表情面板，则不恢复输入框的焦点
+- (void)restoreFocusIfNeeded;
+
+/// 恢复输入焦点（用于模态页面消失后）
 - (void)restoreFocus;
 
 /// 隐藏底部面板，包含表情面板或键盘
+- (void)hideBottomPanels;
+
 - (void)hideBottomPanelsWithAnimation:(BOOL)animated completion:(void (^ _Nullable)(void))completion;
 
 /// 设置编辑控件显示/隐藏状态（不退出编辑模式）
-/// - Parameter hidden: 是否隐藏
+/// @param hidden 是否隐藏
 - (void)hideEditInputBar:(BOOL)hidden;
 
 /// 重置编辑控件，清空编辑内容
 - (void)resetEditInputBar;
 
+#pragma mark - 状态保存和恢复
+
+/// 获取当前编辑状态数据（用于保存编辑状态）
+- (NSDictionary *)stateData;
+
+/// 从状态数据恢复编辑状态（用于恢复编辑状态）
+/// @param stateData 之前保存的状态数据
+- (BOOL)restoreFromStateData:(NSDictionary *)stateData;
+
 /// 检查是否有编辑内容
 - (BOOL)hasContent;
-
-#pragma mark - 光标位置
-
-/// 获取当前光标位置
-- (NSRange)getCurrentCursorPosition;
-
-/// 设置光标位置
-/// - Parameter range: 光标位置范围
-- (void)setCursorPosition:(NSRange)range;
 
 @end
 
