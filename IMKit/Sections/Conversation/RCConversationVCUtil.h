@@ -10,7 +10,7 @@
 #import "RCMessageCellNotificationModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 
-@class RCConversationViewController,RCMessageModel;
+@class RCConversationViewController,RCMessageModel,RCEditInputBarConfig;
 
 @interface RCConversationVCUtil : NSObject
 - (instancetype)init:(RCConversationViewController *)chatVC;
@@ -35,6 +35,8 @@
 - (void)stopVoiceMessageIfNeed:(RCMessageModel *)model;
 //通知消息 cell 的状态
 - (void)sendMessageStatusNotification:(NSString *)actionNametatus messageId:(long)messageId progress:(NSInteger)progress;
+
+- (void)sendMessageReadReceiptV5Notification:(RCMessageModel *)model;
 
 #pragma mark - 阅后即焚
 //初次使用阅后即焚给用户提示
@@ -62,8 +64,12 @@
 
 
 /// 根据消息ID获取model
-/// - Parameter messageID: <#messageID description#>
+/// - Parameter messageID
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
+
+/// 根据消息 UId 获取页面中的 model
+- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId;
+
 #pragma mark - Util
 //保存草稿
 - (void)saveDraftIfNeed;
@@ -73,5 +79,14 @@
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)errorCode;
 
 + (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model;
+
+#pragma mark - Edit
+
+/// 获取编辑状态
+- (RCEditInputBarConfig *)getCacheEditConfig;
+
+/// 清理编辑状态
+- (void)clearEditingState;
+
 @end
 

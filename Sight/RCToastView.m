@@ -7,6 +7,7 @@
 //
 
 #import "RCToastView.h"
+#import "RongSightAdaptiveHeader.h"
 
 #define kToastViewDuring          2.0f
 #define kToastViewFont            15.0f
@@ -39,7 +40,7 @@ static RCToastView *s_toastView = nil;
     self.titleLabel.font = [UIFont systemFontOfSize:kToastViewFont];
     self.titleLabel.numberOfLines = 0;
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
-    self.titleLabel.textColor = [UIColor whiteColor];
+    self.titleLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
     [self.bgView addSubview:self.titleLabel];
 }
 

@@ -61,13 +61,14 @@
 
 + (NSString *)getFirstUpperLetter:(NSString *)hanzi {
     NSString *pinyin = [self hanZiToPinYinWithString:hanzi];
-    NSString *firstUpperLetter = [[pinyin substringToIndex:1] uppercaseString];
-    if ([firstUpperLetter compare:@"A"] != NSOrderedAscending &&
-        [firstUpperLetter compare:@"Z"] != NSOrderedDescending) {
-        return firstUpperLetter;
-    } else {
-        return @"#";
+    if (pinyin.length != 0) {
+        NSString *firstUpperLetter = [[pinyin substringToIndex:1] uppercaseString];
+        if ([firstUpperLetter compare:@"A"] != NSOrderedAscending &&
+            [firstUpperLetter compare:@"Z"] != NSOrderedDescending) {
+            return firstUpperLetter;
+        }
     }
+    return @"#";
 }
 
 + (NSMutableDictionary *)sortedArrayWithPinYinDic:(NSArray *)userList {

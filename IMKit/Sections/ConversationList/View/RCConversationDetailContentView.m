@@ -12,6 +12,10 @@
 #import "RCKitUtility.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
+#import "RCEditInputBarConfig.h"
+#import "RCConversationModel+RRS.h"
+#import "RCRRSUtil.h"
+
 @interface RCConversationDetailContentView ()
 @property (nonatomic, strong) NSArray *constraints;
 @property (nonatomic, copy) NSString *prefixName;
@@ -22,6 +26,7 @@
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
+        [self setupSemanticContentAttribute];
         [self initSubviewsLayout];
     }
     return self;
@@ -30,6 +35,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        [self setupSemanticContentAttribute];
         [self initSubviewsLayout];
     }
     return self;
@@ -37,7 +43,7 @@
 
 - (void)initSubviewsLayout {
     self.translatesAutoresizingMaskIntoConstraints = NO;
-
+    
     [self addSubview:self.messageContentLabel];
     [self addSubview:self.hightlineLabel];
     [self addSubview:self.sentStatusView];
@@ -45,45 +51,94 @@
     [self addSubviewConstraint];
 }
 
+- (void)setupSemanticContentAttribute {
+    BOOL isRTL = [RCKitUtility isRTL];
+    UISemanticContentAttribute attribute = isRTL ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
+    self.semanticContentAttribute = attribute;
+}
+
 - (void)updateContent:(RCConversationModel *)model prefixName:(NSString *)prefixName {
     self.prefixName = prefixName;
     [self updateContent:model];
 }
 
+/// 是否在左侧显示已读状态
+/// - Parameter model: model
+- (BOOL)shouldShowReadStatusAtLeading:(RCConversationModel *)model {
+    if ([RCKitUtility isTraditionInnerThemes]) {// 传统模式不显示在左侧, 仍然在右侧
+        return NO;
+    }
+    if (model.draft.length == 0
+        && model.editedMessageDraft.content.length == 0
+        && model.lastestMessageId > 0
+        && model.lastestMessageDirection == MessageDirection_SEND
+        && ((model.conversationType == ConversationType_PRIVATE
+             && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(model.conversationType)])
+            || model.conversationType == ConversationType_Encrypted)
+        && model.latestMessageUId
+        && model.latestMessageUId.length > 0
+        && ![model.objectName isEqualToString:RCRecallNotificationMessageIdentifier]) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void)updateContent:(RCConversationModel *)model {
-    if (model.draft.length > 0 && !model.hasUnreadMentioned) {
+    if ([self isShowDraft:model]) {
         self.sentStatusView.hidden = YES;
         self.hightlineLabel.text = RCLocalizedString(@"Draft");
-        self.hightlineLabel.textColor = HEXCOLOR(0xcc3333);
+        self.hightlineLabel.textColor = RCDynamicColor(@"hint_color", @"0xcc3333", @"0xcc3333");
     } else if (model.lastestMessageDirection == MessageDirection_SEND && model.sentStatus == SentStatus_FAILED) {
         self.sentStatusView.hidden = NO;
         self.hightlineLabel.text = nil;
         if ([[RCResendManager sharedManager] needResend:model.lastestMessageId]) {
-            self.sentStatusView.image = RCResourceImage(@"rc_conversation_list_msg_sending");
+            self.sentStatusView.image = RCDynamicImage(@"conversation-list_cell_msg_sending_img", @"rc_conversation_list_msg_sending");
         } else {
-            self.sentStatusView.image = RCResourceImage(@"message_fail");
+            self.sentStatusView.image = RCDynamicImage(@"conversation-list_cell_msg_fail_img", @"message_fail");
         }
     } else if (model.lastestMessageDirection == MessageDirection_SEND && model.sentStatus == SentStatus_SENDING) {
         self.sentStatusView.hidden = NO;
-        self.sentStatusView.image = RCResourceImage(@"rc_conversation_list_msg_sending");
+        self.sentStatusView.image = RCDynamicImage(@"conversation-list_cell_msg_sending_img", @"rc_conversation_list_msg_sending");
         self.hightlineLabel.text = nil;
     } else if (model.hasUnreadMentioned) {
         self.sentStatusView.hidden = YES;
         self.hightlineLabel.text = RCLocalizedString(@"HaveMentioned");
-        self.hightlineLabel.textColor = HEXCOLOR(0xcc3333);
+        self.hightlineLabel.textColor = RCDynamicColor(@"hint_color", @"0xcc3333", @"0xcc3333");
+    } else if([self shouldShowReadStatusAtLeading:model]) { // 欢快主题显示已读状态
+        // 默认未读图标
+        UIImage *image = RCDynamicImage(@"conversation_msg_rrs_v5_unread_gray_img",@"msg_rrs_v5_unread_gray");;
+        if ([RCRRSUtil isSupportReadReceiptV5]
+            && [model rrs_shouldFetchConversationReadReceipt]) {
+            if (model.readReceiptInfoV5.readCount > 0 && model.readReceiptInfoV5.unreadCount == 0) {
+                // 已读
+                image = RCDynamicImage(@"conversation_msg_rrs_v5_read_img",@"msg_rrs_v5_read");
+            }
+        } else if (model.sentStatus == SentStatus_READ) {
+            image = RCDynamicImage(@"conversation-list_cell_msg_read_img",@"message_read_status");
+        }
+        self.sentStatusView.hidden = NO;
+        self.sentStatusView.image = image;
+        self.hightlineLabel.text = nil;
     } else {
         self.sentStatusView.hidden = YES;
         self.hightlineLabel.text = nil;
     }
 
     NSString *messageContent = nil;
-    if (model.draft.length > 0 && !model.hasUnreadMentioned) {
-        messageContent = model.draft;
+    if ([self isShowDraft:model]) {
+        NSString *editedDraftContent = model.editedMessageDraft.content;
+        if (editedDraftContent.length) {
+            RCEditInputBarConfig *config = [[RCEditInputBarConfig alloc] initWithData:editedDraftContent];
+            messageContent = config.textContent;
+        } else {
+            messageContent = model.draft;
+        }
     } else if (model.lastestMessageId > 0) {
         if (self.prefixName.length == 0 || model.lastestMessageDirection == MessageDirection_SEND ||
             [model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]] ||
             [model.lastestMessage isKindOfClass:[RCInformationNotificationMessage class]] ||
-            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
+            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]] ||
+            [model.lastestMessage isKindOfClass:[RCUnknownMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
             messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];
@@ -105,7 +160,11 @@
         } else {
             range = [messageContent rangeOfString:[self formatMessageContent:model]];
         }
-        [attibuteText addAttribute:NSForegroundColorAttributeName value:HEXCOLOR(0xcc3333) range:range];
+        UIColor *attributeColor = RCDynamicColor(@"hint_color", @"0xcc3333", @"0xcc3333");
+        if (attributeColor) {
+            [attibuteText addAttribute:NSForegroundColorAttributeName value:attributeColor range:range];
+        }
+     
     }
     self.messageContentLabel.attributedText = attibuteText;
     [self updateLayout];
@@ -113,7 +172,7 @@
 
 - (void)updateLayout {
     if (self.constraints) {
-        [self removeConstraints:self.constraints];
+        [NSLayoutConstraint deactivateConstraints:self.constraints];
     }
 
     NSString *layoutFormat = nil;
@@ -133,11 +192,7 @@
                                                 }
                                                   views:NSDictionaryOfVariableBindings(_sentStatusView, _hightlineLabel,
                                                                                        _messageContentLabel)];
-    [self addConstraints:self.constraints];
-
-    [self setNeedsUpdateConstraints];
-    [self updateConstraintsIfNeeded];
-    [self layoutIfNeeded];
+    [NSLayoutConstraint activateConstraints:self.constraints];
 }
 
 - (NSString *)formatMessageContent:(RCConversationModel *)model {
@@ -152,7 +207,9 @@
     if ([RCKitUtility isUnkownMessage:model.lastestMessageId content:model.lastestMessage] &&
         RCKitConfigCenter.message.showUnkownMessage) {
         return RCLocalizedString(@"unknown_message_cell_tip");
-    } else {
+    } else if ([model.lastestMessage isKindOfClass:[RCStreamMessage class]]) {
+        return [RCKitUtility formatStreamDigest:[[RCCoreClient sharedCoreClient] getMessage:model.lastestMessageId]];
+    }  else {
         return [RCKitUtility formatMessage:model.lastestMessage
                                   targetId:model.targetId
                           conversationType:model.conversationType];
@@ -174,7 +231,8 @@
 
 - (CGFloat)getLeftViewWidth {
     if (!self.sentStatusView.hidden) {
-        return self.sentStatusView.frame.size.width;
+        // 使用固定宽度 16，与 sentStatusView 初始化和高度约束保持一致
+        return 16;
     } else if (self.hightlineLabel.text.length > 0) {
         CGSize size = [RCKitUtility getTextDrawingSize:self.hightlineLabel.text
                                                   font:self.hightlineLabel.font
@@ -183,6 +241,11 @@
     } else {
         return 0;
     }
+}
+
+// 是否显示草稿
+- (BOOL)isShowDraft:(RCConversationModel *)model {
+    return (model.editedMessageDraft.content.length > 0 || model.draft.length > 0) && !model.hasUnreadMentioned;
 }
 
 #pragma mark - Constraint
@@ -209,6 +272,14 @@
                                                      attribute:NSLayoutAttributeCenterY
                                                     multiplier:1
                                                       constant:0]];
+    // sentStatusView 高度约束（宽度由 VFL 动态设置）
+    [self addConstraint:[NSLayoutConstraint constraintWithItem:self.sentStatusView
+                                                     attribute:NSLayoutAttributeHeight
+                                                     relatedBy:NSLayoutRelationEqual
+                                                        toItem:nil
+                                                     attribute:NSLayoutAttributeNotAnAttribute
+                                                    multiplier:1
+                                                      constant:16]];
 }
 
 #pragma mark - Getter & Setter
@@ -217,7 +288,7 @@
         _messageContentLabel = [[UILabel alloc] init];
         _messageContentLabel.backgroundColor = [UIColor clearColor];
         _messageContentLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-        _messageContentLabel.textColor = RCDYCOLOR(0xA0A5AB, 0x5D5D5D);
+        _messageContentLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xA0A5AB", @"0x5D5D5D");
         _messageContentLabel.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _messageContentLabel;
@@ -228,8 +299,9 @@
         _hightlineLabel = [[UILabel alloc] init];
         _hightlineLabel.backgroundColor = [UIColor clearColor];
         _hightlineLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-        _hightlineLabel.textColor = RCDYCOLOR(0xA0A5AB, 0x5D5D5D);
+        _hightlineLabel.textColor = RCDynamicColor(@"hint_color", @"0xA0A5AB", @"0x5D5D5D");
         _hightlineLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        _hightlineLabel.accessibilityLabel = @"_hightlineLabel";
     }
     return _hightlineLabel;
 }
@@ -237,7 +309,8 @@
 - (RCBaseImageView *)sentStatusView {
     if(!_sentStatusView) {
         _sentStatusView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 16, 16)];
-        _sentStatusView.image = RCResourceImage(@"message_fail");
+        _sentStatusView.translatesAutoresizingMaskIntoConstraints = NO;
+        _sentStatusView.image = RCDynamicImage(@"conversation-list_cell_msg_fail_img", @"message_fail");
     }
     return _sentStatusView;
 }

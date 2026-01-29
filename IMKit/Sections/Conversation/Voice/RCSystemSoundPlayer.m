@@ -124,9 +124,10 @@ static void playSoundEnd(SystemSoundID mySSID, void *myself) {
         return;
     }
     if (nil == _soundFilePath) {
+        NSString *bundlePath = [RCKitUtility bundlePathWithName:@"RongCloud"];
+
         // no redefined path, use the default
-        _soundFilePath = [[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"RongCloud.bundle"]
-            stringByAppendingPathComponent:@"sms-received.caf"];
+        _soundFilePath = [bundlePath stringByAppendingPathComponent:@"sms-received.caf"];
     }
 
     if (nil != _soundFilePath) {

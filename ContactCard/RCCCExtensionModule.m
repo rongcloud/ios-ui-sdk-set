@@ -45,8 +45,8 @@
     if (conversationType == ConversationType_PRIVATE || conversationType == ConversationType_GROUP ||
         conversationType == ConversationType_Encrypted) {
         RCExtensionPluginItemInfo *cardItem = [[RCExtensionPluginItemInfo alloc] init];
-        cardItem.normalImage = RCResourceImage(@"plugin_item_card");
-        cardItem.highlightedImage = RCResourceImage(@"plugin_item_card_highlighted");
+        cardItem.normalImage = RCDynamicImage(@"conversation_plugin_item_card_img",@"plugin_item_card");
+        cardItem.highlightedImage = RCDynamicImage(@"conversation_plugin_item_card_highlighted_img",@"plugin_item_card_highlighted");
         cardItem.title = RCLocalizedString(@"ContactCard");
         cardItem.tag = PLUGIN_BOARD_ITEM_CARD_TAG;
         cardItem.tapBlock = ^(RCChatSessionInputBarControl *chatSessionInputBar) {

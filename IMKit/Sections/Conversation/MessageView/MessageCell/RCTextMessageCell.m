@@ -14,6 +14,8 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCCoreClient+Destructing.h"
+#import "RCAttributedLabel+Edit.h"
+#import "RCMessageCell+Edit.h"
 #define TEXT_SPACE_LEFT 12
 #define TEXT_SPACE_RIGHT 12
 #define TEXT_SPACE_TOP 9.5
@@ -55,7 +57,7 @@
          referenceExtraHeight:(CGFloat)extraHeight {
     CGFloat __messagecontentview_height = [self getMessageContentHeight:model];
     __messagecontentview_height += extraHeight;
-
+    __messagecontentview_height += [self edit_editStatusBarHeightWithModel:model];
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
@@ -157,22 +159,23 @@
     }
     
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
-        [self.textLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+        [self.textLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc")];
         if ([RCKitUtility isRTL] && !self.destructTextImage.hidden) {
             self.textLabel.frame =  CGRectMake(DESTRUCT_TEXT_ICON_WIDTH / 2 + DESTRUCT_TEXT_ICON_WIDTH + TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
         } else {
             self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
         }
     } else {
-        [self.textLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
+        [self.textLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0x040A0F")];
         self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
     
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && !numDuration) {
-        self.textLabel.text = RCLocalizedString(@"ClickToView");
-    }else if(textMessage){
-        self.textLabel.text = textMessage.content;
-    }else{
+        // 统一调用 edit_setTextWithEditedState 设置文本，防止 cell 重用出现问题
+        [self.textLabel edit_setTextWithEditedState:RCLocalizedString(@"ClickToView") isEdited:NO];
+    } else if (textMessage){
+        [self.textLabel edit_setTextWithEditedState:textMessage.content isEdited:self.model.hasChanged];
+    } else {
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
     }
 }
@@ -199,36 +202,38 @@
         }
         self.separateLine =
             [[UIView alloc] initWithFrame:CGRectMake(15, bubbleHeight - 23, bubbleWidth - 15 - 5, 0.5)];
-        [self.separateLine setBackgroundColor:[UIColor lightGrayColor]];
+        [self.separateLine setBackgroundColor:RCDynamicColor(@"line_background_color", @"0xD3D3D3", @"0xD3D3D3")];
 
         if (csModel.alreadyEvaluated) {
             self.tipLablel =
                 [[UILabel alloc] initWithFrame:CGRectMake(bubbleWidth - 80 - 7, bubbleHeight - 18, 80, 15)];
             self.tipLablel.text = @"感谢您的评价";
-            self.tipLablel.textColor = [UIColor lightGrayColor];
+            self.tipLablel.textColor = RCDynamicColor(@"line_background_color", @"0xD3D3D3", @"0xD3D3D3");
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
             self.acceptBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 95 - 7 - 3, bubbleHeight - 18, 15, 15)];
-            [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete") forState:UIControlStateNormal];
-            [self.acceptBtn setImage:RCResourceImage(@"cs_eva_complete_hover") forState:UIControlStateHighlighted];
+            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_eva_complete_img",@"cs_eva_complete")
+                            forState:UIControlStateNormal];
+            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_eva_complete_hover_img",@"cs_eva_complete_hover")
+                            forState:UIControlStateHighlighted];
 
             [self.messageContentView addSubview:self.acceptBtn];
         } else {
             self.tipLablel =
                 [[UILabel alloc] initWithFrame:CGRectMake(bubbleWidth - 118 - 10, bubbleHeight - 18, 80, 15)];
             self.tipLablel.text = @"您对我的回答";
-            self.tipLablel.textColor = [UIColor lightGrayColor];
+            self.tipLablel.textColor = RCDynamicColor(@"line_background_color", @"0xD3D3D3", @"0xD3D3D3");
             self.tipLablel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
 
             self.acceptBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 30 - 7 - 6, bubbleHeight - 18, 15, 15)];
             self.rejectBtn =
                 [[RCBaseButton alloc] initWithFrame:CGRectMake(bubbleWidth - 15 - 7, bubbleHeight - 18, 15, 15)];
-            [self.acceptBtn setImage:RCResourceImage(@"cs_yes") forState:UIControlStateNormal];
-            [self.acceptBtn setImage:RCResourceImage(@"cs_yes_hover") forState:UIControlStateHighlighted];
+            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_yes_img",@"cs_yes")
+                            forState:UIControlStateNormal];
+            [self.acceptBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_yes_hover_img",@"cs_yes_hover") forState:UIControlStateHighlighted];
 
-            [self.self.rejectBtn setImage:RCResourceImage(@"cs_no") forState:UIControlStateNormal];
-            [self.self.rejectBtn setImage:RCResourceImage(@"cs_yes_no") forState:UIControlStateHighlighted];
+            [self.self.rejectBtn setImage:RCDynamicImage(@"conversation_msg_cell_cs_no_img",@"cs_no") forState:UIControlStateNormal];
             [self.messageContentView addSubview:self.acceptBtn];
             [self.messageContentView addSubview:self.rejectBtn];
 
@@ -285,9 +290,8 @@
                              constrainedSize:CGSizeMake(textMaxWidth, 80000)];
         textMessageSize.width += 20;
     } else {
-        textMessageSize = [RCKitUtility getTextDrawingSize:textMessage.content
-                                                       font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]
-                                            constrainedSize:CGSizeMake(textMaxWidth, 80000)];
+        UIFont *font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
+        textMessageSize = [RCMessageEditUtil sizeForText:textMessage.content isEdited:model.hasChanged font:font constrainedSize:CGSizeMake(textMaxWidth, 80000)];
     }
     if (textMessageSize.width > textMaxWidth) {
         textMessageSize.width = textMaxWidth;
@@ -319,7 +323,7 @@
 - (RCBaseImageView *)destructTextImage{
     if (!_destructTextImage) {
         _destructTextImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 13, 28)];
-        [_destructTextImage setImage:RCResourceImage(@"text_burn_img")];
+        [_destructTextImage setImage:RCDynamicImage(@"conversation_msg_status_text_destruct_img", @"text_burn_img")];
         _destructTextImage.contentMode = UIViewContentModeScaleAspectFit;
         _destructTextImage.hidden = YES;
     }
