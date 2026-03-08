@@ -222,17 +222,15 @@
     if (!RCKitConfigCenter.ui.enableDarkMode) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        for (RCPluginBoardItem *item in self.allItems) {
-            if (item.normalImage.rc_imageLocalPath) {
-                item.normalImage = [UIImage rc_imageWithLocalPath:item.normalImage.rc_imageLocalPath];
-            }
-            if (item.highlightedImage.rc_imageLocalPath) {
-                item.highlightedImage = [UIImage rc_imageWithLocalPath:item.highlightedImage.rc_imageLocalPath];
-            }
+    for (RCPluginBoardItem *item in self.allItems) {
+        if (item.normalImage.rc_imageLocalPath) {
+            item.normalImage = [UIImage rc_imageWithLocalPath:item.normalImage.rc_imageLocalPath];
         }
-        [self.contentView reloadData];
+        if (item.highlightedImage.rc_imageLocalPath) {
+            item.highlightedImage = [UIImage rc_imageWithLocalPath:item.highlightedImage.rc_imageLocalPath];
+        }
     }
+    [self.contentView reloadData];
 }
 
 #pragma mark - Private Methods

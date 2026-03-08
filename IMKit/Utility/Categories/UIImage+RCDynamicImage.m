@@ -79,17 +79,11 @@ static const NSString *RCImageLocalPathKey = @"RCImageLocalPathKey";
 
 //判断是否是暗黑模式
 + (BOOL)isDarkMode {
-    if (@available(iOS 13.0, *)) {
-        NSNumber *currentUserInterfaceStyle =
-        [[NSUserDefaults standardUserDefaults] objectForKey:@"RCCurrentUserInterfaceStyle"];
-        if (!currentUserInterfaceStyle) {
-            currentUserInterfaceStyle = @(UITraitCollection.currentTraitCollection.userInterfaceStyle);
-        }
-        if (currentUserInterfaceStyle.integerValue == UIUserInterfaceStyleDark) {
-            return YES;
-        }
+    if (RCKitConfigCenter.ui.enableDarkMode){
+        return YES;
+    }else{
+        return NO;
     }
-    return NO;
 }
 
 - (void)setRc_imageLocalPath:(NSString *)rc_imageLocalPath {

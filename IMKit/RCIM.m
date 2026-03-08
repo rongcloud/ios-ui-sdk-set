@@ -73,6 +73,8 @@ static NSString *const RCIMKitVersion = @"5.20.0.108_opensource";
             __rongUIKit.enablePersistentUserInfoCache = NO;
             __rongUIKit.hasNotifydExtensionModuleUserId = NO;
             __rongUIKit.automaticDownloadHQVoiceMsgEnable = YES;
+            __rongUIKit.avatarPaddingX = 5.0;
+            __rongUIKit.avatarPaddingY = 5.0;
             [[RongIMKitExtensionManager sharedManager] loadAllExtensionModules];
         }
     });

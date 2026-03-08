@@ -213,9 +213,9 @@
                    _tableView.rowHeight * (_cellArray.count + 1) + _headView.bounds.size.height + (Space_Line * 2) + [RCKitUtility getWindowSafeAreaInsets].bottom);
     [UIView animateWithDuration:.2
                      animations:^{
-                         CGRect rect = _tableView.frame;
-                         rect.origin.y -= _tableView.bounds.size.height;
-                         _tableView.frame = rect;
+                         CGRect rect = self.tableView.frame;
+                         rect.origin.y -= self.tableView.bounds.size.height;
+                         self.tableView.frame = rect;
                      }];
 }
 
@@ -223,9 +223,9 @@
 - (void)dismiss {
     [UIView animateWithDuration:.2
         animations:^{
-            CGRect rect = _tableView.frame;
-            rect.origin.y += _tableView.bounds.size.height;
-            _tableView.frame = rect;
+            CGRect rect = self.tableView.frame;
+            rect.origin.y += self.tableView.bounds.size.height;
+            self.tableView.frame = rect;
         }
         completion:^(BOOL finished) {
             [self removeFromSuperview];

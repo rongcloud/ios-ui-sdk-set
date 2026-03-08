@@ -172,12 +172,15 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    RCConversationModel *model = self.dataSource.dataList[indexPath.row];
-    if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
-        return [self rcConversationListTableView:tableView heightForRowAtIndexPath:indexPath];
-    } else {
-        return RCKitConfigCenter.ui.globalConversationPortraitSize.height + 24.f;
+    if ((indexPath.row + 1) <= self.dataSource.dataList.count) {
+        RCConversationModel *model = self.dataSource.dataList[indexPath.row];
+        if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
+            return [self rcConversationListTableView:tableView heightForRowAtIndexPath:indexPath];
+        } else {
+            return RCKitConfigCenter.ui.globalConversationPortraitSize.height + 24.f;
+        }
     }
+    return RCKitConfigCenter.ui.globalConversationPortraitSize.height + 24.f;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -776,18 +779,15 @@
     if (!RCKitConfigCenter.ui.enableDarkMode) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        self.networkIndicatorView.networkUnreachableImageView.image = RCResourceImage(@"network_fail");
-        if ([self.emptyConversationView isKindOfClass:[UIImageView class]]) {
-            UIImageView *imageView = (UIImageView *)self.emptyConversationView;
-            if (imageView.image.rc_imageLocalPath && imageView.image.rc_imageLocalPath.length > 0 &&
-                [imageView.image rc_needReloadImage]) {
-                imageView.image = [UIImage rc_imageWithLocalPath:imageView.image.rc_imageLocalPath];
-            }
+    if ([self.emptyConversationView isKindOfClass:[UIImageView class]]) {
+        UIImageView *imageView = (UIImageView *)self.emptyConversationView;
+        if (imageView.image.rc_imageLocalPath && imageView.image.rc_imageLocalPath.length > 0 &&
+            [imageView.image rc_needReloadImage]) {
+            imageView.image = [UIImage rc_imageWithLocalPath:imageView.image.rc_imageLocalPath];
         }
-        if (self.dataSource.isConverstaionListAppear) {
-            [self.conversationListTableView reloadData];
-        }
+    }
+    if (self.dataSource.isConverstaionListAppear) {
+        [self.conversationListTableView reloadData];
     }
 }
 @end

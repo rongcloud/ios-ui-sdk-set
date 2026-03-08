@@ -64,14 +64,20 @@ static NSOperationQueue *rong_st_download_queue() {
                      progress:(void (^)(int progress))progressBlock
                       success:(void (^)(NSURL *localURL))successBlock
                         error:(void (^)(int errorCode))errorBlock {
-    if (identifier.length == 0) {
-        RCLogD(@"sticker download, identifier is nil");
+    if (URLString.length == 0 || identifier.length == 0) {
+        RCLogD(@"sticker download, URLString or identifier is nil");
         return;
     }
     [self.lock lock];
-    [self.progressBlocks setObject:progressBlock forKey:identifier];
-    [self.successBlocks setObject:successBlock forKey:identifier];
-    [self.errorBlocks setObject:errorBlock forKey:identifier];
+    if (progressBlock) {
+        [self.progressBlocks setObject:[progressBlock copy] forKey:identifier];
+    }
+    if (successBlock) {
+        [self.successBlocks setObject:[successBlock copy] forKey:identifier];
+    }
+    if (errorBlock) {
+        [self.errorBlocks setObject:[errorBlock copy] forKey:identifier];
+    }
     [self.lock unlock];
     NSURLSession *session =
         [NSURLSession sessionWithConfiguration:[RCStickerUtility rcSessionConfiguration]
@@ -124,15 +130,13 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
     }
     [self.lock lock];
     void (^successBlock)(NSURL *localURL) = [self.successBlocks objectForKey:sessionIdentifier];
-    [self.lock unlock];
-    if (successBlock) {
-        successBlock(location);
-    }
-    [self.lock lock];
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
     [self.lock unlock];
+    if (successBlock) {
+        successBlock(location);
+    }
     [session finishTasksAndInvalidate];
 }
 
@@ -145,15 +149,13 @@ expectedTotalBytes:(int64_t)expectedTotalBytes {
     }
     [self.lock lock];
     void (^errorBlock)(int errorCode) = [self.errorBlocks objectForKey:sessionIdentifier];
-    [self.lock unlock];
-    if (errorBlock) {
-        errorBlock((int)error.code);
-    }
-    [self.lock lock];
     [self.progressBlocks removeObjectForKey:sessionIdentifier];
     [self.successBlocks removeObjectForKey:sessionIdentifier];
     [self.errorBlocks removeObjectForKey:sessionIdentifier];
     [self.lock unlock];
+    if (errorBlock && error) {
+        errorBlock((int)error.code);
+    }
     [session finishTasksAndInvalidate];
 }
 

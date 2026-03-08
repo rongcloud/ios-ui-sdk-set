@@ -28,4 +28,8 @@
  */
 - (void)setDataModel:(RCMessageModel *)model;
 
+- (void)updateBubble:(NSDictionary *)dict;
+
+- (void)setAutoLayout;
+
 @end

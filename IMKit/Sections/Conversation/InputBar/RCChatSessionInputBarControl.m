@@ -77,8 +77,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 @property (nonatomic, strong) RCCommonPhrasesListView *commonPhrasesListView;
 
 @property (nonatomic, strong) UIView *safeAreaView;
-
 @property (nonatomic, strong) CALayer *topLineLayer;
+@property (nonatomic, strong) UIView *barControlBgView;
 
 @end
 
@@ -100,10 +100,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 }
 
 - (void)rcinit {
-    self.backgroundColor = RCDYCOLOR(0xF5F6F9, 0x1c1c1c);
+    self.backgroundColor = [RCKitUtility generateDynamicColor:RCMASKCOLOR(0xffffff, 0.0) darkColor:RCMASKCOLOR(0xffffff, 0.0)];
     self.keyboardFrame = CGRectZero;
     self.isNew = 0;
     [self addBottomAreaView];
+    [self addBarControlBgView];
     [self.layer addSublayer:self.topLineLayer];
 }
 
@@ -113,6 +114,8 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!self.isContainViewAppeared) {
         return;
     }
+    self.topLineLayer.frame = CGRectMake(0, 0, frame.size.width, 0.5);
+    self.barControlBgView.frame = CGRectMake(6, 6, frame.size.width - 12, frame.size.height - 12);
     if ([self.delegate respondsToSelector:@selector(chatInputBar:shouldChangeFrame:)]) {
         [self.delegate chatInputBar:self shouldChangeFrame:frame];
     }
@@ -585,6 +588,14 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     [self enableEmojiBoardViewSendButton];
 }
 
+// MARK: 20250826增加自定义贴纸表情回调
+- (void)didTouchEmojiView:(RCEmojiBoardView *)emojiView touchedSticker:(NSString *)string {
+    NSLog(@"%@",string);
+    if (self.delegate && [self.delegate respondsToSelector:@selector(emojiView:didTouchedSticker:)]) {
+        [self.delegate emojiView:emojiView didTouchedSticker:string];
+    }
+}
+
 #pragma mark - UIImagePickerControllerDelegate method
 //选择相册图片或者拍照回调
 - (void)imagePickerController:(UIImagePickerController *)picker
@@ -722,6 +733,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                                              selector:@selector(didCreateNewSession)
                                                  name:@"RCCallNewSessionCreation Notification"
                                                object:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(themeColorDidChange:)
+                                               name:@"com.jiaxin.theme.themeDidChangeNotification"
+                                             object:nil];
 }
 
 - (void)rcInputBar_unregisterForNotifications {
@@ -791,6 +807,17 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
 
 - (void)didCreateNewSession {
     [self endVoiceRecord];
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
+    if ([notification.userInfo.allKeys containsObject:@"style"]) {
+        NSString *style = [NSString stringWithFormat:@"%@", notification.userInfo[@"style"]];
+        if ([style containsString:@"dark"]) {
+            self.barControlBgView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1.0];
+        } else {
+            self.barControlBgView.backgroundColor = [UIColor whiteColor];
+        }
+    }
 }
 
 #pragma mark - Public Service
@@ -1339,6 +1366,7 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
     if (!_inputContainerView) {
         _inputContainerView = [[RCInputContainerView alloc] initWithFrame:self.bounds];
         _inputContainerView.delegate = self;
+        _inputContainerView.inputTextView.backgroundColor = [RCKitUtility generateDynamicColor:RCMASKCOLOR(0xffffff, 0.0) darkColor:RCMASKCOLOR(0xffffff, 0.0)];
     }
     return _inputContainerView;
 }
@@ -1603,6 +1631,20 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         self.safeAreaView = bottomAreaView;
         [self.containerView addSubview:bottomAreaView];
     }
+}
+
+- (void)addBarControlBgView {
+    // 背景颜色
+    self.barControlBgView = [[UIView alloc] initWithFrame:CGRectMake(8, 8, self.bounds.size.width - 16, self.bounds.size.height - 16)];
+    [self addSubview:self.barControlBgView];
+    [self sendSubviewToBack:self.barControlBgView];
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        self.barControlBgView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1.0];
+    } else {
+        self.barControlBgView.backgroundColor = [UIColor whiteColor];
+    }
+    self.barControlBgView.layer.cornerRadius = 10;
+    self.barControlBgView.layer.masksToBounds = true;
 }
 
 - (RCPublicServiceMenu *)publicServiceMenu {

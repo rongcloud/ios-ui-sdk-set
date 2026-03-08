@@ -14,8 +14,10 @@
 #import "RCIM.h"
 #import "RCStreamUtilities.h"
 #import "RCStreamMessage+Internal.h"
+#import "RCStickerHelper.h"
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;
+
 @end
 
 #define textlabel_left_space 12
@@ -94,7 +96,7 @@
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
-        if (messageInfo <= 0 ||
+        if (messageInfo.length <= 0 ||
             [messageInfo isEqualToString:[[self.referModel.content class] getObjectName]]) {
             messageInfo = RCLocalizedString(@"unknown_message_cell_tip");
         }
@@ -110,6 +112,14 @@
     messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\r" withString:@" "];
     self.textLabel.text = [NSString stringWithFormat:@"%@",messageInfo];
+    
+    // 20250826贴纸引用文本信息
+    if ([self.referModel.content.extra isEqualToString:@"source_game_expression"]) {
+        NSAttributedString *attributedText = [[RCStickerHelper shared] attributeString:messageInfo itemSize:CGSizeMake(20, 20)];
+        self.textLabel.attributedText = attributedText;
+    } else {
+        self.textLabel.text = [NSString stringWithFormat:@"%@",messageInfo];
+    }
 }
 
 - (void)didClickDismissButton:(UIButton *)button {
@@ -218,4 +228,5 @@
     }
     return _textLabel;
 }
+
 @end

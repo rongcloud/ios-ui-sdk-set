@@ -1125,6 +1125,21 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// 默认为 YES
 @property (nonatomic, assign) BOOL automaticDownloadHQVoiceMsgEnable;
 
+/*!
+ SDK会话页面中头像框paddingX
+ 
+ @discussion 默认值为5.0
+ */
+@property (nonatomic) CGFloat avatarPaddingX;
+
+/*!
+ SDK会话页面中头像框paddingY
+ 
+ @discussion 默认值为5.0
+ */
+@property (nonatomic) CGFloat avatarPaddingY;
+
+
 #pragma mark - 公众号信息提供者
 
 /// 公众号信息提供者

@@ -28,6 +28,14 @@
 - (void)didTouchEmojiView:(RCEmojiBoardView *)emojiView touchedEmoji:(NSString *)string;
 
 /*!
+ 20250826 点击自定义贴纸表情的回调
+
+ @param emojiView 表情输入的View
+ @param string    点击的自定义贴纸表情对应的字符串编码
+ */
+- (void)didTouchEmojiView:(RCEmojiBoardView *)emojiView touchedSticker:(NSString *)string;
+
+/*!
  点击发送按钮的回调
 
  - Parameter emojiView:  表情输入的View

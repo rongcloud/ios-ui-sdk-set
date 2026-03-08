@@ -24,14 +24,12 @@
     if (!RCKitConfigCenter.ui.enableDarkMode) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        [self rc_setDyImageForState:(UIControlStateNormal)];
-        [self rc_setDyImageForState:(UIControlStateSelected)];
-        [self rc_setDyImageForState:(UIControlStateHighlighted)];
-        [self rc_setDyBackgroundImageForState:(UIControlStateNormal)];
-        [self rc_setDyBackgroundImageForState:(UIControlStateSelected)];
-        [self rc_setDyBackgroundImageForState:(UIControlStateHighlighted)];
-    }
+    [self rc_setDyImageForState:(UIControlStateNormal)];
+    [self rc_setDyImageForState:(UIControlStateSelected)];
+    [self rc_setDyImageForState:(UIControlStateHighlighted)];
+    [self rc_setDyBackgroundImageForState:(UIControlStateNormal)];
+    [self rc_setDyBackgroundImageForState:(UIControlStateSelected)];
+    [self rc_setDyBackgroundImageForState:(UIControlStateHighlighted)];
 }
 
 - (void)rc_setDyBackgroundImageForState:(UIControlState)state {

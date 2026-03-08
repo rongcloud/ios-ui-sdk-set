@@ -281,7 +281,7 @@ progressHandler:(void (^)(double progress, NSError *error, BOOL *stop, NSDiction
         NSMutableArray *smartAlbumSubtypes = [NSMutableArray arrayWithArray: @[@(PHAssetCollectionSubtypeSmartAlbumUserLibrary),
                                                                                @(PHAssetCollectionSubtypeSmartAlbumRecentlyAdded),
                                                                                @(PHAssetCollectionSubtypeSmartAlbumVideos),
-                                                                             @(PHAssetCollectionSubtypeSmartAlbumFavorites),
+                                                                               @(PHAssetCollectionSubtypeSmartAlbumFavorites),
                                                                                @(PHAssetCollectionSubtypeSmartAlbumSlomoVideos)]];
         NSMutableArray *albums = [NSMutableArray array];
         // For iOS 9, We need to show ScreenShots Album && SelfPortraits Album
@@ -300,7 +300,7 @@ progressHandler:(void (^)(double progress, NSError *error, BOOL *stop, NSDiction
                 [albums addObject:smartAlbums];
             }
         }
-
+        
         NSArray *mySubTypes = @[@(PHAssetCollectionSubtypeAlbumRegular),@(PHAssetCollectionSubtypeAlbumSyncedAlbum)];
         for (NSNumber *typs in mySubTypes) {
             PHFetchResult *album =

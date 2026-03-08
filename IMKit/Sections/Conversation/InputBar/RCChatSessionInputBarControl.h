@@ -448,6 +448,14 @@
 - (BOOL)commonPhrasesButtonDidTouch;
 
 /*!
+ 20250826 点击自定义贴纸的回调
+
+ @param emojiView  表情输入的View
+ @param touchedSticker 自定义的贴纸对应的字符串编码
+ */
+- (void)emojiView:(RCEmojiBoardView *)emojiView didTouchedSticker:(NSString *)touchedSticker;
+
+/*!
  点击常用语的回调
 
  - Parameter commonPhrases:  常用语

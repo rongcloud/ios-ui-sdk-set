@@ -14,6 +14,8 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCCoreClient+Destructing.h"
+#import "RCBubbleCell.h"
+#import "RCStickerHelper.h"
 #import "RCAttributedLabel+EditedState.h"
 #import "RCMessageCell+EditStatus.h"
 #define TEXT_SPACE_LEFT 12
@@ -29,6 +31,8 @@
 @property (nonatomic, strong) UIView *separateLine;
 @property (nonatomic, strong) RCBaseImageView *destructTextImage;
 @property (nonatomic, strong) UILabel *tipLablel;
+@property (nonatomic, strong) RCBubbleCell *bubbleView;
+@property (nonatomic, assign) BOOL isHiddenBubble;
 @end
 
 @implementation RCTextMessageCell
@@ -38,6 +42,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.isHiddenBubble = true;
         [self initialize];
     }
     return self;
@@ -46,6 +51,7 @@
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
+        self.isHiddenBubble = true;
         [self initialize];
     }
     return self;
@@ -58,13 +64,14 @@
     CGFloat __messagecontentview_height = [self getMessageContentHeight:model];
     __messagecontentview_height += extraHeight;
     __messagecontentview_height += [self edit_editStatusBarHeightWithModel:model];
-    return CGSizeMake(collectionViewWidth, __messagecontentview_height);
+    return CGSizeMake(collectionViewWidth, __messagecontentview_height + 6);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
     [self setAutoLayout];
 }
+
 
 #pragma mark - RCAttributedLabelDelegate
 
@@ -134,10 +141,20 @@
 
     [self.messageContentView addSubview:self.textLabel];
     [self.messageContentView addSubview:self.destructTextImage];
+    
+    //新气泡
+    _bubbleView = [[RCBubbleCell alloc] initWithFrame:CGRectZero];
+    _bubbleView.backgroundColor = [UIColor clearColor];
+    [self.bubbleBackgroundView addSubview:_bubbleView];
 }
 
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    self.textLabel.text = @"";
+}
 
 - (void)setAutoLayout {
+    
     CGSize labelSize = [RCTextMessageCell getTextSize:self.model];//textlabelsize
     
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
@@ -146,9 +163,16 @@
     if (bubbleWidth >= maxWidth) {
         bubbleWidth = maxWidth;
     }
+    if (bubbleHeight < 35) {
+        bubbleHeight = 35;
+    }
+    self.isHiddenBubble = [_bubbleView updateBubble:RCKitConfig.defaultConfig.ui.bubbleData];
+    if (bubbleWidth < 165 && self.isHiddenBubble == false) {
+        bubbleWidth = 165;
+    }
     
     [self setCSEvaUILayout:bubbleWidth bubbleHeight:bubbleHeight];
-
+    
     self.messageContentView.contentSize = CGSizeMake(bubbleWidth, bubbleHeight);
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
     self.destructTextImage.hidden = YES;
@@ -160,23 +184,39 @@
     
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
         [self.textLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+        float originX = (self.bubbleBackgroundView.frame.size.width - labelSize.width) / 2; //加上气泡的角的宽度
         if ([RCKitUtility isRTL] && !self.destructTextImage.hidden) {
             self.textLabel.frame =  CGRectMake(DESTRUCT_TEXT_ICON_WIDTH / 2 + DESTRUCT_TEXT_ICON_WIDTH + TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
         } else {
-            self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
+            self.textLabel.frame =  CGRectMake(originX, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
         }
     } else {
+        float originX = (self.bubbleBackgroundView.frame.size.width - labelSize.width) / 2; //加上气泡的角的宽度
         [self.textLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
-        self.textLabel.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
+        self.textLabel.frame =  CGRectMake(originX, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
     }
     
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && !numDuration) {
         // 统一调用 edit_setTextWithEditedState 设置文本，防止重复出现问题
         [self.textLabel edit_setTextWithEditedState:RCLocalizedString(@"ClickToView") isEdited:NO];
     } else if (textMessage){
-        [self.textLabel edit_setTextWithEditedState:textMessage.content isEdited:self.model.hasChanged];
+        if ([self.model.content.extra isEqualToString:@"source_game_expression"]) {
+            NSAttributedString *attribute = [[RCStickerHelper shared] attributeString:textMessage.content itemSize:CGSizeMake(72, 72)];
+            self.textLabel.attributedText = attribute;
+        } else {
+            [self.textLabel edit_setTextWithEditedState:textMessage.content isEdited:self.model.hasChanged];
+        }
     } else {
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
+    }
+    
+    //新气泡
+    if (self.model.messageDirection == MessageDirection_RECEIVE) {
+        self.bubbleView.frame = CGRectMake(-10, -25, bubbleWidth+35, bubbleHeight+45);
+        [self.bubbleView updateSize:CGSizeMake(bubbleWidth+35, bubbleHeight+45)];
+    }else{
+        self.bubbleView.frame = CGRectMake(-20, -25, bubbleWidth+35, bubbleHeight+45);
+        [self.bubbleView updateSize:CGSizeMake(bubbleWidth+35, bubbleHeight+45)];
     }
 }
 
@@ -276,6 +316,13 @@
 }
 
 + (CGSize)getTextSize:(RCMessageModel *)model{
+    // 如果是贴纸表情并且存在就返回固定的大小
+    if ([model.content.extra isEqualToString:@"source_game_expression"]) {
+        RCTextMessage *textMessage = (RCTextMessage *)model.content;
+        if ([[RCStickerHelper shared] containSticker:textMessage.content]) {
+            return CGSizeMake(72, 72);
+        }
+    }
     CGFloat textMaxWidth = [RCMessageCellTool getMessageContentViewMaxWidth] - TEXT_SPACE_LEFT - TEXT_SPACE_RIGHT;
     RCTextMessage *textMessage = (RCTextMessage *)model.content;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:model.messageUId];
@@ -327,4 +374,87 @@
     }
     return _destructTextImage;
 }
+
+-(void)updateBubble:(NSDictionary *)dict{
+    //停止
+    [_bubbleView stopAllAnimation];
+    
+    if (dict.allKeys.count == 0){
+        if (MessageDirection_RECEIVE == self.messageDirection) {
+            UIImage *image = [RCKitUtility imageNamed:@"chat_from_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }else{
+            UIImage *image = [RCKitUtility imageNamed:@"chat_to_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }
+        
+        [self.textLabel setTextColor:RCDYCOLOR(0x262626, 0xe0e0e0)];
+    }else{
+        self.bubbleBackgroundView.image = nil;
+        self.textLabel.textColor = [UIColor whiteColor];
+    }
+    //重新赋值
+    self.isHiddenBubble = [_bubbleView updateBubble:dict];
+    
+    //20250826 如果是贴纸表情就隐藏背景
+//    if ([self.model.content.extra isEqualToString:@"source_game_expression"]) {
+//        RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
+//        if ([[RCStickerHelper shared] containSticker:textMessage.content]) {
+//            self.bubbleBackgroundView.hidden = [[RCStickerHelper shared] containSticker:textMessage.content];
+//        } else {
+//            self.bubbleBackgroundView.hidden = NO;
+//        }
+//    } else {
+//        self.bubbleBackgroundView.hidden = NO;
+//    }
+    
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        [self updateAppearanceWith:@"dark"];
+    } else {
+        [self updateAppearanceWith:@"light"];
+    }
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
+    if ([notification.userInfo.allKeys containsObject:@"style"]) {
+        NSString *style = [NSString stringWithFormat:@"%@", notification.userInfo[@"style"]];
+        if ([style containsString:@"dark"]) {
+            [self updateAppearanceWith:@"dark"];
+        } else {
+            [self updateAppearanceWith:@"light"];
+        }
+    }
+}
+
+- (void)updateAppearanceWith:(NSString *)style {
+    self.bubbleBackgroundView.image = nil;
+    // 是否有气泡（VIP）
+    if (self.isHiddenBubble == false) {
+        self.textLabel.textColor = [UIColor whiteColor];
+        self.bubbleBackgroundView.backgroundColor = [UIColor clearColor];
+        self.bubbleBackgroundView.layer.cornerRadius = 0;
+        self.bubbleBackgroundView.layer.masksToBounds = false;
+    } else {
+        if ([style isEqualToString:@"light"]) {
+            if (self.model.messageDirection == MessageDirection_RECEIVE) {
+                self.textLabel.textColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.85];
+                self.bubbleBackgroundView.backgroundColor = [UIColor whiteColor];
+            } else {
+                self.textLabel.textColor = [UIColor whiteColor];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+            }
+        } else {
+            if (self.model.messageDirection == MessageDirection_RECEIVE) {
+                self.textLabel.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.85];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1];
+            } else {
+                self.textLabel.textColor = [UIColor whiteColor];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+            }
+        }
+        self.bubbleBackgroundView.layer.cornerRadius = 8;
+        self.bubbleBackgroundView.layer.masksToBounds = true;
+    }
+}
+
 @end

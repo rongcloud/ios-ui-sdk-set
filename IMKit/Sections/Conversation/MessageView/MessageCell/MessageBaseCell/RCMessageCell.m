@@ -21,8 +21,7 @@
 #import "RCIM.h"
 #import "RCMessageModel+StreamCellVM.h"
 #import "RCMessageModel+RRS.h"
-#import "RCMessageCell+EditStatus.h"
-
+#import <SVGAPlayer/SVGAImageView.h>
 // 头像
 #define PortraitImageViewTop 0
 // 气泡
@@ -88,6 +87,17 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 - (BOOL)showPortrait {
     return _showPortrait;
 }
+
+- (CGSize)nickNameSize:(RCUserInfo *)userInfo{
+    NSString *name = [RCKitUtility getDisplayName:userInfo];
+    UIFont *font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
+    UIColor *color = [RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x707070)];
+    CGSize size = [name sizeWithAttributes:@{NSFontAttributeName:font, NSForegroundColorAttributeName:color}];
+    CGRect rect = self.nicknameLabel.frame;
+    rect.size.width = size.width;
+    return rect.size;
+}
+
 #pragma mark - Super Methods
 
 - (void)setDataModel:(RCMessageModel *)model {
@@ -222,9 +232,14 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     self.delegate = nil;
 
     [self.baseContentView addSubview:self.portraitImageView];
+    [self.baseContentView addSubview:self.avatarFrameView];
     [self.baseContentView addSubview:self.nicknameLabel];
     [self.baseContentView addSubview:self.messageContentView];
     [self.baseContentView addSubview:self.statusContentView];
+    
+    [self.baseContentView addSubview:self.levelImageView];
+    [self.baseContentView addSubview:self.vipSvgaView];
+    [self.baseContentView addSubview:self.vipImageView];
     
     [self.messageContentView addSubview:self.destructView];
     
@@ -320,60 +335,65 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 - (void)registerSizeUpdateLayoutIfNeed{
     __weak typeof(self) weakSelf = self;
     [self.messageContentView registerSizeChangedEvent:^(CGSize size) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (strongSelf.model){
-            CGRect rect = CGRectMake(0, 0, size.width, size.height);
-            CGFloat protraitWidth = RCKitConfigCenter.ui.globalMessagePortraitSize.width;
-
-            if ([RCKitUtility isRTL]) {
-                if(strongSelf.model.messageDirection == MessageDirection_RECEIVE) {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
-                    } else {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
-                    }
-                    rect.origin.y = PortraitImageViewTop;
-                    if (strongSelf.model.isDisplayNickname) {
-                        rect.origin.y = PortraitImageViewTop + NameHeight + NameAndContentSpace;
-                    }
-                } else {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
-                    } else {
-                        rect.origin.x = PortraitViewEdgeSpace;
-                    }
-                    rect.origin.y = PortraitImageViewTop;
-                }
-            } else {
-                if(strongSelf.model.messageDirection == MessageDirection_RECEIVE) {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
-                    } else {
-                        rect.origin.x = PortraitViewEdgeSpace;
-                    }
-                    CGFloat messageContentViewY = PortraitImageViewTop;
-                    if (strongSelf.model.isDisplayNickname) {
-                        messageContentViewY = PortraitImageViewTop + NameHeight + NameAndContentSpace;
-                    }
-                    rect.origin.y = messageContentViewY;
-                } else {
-                    if (strongSelf.showPortrait) {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
-                    } else {
-                        rect.origin.x = strongSelf.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
-                    }
-                
-                    rect.origin.y = PortraitImageViewTop;
-                }
-            }
-            strongSelf.messageContentView.frame = rect;
-            [strongSelf setDestructViewLayout];
-        }
+        [weakSelf setNeedsFocusUpdateContentViewFrame:size];
     }];
 }
 
 - (void)messageContentViewFrameDidChanged {
     
+}
+
+/// 强制刷新messageContentView的Frame
+- (void)setNeedsFocusUpdateContentViewFrame:(CGSize)size {
+    if (self.model){
+        CGRect rect = CGRectMake(0, 0, size.width, size.height);
+        CGFloat protraitWidth = RCKitConfigCenter.ui.globalMessagePortraitSize.width;
+
+        if ([RCKitUtility isRTL]) {
+            if(self.model.messageDirection == MessageDirection_RECEIVE) {
+                if (self.showPortrait) {
+                    rect.origin.x = self.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
+                } else {
+                    rect.origin.x = self.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
+                }
+                rect.origin.y = PortraitImageViewTop;
+                if (self.model.isDisplayNickname) {
+                    rect.origin.y = PortraitImageViewTop + NameHeight + NameAndContentSpace;
+                }
+            } else {
+                if (self.showPortrait) {
+                    rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
+                } else {
+                    rect.origin.x = PortraitViewEdgeSpace;
+                }
+                rect.origin.y = PortraitImageViewTop;
+            }
+        } else {
+            if(self.model.messageDirection == MessageDirection_RECEIVE) {
+                if (self.showPortrait) {
+                    rect.origin.x = PortraitViewEdgeSpace + protraitWidth + HeadAndContentSpacing;
+                } else {
+                    rect.origin.x = PortraitViewEdgeSpace;
+                }
+                CGFloat messageContentViewY = PortraitImageViewTop;
+                if (self.model.isDisplayNickname) {
+                    messageContentViewY = PortraitImageViewTop + NameHeight + NameAndContentSpace;
+                }
+                rect.origin.y = messageContentViewY;
+            } else {
+                if (self.showPortrait) {
+                    rect.origin.x = self.baseContentView.bounds.size.width - (size.width + [RCIM sharedRCIM].avatarPaddingX + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace)+4;
+                } else {
+                    rect.origin.x = self.baseContentView.bounds.size.width - (size.width + [RCIM sharedRCIM].avatarPaddingX + PortraitViewEdgeSpace) + 4;
+                }
+                CGFloat messageContentViewY = PortraitImageViewTop;
+                messageContentViewY = PortraitImageViewTop + NameHeight + NameAndContentSpace;
+                rect.origin.y = messageContentViewY;
+            }
+        }
+        self.messageContentView.frame = rect;
+        [self setDestructViewLayout];
+    }
 }
 
 - (void)setPortraitStyle:(RCUserAvatarStyle)portraitStyle {
@@ -428,11 +448,16 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                nicknameFrame.origin = CGPointMake(nameOffset_X, PortraitImageViewTop);
                self.nicknameLabel.frame = nicknameFrame;
            } else { // owner
+               CGFloat nameOffset_X = 0;
                if (self.showPortrait) {
                    contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + HeadAndContentSpacing + protraitWidth + PortraitViewEdgeSpace);
+                   nameOffset_X = self.portraitImageView.frame.origin.x - HeadAndContentSpacing - nicknameFrame.size.width;
                } else {
                    contentFrame.origin.x = self.baseContentView.bounds.size.width - (size.width + PortraitViewEdgeSpace);
+                   nameOffset_X = self.portraitImageView.frame.origin.x + self.portraitImageView.bounds.size.width - nicknameFrame.size.width;
                }
+               nicknameFrame.origin = CGPointMake(nameOffset_X, PortraitImageViewTop);
+               self.nicknameLabel.frame = nicknameFrame;
            }
     }
     self.nicknameLabel.frame = nicknameFrame;
@@ -444,6 +469,9 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 - (void)setCellAutoLayout {
     CGFloat protraitWidth = RCKitConfigCenter.ui.globalMessagePortraitSize.width;
     CGFloat protraitHeight = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
+    
+    CGFloat avatarPaddingX = [RCIM sharedRCIM].avatarPaddingX;
+    CGFloat avatarPaddingY = [RCIM sharedRCIM].avatarPaddingY;
 
     if ([RCKitUtility isRTL]) {
         // receiver
@@ -457,10 +485,17 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             } else {
                 self.nicknameLabel.frame = CGRectMake(self.baseContentView.bounds.size.width - (DefaultMessageContentViewWidth + PortraitViewEdgeSpace), PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
             }
+            self.avatarFrameView.frame = CGRectMake(portraitImageX - avatarPaddingX, PortraitImageViewTop - avatarPaddingY,protraitWidth + avatarPaddingX*2, protraitHeight + avatarPaddingY*2);
         } else { // owner
             self.nicknameLabel.hidden = YES;
             CGFloat portraitImageX = PortraitViewEdgeSpace;
             self.portraitImageView.frame = CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth, protraitHeight);
+            self.avatarFrameView.frame = CGRectMake(portraitImageX - avatarPaddingX, PortraitImageViewTop - avatarPaddingY,protraitWidth + avatarPaddingX*2, protraitHeight + avatarPaddingY*2);
+            if (self.showPortrait) {
+                self.nicknameLabel.frame = CGRectMake(portraitImageX + self.portraitImageView.bounds.size.width + HeadAndContentSpacing, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+            } else {
+                self.nicknameLabel.frame = CGRectMake(portraitImageX, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+            }
         }
         self.messageContentView.contentSize = CGSizeMake(DefaultMessageContentViewWidth,self.baseContentView.bounds.size.height - ContentViewBottom);
     } else {
@@ -472,19 +507,31 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
                self.portraitImageView.frame =
                CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth,
                           protraitHeight);
-            if (self.showPortrait) {
+               self.avatarFrameView.frame = CGRectMake(portraitImageX - avatarPaddingX, PortraitImageViewTop - avatarPaddingY,protraitWidth + avatarPaddingX*2, protraitHeight + avatarPaddingY*2);
+               if (self.showPortrait) {
                    self.nicknameLabel.frame =
                    CGRectMake(portraitImageX + self.portraitImageView.bounds.size.width + HeadAndContentSpacing, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
                } else {
                    self.nicknameLabel.frame =
-                   CGRectMake(portraitImageX , PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);               }
+                   CGRectMake(portraitImageX , PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+               }
+               self.nicknameLabel.textAlignment = NSTextAlignmentLeft;
            } else { // owner
-               self.nicknameLabel.hidden = YES;
+               self.nicknameLabel.hidden = NO;
                CGFloat portraitImageX =
                self.baseContentView.bounds.size.width - (protraitWidth + PortraitViewEdgeSpace);
                self.portraitImageView.frame =
                CGRectMake(portraitImageX, PortraitImageViewTop, protraitWidth,
                           protraitHeight);
+               self.avatarFrameView.frame = CGRectMake(portraitImageX - avatarPaddingX, PortraitImageViewTop - avatarPaddingY,protraitWidth + avatarPaddingX*2, protraitHeight + avatarPaddingY*2);
+               if (self.showPortrait) {
+                   self.nicknameLabel.frame =
+                   CGRectMake(portraitImageX - DefaultMessageContentViewWidth - HeadAndContentSpacing, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+               } else {
+                   self.nicknameLabel.frame =
+                   CGRectMake(portraitImageX + self.portraitImageView.bounds.size.width - DefaultMessageContentViewWidth, PortraitImageViewTop, DefaultMessageContentViewWidth, NameHeight);
+               }
+               self.nicknameLabel.textAlignment = NSTextAlignmentRight;
            }
            self.messageContentView.contentSize = CGSizeMake(DefaultMessageContentViewWidth,self.baseContentView.bounds.size.height - ContentViewBottom);
     }
@@ -962,6 +1009,10 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 - (RCloudImageView *)portraitImageView{
     if (!_portraitImageView) {
         _portraitImageView = [[RCloudImageView alloc] initWithPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+        self.avatarFrameView = [[SVGAImageView alloc] initWithFrame:CGRectZero];
+        [self.avatarFrameView setUserInteractionEnabled:NO];
+        self.avatarFrameView.autoPlay = true;
+        self.avatarFrameView.clearsAfterStop = true;
         //点击头像
         UITapGestureRecognizer *portraitTap =
             [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapUserPortaitEvent:)];
@@ -987,6 +1038,32 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
             setTextColor:[RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x707070)]];
     }
     return _nicknameLabel;
+}
+
+- (RCloudImageView *)levelImageView{
+    if (!_levelImageView){
+        _levelImageView = [[RCloudImageView alloc]init];
+        _levelImageView.contentMode = UIViewContentModeScaleAspectFit;
+    }
+    return _levelImageView;
+}
+
+- (SVGAImageView *)vipSvgaView{
+    if (!_vipSvgaView){
+        _vipSvgaView = [[SVGAImageView alloc]initWithFrame:CGRectZero];
+        [_vipSvgaView setUserInteractionEnabled:NO];
+        _vipSvgaView.autoPlay = YES;
+        _vipSvgaView.clearsAfterStop = YES;
+    }
+    return _vipSvgaView;
+}
+
+-(RCloudImageView *)vipImageView{
+    if (!_vipImageView){
+        _vipImageView = [[RCloudImageView alloc]init];
+        _vipImageView.contentMode = UIViewContentModeScaleAspectFit;
+    }
+    return _vipImageView;
 }
 
 - (UIView *)statusContentView{
@@ -1081,4 +1158,58 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     return _editRetryButton;
 }
 
+- (void)updateAvatarFrame:(NSString *)avatarFrame{
+    if (avatarFrame.length == 0) {
+        [self.avatarFrameView setHidden:YES];
+    } else {
+        NSString *documentsPath = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+        NSString *path = [NSString stringWithFormat:@"%@/Decorate/svga/%@", documentsPath, avatarFrame];
+        [self.avatarFrameView setImageName:path];
+        [self.avatarFrameView setHidden:NO];
+    }
+}
+
+-(void)updateBubble:(NSDictionary *)dict{
+    
+    
+}
+
+-(void)showUserLevelAndVipView:(UIImage *)level Vip:(NSString *)vip{
+    //数据显示
+    _levelImageView.image = level;
+    if ([vip containsString:@"http"]){
+        [_vipSvgaView setHidden:YES];
+        [_vipImageView setHidden:NO];
+        _vipImageView.imageURL = [NSURL URLWithString:vip];
+    }else{
+        NSString *documentsPath = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+        NSString *path = [NSString stringWithFormat:@"%@/VIP/svga/%@",documentsPath,vip];
+        if ([path containsString:@".svga"]){
+            [_vipSvgaView setHidden:NO];
+            [_vipImageView setHidden:YES];
+            _vipSvgaView.imageName = path;
+        }else{
+            [_vipSvgaView setHidden:YES];
+            [_vipImageView setHidden:NO];
+            _vipImageView.image = [[UIImage alloc]initWithContentsOfFile:path];
+        }
+    }
+    
+    //UI
+    [_nicknameLabel sizeToFit];
+    CGRect nameRect = _nicknameLabel.frame;
+    if (self.model.messageDirection == MessageDirection_SEND){
+        _vipSvgaView.frame = CGRectMake(_portraitImageView.frame.origin.x-NameAndContentSpace-60, PortraitImageViewTop-2, 60, 24);
+        _vipImageView.frame = CGRectMake(_portraitImageView.frame.origin.x-NameAndContentSpace-60, PortraitImageViewTop-2, 60, 24);
+        _nicknameLabel.frame = CGRectMake(_vipSvgaView.frame.origin.x-5-nameRect.size.width, PortraitImageViewTop, nameRect.size.width, NameHeight);
+        _levelImageView.frame = CGRectMake(_nicknameLabel.frame.origin.x-5-32, PortraitImageViewTop+2, 32, 16);
+    }else{
+        _levelImageView.frame = CGRectMake(_portraitImageView.frame.origin.x+_portraitImageView.frame.size.width+NameAndContentSpace+2, PortraitImageViewTop+2, 32, 16);
+        _nicknameLabel.frame = CGRectMake(_levelImageView.frame.origin.x+_levelImageView.frame.size.width+5, PortraitImageViewTop, nameRect.size.width, NameHeight);
+        _vipSvgaView.frame = CGRectMake(_nicknameLabel.frame.origin.x+_nicknameLabel.frame.size.width+5, PortraitImageViewTop-2, 60, 24);
+        _vipImageView.frame = CGRectMake(_nicknameLabel.frame.origin.x+_nicknameLabel.frame.size.width+4, PortraitImageViewTop-2, 60, 24);
+    }
+
+
 @end
+        _editRetryButton = [[UIButton alloc] init];

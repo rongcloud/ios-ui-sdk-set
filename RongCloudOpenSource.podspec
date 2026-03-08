@@ -1,4 +1,3 @@
-
 Pod::Spec.new do |s|
 
 
@@ -31,10 +30,11 @@ Pod::Spec.new do |s|
     kit.private_header_files = 'IMKit/Utility/Extension/*.h'
     kit.frameworks = "AssetsLibrary", "MapKit", "ImageIO", "CoreLocation", "SystemConfiguration", "QuartzCore", "OpenGLES", "CoreVideo", "CoreTelephony", "CoreMedia", "CoreAudio", "CFNetwork", "AudioToolbox", "AVFoundation", "UIKit", "CoreGraphics", "SafariServices"
     kit.dependency 'RongCloudIM/IMLib','5.20.0.108'
+    kit.dependency "SVGAPlayer"
   end
 
   s.subspec 'RongSticker' do |rs|
-    rs.resources = "Sticker/Resources/*.bundle", "Sticker/Resources/*.lproj"
+    rs.resources = "Resources/RongSticker.bundle", "Resources/RongSticker.plist"
     rs.source_files = 'Sticker/RongSticker.h','Sticker/**/*.{h,m,c}'
     rs.private_header_files = 'Sticker/Extension/*.h','Sticker/Utilities/RCUnzip.h'
     rs.dependency 'RongCloudOpenSource/IMKit'

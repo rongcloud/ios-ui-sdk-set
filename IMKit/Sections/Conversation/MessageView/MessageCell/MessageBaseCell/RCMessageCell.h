@@ -13,12 +13,13 @@
 #import "RCButton.h"
 #import "RCBaseButton.h"
 #import "RCBaseImageView.h"
-#define HeadAndContentSpacing 8
+#define HeadAndContentSpacing 18
 #define PortraitViewEdgeSpace 12//头像与屏幕边缘距离
-#define NameAndContentSpace 2
-#define NameHeight 14
+#define NameAndContentSpace 6
+#define NameHeight 20
 @class RCloudImageView;
 @class RCCircularLoadingView;
+@class SVGAImageView;
 
 /*!
  展示的消息Cell类
@@ -38,6 +39,14 @@
  消息发送者的用户名称
  */
 @property (nonatomic, strong) UILabel *nicknameLabel;
+
+
+//粉丝等级
+@property (nonatomic, strong) RCloudImageView *levelImageView;
+
+//vip
+@property (nonatomic, strong) RCloudImageView *vipImageView;
+@property (nonatomic, strong) SVGAImageView *vipSvgaView;
 
 /*!
  消息内容的View
@@ -101,6 +110,13 @@
 
  */
 @property (nonatomic, assign) BOOL showPortrait;
+
+/*!
+消息发送者的用户头像框
+*/
+@property (nonatomic, strong) SVGAImageView *avatarFrameView;
+
+
 /*!
  设置当前消息Cell的数据模型
 
@@ -139,4 +155,15 @@
 */
 - (void)didTapMessageContentView;
 
+- (void)updateBubble:(NSDictionary *)dict;
+
+/*!
+ 更新头像框
+
+ @param avatarFrame 头像框
+ */
+- (void)updateAvatarFrame:(NSString *)avatarFrame;
+
+/// 强制刷新messageContentView的Frame
+- (void)setNeedsFocusUpdateContentViewFrame:(CGSize)size;
 @end

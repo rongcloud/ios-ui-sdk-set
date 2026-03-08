@@ -22,7 +22,7 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
 #define TIME_LABEL_HEIGHT 16
 #define TIME_LABEL_AND_BASE_CONTENT_VIEW_SPACE 12
 #define TIME_LABEL_TOP 8
-#define BASE_CONTENT_VIEW_BOTTOM 20 //每个 Cell 底部都有 20 个点
+#define BASE_CONTENT_VIEW_BOTTOM 28 //每个 Cell 底部都有 28 个点
 
 /*!
  消息Cell基类
@@ -108,11 +108,23 @@ UIKIT_EXTERN NSString *const KNotificationMessageBaseCellUpdateSendingStatus;
  */
 - (void)setDataModel:(RCMessageModel *)model;
 
++ (BOOL) isForceRefreshSize;
+
 /*!
  消息发送状态更新的监听回调
 
  - Parameter notification: 消息发送状态更新的Notification
  */
 - (void)messageCellUpdateSendingStatusEvent:(NSNotification *)notification;
+
+/*!
+ 主题切换
+
+ @param notification 消息发送状态更新的Notification
+ */
+- (void)themeColorDidChange:(NSNotification *)notification;
+
+///显示用户的等级及vip
+- (void)showUserLevelAndVipView:(UIImage *)level Vip:(NSString *)vip;
 
 @end

@@ -12,6 +12,7 @@
 #import "RCKitUtility.h"
 #import "RCVoicePlayer.h"
 #import "RCKitConfig.h"
+#import "RCBubbleCell.h"
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
 #define Play_Voice_View_Width 16
@@ -98,8 +99,7 @@ static RCMessageDirection s_previousMessageDirection;
     }
     
     __messagecontentview_height += extraHeight;
-    
-    return CGSizeMake(collectionViewWidth, __messagecontentview_height);
+    return CGSizeMake(collectionViewWidth, __messagecontentview_height + 6);
 }
 
 - (void)resetAnimationTimer{
@@ -410,4 +410,61 @@ static RCMessageDirection s_previousMessageDirection;
     }
     return _voiceDurationLabel;
 }
+
+-(void)updateBubble:(NSDictionary *)dict{
+    if (dict.allKeys.count == 0){
+        if (MessageDirection_RECEIVE == self.messageDirection) {
+            UIImage *image = [RCKitUtility imageNamed:@"chat_from_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }else{
+            UIImage *image = [RCKitUtility imageNamed:@"chat_to_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }
+        self.voiceDurationLabel.textColor = RCDYCOLOR(0x3f81bc, 0xE0E0E0);
+    }else{
+        self.bubbleBackgroundView.image = nil;
+        self.voiceDurationLabel.textColor = [UIColor whiteColor];
+    }
+    
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        [self updateAppearanceWith:@"dark"];
+    } else {
+        [self updateAppearanceWith:@"light"];
+    }
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
+    if ([notification.userInfo.allKeys containsObject:@"style"]) {
+        NSString *style = [NSString stringWithFormat:@"%@", notification.userInfo[@"style"]];
+        if ([style containsString:@"dark"]) {
+            [self updateAppearanceWith:@"dark"];
+        } else {
+            [self updateAppearanceWith:@"light"];
+        }
+    }
+}
+
+- (void)updateAppearanceWith:(NSString *)style {
+    if ([style isEqualToString:@"light"]) {
+        if (self.model.messageDirection == MessageDirection_RECEIVE) {
+            self.voiceDurationLabel.textColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.85];
+            self.bubbleBackgroundView.backgroundColor = [UIColor whiteColor];
+        } else {
+            self.voiceDurationLabel.textColor = [UIColor whiteColor];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+        }
+    } else {
+        if (self.model.messageDirection == MessageDirection_RECEIVE) {
+            self.voiceDurationLabel.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.85];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1];
+        } else {
+            self.voiceDurationLabel.textColor = [UIColor whiteColor];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+        }
+    }
+    self.bubbleBackgroundView.image = nil;
+    self.bubbleBackgroundView.layer.cornerRadius = 8;
+    self.bubbleBackgroundView.layer.masksToBounds = true;
+}
+
 @end

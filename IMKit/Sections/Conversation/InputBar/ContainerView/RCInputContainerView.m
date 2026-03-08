@@ -482,7 +482,7 @@
         [_inputTextView setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
         [_inputTextView setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         [_inputTextView setReturnKeyType:UIReturnKeySend];
-        _inputTextView.backgroundColor = RCDYCOLOR(0xffffff, 0x2d2d2d);
+        _inputTextView.backgroundColor = [RCKitUtility generateDynamicColor:RCMASKCOLOR(0xffffff, 0.0) darkColor:RCMASKCOLOR(0xffffff, 0.0)];
         _inputTextView.enablesReturnKeyAutomatically = YES;
         _inputTextView.layer.cornerRadius = 8;
         _inputTextView.layer.masksToBounds = YES;

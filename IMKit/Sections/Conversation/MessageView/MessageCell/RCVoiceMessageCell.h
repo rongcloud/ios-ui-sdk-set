@@ -36,4 +36,6 @@ UIKIT_EXTERN NSString *const kNotificationStopVoicePlayer;
 /// 停止播放语音
 - (void)stopPlayingVoice;
 
+- (void)updateBubble:(NSDictionary *)dict;
+
 @end

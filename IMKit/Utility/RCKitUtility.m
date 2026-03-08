@@ -764,20 +764,8 @@
 + (UIColor *)generateDynamicColor:(UIColor *)lightColor darkColor:(UIColor *)darkColor {
     if (!RCKitConfigCenter.ui.enableDarkMode) {
         return lightColor;
-    }
-
-    if (@available(iOS 13.0, *)) {
-        UIColor *dyColor =
-            [UIColor colorWithDynamicProvider:^UIColor *_Nonnull(UITraitCollection *_Nonnull traitCollection) {
-                if (traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-                    return darkColor;
-                } else {
-                    return lightColor;
-                }
-            }];
-        return dyColor;
-    } else {
-        return lightColor;
+    }else{
+        return darkColor;
     }
 }
 

@@ -14,6 +14,7 @@
 #import "RCKitConfig.h"
 #import "RCIM.h"
 #import "RCEditedStateUtil.h"
+#import "RCStickerHelper.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -118,6 +119,13 @@
         messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
         messageInfo = [messageInfo stringByReplacingOccurrencesOfString:@"\r" withString:@" "];
         self.textLabel.text = messageInfo;
+        // 20250826 引用图片为自定义贴纸表情
+        if ([self.referedContent.extra isEqualToString:@"source_game_expression"]) {
+            NSAttributedString *attributedText = [[RCStickerHelper shared] attributeString:messageInfo itemSize:CGSizeMake(20, 20)];
+            self.textLabel.attributedText = attributedText;
+        } else {
+            self.textLabel.text = messageInfo;
+        }
     }
     
     if(self.referModel.messageDirection == MessageDirection_SEND){
@@ -216,6 +224,9 @@
                 name = userInfo.name;
             }
         }
+    }
+    if (name == nil) {
+        name = @"";
     }
     __weak typeof(self) weakSelf = self;
     dispatch_main_async_safe(^{
@@ -339,4 +350,5 @@
     }
     return _msgImageView;
 }
+
 @end

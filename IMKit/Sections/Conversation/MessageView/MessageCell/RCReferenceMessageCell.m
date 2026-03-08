@@ -11,6 +11,7 @@
 #import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
+#import "RCBubbleCell.h"
 #import "RCAttributedLabel+EditedState.h"
 #import "RCMessageCell+EditStatus.h"
 
@@ -20,6 +21,8 @@
 #define content_space_left 12
 #define content_space_right 12
 @interface RCReferenceMessageCell () <RCAttributedLabelDelegate, RCReferencedContentViewDelegate>
+@property (nonatomic, strong) RCBubbleCell *bubbleView;
+@property (nonatomic, assign) BOOL isHiddenBubble;
 @end
 @implementation RCReferenceMessageCell
 
@@ -28,6 +31,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.isHiddenBubble = true;
         [self initialize];
     }
     return self;
@@ -36,6 +40,7 @@
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
+        self.isHiddenBubble = true;
         [self initialize];
     }
     return self;
@@ -58,8 +63,8 @@
     CGFloat __messagecontentview_height = messageContentSize.height;
     __messagecontentview_height += extraHeight;
     __messagecontentview_height += [self edit_editStatusBarHeightWithModel:model];
-    
-    return CGSizeMake(collectionViewWidth, __messagecontentview_height);
+
+    return CGSizeMake(collectionViewWidth, __messagecontentview_height + 6);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
@@ -118,6 +123,11 @@
 
     [self.messageContentView addSubview:self.referencedContentView];
     [self.messageContentView addSubview:self.contentLabel];
+    
+    //新气泡
+    _bubbleView = [[RCBubbleCell alloc] initWithFrame:CGRectZero];
+    _bubbleView.backgroundColor = [UIColor clearColor];
+    [self.bubbleBackgroundView addSubview:_bubbleView];
 }
 
 - (void)setAutoLayout {
@@ -144,6 +154,15 @@
     self.contentLabel.frame = CGRectMake(content_space_left, CGRectGetMaxY(self.referencedContentView.frame) + refer_and_text_space,
                                          textLabelSize.width, textLabelSize.height);
     self.messageContentView.contentSize = CGSizeMake(messageContentSize.width, messageContentSize.height);
+    
+    //新气泡
+    if(self.model.messageDirection == MessageDirection_RECEIVE){
+        self.bubbleView.frame = CGRectMake(-10, -25, messageContentSize.width+35, messageContentSize.height+45);
+        [self.bubbleView updateSize:CGSizeMake(messageContentSize.width+35, messageContentSize.height+45)];
+    }else{
+        self.bubbleView.frame = CGRectMake(-20, -25, messageContentSize.width+35, messageContentSize.height+45);
+        [self.bubbleView updateSize:CGSizeMake(messageContentSize.width+35, messageContentSize.height+45)];
+    }
 }
 
 - (NSDictionary *)attributeDictionary {
@@ -197,4 +216,77 @@
     }
     return _referencedContentView;
 }
+
+-(void)updateBubble:(NSDictionary *)dict{
+    //停止
+    [_bubbleView stopAllAnimation];
+    if (dict.allKeys.count == 0){
+        if (MessageDirection_RECEIVE == self.messageDirection) {
+            UIImage *image = [RCKitUtility imageNamed:@"chat_from_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.referencedContentView.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x939393) darkColor:HEXCOLOR(0x939393)];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }else{
+            UIImage *image = [RCKitUtility imageNamed:@"chat_to_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.referencedContentView.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x999999) darkColor:HEXCOLOR(0x999999)];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }
+        self.contentLabel.textColor = RCDYCOLOR(0x262626, 0xe0e0e0);
+        
+    }else{
+        self.bubbleBackgroundView.image = nil;
+        self.contentLabel.textColor = [UIColor whiteColor];
+        self.referencedContentView.textLabel.textColor = [UIColor whiteColor];
+    }
+    //重新赋值
+    self.isHiddenBubble = [_bubbleView updateBubble:dict];
+    
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        [self updateAppearanceWith:@"dark"];
+    } else {
+        [self updateAppearanceWith:@"light"];
+    }
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
+    if ([notification.userInfo.allKeys containsObject:@"style"]) {
+        NSString *style = [NSString stringWithFormat:@"%@", notification.userInfo[@"style"]];
+        if ([style containsString:@"dark"]) {
+            [self updateAppearanceWith:@"dark"];
+        } else {
+            [self updateAppearanceWith:@"light"];
+        }
+    }
+}
+
+- (void)updateAppearanceWith:(NSString *)style {
+    self.bubbleBackgroundView.image = nil;
+    // 是否有气泡（VIP）
+    if (self.isHiddenBubble == false) {
+        self.contentLabel.textColor = [UIColor whiteColor];
+        self.bubbleBackgroundView.backgroundColor = [UIColor clearColor];
+        self.bubbleBackgroundView.layer.cornerRadius = 0;
+        self.bubbleBackgroundView.layer.masksToBounds = false;
+    } else {
+        if ([style isEqualToString:@"light"]) {
+            if (self.model.messageDirection == MessageDirection_RECEIVE) {
+                self.contentLabel.textColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.85];
+                self.bubbleBackgroundView.backgroundColor = [UIColor whiteColor];
+            } else {
+                self.contentLabel.textColor = [UIColor whiteColor];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+            }
+        } else {
+            if (self.model.messageDirection == MessageDirection_RECEIVE) {
+                self.contentLabel.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.85];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1];
+            } else {
+                self.contentLabel.textColor = [UIColor whiteColor];
+                self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+            }
+        }
+        self.bubbleBackgroundView.layer.cornerRadius = 8;
+        self.bubbleBackgroundView.layer.masksToBounds = true;
+    }
+}
+
 @end

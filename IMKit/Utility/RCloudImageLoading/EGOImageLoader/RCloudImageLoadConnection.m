@@ -100,7 +100,7 @@
 - (NSURLSessionConfiguration *)rcSessionConfiguration {
     NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
     RCIMProxy *currentProxy = [[RCCoreClient sharedCoreClient] getCurrentProxy];
-    
+
     if (currentProxy && [currentProxy isValid]) {
         NSString *proxyHost = currentProxy.host;
         NSNumber *proxyPort = @(currentProxy.port);

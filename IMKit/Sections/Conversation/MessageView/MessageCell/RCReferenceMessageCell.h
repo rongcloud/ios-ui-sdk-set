@@ -18,6 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// 文本内容的Label
 @property (nonatomic, strong) RCAttributedLabel *contentLabel;
 
+///气泡
+- (void)updateBubble:(NSDictionary *)dict;
+
 @end
 
 NS_ASSUME_NONNULL_END

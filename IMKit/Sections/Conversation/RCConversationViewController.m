@@ -1158,6 +1158,15 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     RCMessageContent *messageContent = model.content;
     NSString *objectName = [[messageContent class] getObjectName];
     Class cellClass = self.cellMsgDict[objectName];
+    
+    if ([cellClass respondsToSelector:@selector(isForceRefreshSize)]){
+        if (model.cellSize.height > 0 &&
+            !(model.conversationType == ConversationType_CUSTOMERSERVICE &&
+              [model.content isKindOfClass:[RCTextMessage class]])) {
+            return model.cellSize;
+        }
+    }
+    
     if([cellClass respondsToSelector:@selector(sizeForMessageModel:withCollectionViewWidth:referenceExtraHeight:)]) {
         CGFloat extraHeight = [self.util referenceExtraHeight:cellClass messageModel:model];
         CGSize size = [cellClass sizeForMessageModel:model
@@ -1758,6 +1767,14 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (BOOL)commonPhrasesButtonDidTouch {
     return [self didTapCommonPhrasesButton];
+}
+
+- (void)emojiView:(RCEmojiBoardView *)emojiView didTouchedSticker:(NSString *)touchedSticker {
+    RCTextMessage *rcTextMessage = [RCTextMessage messageWithContent:touchedSticker];
+    rcTextMessage.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
+    rcTextMessage.extra = @"source_game_expression";
+    [self sendMessage:rcTextMessage pushContent:nil];
+    self.placeholderLabel.hidden = NO;
 }
 
 //点击常用语的回调
@@ -2688,9 +2705,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self.csUtil customerServiceLeftCurrentViewController];
 }
 
+#pragma mark - 20250910 加入融云失败不退出当前页面
 - (void)alertErrorAndLeft:(NSString *)errorInfo {
     [RCAlertView showAlertController:nil message:errorInfo hiddenAfterDelay:1 inViewController:self dismissCompletion:^{
-        [self.navigationController popViewControllerAnimated:YES];
+//        [self.navigationController popViewControllerAnimated:YES];
     }];
 }
 
@@ -3269,15 +3287,13 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if (!RCKitConfigCenter.ui.enableDarkMode) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        if (self.unReadButton) {
-            [self.unReadButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
-        }
-        if (self.unReadMentionedButton) {
-            [self.unReadMentionedButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
-        }
-        [self.conversationMessageCollectionView reloadData];
+    if (self.unReadButton) {
+        [self.unReadButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
     }
+    if (self.unReadMentionedButton) {
+        [self.unReadMentionedButton setBackgroundImage:RCResourceImage(@"up") forState:UIControlStateNormal];
+    }
+    [self.conversationMessageCollectionView reloadData];
 }
 
 #pragma mark - Reference
@@ -3517,6 +3533,8 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
     [self.conversationMessageCollectionView reloadItemsAtIndexPaths:[indexPathes copy]];
 }
+
+#pragma mark - 20250910 修复连续播放音频导致的崩溃问题
 
 - (void)playNextVoiceMesage:(NSNumber *)msgId {
     dispatch_async(dispatch_get_main_queue(), ^{

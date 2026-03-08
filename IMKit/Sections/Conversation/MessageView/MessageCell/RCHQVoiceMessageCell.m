@@ -14,6 +14,7 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
+#import "RCBubbleCell.h"
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
@@ -69,7 +70,7 @@ static RCMessageDirection hq_previousMessageDirection;
 
     __messagecontentview_height += extraHeight;
 
-    return CGSizeMake(collectionViewWidth, __messagecontentview_height);
+    return CGSizeMake(collectionViewWidth, __messagecontentview_height + 6);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
@@ -219,7 +220,6 @@ static RCMessageDirection hq_previousMessageDirection;
     
     [self.messageContentView addSubview:self.playVoiceView];
     [self.messageContentView addSubview:self.voiceDurationLabel];
-    
     [self registerNotification];
 }
 
@@ -282,7 +282,11 @@ static RCMessageDirection hq_previousMessageDirection;
     CGFloat voiceHeight = size.height;
     if ([RCKitUtility isRTL]) {
         if (self.model.messageDirection == MessageDirection_SEND) {
-            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+                [self updatePlayVoiceViewWith:@"dark"];
+            } else {
+                [self updatePlayVoiceViewWith:@"light"];
+            }
             [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
             self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
@@ -303,7 +307,11 @@ static RCMessageDirection hq_previousMessageDirection;
             [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
             self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }else{
-            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+                [self updatePlayVoiceViewWith:@"dark"];
+            } else {
+                [self updatePlayVoiceViewWith:@"light"];
+            }
             [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
             self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
@@ -580,16 +588,10 @@ static RCMessageDirection hq_previousMessageDirection;
         self.animationTimer = nil;
         self.animationIndex = 0;
     }
-    UIImage *image;
-    if (MessageDirection_SEND == self.model.messageDirection) {
-        image = RCResourceImage(@"to_voice_3");
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        [self updatePlayVoiceViewWith:@"dark"];
     } else {
-        image = RCResourceImage(@"from_voice_3");
-    }
-    if ([RCKitUtility isRTL]) {
-        self.playVoiceView.image = [image imageFlippedForRightToLeftLayoutDirection];
-    } else {
-        self.playVoiceView.image = image;
+        [self updatePlayVoiceViewWith:@"light"];
     }
 }
 
@@ -637,4 +639,84 @@ static RCMessageDirection hq_previousMessageDirection;
     }
     return _voiceDurationLabel;
 }
+
+-(void)updateBubble:(NSDictionary *)dict{
+    if (dict.allKeys.count == 0){
+        if (MessageDirection_RECEIVE == self.messageDirection) {
+            UIImage *image = [RCKitUtility imageNamed:@"chat_from_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }else{
+            UIImage *image = [RCKitUtility imageNamed:@"chat_to_bg_normal" ofBundle:@"RongCloud.bundle"];
+            self.bubbleBackgroundView.image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.height * 0.5, image.size.width * 0.5,image.size.height * 0.5, image.size.width * 0.5)];
+        }
+        self.voiceDurationLabel.textColor = RCDYCOLOR(0x3f81bc, 0xE0E0E0);
+    }else{
+        self.bubbleBackgroundView.image = nil;
+        self.voiceDurationLabel.textColor = [UIColor whiteColor];
+    }
+    
+    if (RCKitConfig.defaultConfig.ui.enableDarkMode == true ) {
+        [self updateAppearanceWith:@"dark"];
+    } else {
+        [self updateAppearanceWith:@"light"];
+    }
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
+    if ([notification.userInfo.allKeys containsObject:@"style"]) {
+        NSString *style = [NSString stringWithFormat:@"%@", notification.userInfo[@"style"]];
+        if ([style containsString:@"dark"]) {
+            [self updateAppearanceWith:@"dark"];
+        } else {
+            [self updateAppearanceWith:@"light"];
+        }
+    }
+}
+
+- (void)updateAppearanceWith:(NSString *)style {
+    if ([style isEqualToString:@"light"]) {
+        if (self.model.messageDirection == MessageDirection_RECEIVE) {
+            self.voiceDurationLabel.textColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.85];
+            self.bubbleBackgroundView.backgroundColor = [UIColor whiteColor];
+        } else {
+            self.voiceDurationLabel.textColor = [UIColor whiteColor];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+        }
+    } else {
+        if (self.model.messageDirection == MessageDirection_RECEIVE) {
+            self.voiceDurationLabel.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.85];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:34 / 255.0 green:34 / 255.0 blue:34 / 255.0 alpha:1];
+        } else {
+            self.voiceDurationLabel.textColor = [UIColor whiteColor];
+            self.bubbleBackgroundView.backgroundColor = [UIColor colorWithRed:135 / 255.0 green:84 / 255.0 blue:251 / 255.0 alpha:1];
+        }
+    }
+    self.bubbleBackgroundView.image = nil;
+    self.bubbleBackgroundView.layer.cornerRadius = 8;
+    self.bubbleBackgroundView.layer.masksToBounds = true;
+}
+
+- (void)updatePlayVoiceViewWith:(NSString *)style {
+    // 语音按钮
+    UIImage *image;
+    if (MessageDirection_SEND == self.model.messageDirection) {
+        if ([style isEqualToString:@"light"]) {
+            image = RCResourceImage(@"to_voice_3");
+        } else {
+            image = RCResourceImage(@"to_voice_3_dark");
+        }
+    } else {
+        if ([style isEqualToString:@"light"]) {
+            image = RCResourceImage(@"from_voice_3");
+        } else {
+            image = RCResourceImage(@"from_voice_3_dark");
+        }
+    }
+    if ([RCKitUtility isRTL]) {
+        self.playVoiceView.image = [image imageFlippedForRightToLeftLayoutDirection];
+    } else {
+        self.playVoiceView.image = image;
+    }
+}
+
 @end

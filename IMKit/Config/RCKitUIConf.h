@@ -76,6 +76,8 @@ typedef NS_ENUM(NSInteger, RCKitInterfaceLayoutDirection) {
 /// 文件消息图标配置，key 是文件后缀（例如："png"、"pdf"），value 是本地文件路径
 @property (nonatomic, copy, readonly) NSDictionary *fileSuffixDictionary;
 
+/// 聊天气泡配置信息
+@property (nonatomic, strong) NSDictionary *bubbleData;
 
 /// 注册文件消息图标配置，根据文件后缀，自定义会话中文件消息展示的图标
 /// - Parameter types: 文件图标字典，key 是文件后缀（例如："png"、"pdf"），value 是本地文件路径

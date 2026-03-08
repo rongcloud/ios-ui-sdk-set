@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_angry&quot;,&quot;emojiId&quot;:1,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_angry&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_cry&quot;,&quot;emojiId&quot;:2,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_cry&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_darkcircles&quot;,&quot;emojiId&quot;:3,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_darkcircles&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_daze&quot;,&quot;emojiId&quot;:4,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_daze&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_funny&quot;,&quot;emojiId&quot;:5,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_funny&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_good&quot;,&quot;emojiId&quot;:6,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_good&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_gosh&quot;,&quot;emojiId&quot;:7,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_gosh&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_hello&quot;,&quot;emojiId&quot;:8,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_hello&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_love&quot;,&quot;emojiId&quot;:9,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_love&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_nosebleed&quot;,&quot;emojiId&quot;:10,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_nosebleed&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_shutup&quot;,&quot;emojiId&quot;:11,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_shutup&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_shy&quot;,&quot;emojiId&quot;:12,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_shy&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_speechless&quot;,&quot;emojiId&quot;:13,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_speechless&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_surprised&quot;,&quot;emojiId&quot;:14,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_surprised&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_think&quot;,&quot;type&quot;:1,&quot;emojiId&quot;:15,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_think&quot;}</string>
+	</dict>
+	<dict>
+		<key>contentKey</key>
+		<string>{&quot;emojiData&quot;:&quot;set:emoji.json image:img_0_phiz_threwup&quot;,&quot;emojiId&quot;:16,&quot;type&quot;:1,&quot;image&quot;:&quot;imchat_sticker_threwup&quot;}</string>
+	</dict>
+</array>
+</plist>

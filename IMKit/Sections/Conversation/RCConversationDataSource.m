@@ -78,6 +78,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         self.allMessagesAreLoaded = NO;
         self.isShowingLastestMessage = YES;
         self.customFlowLayout = [[RCConversationViewLayout alloc] init];
+        self.customFlowLayout.minimumLineSpacing = 10;
         self.isIndicatorLoading = NO;
         self.unreadNewMsgArr = [NSMutableArray new];
 

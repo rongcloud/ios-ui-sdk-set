@@ -188,6 +188,10 @@ static int rc_currentSelectIndexPage;
         isEmoticonAddButtonEnabled:(RCChatSessionInputBarControl *)self.delegate];
     BOOL isSettingButtonEnabled = [[RCExtensionService sharedService]
         isEmoticonSettingButtonEnabled:(RCChatSessionInputBarControl *)self.delegate];
+    // [self.tabbarView showAddButton:isAddButtonEnabled showSettingButton:isSettingButtonEnabled];
+    // 20250826 屏蔽SDK表情贴纸设置入口
+    isAddButtonEnabled = NO;
+    isSettingButtonEnabled = NO;
     [self.tabbarView showAddButton:isAddButtonEnabled showSettingButton:isSettingButtonEnabled];
     [self loadCustomerEmoticonPackage];
 }

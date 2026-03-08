@@ -83,6 +83,11 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
                                              selector:@selector(messageCellUpdateSendingStatusEvent:)
                                                  name:KNotificationMessageBaseCellUpdateSendingStatus
                                                object:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self 
+                                           selector:@selector(themeColorDidChange:)
+                                               name:@"com.jiaxin.theme.themeDidChangeNotification"
+                                             object:nil];
     self.model = nil;
     self.baseContentView = [[UIView alloc] initWithFrame:CGRectZero];
     self.isDisplayReadStatus = NO;
@@ -109,6 +114,10 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 }
 
 - (void)messageCellUpdateSendingStatusEvent:(NSNotification *)notification {
+    DebugLog(@"%s", __FUNCTION__);
+}
+
+- (void)themeColorDidChange:(NSNotification *)notification {
     DebugLog(@"%s", __FUNCTION__);
 }
 
@@ -230,4 +239,13 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
     }
     return _messageTimeLabel;
 }
+
++ (BOOL)isForceRefreshSize{
+    return false;
+}
+
+-(void)showUserLevelAndVipView:(UIImage *)level Vip:(NSString *)vip{
+    
+}
+
 @end
