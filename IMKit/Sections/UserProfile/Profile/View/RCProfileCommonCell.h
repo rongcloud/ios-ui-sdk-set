@@ -5,16 +5,18 @@
 //  Created by zgh on 2024/8/19.
 //
 
-#import "RCBaseTableViewCell.h"
+#import "RCPaddingTableViewCell.h"
 #import "RCBaseImageView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCProfileCommonCell : RCBaseTableViewCell
+@interface RCProfileCommonCell : RCPaddingTableViewCell
 
 @property (nonatomic, strong) UILabel *titleLabel;
 
 @property (nonatomic, strong) RCBaseImageView *arrowView;
+
+@property (nonatomic, strong) UIStackView *contentStackView;
 
 @end
 

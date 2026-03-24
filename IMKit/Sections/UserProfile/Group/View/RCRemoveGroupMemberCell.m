@@ -16,26 +16,23 @@ NSString  * const RCRemoveGroupMemberCellIdentifier = @"RCSelectGroupMemberCellI
 
 - (void)setupView {
     [super setupView];
-    [self.contentView addSubview:self.roleLabel];
+    [self.paddingContainerView addSubview:self.roleLabel];
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    [self.roleLabel sizeToFit];
-    self.roleLabel.center = CGPointMake(self.contentView.frame.size.width - RCSelectUserCellRoleTrailingSpace - self.roleLabel.frame.size.width / 2, self.contentView.center.y);
-    CGRect frame = self.nameLabel.frame;
-    frame.origin.y = 0;
-    frame.size.width = self.roleLabel.frame.origin.x - frame.origin.x - RCSelectUserCellRoleTrailingSpace;
-    frame.size.height = self.contentView.frame.size.height;
-    self.nameLabel.frame = frame;
+- (void)setupConstraints {
+    [super setupConstraints];
+    [self appendViewAtEnd:self.roleLabel];
 }
 
 - (UILabel *)roleLabel {
     if (!_roleLabel) {
         _roleLabel = [[UILabel alloc] init];
-        _roleLabel.textColor = RCDYCOLOR(0xA0A5Ab, 0x878787);
-        _roleLabel.font = self.nameLabel.font;
+        _roleLabel.font = [UIFont systemFontOfSize:14];
+        _roleLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xA0A5Ab", @"0x878787");
         _roleLabel.textAlignment = NSTextAlignmentRight;
+        _roleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [_roleLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
     }
     return _roleLabel;
 }

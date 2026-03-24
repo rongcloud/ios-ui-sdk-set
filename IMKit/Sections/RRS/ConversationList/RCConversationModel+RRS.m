@@ -26,9 +26,6 @@
     if (![self rrs_couldFetchConversationReadReceipt]) {
         return NO;
     }
-    if (self.readReceiptCount > 0) {
-        return NO;
-    }
     return YES;
 }
 

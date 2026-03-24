@@ -12,7 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCMessageModel (RRS)
 - (BOOL)rrs_shouldResponseReadReceiptV5;
-- (BOOL)rrs_couldFetchReadReceiptV5;
 - (BOOL)rrs_shouldFetchReadReceiptV5;
 @end
 

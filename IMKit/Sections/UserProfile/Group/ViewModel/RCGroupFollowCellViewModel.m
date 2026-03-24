@@ -46,11 +46,8 @@
     }];
     cell.actionButton.hidden = self.hiddenButton;
     cell.actionButton.userInteractionEnabled = !self.hiddenButton;
+    cell.hideSeparatorLine = self.hideSeparatorLine;
     return cell;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 56;
 }
 
 @end

@@ -39,7 +39,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
+    self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
     self.title = RCLocalizedString(@"PreviewFile");
     // self.view.frame是从navigationBar下面开始计算
     self.edgesForExtendedLayout = UIRectEdgeNone;
@@ -161,6 +161,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.typeIconView.hidden = NO;
     self.nameLabel.hidden = NO;
     self.sizeLabel.hidden = NO;
+    self.sizeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa8a8a8", @"0xa0a5ab66");
     self.cancelButton.hidden = YES;
     self.progressLabel.hidden = YES;
     if ([self isFileDownloaded]) {
@@ -294,6 +295,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (void)downloading:(float)progress {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self layoutForDownloading];
+        self.sizeLabel.textColor = RCDynamicColor(@"primary_color", @"0xa8a8a8", @"0xa0a5ab66");
         self.progressLabel.text = [NSString
             stringWithFormat:@"%@(%@/%@)", RCLocalizedString(@"FileIsDownloading"),
                              [RCKitUtility getReadableStringForFileSize:progress * self.fileMessage.size],
@@ -348,16 +350,17 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)setNavigationItems {
     //设置右键
+    
     RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
-    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(9.5, 0, 9.5, -9.5);
+//    rightBtn.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8);
     rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    UIImage *rightImage = RCResourceImage(@"forwardIcon");
+    UIImage *rightImage = RCDynamicImage(@"file_preview_forward_img", @"forwardIcon");
     [rightBtn setImage:rightImage forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(moreAction) forControlEvents:UIControlEventTouchUpInside];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:rightBtn];
 
     //设置左键
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }
@@ -379,8 +382,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _webView = [[WKWebView alloc] initWithFrame:webViewRect];
         _webView.scrollView.contentInset = (UIEdgeInsets){8, 8, 8, 8};
         [_webView sizeToFit];
-        _webView.backgroundColor =
-            [UIColor colorWithRed:242.f / 255.f green:242.f / 255.f blue:243.f / 255.f alpha:1.f];
+        _webView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf2f2f3", @"0xf2f2f3");
         [_webView setOpaque:NO];
     }
     return _webView;
@@ -402,7 +404,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         _nameLabel.text = self.fileMessage.name;
         _nameLabel.textAlignment = NSTextAlignmentCenter;
-        _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x343434) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x343434", @"0xffffffcc");
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     }
     return _nameLabel;
@@ -414,7 +416,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _sizeLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         _sizeLabel.text = [RCKitUtility getReadableStringForFileSize:self.fileMessage.size];
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
-        _sizeLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa8a8a8) darkColor:RCMASKCOLOR(0xa0a5ab, 0.4)];
+        _sizeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa8a8a8", @"0xa0a5ab66");
     }
     return _sizeLabel;
 }
@@ -422,7 +424,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (UILabel *)progressLabel {
     if (!_progressLabel) {
         _progressLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.nameLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 16)];
-        _progressLabel.textColor = HEXCOLOR(0xa8a8a8);
+        _progressLabel.textColor = RCDynamicColor(@"primary_color", @"0xa8a8a8", @"0xa8a8a8");
         _progressLabel.textAlignment = NSTextAlignmentCenter;
         _progressLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
     }
@@ -436,10 +438,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_cancelButton addTarget:self
                           action:@selector(cancelFileDownload)
                 forControlEvents:UIControlEventTouchUpInside];
-        _cancelButton.backgroundColor = HEXCOLOR(0x0089E5);
+        _cancelButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x0089E5", @"0x0089E5");
         _cancelButton.layer.cornerRadius = 5.0f;
-        _cancelButton.layer.borderWidth = 0.5f;
-        _cancelButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
+//        _cancelButton.layer.borderWidth = 0.5f;
+//        _cancelButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
     }
     return _cancelButton;
 }
@@ -448,10 +450,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_downloadButton) {
         _downloadButton =
             [[RCBaseButton alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.sizeLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 40)];
-        _downloadButton.backgroundColor = HEXCOLOR(0x0099ff);
+        _downloadButton.backgroundColor =RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _downloadButton.layer.cornerRadius = 5.0f;
-        _downloadButton.layer.borderWidth = 0.5f;
-        _downloadButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
+//        _downloadButton.layer.borderWidth = 0.5f;
+//        _downloadButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
         [_downloadButton setTitle:RCLocalizedString(@"StartDownloadFile")
                          forState:UIControlStateNormal];
         [_downloadButton addTarget:self
@@ -465,10 +467,10 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_openInOtherAppButton) {
         _openInOtherAppButton =
             [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
-        _openInOtherAppButton.backgroundColor = HEXCOLOR(0x0099ff);
+        _openInOtherAppButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _openInOtherAppButton.layer.cornerRadius = 5.0f;
-        _openInOtherAppButton.layer.borderWidth = 0.5f;
-        _openInOtherAppButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
+//        _openInOtherAppButton.layer.borderWidth = 0.5f;
+//        _openInOtherAppButton.layer.borderColor = [HEXCOLOR(0x0181dd) CGColor];
         [_openInOtherAppButton setTitle:RCLocalizedString(@"OpenFileInOtherApp")
                                forState:UIControlStateNormal];
         [_openInOtherAppButton addTarget:self

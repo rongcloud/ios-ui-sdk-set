@@ -230,7 +230,7 @@
                     RCImageMessageProgressView *imageProressView =
                         [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
                     imageProressView.label.hidden = YES;
-                    imageProressView.indicatorView.color = [UIColor blackColor];
+                    imageProressView.indicatorView.color = RCDynamicColor(@"conversation_msg_progress_bg_color", @"0x000000", @"0x000000");
                     imageProressView.backgroundColor = [UIColor clearColor];
                     [imageProressView
                         setCenter:CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2)];
@@ -291,7 +291,7 @@
                 RCImageMessageProgressView *imageProressView =
                     [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
                 imageProressView.label.hidden = YES;
-                imageProressView.indicatorView.color = [UIColor blackColor];
+                imageProressView.indicatorView.color = RCDynamicColor(@"conversation_msg_progress_bg_color", @"0x000000", @"0x000000");
                 imageProressView.backgroundColor = [UIColor clearColor];
                 [imageProressView
                     setCenter:CGPointMake(self.view.bounds.size.width / 2, self.view.bounds.size.height / 2)];
@@ -393,7 +393,7 @@
     }
 
     if ([imageUrl hasPrefix:@"http"]) {
-        UIImage *image = RCResourceImage(@"broken");
+        UIImage *image = RCDynamicImage(@"conversation_msg_cell_image_broken_img", @"broken");
         imageView.image = nil;
         RCBaseImageView *imageViewTip = [[RCBaseImageView alloc] initWithImage:image];
         [imageViewTip setFrame:CGRectMake(0, 0, 81, 60)];
@@ -403,10 +403,10 @@
                                                                        self.view.frame.size.height / 2 + 44, 150, 30)];
         failLabel.text = RCLocalizedString(@"ImageLoadFailed");
         failLabel.textAlignment = NSTextAlignmentCenter;
-        failLabel.textColor = HEXCOLOR(0x999999);
+        failLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
         [imageView addSubview:failLabel];
     } else {
-        UIImage *image = RCResourceImage(@"exclamation");
+        UIImage *image = RCDynamicImage(@"image_preview_exclamation_img", @"exclamation");
         imageView.image = nil;
         RCBaseImageView *imageViewTip = [[RCBaseImageView alloc] initWithImage:image];
         [imageViewTip setFrame:CGRectMake(0, 0, 71, 71)];
@@ -417,7 +417,7 @@
                                                       self.view.frame.size.height / 2 + 49.5, 150, 30)];
         failLabel.text = RCLocalizedString(@"ImageHasBeenDeleted");
         failLabel.textAlignment = NSTextAlignmentCenter;
-        failLabel.textColor = HEXCOLOR(0x999999);
+        failLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
         [imageView addSubview:failLabel];
     }
 }
@@ -439,7 +439,7 @@
 - (RCBaseScrollView *)scrollView {
     if (_scrollView == nil) {
         _scrollView = [[RCBaseScrollView alloc] initWithFrame:self.view.bounds];
-        [_scrollView setBackgroundColor:[UIColor blackColor]];
+        [_scrollView setBackgroundColor:RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000")];
         [_scrollView setDelegate:self];
         [_scrollView setPagingEnabled:YES];
         [_scrollView setShowsHorizontalScrollIndicator:NO];
@@ -459,7 +459,7 @@
 - (UIView *)backView {
     if (_backView == nil) {
         _backView = [[UIView alloc] init];
-        _backView.backgroundColor = [UIColor blackColor];
+        _backView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
     }
     return _backView;
 }

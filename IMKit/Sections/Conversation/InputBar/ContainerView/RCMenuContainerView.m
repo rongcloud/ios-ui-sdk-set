@@ -54,7 +54,7 @@
 
         label.numberOfLines = 1;
         label.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-        label.textColor = RCDYCOLOR(0x000000, 0xffffff);
+        label.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffff");
         label.textAlignment = NSTextAlignmentCenter;
         label.text = menuItem.name;
 
@@ -65,7 +65,7 @@
 
         if (menuItem.type == RC_PUBLIC_SERVICE_MENU_ITEM_GROUP) {
             RCBaseImageView *icon =
-                [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"public_serive_menu_icon")];
+                [[RCBaseImageView alloc] initWithImage:RCDynamicImage(@"conversation_input_bar_ps_menu_img", @"public_serive_menu_icon")];
             CGSize iconSize = CGSizeMake(7, 7);
             CGRect iconFrame = CGRectZero;
             iconFrame.origin.x = (itemWidth - labelsize.width - iconSize.width - RC_PUBLIC_SERVICE_MENU_ICON_GAP) / 2;
@@ -129,7 +129,7 @@
 
 - (UIView *)newLine {
     UIView *line = [UIView new];
-    line.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xe3e5e6) darkColor:HEXCOLOR(0x2f2f2f)];
+    line.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x2f2f2f");
     return line;
 }
 

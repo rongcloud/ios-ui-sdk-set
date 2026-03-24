@@ -78,6 +78,25 @@ NSString *const RCNotificationMessagesMultiSelectedCountChanged = @"RCNotificati
     return NO;
 }
 
+- (void)removeMessageModelByMessage:(RCMessage *)message {
+    if (self.messages.count == 0) {
+        return;
+    }
+    
+    if (![message isKindOfClass:[RCMessage class]]) {
+        return;
+    }
+   
+    for (int i = 0; i < self.messages.count; i++) {
+        RCMessageModel *tmp = self.messages[i];
+        if (tmp.conversationType == message.conversationType && [tmp.targetId isEqualToString:message.targetId] &&
+            tmp.messageId == message.messageId) {
+            [self removeMessageModel:tmp];
+            return;
+        }
+    }
+}
+
 - (NSArray<RCMessageModel *> *)selectedMessages {
     [self.messages sortUsingComparator:^NSComparisonResult(id _Nonnull obj1, id _Nonnull obj2) {
         if (((RCMessageModel *)obj1).sentTime < ((RCMessageModel *)obj2).sentTime) {

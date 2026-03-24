@@ -6,14 +6,14 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import "RCBaseTableViewCell.h"
+#import "RCStackTableViewCell.h"
 #import "RCloudImageView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 UIKIT_EXTERN NSString  * _Nonnull const RCGroupMemberCellIdentifier;
 
-@interface RCGroupMemberCell : RCBaseTableViewCell
+@interface RCGroupMemberCell : RCStackTableViewCell
 
 @property (nonatomic, strong) RCloudImageView *portraitImageView;
 

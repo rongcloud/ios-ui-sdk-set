@@ -220,9 +220,8 @@
 - (RCTipLabel *)tipMessageLabel{
     if (!_tipMessageLabel) {
         _tipMessageLabel = [RCTipLabel greyTipLabel];
-        _tipMessageLabel.backgroundColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xc9c9c9) darkColor:HEXCOLOR(0x232323)];
-        _tipMessageLabel.textColor = RCDYCOLOR(0xffffff, 0x707070);
+        _tipMessageLabel.backgroundColor = RCDynamicColor(@"common_background_color", @"0xc9c9c9", @"0x232323");
+        _tipMessageLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xffffff", @"0x707070");
         _tipMessageLabel.delegate = self;
         _tipMessageLabel.userInteractionEnabled = YES;
         _tipMessageLabel.marginInsets = UIEdgeInsetsMake(0.5f, 0.5f, 0.5f, 0.5f);
@@ -235,7 +234,7 @@
         _reeditLabel = [[UILabel alloc] init];
         _reeditLabel.text = RCLocalizedString(@"RecallEdit");
         _reeditLabel.userInteractionEnabled = YES;
-        _reeditLabel.textColor = RCDYCOLOR(0x0099ff, 0x0099ff);
+        _reeditLabel.textColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _reeditLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         UITapGestureRecognizer *tapGestureRecognizer =
             [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(reeditAction:)];

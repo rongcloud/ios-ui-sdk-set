@@ -17,12 +17,12 @@
         self.label = label;
         [label setTextAlignment:NSTextAlignmentCenter];
         [self.label setBackgroundColor:[UIColor clearColor]];
-        [self.label setTextColor:[UIColor whiteColor]];
+        [self.label setTextColor:RCDynamicColor(@"pop_layer_background_color", @"0xffffff", @"0xffffff")];
         label.text = RCLocalizedString(@"MessageRecalling");
         [self addSubview:label];
         [label setCenter:CGPointMake(frame.size.width / 2, frame.size.height / 2 + 30)];
 
-        [self setBackgroundColor:[UIColor blackColor]];
+        [self setBackgroundColor:RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000")];
         [self setAlpha:0.7f];
 
         self.indicatorView =

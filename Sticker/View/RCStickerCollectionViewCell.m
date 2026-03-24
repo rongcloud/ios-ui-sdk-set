@@ -77,7 +77,7 @@
 - (UILabel *)digestLabel {
     if (_digestLabel == nil) {
         _digestLabel = [[UILabel alloc] init];
-        _digestLabel.textColor = HEXCOLOR(0x999999);
+        _digestLabel.textColor = RCDynamicColor(@"text_secondary_color",@"0x999999", @"0x999999");
         _digestLabel.font = [UIFont systemFontOfSize:13];
         _digestLabel.textAlignment = NSTextAlignmentCenter;
         if ([RCKitUtility isRTL]) {

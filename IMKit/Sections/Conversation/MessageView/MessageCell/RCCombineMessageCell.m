@@ -156,19 +156,16 @@
 
 - (void)autoLayoutSubViews {
     if(self.model.messageDirection == MessageDirection_RECEIVE){
-        [self.titleLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
-        self.lineLable.backgroundColor = RCDYCOLOR(0xe3e5e6,0x383838);
-        self.contentLabel.textColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
+        [self.titleLabel setTextColor: RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+        self.lineLable.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x383838");
+        self.contentLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa0a5ab", @"0xffffff66");
         self.historyLabel.textColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0xffffff, 0.7)];
+        RCDynamicColor(@"text_secondary_color", @"0xa0a5ab", @"0xffffffb2");
     }else{
-        [self.titleLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
-        self.lineLable.backgroundColor = RCDYCOLOR(0xe3e5e6,0x8EC4E9);
-        self.contentLabel.textColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0x040a0f, 0.5)];
-        self.historyLabel.textColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0x040a0f, 0.7)];
+        [self.titleLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
+        self.lineLable.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x8EC4E9");
+        self.contentLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa0a5ab", @"0x040a0f7f");
+        self.historyLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa0a5ab", @"0x040a0fb2");
     }
     self.backView.frame = CGRectMake(RCCOMBINEBACKVIEWLEFT, 0,
                                      self.messageContentView.frame.size.width - RCCOMBINEBACKVIEWLEFT * 2,

@@ -38,11 +38,21 @@
 }
 
 - (void)setProfileList:(NSArray<NSArray<RCProfileCellViewModel *> *> *)profileList {
+    NSArray *array = nil;
     if ([self.delegate respondsToSelector:@selector(profileViewModel:willLoadProfileCellViewModel:)]) {
-        _profileList = [self.delegate profileViewModel:self willLoadProfileCellViewModel:profileList];
+        array = [self.delegate profileViewModel:self willLoadProfileCellViewModel:profileList];
     } else {
-        _profileList = profileList;
+        array = profileList;
     }
+    for (NSArray *tmp in array) {
+        if ([tmp isKindOfClass:[NSArray class]]) {
+            RCBaseCellViewModel *vm = [tmp lastObject];
+            if ([vm isKindOfClass:[RCBaseCellViewModel class]]) {
+                vm.hideSeparatorLine = YES;
+            }
+        }
+    }
+    _profileList = array;
 }
 
 @end

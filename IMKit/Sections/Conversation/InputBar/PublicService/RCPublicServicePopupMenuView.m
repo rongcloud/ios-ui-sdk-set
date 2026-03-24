@@ -141,12 +141,12 @@
                                                                        RC_PUBLIC_SERVICE_MENU_ITEM_PENDING_RIGHT,
                                                                    RC_PUBLIC_SERVICE_MENU_ITEM_HEIGHT)];
         [btn setTitle:menuItem.name forState:UIControlStateNormal];
-        UIColor *titleColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x5f5f5f) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        UIColor *titleColor = RCDynamicColor(@"text_primary_color", @"0x5f5f5f", @"0xffffffcc");
         [btn setTitleColor:titleColor forState:UIControlStateNormal];
         [btn.titleLabel setFont:[[RCKitConfig defaultConfig].font fontOfFourthLevel]];
         btn.tag = i;
         [self.itemViews addObject:btn];
-        [btn setBackgroundColor:RCDYCOLOR(0xffffff, 0x1c1c1c)];
+        [btn setBackgroundColor:RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c")];
         [self.backgroundImageView addSubview:btn];
         [btn addTarget:self action:@selector(onMenuButtonPressed:) forControlEvents:UIControlEventTouchDown];
     }
@@ -182,8 +182,8 @@
         offset = arrowOffsetMax;
     }
 
-    UIColor *fillColor = RCDYCOLOR(0xffffff, 0x1c1c1c);
-    UIColor *strokeColor = RCDYCOLOR(0xffffff, 0x1c1c1c);;
+    UIColor *fillColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c");
+    UIColor *strokeColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c");
 
     UIGraphicsBeginImageContextWithOptions(size, NO, [UIScreen mainScreen].scale);
     CGContextRef context = UIGraphicsGetCurrentContext();
@@ -265,9 +265,7 @@
 
 - (UIView *)newLine {
     UIView *line = [UIView new];
-    line.backgroundColor = [RCKitUtility
-        generateDynamicColor:[UIColor colorWithRed:216 / 255.0f green:216 / 255.0f blue:216 / 255.0f alpha:1]
-                   darkColor:HEXCOLOR(0x292929)];
+    line.backgroundColor = RCDynamicColor(@"line_background_color", @"0xD8D8D8", @"0x292929");
     return line;
 }
 

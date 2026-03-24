@@ -7,6 +7,7 @@
 //
 
 #import "RCSightProgressView.h"
+#import "RongSightAdaptiveHeader.h"
 
 #define DEGREES_TO_RADIANS(x) (x) / 180.0 * M_PI
 #define RADIANS_TO_DEGREES(x) (x) / M_PI * 180.0
@@ -84,19 +85,19 @@
 }
 
 - (void)commonInit {
-    _progressTintColor = [UIColor blackColor];
-    self.tintColor = [UIColor whiteColor];
+    _progressTintColor = RCDynamicColor(@"control_title_white_color", @"0x000000", @"0x000000");
+    self.tintColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
 
     self.backgroundLayer.frame = self.bounds;
-    self.backgroundLayer.tintColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.8];
-    self.backgroundLayer.backgroundColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:0.2].CGColor;
+    self.backgroundLayer.tintColor = RCDynamicColor(@"control_title_white_color", @"0xffffffcc", @"0xffffffcc");
+    self.backgroundLayer.backgroundColor = RCDynamicColor(@"mask_color", @"0xcccccccc", @"0xcccccccc").CGColor;
     self.backgroundLayer.cornerRadius = self.bounds.size.width / 2;
     [self.layer addSublayer:self.backgroundLayer];
 
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     shapeLayer.frame = self.bounds;
     shapeLayer.fillColor = nil;
-    shapeLayer.strokeColor = [UIColor whiteColor].CGColor; // self.progressTintColor.CGColor;
+    shapeLayer.strokeColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff").CGColor; // self.progressTintColor.CGColor;
     [self.layer addSublayer:shapeLayer];
     self.shapeLayer = shapeLayer;
 }
@@ -126,7 +127,7 @@
                                                             endAngle:3 * M_PI_2 + 2 * M_PI
                                                            clockwise:YES]
                                    .CGPath;
-        self.shapeLayer.strokeColor = [UIColor whiteColor].CGColor;
+        self.shapeLayer.strokeColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff").CGColor;
         if (animated) {
             CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
             animation.fromValue = (startingFromIndeterminateState) ? @0 : nil;
@@ -213,7 +214,7 @@
                                                        clockwise:NO]
                                .CGPath;
     self.shapeLayer.strokeEnd = 1;
-    self.shapeLayer.strokeColor = [UIColor whiteColor].CGColor;
+    self.shapeLayer.strokeColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff").CGColor;
     [CATransaction commit];
 
     CABasicAnimation *rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
