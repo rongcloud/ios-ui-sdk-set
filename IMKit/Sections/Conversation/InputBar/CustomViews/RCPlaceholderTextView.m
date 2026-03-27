@@ -7,7 +7,6 @@
 //
 
 #import "RCPlaceholderTextView.h"
-#import "RCKitCommonDefine.h"
 
 @interface RCPlaceholderTextView ()
 
@@ -16,16 +15,7 @@
 @end
 
 @implementation RCPlaceholderTextView
-/*
- UITextView 的 baseWritingDirection
- UITextView 内部有一个 baseWritingDirection 属性（继承自 UITextInput 协议），默认值是 UITextWritingDirectionNatural。
- 关键问题：UITextWritingDirectionNatural 的解析依赖于 [UIApplication sharedApplication].userInterfaceLayoutDirection，而这个值在 app 生命周期内是固定的，不会随系统语言切换而更新。
- 所以即使：
- isRTL 返回正确的值 ✓
- semanticContentAttribute 设置正确 ✓
- textAlignment 设置正确 ✓
- 但 UITextView 内部的 文本书写方向 仍然是错误的，因为它依赖于 userInterfaceLayoutDirection。
- */
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -85,7 +75,7 @@
     if (!_placeholderLabel) {
         _placeholderLabel = [[UILabel alloc] init];
         _placeholderLabel.numberOfLines = 0;
-        _placeholderLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xD3D3D3", @"0xD3D3D3");
+        _placeholderLabel.textColor = [UIColor lightGrayColor];
     }
     return _placeholderLabel;
 }

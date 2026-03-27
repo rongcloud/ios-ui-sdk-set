@@ -49,5 +49,4 @@ message cell 消息选择数量发生变化的回调
 - (NSArray<RCMessageModel *> *)selectedMessages;
 - (void)removeAllMessages;
 - (void)clear;
-- (void)removeMessageModelByMessage:(RCMessage *)message;
 @end

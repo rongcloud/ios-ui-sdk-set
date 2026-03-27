@@ -8,7 +8,7 @@
 #import "RCBaseViewModel.h"
 #import "RCViewModelAdapterCenter.h"
 #import "RCLoadingTipView.h"
-#import "RCBaseCellViewModel.h"
+
 @interface RCBaseViewModel () {
     id __weak _delegate;
 }
@@ -47,16 +47,5 @@
         self.loadingView = nil;
     });
    
-}
-
-- (void)removeSeparatorLineIfNeed:(NSArray *)array {
-    for (NSArray *tmp in array) {
-        if ([tmp isKindOfClass:[NSArray class]]) {
-            RCBaseCellViewModel *vm = tmp.lastObject;
-            if ([vm isKindOfClass:[RCBaseCellViewModel class]]) {
-                vm.hideSeparatorLine = YES;
-            }
-        }
-    }
 }
 @end

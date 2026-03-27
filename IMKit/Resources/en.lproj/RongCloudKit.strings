@@ -457,20 +457,6 @@
 "Saving"="Saving";
 "Content_Contains_Sensitive"="Setup failed, Content contains sensitive information";
 
-"StreamMessageLoading"="Loading";
-"StreamMessageRequestFailed"="Failed to load, tap to try again";
-"StreamMessageUnfold"="Expand all";
-"StreamMessageTyping"="Loading";
-"StreamFailedWithAutoRequest"="Sorry, the message failed to load completely. Please check your network connection or try again later.";
-"StreamFailedWithRequesting"="Message loaded incompletely. Some content may not be displayed due to network issues. Please check your network connection or try again later.";
-
-// STT
-"STTOperationFailed"="Voice to Text Conversion Failed";
-"STTMenuItemDo"="Convert to Text";
-"STTMenuItemUndo"="Cancel Transcription";
-"STTConvertFailureTips"="Unable to transcribe. Please check your network connection and try again";
-"STTConvertFailedByContentTips"="We can't transcribe this voice message because of its format";
-
 "Tip"="Tip";
 "MessageEdit"="Edit";
 "MessageEditingAlert"="Another message is being edited. If you confirm to edit the current message, the previously edited message will be lost.";
@@ -486,10 +472,3 @@
 "MessageEditNotExist"="The cloud message does not exist and cannot be edited.";
 "MessageEditContentSensitive"="The edited content contains sensitive information, and the update faile.";
 "MessageEditExpiredToast"="Exceeded the effective editing time and cannot be edited.";
-
-"MessageReadStatus"="Message read status";
-"MessageReadStatusNoneRead"="none read";
-"MessageReadStatusAllRead"="all read";
-
-"GroupMentionAll"="All";
-"GroupNameEditPlaceholderWithLimit"="Enter group name (2-10 chars)";

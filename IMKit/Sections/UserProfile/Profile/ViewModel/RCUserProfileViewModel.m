@@ -17,10 +17,6 @@
 #import "RCProfileFooterViewModel.h"
 #import "RCProfileViewModel+private.h"
 #import "RCMyProfileViewModel.h"
-#import "RCUserOnlineStatusManager.h"
-#import "RCUserOnlineStatusUtil.h"
-#import "RCIM.h"
-
 #define RCUUserProfileViewFooterChatTop 100
 #define RCUUserProfileViewFooterLeadingOrTrailing 25
 #define RCUUserProfileViewFooterBtnheight 40
@@ -54,13 +50,8 @@
     self = [super init];
     if (self) {
         self.verifyFriend = YES;
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onUserOnlineStatusChanged:) name:RCKitUserOnlineStatusChangedNotification object:nil];
     }
     return self;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)registerCellForTableView:(UITableView *)tableView {
@@ -165,21 +156,6 @@
     [self configFooterViewModel:footerViewModel];
 }
 
-- (void)onUserOnlineStatusChanged:(NSNotification *)notification {
-    NSArray<NSString *> *changedUserIds = notification.userInfo[RCKitUserOnlineStatusChangedUserIdsKey];
-    for (NSString *userId in changedUserIds) {
-        if ([userId isEqualToString:self.userId]) {
-            RCProfileCellViewModel *headerVM = self.profileList[0][0];
-            if ([headerVM isKindOfClass:RCUserProfileHeaderCellViewModel.class]) {
-                RCUserProfileHeaderCellViewModel *headerCellVM = (RCUserProfileHeaderCellViewModel *)headerVM;
-                RCSubscribeUserOnlineStatus *onlineStatus = [RCUserOnlineStatusManager.sharedManager getCachedOnlineStatus:userId];
-                headerCellVM.isOnline = onlineStatus.isOnline;
-                [self.responder reloadData:NO];
-            }
-        }
-    }
-}
-
 #pragma mark - private
 
 - (NSArray<NSArray<RCProfileCellViewModel *> *> *)reloadFriendDataSource:(RCFriendInfo *)friendInfo {
@@ -187,11 +163,8 @@
     NSMutableArray *profileList = [NSMutableArray array];
     
     RCUserProfileHeaderCellViewModel *headerVM = [[RCUserProfileHeaderCellViewModel alloc] initWithPortrait:friendInfo.portraitUri name:friendInfo.name remark:friendInfo.remark];
-    // 在线状态
-    [self setupViewModelOnlineStatus:headerVM];
     
     RCProfileCommonCellViewModel *setRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"SetRemark") detail:nil];
-    setRemarkVM.hideSeparatorLine = YES;
     
     [profileList addObject:@[headerVM]];
     [profileList addObject:@[setRemarkVM]];
@@ -212,9 +185,6 @@
     NSMutableArray *profileList = [NSMutableArray array];
     
     RCUserProfileHeaderCellViewModel *headerVM = [[RCUserProfileHeaderCellViewModel alloc] initWithPortrait:userProfile.portraitUri name:userProfile.name remark:userProfile.email];
-   
-    [self setupViewModelOnlineStatus:headerVM];
-    
     [profileList addObject:@[headerVM]];
     if (self.verifyFriend && self.isFriend) {
         RCProfileCommonCellViewModel *setRemarkVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"SetRemark") detail:nil];
@@ -257,31 +227,6 @@
         return YES;
     }
     return NO;
-}
-
-- (void)setupViewModelOnlineStatus:(RCUserProfileHeaderCellViewModel *)headerVM {
-    if (![RCUserOnlineStatusUtil shouldDisplayOnlineStatus]) {
-        headerVM.displayOnlineStatus = NO;
-        return;
-    }
-    RCSubscribeUserOnlineStatus *onlineStatus = [self getUserOnlineStatus:self.userId];
-    headerVM.isOnline = onlineStatus.isOnline;
-    headerVM.displayOnlineStatus = YES;
-}
-
-- (RCSubscribeUserOnlineStatus *)getUserOnlineStatus:(NSString *)userId {
-    if (userId.length == 0) {
-        return nil;
-    }
-    RCSubscribeUserOnlineStatus *onlineStatus = [RCUserOnlineStatusManager.sharedManager getCachedOnlineStatus:userId];
-    if (!onlineStatus) {
-        if (self.isFriend && self.verifyFriend) {
-            [RCUserOnlineStatusManager.sharedManager fetchFriendOnlineStatus:@[userId]];
-        } else {
-            [RCUserOnlineStatusManager.sharedManager fetchOnlineStatus:userId processSubscribeLimit:NO];
-        }
-    }
-    return onlineStatus;
 }
 
 @end

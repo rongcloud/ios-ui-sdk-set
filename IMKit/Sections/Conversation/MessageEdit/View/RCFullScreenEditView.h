@@ -16,12 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol RCFullScreenEditViewDelegate <NSObject>
 
-/// 全屏编辑点击折叠退出全屏编辑
+/// 全屏编辑点击折叠
 - (void)fullScreenEditViewCollapse:(RCFullScreenEditView *)fullScreenEditView;
 
-/// 编辑输入控件点击确认
-/// - Parameter fullScreenEditView: 全屏编辑 view
-/// - Parameter text: 编辑输入框中的文本
+/// 编辑输入控件
 - (void)fullScreenEditView:(RCFullScreenEditView *)fullScreenEditView didConfirmWithText:(NSString *)text;
 
 /// 编辑点击取消
@@ -48,17 +46,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// 编辑输入容器
 @property (nonatomic, strong) RCEditInputBarControl *editInputBarControl;
 
-/// @ 功能是否开启
+/// isMentionedEnabled
 @property (nonatomic, assign) BOOL isMentionedEnabled;
 
-/// 显示全屏编辑页面
-/// - Parameter config: 编辑配置信息
-/// - Parameter animated：是否开启动画
 - (void)showWithConfig:(RCEditInputBarConfig *)config animation:(BOOL)animated;
 
 /// 隐藏全屏编辑视图
-/// - Parameter animated: 是否开启动画
-/// - Parameter completion: 隐藏完成的回调
 - (void)hideWithAnimation:(BOOL)animated completion:(void(^_Nullable)(void))completion;
 
 @end

@@ -19,7 +19,6 @@
 @property (nonatomic, strong)  NSIndexPath *indexPath;
 @property (nonatomic, weak) UIViewController <RCListViewModelResponder> *responder;
 @property (nonatomic, assign) CGFloat cellHeight;
-
 @end
 
 @implementation RCGroupNotificationCellViewModel
@@ -79,7 +78,6 @@
                     return;
                 }
                 cell.labName.text = name;
-                [self reloadCell];
             });
         }
                                                  error:^(RCErrorCode errorCode) {
@@ -99,7 +97,6 @@
     RCGroupNotificationCell *cell = [tableView dequeueReusableCellWithIdentifier:RCGroupNotificationCellIdentifier
                                                                           forIndexPath:indexPath];
     self.cell = cell;
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     [self fetchGroupNameIfNeed];
     [cell updateWithViewModel:self];
     cell.labTips.text = [self tipsOfOperator:self.application];
@@ -253,10 +250,27 @@
 
 - (CGFloat)cellHeight {
     if (_cellHeight == 0) {
- // 高度自动适配, 该方法废弃
-        _cellHeight = 115;
+        UILabel *lab = [self createLabSlave];
+        CGFloat labHeight = lab.frame.size.height;
+        CGFloat diff = 90 - labHeight;
+        lab.text = [self tipsOfOperator:self.application];
+        [lab sizeToFit];
+        _cellHeight = diff + lab.frame.size.height;
     }
     return _cellHeight;
 }
 
+
+- (UILabel *)createLabSlave {
+    CGFloat width = [[UIScreen mainScreen] bounds].size.width;
+    
+    CGFloat labWidth = width - 40 - 2*RCGroupNotificationCellHorizontalMargin+RCGroupNotificationCellHorizontalMargin/2;
+    
+    UILabel *lab = [UILabel new];
+    lab.frame = CGRectMake(0, 0, labWidth, 20);
+    lab.font = [UIFont systemFontOfSize:15];
+    lab.lineBreakMode = NSLineBreakByTruncatingTail;
+    lab.numberOfLines = 0;
+    return lab;
+}
 @end

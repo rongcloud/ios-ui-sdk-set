@@ -26,11 +26,7 @@
 
 - (void)setKeyContent:(NSString *)keyContent {
     if (keyContent) {
-        UIColor *color = RCDynamicColor(@"success_color", @"0x53d569", @"0x53d569");
-        if (!color) {
-            color = RGBCOLOR(83, 213, 105);
-        }
-        NSDictionary *dict = @{NSForegroundColorAttributeName : color};
+        NSDictionary *dict = @{NSForegroundColorAttributeName : RGBCOLOR(83, 213, 105)};
         NSAttributedString *key = [[NSAttributedString alloc] initWithString:keyContent attributes:dict];
         self.keyLabel.attributedText = key;
     }
@@ -43,7 +39,7 @@
         initWithFrame:CGRectMake(RCPublicServiceProfileCellPaddingLeft, RCPublicServiceProfileCellPaddingTop,
                                  RCPublicServiceProfileHeaderImageWidth - 20,
                                  RCPublicServiceProfileHeaderImageHeigh - 20)];
-    [imageView setImage:RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait")];
+    [imageView setImage:RCResourceImage(@"default_portrait")];
 
     UIFont *font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
     CGSize size = CGSizeMake(RCPublicServiceProfileCellTitleWidth, 2000);

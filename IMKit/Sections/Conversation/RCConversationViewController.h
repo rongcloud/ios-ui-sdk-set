@@ -8,6 +8,7 @@
 
 #import "RCBaseViewController.h"
 #import "RCChatSessionInputBarControl.h"
+#import "RCEditInputBarControl.h"
 #import "RCConversationModel.h"
 #import "RCEmojiBoardView.h"
 #import "RCMessageBaseCell.h"
@@ -19,7 +20,6 @@
 #import "RCBaseCollectionView.h"
 #import "RCBaseButton.h"
 #import "RCBaseImageView.h"
-#import "RCEditInputBarControl.h"
 #import "RCFullScreenEditView.h"
 
 @class RCLocationMessage;
@@ -156,10 +156,10 @@ typedef enum : NSUInteger {
 /// 会话页面下方的输入工具栏
 @property (nonatomic, strong) RCChatSessionInputBarControl *chatSessionInputBarControl;
 
-/// 消息编辑普通输入框控件
+/// 编辑控件
 @property (nonatomic, strong) RCEditInputBarControl *editInputBarControl;
 
-/// 消息编辑全屏编辑视图
+/// 全屏编辑视图
 @property (nonatomic, strong, nullable) RCFullScreenEditView *fullScreenEditView;
 
 /// 禁用系统表情, 建议在RCConversationViewController 创建后立刻赋值
@@ -450,19 +450,6 @@ typedef enum : NSUInteger {
 /// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
 - (void)didTapMessageCell:(RCMessageModel *)model;
 
-
-/// 长按Cell中的语音转文本内容的回调
-/// - Parameters:
-/// - Parameter model: 消息Cell的数据模型
-/// - Parameter view:  长按区域的View
-- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view;
-
-/// 获取长按Cell中的语音转文本时的菜单
-/// - Parameter model: 消息Cell的数据模型
-/// SDK在此长按事件中，会展示此方法返回的菜单。
-/// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
-- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model;
-
 /// 长按Cell中的消息内容的回调
 /// - Parameter model: 消息Cell的数据模型
 /// - Parameter view:  长按区域的View
@@ -507,8 +494,6 @@ typedef enum : NSUInteger {
 ///
 /// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
 - (BOOL)didTapCommonPhrasesButton;
-
-- (void)didTapReceiptStatusView:(RCMessageModel *)model;
 
 #pragma mark - 语音消息、图片消息、位置消息、文件消息显示与操作
 

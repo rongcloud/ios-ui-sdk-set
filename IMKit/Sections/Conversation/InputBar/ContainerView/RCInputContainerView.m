@@ -126,43 +126,42 @@
 }
 
 - (void)voiceRecordButtonTouchDown:(UIButton *)sender {
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_2_color", @"0xe0e2e3", @"0x323232");
+    sender.backgroundColor = RCDYCOLOR(0xe0e2e3,0x323232);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchDown];
     }
 }
 
 - (void)voiceRecordButtonTouchUpInside:(UIButton *)sender {
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+    sender.backgroundColor = RCDYCOLOR(0xffffff,0x2d2d2d);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchUpInside];
     }
 }
 
 - (void)voiceRecordButtonTouchCancel:(UIButton *)sender {
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+    sender.backgroundColor = RCDYCOLOR(0xffffff,0x2d2d2d);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchCancel];
     }
 }
 
 - (void)voiceRecordButtonTouchDragExit:(UIButton *)sender {
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+    sender.backgroundColor = RCDYCOLOR(0xffffff,0x2d2d2d);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchDragExit];
     }
 }
 
 - (void)voiceRecordButtonTouchDragEnter:(UIButton *)sender {
-    
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_2_color", @"0xe0e2e3", @"0x323232");
+    sender.backgroundColor = RCDYCOLOR(0xe0e2e3,0x323232);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchDragEnter];
     }
 }
 
 - (void)voiceRecordButtonTouchUpOutside:(UIButton *)sender {
-    sender.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x323232") ;
+    sender.backgroundColor = RCDYCOLOR(0xffffff,0x323232);
     if (self.delegate && [self.delegate respondsToSelector:@selector(inputContainerView:forControlEvents:)]) {
         [self.delegate inputContainerView:self forControlEvents:UIControlEventTouchUpOutside];
     }
@@ -195,37 +194,27 @@
 
 - (void)beginDestructMsgMode {
     self.destructMessageMode = YES;
-    NSString *iconName = self.recordButton.hidden ? @"voice_burn"
-    : @"keyboard_burn";
-    NSString *iconKey = self.recordButton.hidden ? @"conversation_input_bar_voice_destruct_img"
-    : @"conversation_input_bar_keyboard_destruct_img";
-    
-    [self.switchButton setImage:RCDynamicImage(iconKey, iconName)
+    [self.switchButton setImage:RCResourceImage(self.recordButton.hidden ? @"voice_burn" : @"keyboard_burn")
                        forState:UIControlStateNormal];
-    [self.switchButton setImage:RCDynamicImage(iconKey, iconName)
+    [self.switchButton setImage:RCResourceImage(self.recordButton.hidden ? @"voice_burn" : @"keyboard_burn")
                        forState:UIControlStateHighlighted];
-    [self.additionalButton setImage:RCDynamicImage(@"conversation_input_bar_close_destruct_img",@"close_burn") forState:UIControlStateNormal];
-    [self.emojiButton setImage:RCDynamicImage(@"conversation_input_bar_photo_destruct_img", @"photo_burn") forState:UIControlStateNormal];
+    [self.additionalButton setImage:RCResourceImage(@"close_burn") forState:UIControlStateNormal];
+    [self.emojiButton setImage:RCResourceImage(@"photo_burn") forState:UIControlStateNormal];
 
-    [self.recordButton setTitleColor: RCDynamicColor(@"text_primary_color", @"0xF4B50B", @"0xF4B50B")
-      forState:UIControlStateNormal];
+    [self.recordButton setTitleColor:HEXCOLOR(0xF4B50B) forState:UIControlStateNormal];
     self.recordButton.layer.borderWidth = 0.5;
-    
-    self.recordButton.layer.borderColor = RCDynamicColor(@"clear_color", @"0xFA9d3b", @"0xFA9d3b").CGColor;
+    self.recordButton.layer.borderColor = HEXCOLOR(0xFA9d3b).CGColor;
 }
 
 - (void)endDestructMsgMode {
     self.destructMessageMode = NO;
-    NSString *iconName = self.recordButton.hidden ? @"inputbar_voice"
-    : @"inputbar_keyboard";
-    NSString *iconKey = self.recordButton.hidden ? @"conversation_input_bar_voice_img"
-    : @"conversation_input_bar_keyboard_img";
-    [self.switchButton setImage:RCDynamicImage(iconKey, iconName)
+    [self.switchButton setImage:RCResourceImage(self.recordButton.hidden ? @"inputbar_voice"
+                                                                                  : @"inputbar_keyboard")
                        forState:UIControlStateNormal];
-    [self.additionalButton setImage:RCDynamicImage(@"conversation_input_bar_add_img",@"inputbar_add")
+    [self.additionalButton setImage:RCResourceImage(@"inputbar_add")
                            forState:UIControlStateNormal];
-    [self.emojiButton setImage:RCDynamicImage(@"conversation_input_bar_emoji_img",@"inputbar_emoji") forState:UIControlStateNormal];
-    [self.recordButton setTitleColor:RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffff") forState:UIControlStateNormal];
+    [self.emojiButton setImage:RCResourceImage(@"inputbar_emoji") forState:UIControlStateNormal];
+    [self.recordButton setTitleColor:RCDYCOLOR(0x000000, 0xffffff) forState:UIControlStateNormal];
     self.recordButton.layer.borderWidth = 0;
     self.recordButton.layer.borderColor = [UIColor clearColor].CGColor;
 }
@@ -261,32 +250,23 @@
 - (void)updateButtonImage {
     if (self.currentBottomBarStatus != KBottomBarEmojiStatus) {
         if (self.destructMessageMode) {
-            [self.emojiButton setImage:RCDynamicImage(@"conversation_input_bar_photo_destruct_img", @"photo_burn")
-                              forState:UIControlStateNormal];
+            [self.emojiButton setImage:RCResourceImage(@"photo_burn") forState:UIControlStateNormal];
         } else {
-            [self.emojiButton setImage:RCDynamicImage(@"conversation_input_bar_emoji_img",@"inputbar_emoji")
+            [self.emojiButton setImage:RCResourceImage(@"inputbar_emoji")
                               forState:UIControlStateNormal];
         }
     } else {
-        [self.emojiButton setImage:RCDynamicImage(@"conversation_input_bar_keyboard_img",@"inputbar_keyboard")
+        [self.emojiButton setImage:RCResourceImage(@"inputbar_keyboard")
                           forState:UIControlStateNormal];
     }
 
     if (self.destructMessageMode) {
-        NSString *iconName = self.recordButton.hidden ? @"voice_burn"
-        : @"keyboard_burn";
-        NSString *iconKey = self.recordButton.hidden ? @"conversation_input_bar_voice_destruct_img"
-        : @"conversation_input_bar_keyboard_destruct_img";
-        
         [self.switchButton
-            setImage:RCDynamicImage(iconKey, iconName)
+            setImage:RCResourceImage(self.recordButton.hidden ? @"voice_burn" : @"keyboard_burn")
             forState:UIControlStateNormal];
     } else {
-        NSString *iconName = self.recordButton.hidden ? @"inputbar_voice"
-        : @"inputbar_keyboard";
-        NSString *iconKey = self.recordButton.hidden ? @"conversation_input_bar_voice_img"
-        : @"conversation_input_bar_keyboard_img";
-        [self.switchButton setImage:RCDynamicImage(iconKey, iconName)
+        [self.switchButton setImage:RCResourceImage(self.recordButton.hidden ? @"inputbar_voice"
+                                                                                      : @"inputbar_keyboard")
                            forState:UIControlStateNormal];
     }
 }
@@ -479,7 +459,7 @@
 - (RCButton *)switchButton {
     if (!_switchButton) {
         _switchButton = [[RCButton alloc] initWithFrame:CGRectZero];
-        [_switchButton setImage:RCDynamicImage(@"conversation_input_bar_voice_img",@"inputbar_voice")
+        [_switchButton setImage:RCResourceImage(@"inputbar_voice")
                        forState:UIControlStateNormal];
         [_switchButton addTarget:self
                           action:@selector(switchInputBoxOrRecord)
@@ -497,14 +477,12 @@
         UIEdgeInsets textEdge = self.inputTextView.textContainerInset;
         textEdge.left = 5;
         textEdge.right = 5;
-        
         _inputTextView.textContainerInset = textEdge;
         [_inputTextView setExclusiveTouch:YES];
-        UIColor *textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-        [_inputTextView setTextColor:textColor];
+        [_inputTextView setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
         [_inputTextView setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         [_inputTextView setReturnKeyType:UIReturnKeySend];
-        _inputTextView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+        _inputTextView.backgroundColor = RCDYCOLOR(0xffffff, 0x2d2d2d);
         _inputTextView.enablesReturnKeyAutomatically = YES;
         _inputTextView.layer.cornerRadius = 8;
         _inputTextView.layer.masksToBounds = YES;
@@ -522,8 +500,8 @@
         _recordButton.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
         [_recordButton setTitle:RCLocalizedString(@"release_to_send_title")
                        forState:UIControlStateHighlighted];
-        [_recordButton setTitleColor:RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffff") forState:UIControlStateNormal];
-        _recordButton.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+        [_recordButton setTitleColor:RCDYCOLOR(0x000000, 0xffffff) forState:UIControlStateNormal];
+        _recordButton.backgroundColor = RCDYCOLOR(0xffffff,0x2d2d2d);
         [_recordButton addTarget:self
                           action:@selector(voiceRecordButtonTouchDown:)
                 forControlEvents:UIControlEventTouchDown];
@@ -551,7 +529,7 @@
 - (RCButton *)emojiButton {
     if (!_emojiButton) {
         _emojiButton = [[RCButton alloc] initWithFrame:CGRectZero];
-        [_emojiButton setImage:RCDynamicImage(@"conversation_input_bar_emoji_img",@"inputbar_emoji") forState:UIControlStateNormal];
+        [_emojiButton setImage:RCResourceImage(@"inputbar_emoji") forState:UIControlStateNormal];
         [_emojiButton setExclusiveTouch:YES];
         [_emojiButton addTarget:self action:@selector(didTouchEmojiDown:) forControlEvents:UIControlEventTouchUpInside];
         _emojiButton.hidden = self.hideEmojiButton;
@@ -562,7 +540,7 @@
 - (RCButton *)additionalButton {
     if (!_additionalButton) {
         _additionalButton = [[RCButton alloc] initWithFrame:CGRectZero];
-        [_additionalButton setImage:RCDynamicImage(@"conversation_input_bar_add_img",@"inputbar_add")
+        [_additionalButton setImage:RCResourceImage(@"inputbar_add")
                            forState:UIControlStateNormal];
         [_additionalButton setExclusiveTouch:YES];
         [_additionalButton addTarget:self

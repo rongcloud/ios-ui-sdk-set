@@ -10,8 +10,6 @@
 #import "RCPublicServiceViewConstants.h"
 #import "RCKitConfig.h"
 #import "RCBaseButton.h"
-#import "RCKitCommonDefine.h"
-
 @interface RCPublicServiceProfileActionCell ()
 @property (nonatomic, strong) RCBaseButton *button;
 @end
@@ -44,11 +42,10 @@
         self.frame.size.width - RCPublicServiceProfileCellPaddingLeft - RCPublicServiceProfileCellPaddingRight;
     frame.size.height = RCPublicServiceProfileCellActionButtonHeigh;
     self.button.frame = frame;
-    UIColor *color = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
-    [self.button setTitleColor:color forState:UIControlStateNormal];
-    [self.button setTitleColor:color forState:UIControlStateSelected];
+    [self.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [self.button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
     self.button.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    [self.button setBackgroundColor:RCDynamicColor(@"hint_color", @"0xFF0000", @"0xFF0000")];
+    [self.button setBackgroundColor:[UIColor redColor]];
 
     [self.contentView addSubview:self.button];
 

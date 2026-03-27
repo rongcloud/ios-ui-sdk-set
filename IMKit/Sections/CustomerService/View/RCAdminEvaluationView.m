@@ -120,7 +120,7 @@
             initWithFrame:CGRectMake(TITLE_PADDING_LEFT_RIGHT, TITLE_PADDING_TOP, TITLE_WIDTH, TITLE_HEIGHT)];
         [_titleLabel setText:RCLocalizedString(@"Admin_Comment_Title")];
         [_titleLabel setTextAlignment:NSTextAlignmentCenter];
-        _titleLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
+        _titleLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
     }
     return _titleLabel;
 }

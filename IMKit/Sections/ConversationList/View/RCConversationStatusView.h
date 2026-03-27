@@ -16,13 +16,10 @@
 
 @property (nonatomic, strong) RCBaseImageView *messageReadStatusView;
 
-@property (nonatomic, strong) RCBaseImageView *conversationPinView;
-
 - (void)updateReadStatus:(RCConversationModel *)model;
 
 - (void)updateNotificationStatus:(RCConversationModel *)model;
 
 - (void)resetDefaultLayout:(RCConversationModel *)reuseModel;
 
-- (void)updatePinStatus:(RCConversationModel *)model;
 @end

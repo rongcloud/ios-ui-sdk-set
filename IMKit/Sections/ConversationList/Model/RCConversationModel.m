@@ -41,7 +41,6 @@
         self.sentTime = conversation.sentTime;
         self.operationTime = conversation.operationTime;
         self.draft = conversation.draft;
-        self.editedMessageDraft = conversation.editedMessageDraft;
         self.objectName = conversation.objectName;
         self.senderUserId = conversation.senderUserId;
         self.receivedStatusInfo = conversation.receivedStatusInfo;
@@ -57,7 +56,6 @@
         self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
         self.latestMessageUId = conversation.latestMessageUId;
         self.needReceipt = conversation.latestRCMessage.needReceipt;
-        self.dataMgmtInfo = conversation.dataMgmtInfo;
     }
     return self;
 }
@@ -86,6 +84,9 @@
             }
         }
     }
+    self.latestMessageUId = message.messageUId;
+    self.needReceipt = message.needReceipt;
+
 }
 
 - (BOOL)hasUnreadMentioned {

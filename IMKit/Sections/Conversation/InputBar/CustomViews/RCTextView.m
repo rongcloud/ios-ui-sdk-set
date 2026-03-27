@@ -21,12 +21,11 @@
     if (self.disableActionMenu) {
         return NO;
     }
-    
+    [[UIMenuController sharedMenuController] setMenuItems:nil];
     return [super canPerformAction:action withSender:sender];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    [super touchesBegan:touches withEvent:event];
     _disableActionMenu = NO;
 }
 

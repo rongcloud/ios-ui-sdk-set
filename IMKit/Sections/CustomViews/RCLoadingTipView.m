@@ -103,7 +103,7 @@
 - (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
         _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 27, 27)];
-        _loadingImageView.image = RCDynamicImage(@"conversation_msg_combine_loading_img", @"combine_loading");
+        _loadingImageView.image = RCResourceImage(@"combine_loading");
     }
     return _loadingImageView;
 }
@@ -115,7 +115,7 @@
         _tipLabel.numberOfLines = 1;
         _tipLabel.textAlignment = NSTextAlignmentCenter;
         _tipLabel.backgroundColor = [UIColor clearColor];
-        _tipLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _tipLabel.textColor = [UIColor whiteColor];
     }
     return _tipLabel;
 }
@@ -123,7 +123,7 @@
 - (UIView *)containerView {
     if (!_containerView) {
         _containerView = [UIView new];
-        _containerView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0xD3D3D3", @"0xD3D3D3");
+        _containerView.backgroundColor = [UIColor lightGrayColor];
         _containerView.layer.cornerRadius = 3;
         [_containerView.layer masksToBounds];
     }

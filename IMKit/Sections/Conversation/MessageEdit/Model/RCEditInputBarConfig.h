@@ -7,8 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RCMentionedStringRangeInfo.h"
-#import <RongIMLibCore/RCReferenceMessage.h>
+
+@class RCMentionedInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,29 +17,23 @@ NS_ASSUME_NONNULL_BEGIN
 /// 消息唯一标识
 @property (nonatomic, copy, nullable) NSString *messageUId;
 
-/// 消息发送时间
+// sentTime
 @property (nonatomic, assign) long long sentTime;
 
-/// 编辑消息的文本内容
+/// 编辑文本内容
 @property (nonatomic, copy, nullable) NSString *textContent;
 
-/// 被引用消息发送者姓名
+/// 引用消息发送者姓名
 @property (nonatomic, copy, nullable) NSString *referencedSenderName;
 
-/// 被引用消息内容
+/// 引用消息内容
 @property (nonatomic, copy, nullable) NSString *referencedContent;
 
-/// 被引用消息的状态。
-@property (nonatomic, assign) RCReferenceMessageStatus referencedMsgStatus;
+/// @信息
+@property (nonatomic, strong, nullable) RCMentionedInfo *mentionedInfo;
 
-/// @ 信息
-@property (nonatomic, copy, nullable) NSArray<RCMentionedStringRangeInfo *> *mentionedRangeInfo;
-
-/// 初始化
-- (instancetype)initWithData:(NSString *)data;
-
-/// 序列化为字典
-- (NSString *)encode;
+/// 缓存的编辑信息，用于恢复编辑状态时，传入 messageUId 和 cachedStateData
+@property (nonatomic, copy, nullable) NSDictionary *cachedStateData;
 
 @end
 

@@ -16,6 +16,8 @@
 
 @property (nonatomic, weak) RCConversationViewController *chatVC;
 
+
+
 @end
 
 @implementation RCConversationDataSource (Edit)
@@ -75,19 +77,17 @@
     if (messageUIds.count == 0) {
         return;
     }
-    NSSet<NSString *> *uidSet = [NSSet setWithArray:messageUIds];
     NSMutableArray *indexPaths = [NSMutableArray array];
-    NSArray<RCMessageModel *> *repository = self.chatVC.conversationDataRepository;
-    for (NSUInteger i = 0; i < repository.count; i++) {
-        RCMessageModel *model = repository[i];
-        if (![model.content isKindOfClass:[RCReferenceMessage class]]) {
-            continue;
-        }
-        RCReferenceMessage *refMsg = (RCReferenceMessage *)model.content;
-        if (refMsg.referMsgUid.length > 0 && [uidSet containsObject:refMsg.referMsgUid]) {
-            refMsg.referMsgStatus = status;
-            model.cellSize = CGSizeZero;
-            [indexPaths addObject:[NSIndexPath indexPathForItem:i inSection:0]];
+    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+        RCMessageModel *model = (self.chatVC.conversationDataRepository)[i];
+        if ([model.content isKindOfClass:[RCReferenceMessage class]]) {
+            RCReferenceMessage *refMsg = (RCReferenceMessage *)model.content;
+            if ([messageUIds containsObject:refMsg.referMsgUid]) {
+                refMsg.referMsgStatus = status;
+                model.cellSize = CGSizeZero;
+                NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:0];
+                [indexPaths addObject:indexPath];
+            }
         }
     }
     if (indexPaths.count == 0) {
@@ -103,24 +103,46 @@
         return;
     }
     
-    NSDictionary<NSString *, RCMessageModel *> *newMessageDict = [self edit_buildUIdToModelDict:models];
+    // 创建新消息 UID 的快速查找字典，同时过滤无效数据
+    NSMutableDictionary<NSString *, RCMessageModel *> *newMessageDict = [NSMutableDictionary dictionaryWithCapacity:models.count];
+    for (RCMessageModel *newModel in models) {
+        if (newModel.messageUId.length > 0 && newModel.content) {
+            newMessageDict[newModel.messageUId] = newModel;
+        }
+    }
+    
+    // 如果没有有效的新消息，直接返回
     if (newMessageDict.count == 0) {
         return;
     }
-
+    
     void (^updateCallback)(void) = ^{
-        NSArray<RCMessageModel *> *repository = self.chatVC.conversationDataRepository;
-        NSMutableDictionary<NSString *, NSNumber *> *uidToIndex = [NSMutableDictionary dictionaryWithCapacity:repository.count];
-        NSMutableDictionary<NSString *, NSMutableIndexSet *> *referUidToIndexes = [NSMutableDictionary dictionary];
-
-        [self edit_buildRepositoryIndexes:repository
-                               uidToIndex:uidToIndex
-                        referUidToIndexes:referUidToIndexes];
-
-        NSIndexSet *needUpdateIndexes = [self edit_applyUpdatesWithNewMessageDict:newMessageDict
-                                                                       repository:repository
-                                                                       uidToIndex:uidToIndex
-                                                                referUidToIndexes:referUidToIndexes];
+        NSMutableIndexSet *needUpdateIndexes = [NSMutableIndexSet indexSet];
+        NSArray<RCMessageModel *> *messages = self.chatVC.conversationDataRepository;
+        
+        // 遍历现有消息，进行匹配和更新
+        [messages enumerateObjectsUsingBlock:^(RCMessageModel *oldModel, NSUInteger idx, BOOL *stop) {
+            BOOL needUpdate = NO;
+            
+            // 确保 oldModel 有效
+            if (!oldModel.messageUId.length) {
+                return;
+            }
+            
+            if ([oldModel.content isKindOfClass:[RCReferenceMessage class]]) {
+                needUpdate = [self updateUIReferenceMessage:oldModel withNewMessages:newMessageDict];
+            } else {
+                needUpdate = [self updateUIRegularMessage:oldModel withNewMessages:newMessageDict];
+            }
+            
+            if (needUpdate) {
+                // 重新计算高度
+                oldModel.cellSize = CGSizeZero;
+                [needUpdateIndexes addIndex:idx];
+            }
+        }];
+        
+        // 批量更新 UI
         if (needUpdateIndexes.count > 0) {
             [self reloadCollectionViewAtIndexes:needUpdateIndexes];
         }
@@ -136,97 +158,63 @@
 
 #pragma mark - 私有辅助方法
 
-// 构建 messageUId -> model 的字典
-- (NSDictionary<NSString *, RCMessageModel *> *)edit_buildUIdToModelDict:(NSArray<RCMessageModel *> *)models {
-    if (models.count == 0) {
-        return @{};
+/// 更新引用消息
+- (BOOL)updateUIReferenceMessage:(RCMessageModel *)oldModel
+               withNewMessages:(NSDictionary<NSString *, RCMessageModel *> *)newMessageDict {
+    RCReferenceMessage *refMsg = (RCReferenceMessage *)oldModel.content;
+    BOOL needUpdate = NO;
+    
+    // 1. 检查引用消息本身是否被编辑
+    RCMessageModel *matchingNewModel = newMessageDict[oldModel.messageUId];
+    if (matchingNewModel && [matchingNewModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *newRefMsg = (RCReferenceMessage *)matchingNewModel.content;
+        if (refMsg.referMsgStatus > newRefMsg.referMsgStatus) {
+            // 编辑状态只可递增，不可回滚
+            newRefMsg.referMsgStatus = refMsg.referMsgStatus;
+        }
+        oldModel.content = newRefMsg;
+        oldModel.modifyInfo = matchingNewModel.modifyInfo;
+        oldModel.hasChanged = matchingNewModel.hasChanged;
+        needUpdate = YES;
     }
-    NSMutableDictionary<NSString *, RCMessageModel *> *dict = [NSMutableDictionary dictionaryWithCapacity:models.count];
-    for (RCMessageModel *model in models) {
-        if (model.messageUId.length > 0 && model.content) {
-            dict[model.messageUId] = model;
+    
+    // 2. 检查被引用的消息是否被编辑
+    if (refMsg.referMsgUid.length > 0) {
+        RCMessageModel *newReferencedModel = newMessageDict[refMsg.referMsgUid];
+        if (newReferencedModel) {
+            if (newReferencedModel.hasChanged) {
+                refMsg.referMsgStatus = RCReferenceMessageStatusModified;
+            }
+            if ([newReferencedModel.content isKindOfClass:[RCTextMessage class]]
+                && [refMsg.referMsg isKindOfClass:[RCTextMessage class]]) {
+                
+                NSString *newContent = ((RCTextMessage *)newReferencedModel.content).content;
+                ((RCTextMessage *)refMsg.referMsg).content = newContent;
+                
+            } else if ([newReferencedModel.content isKindOfClass:[RCReferenceMessage class]]
+                       && [refMsg.referMsg isKindOfClass:[RCReferenceMessage class]]){
+                
+                NSString *newContent = ((RCReferenceMessage *)newReferencedModel.content).content;
+                ((RCReferenceMessage *)refMsg.referMsg).content = newContent;
+            }
+            needUpdate = YES;
         }
     }
-    return dict.copy;
+    
+    return needUpdate;
 }
 
-// 构建 messageUId -> index 的字典，以及 referMsgUid -> index 集合的字典
-- (void)edit_buildRepositoryIndexes:(NSArray<RCMessageModel *> *)repository
-                         uidToIndex:(NSMutableDictionary<NSString *, NSNumber *> *)uidToIndex
-                  referUidToIndexes:(NSMutableDictionary<NSString *, NSMutableIndexSet *> *)referUidToIndexes {
-    for (NSUInteger idx = 0; idx < repository.count; idx++) {
-        RCMessageModel *model = repository[idx];
-        if (model.messageUId.length > 0) {
-            uidToIndex[model.messageUId] = @(idx);
-        }
-        if ([model.content isKindOfClass:[RCReferenceMessage class]]) {
-            RCReferenceMessage *ref = (RCReferenceMessage *)model.content;
-            if (ref.referMsgUid.length > 0) {
-                NSMutableIndexSet *set = referUidToIndexes[ref.referMsgUid];
-                if (!set) {
-                    set = [NSMutableIndexSet indexSet];
-                    referUidToIndexes[ref.referMsgUid] = set;
-                }
-                [set addIndex:idx];
-            }
-        }
+/// 更新普通消息
+- (BOOL)updateUIRegularMessage:(RCMessageModel *)oldModel
+             withNewMessages:(NSDictionary<NSString *, RCMessageModel *> *)newMessageDict {
+    RCMessageModel *matchingNewModel = newMessageDict[oldModel.messageUId];
+    if (!matchingNewModel) {
+        return NO;
     }
-}
-
-// 应用更新，返回需要更新的 index 集合
-- (NSIndexSet *)edit_applyUpdatesWithNewMessageDict:(NSDictionary<NSString *, RCMessageModel *> *)newMessageDict
-                                         repository:(NSArray<RCMessageModel *> *)repository
-                                         uidToIndex:(NSDictionary<NSString *, NSNumber *> *)uidToIndex
-                                  referUidToIndexes:(NSDictionary<NSString *, NSMutableIndexSet *> *)referUidToIndexes {
-    NSMutableIndexSet *needUpdateIndexes = [NSMutableIndexSet indexSet];
-    
-    [newMessageDict enumerateKeysAndObjectsUsingBlock:^(NSString *uid, RCMessageModel *newModel, BOOL *stop) {
-        NSNumber *indexNumber = uidToIndex[uid];
-        if (indexNumber) {
-            NSUInteger idx = indexNumber.unsignedIntegerValue;
-            RCMessageModel *oldModel = repository[idx];
-            
-            if ([oldModel.content isKindOfClass:[RCReferenceMessage class]] &&
-                [newModel.content isKindOfClass:[RCReferenceMessage class]]) {
-                RCReferenceMessage *oldRef = (RCReferenceMessage *)oldModel.content;
-                RCReferenceMessage *newRef = (RCReferenceMessage *)newModel.content;
-                if (oldRef.referMsgStatus > newRef.referMsgStatus) {
-                    newRef.referMsgStatus = oldRef.referMsgStatus;
-                }
-            }
-            
-            oldModel.content = newModel.content;
-            oldModel.modifyInfo = newModel.modifyInfo;
-            oldModel.hasChanged = newModel.hasChanged;
-            oldModel.cellSize = CGSizeZero;
-            [needUpdateIndexes addIndex:idx];
-        }
-        
-        NSMutableIndexSet *refIndexes = referUidToIndexes[uid];
-        if (refIndexes.count > 0) {
-            [refIndexes enumerateIndexesUsingBlock:^(NSUInteger refIdx, BOOL *stopRef) {
-                RCMessageModel *refModel = repository[refIdx];
-                RCReferenceMessage *refMsg = (RCReferenceMessage *)refModel.content;
-                
-                if (newModel.hasChanged) {
-                    refMsg.referMsgStatus = RCReferenceMessageStatusModified;
-                }
-                
-                if ([newModel.content isKindOfClass:[RCTextMessage class]] &&
-                    [refMsg.referMsg isKindOfClass:[RCTextMessage class]]) {
-                    ((RCTextMessage *)refMsg.referMsg).content = ((RCTextMessage *)newModel.content).content;
-                } else if ([newModel.content isKindOfClass:[RCReferenceMessage class]] &&
-                           [refMsg.referMsg isKindOfClass:[RCReferenceMessage class]]) {
-                    ((RCReferenceMessage *)refMsg.referMsg).content = ((RCReferenceMessage *)newModel.content).content;
-                }
-                
-                refModel.cellSize = CGSizeZero;
-                [needUpdateIndexes addIndex:refIdx];
-            }];
-        }
-    }];
-    
-    return needUpdateIndexes.copy;
+    oldModel.content = matchingNewModel.content;
+    oldModel.modifyInfo = matchingNewModel.modifyInfo;
+    oldModel.hasChanged = matchingNewModel.hasChanged;
+    return YES;
 }
 
 /// 批量更新 CollectionView
@@ -392,20 +380,14 @@
     if (results.count == 0) {
         return messages;
     }
-    // 构建 UID -> Message 的字典，避免 O(n*m) 嵌套循环
-    NSMutableDictionary<NSString *, RCMessage *> *uidToMessage = [NSMutableDictionary dictionaryWithCapacity:results.count];
+    NSMutableArray *finalMessages = [NSMutableArray arrayWithArray:messages];
     for (RCMessageResult *result in results) {
-        if (result.messageUId.length > 0 && result.message) {
-            uidToMessage[result.messageUId] = result.message;
+        for (int i = 0; i < finalMessages.count; i++) {
+            RCMessage *message = finalMessages[i];
+            if ([message.messageUId isEqualToString:result.messageUId] && result.message) {
+                [finalMessages replaceObjectAtIndex:i withObject:result.message];
+            }
         }
-    }
-    if (uidToMessage.count == 0) {
-        return messages;
-    }
-    NSMutableArray *finalMessages = [NSMutableArray arrayWithCapacity:messages.count];
-    for (RCMessage *message in messages) {
-        RCMessage *replacement = uidToMessage[message.messageUId];
-        [finalMessages addObject:(replacement ?: message)];
     }
     return finalMessages;
 }
@@ -416,7 +398,7 @@
     }
     NSMutableArray *models = [NSMutableArray array];
     for (RCMessageResult *result in results) {
-        if (result.message.content) {
+        if (result.message && result.message.content) {
             RCMessageModel *model = [RCMessageModel modelWithMessage:result.message];
             if (model) {
                 [models addObject:model];

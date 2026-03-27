@@ -85,7 +85,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             }
             self.progressView = [[RCSightMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 44, 44)];
             [self.progressView setHidden:YES];
-            self.progressView.progressTintColor =  RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF");
+            self.progressView.progressTintColor = [UIColor whiteColor];
             [self.thumbnailView addSubview:self.progressView];
             [self.playImage setCenter:CGPointMake(self.thumbnailView.bounds.size.width / 2,
                                                   self.thumbnailView.bounds.size.height / 2)];
@@ -144,20 +144,19 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.thumbnailView.frame = CGRectZero;
     self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundWidth);
     self.destructBackgroundView.frame = self.messageContentView.bounds;
-    self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
+    self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
     self.destructPicture.frame = CGRectMake(55, 43, 22, 22);
     self.destructLabel.frame = CGRectMake(0, CGRectGetMaxY(self.destructPicture.frame)+8, self.destructBackgroundView.frame.size.width, 14);
     CGRect durationLabelFrame = CGRectMake(0, self.destructBackgroundView.bounds.size.height - 20, self.destructBackgroundView.bounds.size.width - 8, 14);
     self.destructDurationLabel.frame = durationLabelFrame;
     if (self.model.messageDirection == MessageDirection_SEND) {
-        self.destructDurationLabel.textColor =
-        RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F");
-        self.destructLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F");
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_video_img", @"burn_video_picture");
+        self.destructDurationLabel.textColor = RCDYCOLOR(0x111f2c, 0x040a0f);
+        self.destructLabel.textColor = RCDYCOLOR(0x111f2c, 0x040a0f);
+        self.destructPicture.image = RCResourceImage(@"burn_video_picture");
     }else{
-        self.destructDurationLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
-        self.destructLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_video_img",@"from_burn_video_picture");
+        self.destructDurationLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        self.destructLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        self.destructPicture.image = RCResourceImage(@"from_burn_video_picture");
     }
 }
 
@@ -290,7 +289,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 120, 21)];
         [_durationLabel setTextAlignment:NSTextAlignmentRight];
         [_durationLabel setBackgroundColor:[UIColor clearColor]];
-        [_durationLabel setTextColor:RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF")];
+        [_durationLabel setTextColor:[UIColor whiteColor]];
         [_durationLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
     }
     return _durationLabel;
@@ -299,7 +298,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseImageView *)playImage {
     if (!_playImage) {
         _playImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 41, 41)];
-        UIImage *image = RCDynamicImage(@"conversation_msg_cell_sight_icon_img",@"sight_message_icon");
+        UIImage *image = RCResourceImage(@"sight_message_icon");
         _playImage.image = image;
     }
     return _playImage;
@@ -313,7 +312,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         RCBaseImageView *backgroudView =
             [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, self.thumbnailView.bounds.size.height - 21,
                                                           self.thumbnailView.bounds.size.width, 21)];
-        backgroudView.image = RCDynamicImage(@"conversation_msg_cell_player_shadow_bottom_img",@"player_shadow_bottom");
+        backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [_playButtonView addSubview:backgroudView];
         [backgroudView addSubview:self.durationLabel];
     }

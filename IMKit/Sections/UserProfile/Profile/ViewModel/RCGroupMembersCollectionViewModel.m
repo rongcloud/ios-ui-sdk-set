@@ -71,7 +71,7 @@
     if (self.members.count > indexPath.row) {
         RCGroupMemberInfo *member = self.members[indexPath.row];
         cell.nameLabel.hidden = NO;
-        cell.portraitImageView.placeholderImage = RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg");
+        cell.portraitImageView.placeholderImage = RCResourceImage(@"default_portrait_msg");
         cell.portraitImageView.imageURL = [NSURL URLWithString:member.portraitUri];
         NSString *remark = [self remarkWithUserId:member.userId];
         if (remark.length > 0) {
@@ -83,10 +83,10 @@
         }
     } else if ([self isAddItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
-        cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_add_img",@"group_member_add");
+        cell.portraitImageView.placeholderImage = RCResourceImage(@"group_member_add");
     } else if ([self isRemoveItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
-        cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_remove_img",@"group_member_remove");
+        cell.portraitImageView.placeholderImage = RCResourceImage(@"group_member_remove");
     }
     return cell;
 }

@@ -57,12 +57,9 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    if (!self.tableView.tableHeaderView) {
-        self.tableView.tableHeaderView = [self getTableViewHeader];
-    }
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor =  RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
-    self.tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
+    self.tableView.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
+    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
     [self.tableView reloadData];
 }
 
@@ -85,7 +82,7 @@
     //    _serviceProfile.serviceTel=@"1234567891234";
     //    _serviceProfile.histroyMsgUrl=@"http://www.baidu.com";
     //    _serviceProfile.scope=@"互联网/软联网/软件开发";
-//    self.tableView.tableHeaderView = [self getTableViewHeader];
+    self.tableView.tableHeaderView = [self getTableViewHeader];
     //    if (_serviceProfile.followed) {
     //        UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"..." style:UIBarButtonItemStylePlain
     //        target:self action:@selector(onOptionButtonPressed)];
@@ -123,10 +120,10 @@
 
     if (self.serviceProfile.followed || self.serviceProfile.isGlobal) {
         [cell setTitleText:RCLocalizedString(@"EnterOfficialAccount")
-            andBackgroundColor:RCDynamicColor(@"success_color", @"0x53d569", @"0x53d569")];
+            andBackgroundColor:RGBCOLOR(83, 213, 105)];
     } else {
         [cell setTitleText:RCLocalizedString(@"Attention")
-            andBackgroundColor:RCDynamicColor(@"success_color", @"0x53d569", @"0x53d569")];
+            andBackgroundColor:RGBCOLOR(83, 213, 105)];
     }
     __weak typeof(self) weakSelf = self;
     cell.onClickEvent = ^{
@@ -143,7 +140,7 @@
 
     if (self.serviceProfile.followed && !self.serviceProfile.isGlobal) {
         [unSubscribeCell setTitleText:RCLocalizedString(@"Unfollow")
-                   andBackgroundColor: RCDynamicColor(@"hint_color", @"0xE4363E", @"0xE4363E")];
+                   andBackgroundColor:RGBCOLOR(228, 54, 62)];
         unSubscribeCell.onClickEvent = ^{
             [weakSelf unsubscribePublicService];
         };
@@ -238,13 +235,14 @@
         initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, RCPublicServiceProfileHeaderPaddingTop +
                                                                        RCPublicServiceProfileHeaderImageHeigh +
                                                                        RCPublicServiceProfileHeaderPaddingBottom)];
-    container.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
+    container.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
+                                                         darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
 
     RCloudImageView *headerImageView = [[RCloudImageView alloc]
         initWithFrame:CGRectMake(RCPublicServiceProfileHeaderPaddingLeft, RCPublicServiceProfileHeaderPaddingTop,
                                  RCPublicServiceProfileHeaderImageWidth, RCPublicServiceProfileHeaderImageHeigh)];
 
-    headerImageView.placeholderImage = RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
+    headerImageView.placeholderImage = RCResourceImage(@"default_portrait");
     [headerImageView setImageURL:[NSURL URLWithString:self.serviceProfile.portraitUrl]];
     headerImageView.layer.masksToBounds = YES;
     if (!self.portraitStyle) {
@@ -270,7 +268,7 @@
     nameLabel.numberOfLines = 1;
     nameLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     nameLabel.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
+    nameLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor blackColor] darkColor:HEXCOLOR(0x9f9f9f)];
     nameLabel.text = self.serviceProfile.name;
 
     CGFloat subheadlineFontSize = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline].lineHeight;
@@ -287,7 +285,7 @@
     userIdLabel.text = [NSString stringWithFormat:RCLocalizedString(@"PublicNum"),
                                                   self.serviceProfile.publicServiceId];
     userIdLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-    userIdLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x808080", @"0x707070");
+    userIdLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x707070)];
 
     [container addSubview:nameLabel];
     [container addSubview:userIdLabel];
@@ -379,7 +377,8 @@
     NSArray *sections = self.cellCollections[indexPath.section];
     UITableViewCell *cell = sections[indexPath.row];
     [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-    cell.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
+    cell.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
+                                                    darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
     return cell;
 }
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

@@ -48,6 +48,7 @@
 }
 
 - (BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar {
+    self.searchBar.showsCancelButton = YES;
     for (UIView *view in [[[self.searchBar subviews] objectAtIndex:0] subviews]) {
         if ([view isKindOfClass:[NSClassFromString(@"UINavigationButton") class]]) {
             UIButton *cancel = (UIButton *)view;

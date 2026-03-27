@@ -11,6 +11,7 @@
 #import "RCNameEditViewController.h"
 #import "RCKitCommonDefine.h"
 
+#define RCUProfileCommonCellHeight 44
 
 @implementation RCProfileCommonCellViewModel
 
@@ -37,7 +38,11 @@
         cell.detailLabel.text = self.detail;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         cell.arrowView.hidden = self.hiddenArrow;
-        cell.hideSeparatorLine = self.hideSeparatorLine;
+        if(self.hiddenSeparatorLine) {
+            cell.separatorInset = UIEdgeInsetsMake(0, CGRectGetWidth(tableView.bounds), 0, 0);
+        } else {
+            cell.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);
+        }
         return cell;
     }
     
@@ -45,21 +50,20 @@
         RCProfileCommonImageCell *cell = [tableView dequeueReusableCellWithIdentifier:RCUProfileImageCellIdentifier forIndexPath:indexPath];
         cell.titleLabel.text = self.title;
         if (self.conversationType == ConversationType_GROUP) {
-            [cell.portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_group_portrait_img", @"default_group_portrait")];
+            [cell.portraitImageView setPlaceholderImage:RCResourceImage(@"default_group_portrait")];
         } else {
-            [cell.portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
+            [cell.portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
         }
         [cell.portraitImageView setImageURL:[NSURL URLWithString:self.detail]];
         [cell hiddenArrow:self.hiddenArrow];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        cell.hideSeparatorLine = self.hideSeparatorLine;
         return cell;
     }
     return nil;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return RCUProfileCommonCellHeight;
 }
 
 @end

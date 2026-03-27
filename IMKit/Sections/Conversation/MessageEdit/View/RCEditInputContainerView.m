@@ -61,7 +61,7 @@
 
 - (void)updateConstraints {
     if (!_didSetupConstraints) {
-        [self setupViewConstraints];
+        [self setupConstraints];
         _didSetupConstraints = YES;
     }
     [super updateConstraints];
@@ -76,7 +76,7 @@
     self.editConstraints = [NSMutableArray array];
     
     // 设置背景色
-    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.backgroundColor = RCDYCOLOR(0xF5F6F9, 0x1c1c1c);
     
     // 创建并添加子视图
     [self setupSubviews];
@@ -111,7 +111,7 @@
 
 #pragma mark - 约束设置
 
-- (void)setupViewConstraints {
+- (void)setupConstraints {
     // 清除所有视图的自动调整掩码
     self.topBorderView.translatesAutoresizingMaskIntoConstraints = NO;
     self.referencedLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -500,14 +500,14 @@
     return self.inputTextView.text ?: @"";
 }
 
-- (void)becomeInputViewFirstResponder {
+- (void)becomeFirstResponder {
     // 添加状态检查，避免不必要的重复调用，保护输入内容
     if (![self.inputTextView isFirstResponder]) {
         [self.inputTextView becomeFirstResponder];
     }
 }
 
-- (void)resignInputViewFirstResponder {
+- (void)resignFirstResponder {
     // 添加状态检查，避免不必要的重复调用
     if ([self.inputTextView isFirstResponder]) {
         [self.inputTextView resignFirstResponder];
@@ -525,11 +525,7 @@
     
     // 设置确认按钮状态
     self.editConfirmButton.enabled = enabled;
-    if (enabled) {
-        self.editConfirmButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x007AFF", @"0x007AFF");
-    } else {
-        self.editConfirmButton.backgroundColor = RCDynamicColor(@"disabled_color", @"0xCCCCCC", @"0xCCCCCC");
-    }
+    self.editConfirmButton.backgroundColor = enabled ? HEXCOLOR(0x007AFF) : HEXCOLOR(0xCCCCCC);
 }
 
 #pragma mark - 私有方法
@@ -545,8 +541,7 @@
 
 - (void)updateExpandButtonIcon {
     NSString *icon = (self.heightMode == RCEditHeightModeExpanded) ? @"edit_collapse" : @"edit_expand";
-    NSString *iconKey = (self.heightMode == RCEditHeightModeExpanded) ? @"conversation_msg_edit_collapse_img" : @"conversation_msg_edit_expand_img";
-    [self.editExpandButton setImage:RCDynamicImage(iconKey, icon) forState:UIControlStateNormal];
+    [self.editExpandButton setImage:RCResourceImage(icon) forState:UIControlStateNormal];
 }
 
 #pragma mark - Getter
@@ -557,7 +552,7 @@
         _referencedLabel.hidden = YES;
         _referencedLabel.translatesAutoresizingMaskIntoConstraints = NO;
         _referencedLabel.font = [UIFont systemFontOfSize:14];
-        _referencedLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x7C838E", @"0x7C838E");
+        _referencedLabel.textColor = HEXCOLOR(0x7C838E);
         _referencedLabel.numberOfLines = 1;
         _referencedLabel.lineBreakMode = NSLineBreakByTruncatingTail;
 
@@ -575,7 +570,7 @@
 - (UIView *)inputContainerBackgroundView {
     if (!_inputContainerBackgroundView) {
         _inputContainerBackgroundView = [[UIView alloc] init];
-        _inputContainerBackgroundView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2d2d2d");
+        _inputContainerBackgroundView.backgroundColor = RCDYCOLOR(0xffffff, 0x2d2d2d);
         _inputContainerBackgroundView.layer.cornerRadius = 6;
         _inputContainerBackgroundView.layer.masksToBounds = YES;
     }
@@ -595,11 +590,10 @@
         _inputTextView.textContainerInset = textEdge;
         
         // 设置样式
-        _inputTextView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xFFFFFF00", @"0xFFFFFF00");
+        _inputTextView.backgroundColor = [UIColor clearColor];
         _inputTextView.layer.borderWidth = 0;
         _inputTextView.layer.cornerRadius = 0;
-        UIColor *textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-        [_inputTextView setTextColor:textColor];
+        [_inputTextView setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
         [_inputTextView setFont:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
         [_inputTextView setReturnKeyType:UIReturnKeySend];
         _inputTextView.enablesReturnKeyAutomatically = YES;
@@ -612,7 +606,7 @@
 - (UIButton *)editExpandButton {
     if (!_editExpandButton) {
         _editExpandButton = [[UIButton alloc] init];
-        [_editExpandButton setImage:RCDynamicImage(@"conversation_msg_edit_expand_img", @"edit_expand") forState:UIControlStateNormal];
+        [_editExpandButton setImage:RCResourceImage(@"edit_expand") forState:UIControlStateNormal];
         _editExpandButton.layer.masksToBounds = YES;
         [_editExpandButton addTarget:self
                               action:@selector(editExpandButtonTapped:)
@@ -624,8 +618,8 @@
 - (UIButton *)editConfirmButton {
     if (!_editConfirmButton) {
         _editConfirmButton = [[UIButton alloc] init];
-        [_editConfirmButton setImage:RCDynamicImage(@"conversation_msg_edit_confirm_img",@"edit_confirm") forState:UIControlStateNormal];
-        _editConfirmButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x007AFF", @"0x007AFF");
+        [_editConfirmButton setImage:RCResourceImage(@"edit_confirm") forState:UIControlStateNormal];
+        _editConfirmButton.backgroundColor = HEXCOLOR(0x007AFF);
         _editConfirmButton.layer.cornerRadius = 4;
         _editConfirmButton.layer.masksToBounds = YES;
         [_editConfirmButton addTarget:self
@@ -638,12 +632,9 @@
 - (UIButton *)editCancelButton {
     if (!_editCancelButton) {
         _editCancelButton = [[UIButton alloc] init];
-        [_editCancelButton setImage:RCDynamicImage(@"conversation_msg_edit_cancel_img", @"edit_cancel") forState:UIControlStateNormal];
-        _editCancelButton.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFFFFFF", @"0x242424");
+        [_editCancelButton setImage:RCResourceImage(@"edit_cancel") forState:UIControlStateNormal];
+        _editCancelButton.backgroundColor = RCDYCOLOR(0xFFFFFF, 0x242424);
         _editCancelButton.layer.cornerRadius = 4;
-        _editCancelButton.layer.borderWidth = 0.5;
-        UIColor *borderColor = RCDynamicColor(@"line_background_color", @"0xE4E7ED", @"0xFFFFFF1A");
-        _editCancelButton.layer.borderColor = borderColor.CGColor;
         _editCancelButton.layer.masksToBounds = YES;
         [_editCancelButton addTarget:self
                               action:@selector(editCancelButtonTapped:)
@@ -655,7 +646,7 @@
 - (UIButton *)editEmojiButton {
     if (!_editEmojiButton) {
         _editEmojiButton = [[UIButton alloc] init];
-        [_editEmojiButton setImage:RCDynamicImage(@"conversation_msg_edit_emoji_img",@"edit_emoji") forState:UIControlStateNormal];
+        [_editEmojiButton setImage:RCResourceImage(@"edit_emoji") forState:UIControlStateNormal];
         _editEmojiButton.layer.cornerRadius = 14;
         _editEmojiButton.layer.masksToBounds = YES;
         [_editEmojiButton addTarget:self
@@ -681,7 +672,7 @@
 - (UIView *)topBorderView {
     if (!_topBorderView) {
         _topBorderView = [[UIView alloc] init];
-        _topBorderView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x2f2f2f");
+        _topBorderView.backgroundColor = RCDYCOLOR(0xe3e5e6, 0x2f2f2f);
     }
     return _topBorderView;
 }
@@ -697,7 +688,7 @@
 - (UIImageView *)editStatusImageView {
     if (!_editStatusImageView) {
         _editStatusImageView = [[UIImageView alloc] init];
-        _editStatusImageView.image = RCDynamicImage(@"conversation_msg_edit_status_expired_img",@"edit_status_expired");
+        _editStatusImageView.image = RCResourceImage(@"edit_status_expired");
     }
     return _editStatusImageView;
 }
@@ -707,7 +698,7 @@
         _editStatusLabel = [[UILabel alloc] init];
         _editStatusLabel.translatesAutoresizingMaskIntoConstraints = NO;
         _editStatusLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
-        _editStatusLabel.textColor = RCDynamicColor(@"hint_color", @"0xFF5A50", @"0xFF5A50"); // 红色文字
+        _editStatusLabel.textColor = HEXCOLOR(0xFF5A50); // 红色文字
         _editStatusLabel.textAlignment = NSTextAlignmentRight;
         _editStatusLabel.numberOfLines = 1;
         _editStatusLabel.lineBreakMode = NSLineBreakByTruncatingTail;

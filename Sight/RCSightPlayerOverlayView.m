@@ -43,9 +43,8 @@
 - (RCBaseButton *)playBtn {
     if (!_playBtn) {
         _playBtn = [[RCBaseButton alloc] init];
-        [_playBtn setImage:RCDynamicImage(@"video_player_start_button_img", @"player_start_button") forState:UIControlStateNormal];
-        [_playBtn setImage:RCDynamicImage(@"video_player_suspend_button_img", @"player_suspend_button")
-                  forState:UIControlStateSelected];
+        [_playBtn setImage:RCResourceImage(@"player_start_button") forState:UIControlStateNormal];
+        [_playBtn setImage:RCResourceImage(@"player_suspend_button") forState:UIControlStateSelected];
         [_playBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _playBtn;
@@ -54,7 +53,7 @@
 - (RCBaseButton *)centerPlayBtn {
     if (!_centerPlayBtn) {
         _centerPlayBtn = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 63, 63)];
-        [_centerPlayBtn setImage:RCDynamicImage(@"video_player_sight_play_btn_img", @"play_btn_normal") forState:UIControlStateNormal];
+        [_centerPlayBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
         [_centerPlayBtn addTarget:self action:@selector(playAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _centerPlayBtn;
@@ -63,7 +62,7 @@
 - (RCBaseButton *)closeBtn {
     if (!_closeBtn) {
         _closeBtn = [[RCBaseButton alloc] init];
-        [_closeBtn setImage:RCDynamicImage(@"video_player_top_close_button_img", @"sight_top_toolbar_close") forState:UIControlStateNormal];
+        [_closeBtn setImage:RCResourceImage(@"sight_top_toolbar_close") forState:UIControlStateNormal];
         [_closeBtn addTarget:self action:@selector(closeAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _closeBtn;
@@ -72,7 +71,7 @@
 - (UISlider *)slider {
     if (!_slider) {
         _slider = [[UISlider alloc] init];
-        [_slider setThumbImage:RCDynamicImage(@"video_player_top_slider_pan_img", @"player_slider_pan") forState:UIControlStateNormal];
+        [_slider setThumbImage:RCResourceImage(@"player_slider_pan") forState:UIControlStateNormal];
         [_slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventValueChanged];
         [_slider addTarget:self
                       action:@selector(sliderUpInside)
@@ -90,7 +89,7 @@
 - (UILabel *)currentTimeLab {
     if (!_currentTimeLab) {
         _currentTimeLab = [[UILabel alloc] init];
-        _currentTimeLab.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _currentTimeLab.textColor = [UIColor whiteColor];
         _currentTimeLab.text = @"00:00";
         _currentTimeLab.accessibilityLabel = @"currentTimeLab";
     }
@@ -107,7 +106,7 @@
 - (UILabel *)durationTimeLabel {
     if (!_durationTimeLabel) {
         _durationTimeLabel = [[UILabel alloc] init];
-        _durationTimeLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _durationTimeLabel.textColor = [UIColor whiteColor];
         _durationTimeLabel.text = @"--:--";
     }
     return _durationTimeLabel;
@@ -117,7 +116,7 @@
     if (!_topView) {
         _topView = [[RCBaseView alloc] init];
         RCBaseImageView *backgroudView = [[RCBaseImageView alloc] init];
-        backgroudView.image = RCDynamicImage(@"video_player_top_shadow_img", @"player_shadow_top");
+        backgroudView.image = RCResourceImage(@"player_shadow_top");
         [_topView addSubview:backgroudView];
         self.topHeightConstraint = [self constrainView:_topView toSize:RCTopViewAlignHeight direction:CCSightLayoutDirectionVertical];
         [self strechToSuperview:backgroudView];
@@ -150,7 +149,7 @@
         [self constraintAlignSuperView:contentView alignSpace:ISX ? 24 : 0 AlignMent:CCSightLayoutAlignBottom];
 
         RCBaseImageView *backgroudView = [[RCBaseImageView alloc] init];
-        backgroudView.image = RCDynamicImage(@"video_player_bottom_shadow_img", @"player_shadow_bottom");
+        backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [contentView addSubview:backgroudView];
         [self strechToSuperview:backgroudView];
         [self constrainView:_bottomView toSize:RCBottomViewAlignBottom direction:CCSightLayoutDirectionVertical];
@@ -201,7 +200,7 @@
 - (void)setUp {
     self.backgroundColor = [UIColor clearColor];
     self.thumbnailView = [[RCBaseImageView alloc] init];
-    self.thumbnailView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+    self.thumbnailView.backgroundColor = [UIColor blackColor];
     self.thumbnailView.userInteractionEnabled = YES;
     self.thumbnailView.contentMode = UIViewContentModeScaleAspectFit;
     [self addSubview:self.thumbnailView];

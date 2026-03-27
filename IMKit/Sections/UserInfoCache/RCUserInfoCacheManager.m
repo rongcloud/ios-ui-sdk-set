@@ -54,13 +54,6 @@
     }
 }
 
-// 此接口主要解决用户托管接口请求超频问题，信息提供者暂不处理
-- (void)preloadUserInfos:(NSArray<NSString *> *)userIds {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        [[RCInfoManagement sharedInstance] loadUserInfos:userIds];
-    }
-}
-
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId {
     if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
         [[RCInfoManagement sharedInstance] refreshUserInfo:userInfo];
@@ -113,14 +106,6 @@
     }
 }
 
-// 此接口主要解决用户托管接口请求超频问题，信息提供者暂不处理
-- (void)preloadGroupMembers:(NSArray<NSString *> *)userIds
-                 inGroup:(NSString *)groupId {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        [[RCInfoManagement sharedInstance] preloadGroupMembers:userIds inGroup:groupId];
-    }
-}
-
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId inGroup:(NSString *)groupId {
     if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
         [[RCInfoManagement sharedInstance] refreshGroupMember:userInfo withGroupId:groupId];
@@ -168,13 +153,6 @@
         return [[RCInfoManagement sharedInstance] getGroupInfoFromCacheOnly:groupId];
     } else {
         return [[RCInfoProvider sharedManager] getGroupInfoFromCacheOnly:groupId];
-    }
-}
-
-// 此接口主要解决用户托管接口请求超频问题，信息提供者暂不处理
-- (void)preloadGroupInfos:(NSArray<NSString *> *)groupIds {
-    if ([RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        [[RCInfoManagement sharedInstance] preloadGroupInfos:groupIds];
     }
 }
 

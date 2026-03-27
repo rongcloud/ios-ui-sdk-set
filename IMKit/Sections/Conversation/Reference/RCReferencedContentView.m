@@ -13,7 +13,7 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCIM.h"
-#import "RCMessageEditUtil.h"
+#import "RCEditedStateUtil.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -72,7 +72,7 @@
     }
     if (self.referMsgStatus == RCReferenceMessageStatusDeleted
         || self.referMsgStatus == RCReferenceMessageStatusRecalled) {
-        self.textLabel.textColor = [RCMessageEditUtil editedTextColor];
+        self.textLabel.textColor = [RCEditedStateUtil editedTextColor];
         return;
     }
     NSString *messageInfo = @"";
@@ -121,20 +121,20 @@
     }
     
     if(self.referModel.messageDirection == MessageDirection_SEND){
-        self.leftLimitLine.backgroundColor = RCDynamicColor(@"text_primary_color", @"0xA0A5Ab", @"0x040a0f66");
-        self.nameLabel.textColor =  RCDynamicColor(@"text_primary_color", @"0xA0A5Ab", @"0x040a0f66");
+        self.leftLimitLine.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
+        self.nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
         if ([self.referedContent isKindOfClass:[RCFileMessage class]] || [self.referedContent isKindOfClass:[RCRichContentMessage class]]) {
-            self.textLabel.textColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x005F9E");
+            self.textLabel.textColor = RCDYCOLOR(0x0099ff, 0x005F9E);
         }else{
-            self.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0xa0a5ab", @"0x999999");
+            self.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
         }
     }else{
-        self.nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0xa0a5ab", @"0x999999");
-        self.leftLimitLine.backgroundColor = RCDynamicColor(@"text_primary_color", @"0xa0a5ab", @"0x999999");
+        self.nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:HEXCOLOR(0x999999)];
+        self.leftLimitLine.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:HEXCOLOR(0x999999)];
         if ([self.referedContent isKindOfClass:[RCFileMessage class]] || [self.referedContent isKindOfClass:[RCRichContentMessage class]]) {
-            self.textLabel.textColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x1290e2");
+            self.textLabel.textColor = RCDYCOLOR(0x0099ff, 0x1290e2);
         }else{
-            self.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0xa0a5ab", @"0x999999");
+            self.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:HEXCOLOR(0x999999)];
         }
     }
     
@@ -143,15 +143,13 @@
         && self.textLabel.text.length > 0
         && self.referMsgStatus == RCReferenceMessageStatusModified) {
         NSString *originalText = self.textLabel.text;
-        UIColor *originalColor = RCDynamicColor(@"text_primary_color", @"0xa0a5ab", @"0x999999");
-        UIColor *editedTextColor = [RCMessageEditUtil editedTextColor];
+        UIColor *originalColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:HEXCOLOR(0x999999)];
+        UIColor *editedTextColor = [RCEditedStateUtil editedTextColor];
         UIFont *font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-        NSString *displayText = [RCMessageEditUtil displayTextForOriginalText:originalText isEdited:YES];
+        NSString *displayText = [RCEditedStateUtil displayTextForOriginalText:originalText isEdited:YES];
         
         if (displayText.length > originalText.length) {
-            if (originalColor) {
-                originalColor = RCDYCOLOR(0xa0a5ab, 0x999999);
-            }
+            
             NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:displayText
                                                                                                attributes:@{
                 NSFontAttributeName: font,
@@ -160,12 +158,10 @@
             
             NSRange originalRange = NSMakeRange(0, originalText.length);
             NSRange editedRange = NSMakeRange(originalText.length, displayText.length - originalText.length);
-            if (editedTextColor) {
-                [attributedText addAttribute:NSForegroundColorAttributeName
-                                           value:editedTextColor
-                                           range:editedRange];
-            }
-           
+        
+            [attributedText addAttribute:NSForegroundColorAttributeName
+                                       value:[RCEditedStateUtil editedTextColor]
+                                       range:editedRange];
             self.textLabel.attributedText = attributedText;
         }
     }
@@ -284,7 +280,8 @@
         } else {
             _leftLimitLine = [[UIView alloc] initWithFrame:CGRectMake(0, 2, leftLine_width, 13)];
         }
-        _leftLimitLine.backgroundColor = RCDynamicColor(@"text_primary_color", @"0xA0A5Ab", @"0x7C7C7C");
+        _leftLimitLine.backgroundColor =
+        [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:HEXCOLOR(0x7C7C7C)];
     }
     return _leftLimitLine;
 }

@@ -81,7 +81,7 @@
     MKAnnotationView *pinAnnotationView = (MKAnnotationView *)[mapView dequeueReusableAnnotationViewWithIdentifier:pinAnnotationIdentifier];
     if (!pinAnnotationView) {
         pinAnnotationView = [[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pinAnnotationIdentifier];
-        pinAnnotationView.image = RCDynamicImage(@"location_map_annotation_img", @"map_annotation");
+        pinAnnotationView.image = RCResourceImage(@"map_annotation");
         pinAnnotationView.canShowCallout = YES;
     }
     return pinAnnotationView;

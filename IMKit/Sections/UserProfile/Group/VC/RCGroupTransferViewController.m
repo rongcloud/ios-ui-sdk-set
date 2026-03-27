@@ -8,14 +8,14 @@
 
 #import "RCGroupTransferViewController.h"
 #import "RCKitCommonDefine.h"
-#import "RCSelectUserView.h"
+#import "RCBaseTableView.h"
 @interface RCGroupTransferViewController ()<
 UITableViewDelegate,
 UITableViewDataSource,
 RCListViewModelResponder
 >
 
-@property (nonatomic, strong) RCSelectUserView *membersView;
+@property (nonatomic, strong) RCBaseTableView *membersView;
 
 @property (nonatomic, strong) RCGroupTransferViewModel *viewModel;
 
@@ -41,7 +41,7 @@ RCListViewModelResponder
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.viewModel registerCellForTableView:self.membersView.tableView];
+    [self.viewModel registerCellForTableView:self.membersView];
     [self setNavigationBarItems];
     [self setupView];
 }
@@ -59,12 +59,13 @@ RCListViewModelResponder
 #pragma mark -- private
 
 - (void)setNavigationBarItems {
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
 - (void)setupView {
-    [self.membersView configureSearchBar:[self.viewModel configureSearchBar]];
+    self.membersView.tableHeaderView = [self.viewModel configureSearchBar];
+    [self.membersView addSubview:self.emptyLabel];
 }
 
 #pragma mark -- action
@@ -76,8 +77,13 @@ RCListViewModelResponder
 #pragma mark -- RCListViewModelResponder
 
 - (void)reloadData:(BOOL)isEmpty {
-    [self.membersView.tableView reloadData];
-    self.membersView.emptyLabel.hidden = !isEmpty;
+    [self.membersView reloadData];
+    self.emptyLabel.hidden = !isEmpty;
+    if (!self.emptyLabel.hidden) {
+        self.emptyLabel.text = RCLocalizedString(@"NotUserFound");
+        [self.emptyLabel sizeToFit];
+        self.emptyLabel.center = CGPointMake(self.view.center.x, 150);
+    }
 }
 
 - (UIViewController *)currentViewController {
@@ -116,16 +122,33 @@ RCListViewModelResponder
 
 #pragma mark -- getter
 
-- (RCSelectUserView *)membersView {
+- (RCBaseTableView *)membersView {
     if (!_membersView) {
-        _membersView = [RCSelectUserView new];
-        _membersView.tableView.delegate = self;
-        _membersView.tableView.dataSource = self;
-        _membersView.emptyLabel.text = RCLocalizedString(@"NotUserFound");
+        _membersView = [RCBaseTableView new];
+        _membersView.delegate = self;
+        _membersView.dataSource = self;
+        _membersView.tableFooterView = [UIView new];
+        if ([_membersView respondsToSelector:@selector(setSeparatorInset:)]) {
+            _membersView.separatorInset = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
+        if ([_membersView respondsToSelector:@selector(setLayoutMargins:)]) {
+            _membersView.layoutMargins = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
     }
     return _membersView;
 }
 
-
+- (UILabel *)emptyLabel {
+    if (!_emptyLabel) {
+        UILabel *lab = [[UILabel alloc] init];
+        lab.textColor = RCDYCOLOR(0x939393, 0x666666);
+        lab.font = [UIFont systemFontOfSize:17];
+        lab.textAlignment = NSTextAlignmentCenter;
+        lab.hidden = YES;
+        [lab sizeToFit];
+        _emptyLabel = lab;
+    }
+    return _emptyLabel;
+}
 
 @end

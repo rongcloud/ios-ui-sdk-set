@@ -11,7 +11,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCConversationDataSource (RRS)
-- (void)rrs_fetchReadReceiptV5Info:(NSArray <RCMessageModel *>*)models;
+- (void)rrs_dealReadReceiptV5Info:(NSArray <RCMessageModel *>*)models;
+- (void)rrs_fetchReadReceiptV5Info:(NSDictionary *)dic;
 - (void)rrs_responseReadReceiptV5Info:(NSDictionary *)dic;
 @end
 

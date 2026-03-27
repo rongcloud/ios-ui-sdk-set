@@ -12,55 +12,48 @@
 #import "RCKitConfig.h"
 NSString  * const RCSelectUserCellIdentifier = @"RCSelectUserCellIdentifier";
 
-#define RCSelectUserCellSelectLeading 12
+#define RCSelectUserCellSelectLeading 20
 #define RCSelectUserCellSelectSize 20
 #define RCSelectUserCellPortraitLeading 8
-#define RCSelectUserCellPortraitSize 32
+#define RCSelectUserCellPortraitSize 40
 #define RCSelectUserCellNameFont 17
 #define RCSelectUserCellNameLeadingSpace 12
 
 @interface RCSelectUserCell ()
+
 @end
 
 @implementation RCSelectUserCell
 
 - (void)setupView {
-    [super setupView];
-    self.contentStackView.spacing = RCSelectUserCellSelectLeading;
-    [self.contentStackView addArrangedSubview:self.selectImageView];
-    [self.contentStackView addArrangedSubview:self.portraitImageView];
-    [self.contentStackView addArrangedSubview:self.nameLabel];
-
+    self.contentView.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
+                                                         darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+    [self.contentView addSubview:self.portraitImageView];
+    [self.contentView addSubview:self.nameLabel];
+    [self.contentView addSubview:self.selectImageView];
 }
 
-- (void)appendViewAtEnd:(UIView *)view {
-    if (view) {
-        [self.contentStackView addArrangedSubview:view];
-    }
-}
-
-- (void)setupConstraints {
-    [super setupConstraints];
-    [self updateLineViewConstraints:80 trailing:-10];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.portraitImageView.widthAnchor constraintEqualToConstant:RCSelectUserCellPortraitSize],
-        [self.portraitImageView.heightAnchor constraintEqualToConstant:RCSelectUserCellPortraitSize],
-        
-        [self.selectImageView.widthAnchor constraintEqualToConstant:RCSelectUserCellSelectSize],
-        [self.selectImageView.heightAnchor constraintEqualToConstant:RCSelectUserCellSelectSize]
-    ]];
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    self.selectImageView.frame = CGRectMake(RCSelectUserCellSelectLeading, (self.frame.size.height - RCSelectUserCellSelectSize)/2, RCSelectUserCellSelectSize, RCSelectUserCellSelectSize);
+    self.portraitImageView.frame = CGRectMake(CGRectGetMaxY(self.selectImageView.frame) + RCSelectUserCellPortraitLeading, (self.frame.size.height - RCSelectUserCellPortraitSize)/2, RCSelectUserCellPortraitSize, RCSelectUserCellPortraitSize);
+    [self.nameLabel sizeToFit];
+    self.nameLabel.center = CGPointMake(CGRectGetMaxX(self.portraitImageView.frame)+RCSelectUserCellNameLeadingSpace+self.nameLabel.frame.size.width/2, self.portraitImageView.center.y);
+    CGRect frame = self.nameLabel.frame;
+    frame.size.width = self.contentView.frame.size.width - CGRectGetMaxX(self.portraitImageView.frame) - RCSelectUserCellNameLeadingSpace;
+    self.nameLabel.frame = frame;
 }
 
 - (void)updateSelectState:(RCSelectState)state {
     switch (state) {
         case RCSelectStateUnselect:
-            self.selectImageView.image = RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect");
+            self.selectImageView.image = RCResourceImage(@"message_cell_unselect");
             break;
         case RCSelectStateSelect:
-            self.selectImageView.image = RCDynamicImage(@"conversation_msg_cell_select_img", @"message_cell_select");
+            self.selectImageView.image = RCResourceImage(@"message_cell_select");
             break;
         case RCSelectStateDisable:
-            self.selectImageView.image = RCDynamicImage(@"group_member_disable_select_img", @"disable_select");
+            self.selectImageView.image = RCResourceImage(@"disable_select");
             break;
         default:
             break;
@@ -79,8 +72,7 @@ NSString  * const RCSelectUserCellIdentifier = @"RCSelectUserCellIdentifier";
             _portraitImageView.layer.cornerRadius = 5.f;
         }
         _portraitImageView.layer.masksToBounds = YES;
-        [_portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
-        _portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
+        [_portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
     }
     return _portraitImageView;
 }
@@ -88,12 +80,8 @@ NSString  * const RCSelectUserCellIdentifier = @"RCSelectUserCellIdentifier";
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[UILabel alloc] init];
-        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x9f9f9f");
+        _nameLabel.textColor = RCDYCOLOR(0x11f2c, 0x9f9f9f);
         _nameLabel.font = [UIFont systemFontOfSize:RCSelectUserCellNameFont];
-        _nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        [_nameLabel setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-        [_nameLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-        _nameLabel.textAlignment = NSTextAlignmentNatural;
     }
     return _nameLabel;
 }
@@ -101,7 +89,6 @@ NSString  * const RCSelectUserCellIdentifier = @"RCSelectUserCellIdentifier";
 - (RCBaseImageView *)selectImageView {
    if (!_selectImageView) {
        _selectImageView = [[RCBaseImageView alloc] init];
-       _selectImageView.translatesAutoresizingMaskIntoConstraints = NO;
    }
    return _selectImageView;
 }

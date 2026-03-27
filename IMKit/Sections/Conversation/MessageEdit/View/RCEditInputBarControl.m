@@ -11,6 +11,7 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 #import "RCExtensionService.h"
+#import "RCFullScreenEditView.h"
 #import "RCInputStateManager.h"
 #import "RCInputKeyboardManager.h"
 
@@ -23,6 +24,9 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 
 /// 编辑输入容器
 @property (nonatomic, strong) RCEditInputContainerView *editInputContainer;
+
+/// 全屏编辑视图
+@property (nonatomic, strong, nullable) RCFullScreenEditView *fullScreenEditView;
 
 /// 表情面板
 @property (nonatomic, strong, nullable) RCEmojiBoardView *emojiBoardView;
@@ -87,21 +91,26 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     // 清理表情面板
     [_emojiBoardView removeFromSuperview];
     _emojiBoardView = nil;
+    // 清理全屏编辑视图
+    if (_fullScreenEditView) {
+        [_fullScreenEditView hideWithAnimation:NO completion:nil];
+        _fullScreenEditView = nil;
+    }
 }
 
 #pragma mark - UI 设置
 
 - (void)setupUI {
-    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.backgroundColor = RCDYCOLOR(0xF5F6F9, 0x1c1c1c);
     self.hidden = YES;
     self.isVisible = NO;
     self.currentBottomBarStatus = KBottomBarDefaultStatus;
     [self addSubview:self.editInputContainer];
     // 设置约束
-    [self setupViewConstraints];
+    [self setupConstraints];
 }
 
-- (void)setupViewConstraints {
+- (void)setupConstraints {
     // 编辑容器填充整个控件
     self.editInputContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
@@ -115,7 +124,6 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 #pragma mark - 公共方法
 
 - (void)showWithConfig:(RCEditInputBarConfig *)config {
-    self.inputBarConfig = config;
     if (!self.isVisible) {
         // 显示控件
         self.isVisible = YES;
@@ -124,18 +132,21 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     // 每次显示重置文本
     [self.editInputContainer setInputText:@""];
     
-    // 设置编辑内容
-    [self.editInputContainer setInputText:config.textContent ?: @""];
-    
-    // 设置引用消息
-    if (config.referencedSenderName.length > 0 || config.referencedContent.length > 0) {
-        [self setReferenceInfo:config.referencedSenderName content:config.referencedContent];
-    } else {
-        [self.editInputContainer clearReferencedMessage];
-    }
-    
-    if (config.mentionedRangeInfo) {
-        [self.inputStateManager setupMentionedRangeInfo:config.mentionedRangeInfo];
+    // 从本地状态恢复编辑状态
+    if (![self restoreFromStateData:config.cachedStateData]) {
+        // 设置编辑内容
+        [self.editInputContainer setInputText:config.textContent ?: @""];
+        
+        // 设置引用消息
+        if (config.referencedSenderName.length > 0 || config.referencedContent.length > 0) {
+            [self setReferenceInfo:config.referencedSenderName content:config.referencedContent];
+        } else {
+            [self.editInputContainer clearReferencedMessage];
+        }
+        
+        if (config.mentionedInfo) {
+            [self.inputStateManager restoreFromOriginalMessage:config.mentionedInfo];
+        }
     }
     if (self.canEdit) {
         BOOL enable = self.editInputContainer.getInputText.length > 0;
@@ -159,7 +170,7 @@ extern NSString *const RCKitKeyboardWillShowNotification;
         return;
     }
     if (hidden) {
-        [self hideBottomPanelsWithAnimation:YES completion:nil];
+        [self hideBottomPanels];
         self.savedFrame = self.frame;
     }
     // 计算目标状态
@@ -200,6 +211,38 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 }
 
 #pragma mark - 辅助方法
+
+- (UIWindow *)keyWindow {
+    if (@available(iOS 13.0, *)) {
+        NSSet<UIScene *> *connectedScenes = [UIApplication sharedApplication].connectedScenes;
+        for (UIScene *scene in connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                for (UIWindow *window in windowScene.windows) {
+                    if (window.isKeyWindow) {
+                        return window;
+                    }
+                }
+            }
+        }
+    }
+    return [UIApplication sharedApplication].keyWindow;
+}
+
+/// 查找当前的导航控制器
+- (UINavigationController *)findNavigationController {
+    UIResponder *responder = self;
+    while (responder) {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            UIViewController *viewController = (UIViewController *)responder;
+            if (viewController.navigationController) {
+                return viewController.navigationController;
+            }
+        }
+        responder = responder.nextResponder;
+    }
+    return nil;
+}
 
 - (NSString *)currentEditText {
     return [self.editInputContainer getInputText];
@@ -266,19 +309,19 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     switch (bottomBarStatus) {
         case KBottomBarDefaultStatus: {
             [self hiddenEmojiBoardView];
-            [self.editInputContainer resignInputViewFirstResponder];
+            [self.editInputContainer resignFirstResponder];
             changedHeight = 0;
             break;
         }
         case KBottomBarEmojiStatus: {
             [self showEmojiBoardView];
-            [self.editInputContainer resignInputViewFirstResponder];
+            [self.editInputContainer resignFirstResponder];
             changedHeight = self.emojiBoardView.bounds.size.height;
             break;
         }
         case KBottomBarKeyboardStatus: {
             [self hiddenEmojiBoardView];
-            [self.editInputContainer becomeInputViewFirstResponder];
+            [self.editInputContainer becomeFirstResponder];
             changedHeight = self.keyboardManager.currentKeyboardHeight - [RCKitUtility getWindowSafeAreaInsets].bottom;
             break;
         }
@@ -330,7 +373,7 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 #pragma mark - RCInputKeyboardManagerDelegate
 
 - (BOOL)keyboardManagerShouldHandleKeyboardEvent:(RCInputKeyboardManager *)manager {
-    BOOL shouldHandle = self.isVisible && !self.isHidden;
+    BOOL shouldHandle = self.isVisible && self.editInputContainer.textViewBeginEditing;
     return shouldHandle;
 }
 
@@ -461,12 +504,9 @@ extern NSString *const RCKitKeyboardWillShowNotification;
             [attStr addAttribute:NSFontAttributeName
                            value:textView.font
                            range:NSMakeRange(0, replaceString.length)];
-            UIColor *foreColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffcc");
-            if (foreColor) {
-                [attStr addAttribute:NSForegroundColorAttributeName
-                               value:foreColor
-                               range:NSMakeRange(0, replaceString.length)];
-            }
+            [attStr addAttribute:NSForegroundColorAttributeName
+                           value:[RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.8)]
+                           range:NSMakeRange(0, replaceString.length)];
             
             NSInteger cursorPosition;
             if (textView.selectedTextRange) {
@@ -506,23 +546,24 @@ extern NSString *const RCKitKeyboardWillShowNotification;
         // 滚动到可见区域
         CGPoint offset = textView.contentOffset;
         offset.y += overflow + 7; // 留 7 像素边距
+        __weak typeof(textView) weakTextView = textView;
         [UIView animateWithDuration:.2 animations:^{
-            [textView setContentOffset:offset];
+            [weakTextView setContentOffset:offset];
         }];
     }
 }
 
 - (void)didSendButtonEvent:(RCEmojiBoardView *)emojiView sendButton:(UIButton *)sendButton {
-    NSString *sendText = [self.editInputContainer getInputText];
-    NSString *formatString = [sendText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    if (0 == [formatString length]) {
-        // 空文本不能发送
+    NSString *_sendText = [self.editInputContainer getInputText];
+    NSString *_formatString = [_sendText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (0 == [_formatString length]) {
+        // 空文本不能发送，可以显示提示
         return;
     }
     
     // 通过代理确认编辑
     if ([self.delegate respondsToSelector:@selector(editInputBarControl:didConfirmWithText:)]) {
-        [self.delegate editInputBarControl:self didConfirmWithText:sendText];
+        [self.delegate editInputBarControl:self didConfirmWithText:_sendText];
     }
 }
 
@@ -543,6 +584,13 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     [self setEditStatus:YES reason:nil];
 }
 
+- (void)restoreFocusIfNeeded {
+    if (self.currentBottomBarStatus != KBottomBarKeyboardStatus) {
+        return;
+    }
+    [self restoreFocus];
+}
+
 - (void)restoreFocus {
     // 检查编辑控件状态，确保逻辑正确性
     if ((!self.isVisible && !self.isFullScreen) || self.hidden) {
@@ -551,10 +599,14 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     if (!self.editInputContainer.superview) {
         return;
     }
-    // 延迟一小段时间，避免第一响应者冲突
+    // 延迟一小段时间，确保联系人页面完全dismiss，避免第一响应者冲突
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self.editInputContainer becomeInputViewFirstResponder];
+        [self.editInputContainer becomeFirstResponder];
     });
+}
+
+- (void)hideBottomPanels {
+    [self hideBottomPanelsWithAnimation:YES completion:nil];
 }
 
 - (void)hideBottomPanelsWithAnimation:(BOOL)animated completion:(void (^ _Nullable)(void))completion {
@@ -564,7 +616,7 @@ extern NSString *const RCKitKeyboardWillShowNotification;
         };
         return;
     }
-    [self layoutBottomBarWithStatus:KBottomBarDefaultStatus animated:animated completion:completion];
+    [self layoutBottomBarWithStatus:KBottomBarDefaultStatus animated:YES completion:completion];
 }
 
 - (void)setIsMentionedEnabled:(BOOL)isMentionedEnabled {
@@ -576,6 +628,11 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 
 - (RCMentionedInfo *)mentionedInfo {
     return self.inputStateManager.mentionedInfo;
+}
+
+- (void)addMentionedUser:(RCUserInfo *)userInfo {
+    // 默认需要插入符号（symbolRequest=YES）
+    [self addMentionedUser:userInfo symbolRequest:YES];
 }
 
 - (void)addMentionedUser:(RCUserInfo *)userInfo symbolRequest:(BOOL)symbolRequest {
@@ -608,45 +665,51 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 /// @param senderName 引用消息发送者姓名
 /// @param content 引用消息内容
 - (void)setReferenceInfo:(NSString *)senderName content:(NSString *)content {
+    [self.inputStateManager setReferenceInfo:senderName content:content];
     
     // 同时设置到输入容器中用于UI显示
-    if ([self.editInputContainer respondsToSelector:@selector(setReferencedContentWithSenderName:content:)]) {
+    if (self.editInputContainer && [self.editInputContainer respondsToSelector:@selector(setReferencedContentWithSenderName:content:)]) {
         [self.editInputContainer setReferencedContentWithSenderName:senderName content:content];
     }
+}
+
+/// 清除引用消息信息
+- (void)clearReferenceInfo {
+    [self.inputStateManager clearReferenceInfo];
+    
+    // 同时清除输入容器中的UI显示
+    if (self.editInputContainer && [self.editInputContainer respondsToSelector:@selector(clearReferencedMessage)]) {
+        [self.editInputContainer clearReferencedMessage];
+    }
+}
+
+#pragma mark - 状态保存和恢复
+
+- (NSDictionary *)stateData {
+    // 直接返回 inputStateManager 的状态数据 (包含了文本、@信息和引用消息的完整状态)
+    NSDictionary *stateData = self.inputStateManager.stateData;
+    return stateData ?: @{};
+}
+
+- (BOOL)restoreFromStateData:(NSDictionary *)stateData {
+    if (!stateData) {
+        return NO;
+    }
+    BOOL result = [self.inputStateManager restoreFromStateData:stateData];
+    if (result) {
+        if ([self.inputStateManager hasReferenceInfo]) {
+            [self setReferenceInfo:self.inputStateManager.referencedSenderName content:self.inputStateManager.referencedContent];
+        }
+    }
+    return result;
 }
 
 - (BOOL)hasContent {
     return self.inputStateManager.hasContent;
 }
 
-#pragma mark - 光标位置
-
-- (NSRange)getCurrentCursorPosition {
-    if (self.editInputContainer && self.editInputContainer.inputTextView) {
-        return self.editInputContainer.inputTextView.selectedRange;
-    }
-    return NSMakeRange(NSNotFound, 0);
-}
-
-- (void)setCursorPosition:(NSRange)range {
-    if (self.editInputContainer && self.editInputContainer.inputTextView) {
-        UITextView *textView = self.editInputContainer.inputTextView;
-        NSUInteger textLength = textView.text.length;
-        
-        // 确保光标位置在有效范围内
-        if (range.location != NSNotFound && range.location <= textLength) {
-            // if (range.location + range.length > textLength) {
-            //     range.length = textLength - range.location;
-            // }
-            // 暂不支持文本选中的状态，所以将 length 改为 0
-            range.length = 0;
-            
-            // 在主线程异步设置光标位置，确保文本已经完全加载
-            dispatch_async(dispatch_get_main_queue(), ^{
-                textView.selectedRange = range;
-            });
-        }
-    }
+- (void)restoreFromEditState:(NSDictionary *)stateData {
+    [self restoreFromStateData:stateData];
 }
 
 - (void)setIsVisible:(BOOL)isVisible {
@@ -659,16 +722,6 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 }
 
 #pragma mark - Getter Methods
-
-- (RCEditInputBarConfig *)inputBarConfig {
-    if (!_inputBarConfig) {
-        _inputBarConfig = [[RCEditInputBarConfig alloc] init];
-    }
-    _inputBarConfig.textContent = self.editInputContainer.getInputText;
-    _inputBarConfig.mentionedRangeInfo = self.inputStateManager.mentionedRangeInfo;
-    return _inputBarConfig;
-}
-
 
 - (RCEditInputContainerView *)editInputContainer {
     if (!_editInputContainer) {

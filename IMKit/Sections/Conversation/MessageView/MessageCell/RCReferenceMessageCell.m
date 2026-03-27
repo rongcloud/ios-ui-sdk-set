@@ -11,16 +11,15 @@
 #import "RCKitUtility.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
-#import "RCAttributedLabel+Edit.h"
-#import "RCMessageCell+Edit.h"
+#import "RCAttributedLabel+EditedState.h"
+#import "RCMessageCell+EditStatus.h"
 
 #define bubble_top_space 12
 #define bubble_bottom_space 12
-#define refer_and_text_space 16
+#define refer_and_text_space 6
 #define content_space_left 12
 #define content_space_right 12
 @interface RCReferenceMessageCell () <RCAttributedLabelDelegate, RCReferencedContentViewDelegate>
-@property (nonatomic, strong) UIView *lineView;
 @end
 @implementation RCReferenceMessageCell
 
@@ -48,7 +47,7 @@
          referenceExtraHeight:(CGFloat)extraHeight {
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)model.content;
-    NSString *displayText = [RCMessageEditUtil displayTextForOriginalText:refenceMessage.content isEdited:model.hasChanged];
+    NSString *displayText = [RCEditedStateUtil displayTextForOriginalText:refenceMessage.content isEdited:model.hasChanged];
     CGSize textLabelSize = [[self class] getTextLabelSize:displayText
                                                  maxWidth:maxWidth - 33
                                                      font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]];
@@ -118,15 +117,14 @@
     [self showBubbleBackgroundView:YES];
 
     [self.messageContentView addSubview:self.referencedContentView];
-    [self.messageContentView addSubview:self.lineView];
     [self.messageContentView addSubview:self.contentLabel];
 }
 
 - (void)setAutoLayout {
     if(self.model.messageDirection == MessageDirection_RECEIVE){
-        [self.contentLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc")];
+        [self.contentLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
     }else{
-        [self.contentLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0x040A0F")];
+        [self.contentLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
     }
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)self.model.content;
     if (refenceMessage) {
@@ -143,7 +141,6 @@
     [self.referencedContentView setMessage:self.model contentSize:contentSize];
     
     self.referencedContentView.frame = CGRectMake(content_space_left, 10, contentSize.width, contentSize.height);
-    self.lineView.frame = CGRectMake(content_space_left, CGRectGetMaxY(self.referencedContentView.frame) + refer_and_text_space/2, contentSize.width, 1);
     self.contentLabel.frame = CGRectMake(content_space_left, CGRectGetMaxY(self.referencedContentView.frame) + refer_and_text_space,
                                          textLabelSize.width, textLabelSize.height);
     self.messageContentView.contentSize = CGSizeMake(messageContentSize.width, messageContentSize.height);
@@ -199,13 +196,5 @@
         _referencedContentView.delegate = self;
     }
     return _referencedContentView;
-}
-
-- (UIView *)lineView {
-    if (!_lineView) {
-        _lineView = [UIView new];
-        _lineView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
-    }
-    return _lineView;
 }
 @end

@@ -153,9 +153,6 @@
     [[RCCoreClient sharedCoreClient] searchGroupMembers:self.groupId name:self.searchBarVM.searchBar.text option:option success:^(RCPagingQueryResult<RCGroupMemberInfo *> * _Nonnull result) {
         [RCGroupManager fetchFriendInfos:result.data complete:^(NSArray<RCFriendInfo *> * _Nullable friendInfos) {
             NSArray *list = [self getViewModelsWithMembers:result.data friendInfos:friendInfos];
-            if (list.count) {
-                [self removeSeparatorLineIfNeed:@[list]];
-            }
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.searchQueryResult = result;
                 [self.matchMemberList addObjectsFromArray:list];
@@ -240,9 +237,6 @@
     if ([self.delegate respondsToSelector:@selector(selectGroupMember:willLoadItemsInDataSource:)]) {
         list = [self.delegate selectGroupMember:self willLoadItemsInDataSource:list].mutableCopy;
     }
-    if (list.count) {
-        [self removeSeparatorLineIfNeed:@[list]];
-    }
     return list;
 }
 
@@ -288,7 +282,7 @@
 }
 
 - (NSArray<RCRemoveGroupMemberCellViewModel *> *)memberList {
-    if (self.searchBarVM.searchBar.text.length > 0) {
+    if ([self.searchBarVM isCurrentFirstResponder]) {
         return self.matchMemberList;
     }
     return self.mutableMemberList;

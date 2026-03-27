@@ -7,7 +7,7 @@
 //
 
 #import "RCCircularLoadingView.h"
-#import "RCKitCommonDefine.h"
+
 static NSString * const kRotationAnimationKey = @"circularLoadingRotationAnimation";
 
 @interface RCCircularLoadingView ()
@@ -59,11 +59,7 @@ static NSString * const kRotationAnimationKey = @"circularLoadingRotationAnimati
  */
 - (void)setupDefaultValues {
     _lineWidth = 2.0;
-    UIColor *color = RCDynamicColor(@"primary_color", @"0x007aff", @"0x007aff");
-    if (!color) {
-        color = [UIColor colorWithRed:0.0 green:0.48 blue:1.0 alpha:1.0];
-    }
-    _strokeColor = color;// 匹配UI图的蓝色
+    _strokeColor = [UIColor colorWithRed:0.0 green:0.48 blue:1.0 alpha:1.0]; // 匹配UI图的蓝色
     _animationDuration = 1.0;
     _startAngle = 0;                    // 从3点钟方向开始(0度)
     _endAngle = -M_PI_2;                // 到12点钟方向结束(-90度)

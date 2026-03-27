@@ -7,12 +7,12 @@
 //
 
 #import "RCBaseViewModel.h"
-#import <RongIMLibCore/RongIMLibCore.h>
+#import <RongIMLibcore/RongIMLibcore.h>
 #import "RCCollectionViewModelProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-#define RCGroupMembersCollectionViewModelItemWidth 48
+#define RCGroupMembersCollectionViewModelItemWidth 64
 #define RCGroupMembersCollectionViewModelItemHeight 70
 #define RCGroupMembersCollectionViewModelLineSpace 12
 #define RCGroupMembersCollectionViewModelPortraitLineCount 5

@@ -20,8 +20,6 @@
 #define rcUserInfoReadDBHelper ([RCInfoProvider sharedManager].readDBHelper)
 #define rcUserInfoDBQueue ([RCInfoProvider sharedManager].dbQueue)
 
-NS_ASSUME_NONNULL_BEGIN
-
 // 原有RCUserInfoCacheManager里面内容
 @interface RCInfoProvider : NSObject
 
@@ -95,4 +93,3 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-NS_ASSUME_NONNULL_END

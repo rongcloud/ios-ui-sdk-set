@@ -42,7 +42,7 @@
         self.frame = [UIScreen mainScreen].bounds;
         self.backgroundColor = [UIColor colorWithRed:102 / 255.0 green:102 / 255.0 blue:102 / 255.0 alpha:0.5];
         self.backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 270, height)];
-        self.backgroundView.backgroundColor =  RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        self.backgroundView.backgroundColor = [UIColor whiteColor];
         self.backgroundView.center = self.center;
         self.backgroundView.layer.cornerRadius = 5;
         [self addSubview:self.backgroundView];

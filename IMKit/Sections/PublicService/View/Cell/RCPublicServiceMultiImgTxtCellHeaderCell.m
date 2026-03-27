@@ -48,7 +48,7 @@
         self.headerLabel.textAlignment = NSTextAlignmentLeft;
         self.headerLabel.lineBreakMode = NSLineBreakByCharWrapping;
         self.headerLabel.numberOfLines = 0;
-        self.headerLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        self.headerLabel.textColor = [UIColor whiteColor];
         self.headerLabel.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
 
         [self addSubview:self.headerImageView];

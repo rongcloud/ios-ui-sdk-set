@@ -40,11 +40,11 @@
         [self addSubview:self.contentView];
         self.extensionView = [[UIView alloc] initWithFrame:contentViewFrame];
         [self.extensionView setHidden:YES];
-        self.extensionView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+        self.extensionView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
         [self addSubview:self.extensionView];
         [self.contentView setShowsHorizontalScrollIndicator:NO];
         [self.contentView setShowsVerticalScrollIndicator:NO];
-        [self.contentView setBackgroundColor:RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c")];
+        [self.contentView setBackgroundColor:RCDYCOLOR(0xf5f6f9, 0x1c1c1c)];
         [self.contentView registerClass:[RCPluginBoardItem class] forCellWithReuseIdentifier:RCPluginBoardCell];
         if ([RCKitUtility isRTL]) {
             [self.contentView setTransform:CGAffineTransformMakeScale(-1, 1)];

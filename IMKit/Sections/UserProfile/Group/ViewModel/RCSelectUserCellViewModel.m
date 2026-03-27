@@ -9,6 +9,7 @@
 #import "RCSelectUserCellViewModel.h"
 #import "RCSelectUserCell.h"
 
+#define RCSelectUserCellHeight 56
 
 @interface RCSelectUserCellViewModel ()
 @property (nonatomic, strong) RCFriendInfo *friendInfo;
@@ -51,12 +52,11 @@
     } else {
         cell.nameLabel.text = self.friendInfo.name;
     }
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     [cell updateSelectState:self.selectState];
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return RCSelectUserCellHeight;
 }
 @end
