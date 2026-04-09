@@ -13,11 +13,10 @@
 #import "RCApplyFriendAlertView.h"
 #import "RCAlertView.h"
 
-NSInteger const RCFriendApplyCellHeight = 56;
+NSInteger const RCFriendApplyCellHeight = 78;
 @interface RCApplyFriendCellViewModel()
 @property (nonatomic, weak) UITableView *tableView;
 @property (nonatomic, strong)  NSIndexPath *indexPath;
-@property (nonatomic, strong) UILabel *labSlaver;
 @property (nonatomic, assign) CGFloat cellHeightOfExpand;
 @property (nonatomic, weak) UIViewController <RCListViewModelResponder> *responder;
 @end
@@ -33,31 +32,20 @@ NSInteger const RCFriendApplyCellHeight = 56;
     return self;
 }
 
-- (void)configureFolderRemarkSize:(CGSize)size {
+- (BOOL)shouldHideExpandButton:(CGSize)size natureSize:(CGSize)natureSize {
+    if (self.style == RCFriendApplyCellStyleFolder) {
+        return NO;
+    }
     if (self.style == RCFriendApplyCellStyleNone) {
-        self.labSlaver.bounds = CGRectMake(0, 0, size.width, size.height);
-        self.labSlaver.text = self.application.extra;
-        self.labSlaver.numberOfLines = 0;
-        [self.labSlaver sizeToFit];
-        if (self.labSlaver.bounds.size.width > size.width || self.labSlaver.bounds.size.height > size.height) {
+        if (natureSize.height > size.height) {
             self.style = RCFriendApplyCellStyleFolder;
+            self.cellHeightOfExpand = RCFriendApplyCellHeight-size.height+natureSize.height;
+            return NO;
         } else {
             self.style = RCFriendApplyCellStyleNormal;
         }
     }
-}
-
-- (void)configureExpandRemarkSize:(CGSize)size {
-    // 折叠状态 才可以计算展开的高度
-    if (self.style == RCFriendApplyCellStyleFolder) {
-        if (self.cellHeightOfExpand == 0) {
-            self.labSlaver.bounds = CGRectMake(0, 0, size.width, 10000);
-            self.labSlaver.text = self.application.extra;
-            self.labSlaver.numberOfLines = 0;
-            [self.labSlaver sizeToFit];
-            self.cellHeightOfExpand = RCFriendApplyCellHeight-size.height+self.labSlaver.frame.size.height;
-        }
-    }
+    return YES;
 }
 
 #pragma mark - RCCellViewModelProtocol
@@ -79,7 +67,7 @@ NSInteger const RCFriendApplyCellHeight = 56;
             cell = [[RCApplyFriendCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:RCFriendApplyCellIdentifier];
         }
     }
-   
+    cell.hideSeparatorLine = self.hideSeparatorLine;
     [cell updateWithViewModel:self];
     return cell;
 }
@@ -196,18 +184,7 @@ NSInteger const RCFriendApplyCellHeight = 56;
     if (self.indexPath) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.tableView reloadRowsAtIndexPaths:@[self.indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView setNeedsLayout];
-            [self.tableView layoutIfNeeded];
         });
     }
-}
-
-- (UILabel *)labSlaver {
-    if (!_labSlaver) {
-        UILabel *lab = [UILabel new];
-        lab.font = [UIFont systemFontOfSize:14];
-        _labSlaver= lab;
-    }
-    return _labSlaver;
 }
 @end

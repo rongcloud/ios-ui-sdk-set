@@ -23,8 +23,7 @@
     if (self) {
         self.delegate = self;
         self.dataSource = self;
-        self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                                darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
         [RCGroupMembersCollectionViewModel registerCollectionViewCell:self];
     }
     return self;
@@ -60,14 +59,6 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     return [self.viewModel collectionView:collectionView cellForItemAtIndexPath:indexPath];
-}
-
-- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)collectionViewLayout;
-    layout.itemSize = CGSizeMake(RCGroupMembersCollectionViewModelItemWidth, RCGroupMembersCollectionViewModelItemHeight); // 每个item的大小
-    layout.minimumLineSpacing = RCGroupMembersCollectionViewModelLineSpace;
-    layout.minimumInteritemSpacing = (collectionView.frame.size.width - 5 * layout.itemSize.width - RCGroupMembersCollectionViewModelLineSpace * 2)/4;
-    return UIEdgeInsetsMake(0, RCGroupMembersCollectionViewModelLineSpace, 0, RCGroupMembersCollectionViewModelLineSpace);
 }
 
 #pragma mark -- UICollectionViewDelegate

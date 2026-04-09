@@ -300,7 +300,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         [_nameLabel setFont:[[RCKitConfig defaultConfig].font fontOfGuideLevel]];
         _nameLabel.numberOfLines = 2;
-        _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x11f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
         if([RCKitUtility isRTL]){
             _nameLabel.textAlignment = NSTextAlignmentRight;
@@ -315,7 +315,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_sizeLabel) {
         _sizeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         [_sizeLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
-        _sizeLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xc7cbce) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
+        _sizeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xc7cbce", @"0xffffff66");
     }
     return _sizeLabel;
 }
@@ -339,7 +339,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseButton *)cancelSendButton{
     if (!_cancelSendButton) {
         _cancelSendButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        [_cancelSendButton setImage:RCResourceImage(@"cancelButton") forState:UIControlStateNormal];
+        [_cancelSendButton setImage:RCDynamicImage(@"conversation_msg_cell_cancel_img",@"cancelButton") forState:UIControlStateNormal];
         [_cancelSendButton addTarget:self action:@selector(cancelSend) forControlEvents:UIControlEventTouchUpInside];
         _cancelSendButton.hidden = YES;
     }
@@ -350,7 +350,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_cancelLabel) {
         _cancelLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _cancelLabel.text = RCLocalizedString(@"CancelSendFile");
-        _cancelLabel.textColor = HEXCOLOR(0xa8a8a8);
+        _cancelLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa8a8a8", @"0xa8a8a8");
         _cancelLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         _cancelLabel.hidden = YES;
     }

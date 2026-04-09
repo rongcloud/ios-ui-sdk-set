@@ -7,6 +7,7 @@
 //
 
 #import "RCVideoPlayer.h"
+#import "RCKitCommonDefine.h"
 
 @interface RCVideoPlayer ()
 
@@ -18,7 +19,7 @@
 
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
-        self.backgroundColor = [UIColor blackColor];
+        self.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
         AVPlayerLayer *layer = (AVPlayerLayer *)self.layer;
         layer.videoGravity = AVLayerVideoGravityResizeAspect;
     }

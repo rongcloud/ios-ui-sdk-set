@@ -25,7 +25,7 @@
     if (self) {
         RCTipLabel *tip = [[RCTipLabel alloc] init];
         tip.marginInsets = UIEdgeInsetsMake(5.f, 5.f, 5.f, 5.f);
-        tip.textColor = RCDYCOLOR(0xBBBBBB, 0x666666);
+        tip.textColor = RCDynamicColor(@"text_secondary_color", @"0xBBBBBB", @"0x666666");
         tip.numberOfLines = 0;
         tip.lineBreakMode = NSLineBreakByCharWrapping;
         tip.textAlignment = NSTextAlignmentCenter;
@@ -36,11 +36,11 @@
         [self.baseContentView addSubview:self.tipMessageLabel];
         self.tipMessageLabel.marginInsets = UIEdgeInsetsMake(0.5f, 0.5f, 0.5f, 0.5f);
         self.leftView = [[UIView alloc] init];
-        self.leftView.backgroundColor = RCDYCOLOR(0xBBBBBB, 0x666666);
+        self.leftView.backgroundColor = RCDynamicColor(@"text_secondary_color", @"0xBBBBBB", @"0x666666");
         self.leftView.alpha = 0.5;
         [self.baseContentView addSubview:self.leftView];
         self.rightView = [[UIView alloc] init];
-        self.rightView.backgroundColor = RCDYCOLOR(0xBBBBBB, 0x666666);
+        self.rightView.backgroundColor = RCDynamicColor(@"text_secondary_color", @"0xBBBBBB", @"0x666666");
         self.rightView.alpha = 0.5;
         [self.baseContentView addSubview:self.rightView];
     }

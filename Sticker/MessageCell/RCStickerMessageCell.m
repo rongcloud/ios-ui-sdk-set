@@ -81,7 +81,8 @@
         initWithFrame:CGRectMake(0, FAIELDIMAGEEHEIGHT + LABLESET, FAIELDLABLEWIDTHT, FAIELDLABLEHEIGHT)];
     self.loadFailedLable.textAlignment = NSTextAlignmentCenter;
     self.loadFailedLable.font = [UIFont systemFontOfSize:12];
-    self.loadFailedLable.textColor = HEXCOLOR(0xC8C7CC);
+    self.loadFailedLable.textColor =
+    RCDynamicColor(@"text_secondary_color",@"0xC8C7CC", @"0xC8C7CC");
     self.loadFailedLable.text = RongStickerString(@"loadingfailed");
     [self.loadfailedBackImageview addSubview:self.loadFailedLable];
 

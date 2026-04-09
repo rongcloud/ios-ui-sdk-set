@@ -47,7 +47,7 @@
     }
     [self configureSearchBar];
     [self configureRightNaviItems];
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
@@ -112,7 +112,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 56;
+    return RCUserManagementCellHeight;
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {

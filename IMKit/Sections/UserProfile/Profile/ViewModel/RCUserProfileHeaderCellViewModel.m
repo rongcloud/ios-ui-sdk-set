@@ -8,6 +8,7 @@
 #import "RCUserProfileHeaderCellViewModel.h"
 #import "RCUserProfileHeaderCell.h"
 #import "RCKitCommonDefine.h"
+#import "RCUserOnlineStatusUtil.h"
 
 #define RCUUserProfileHeaderCellHeight 82
 
@@ -33,10 +34,14 @@
     [cell hiddenNameLabel:!self.remark.length];
     [cell.portraitImageView setImageURL:[NSURL URLWithString:self.portrait]];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    [cell hiddenOnlineStatusView:!self.displayOnlineStatus];
+    [cell updateOnlineStatus:self.isOnline];
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     return RCUUserProfileHeaderCellHeight;
 }
+
 @end

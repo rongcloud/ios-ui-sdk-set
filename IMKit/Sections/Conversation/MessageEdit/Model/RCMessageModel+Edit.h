@@ -12,7 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCMessageModel (Edit)
 
-@property (nonatomic, strong) RCMessageModifyInfo *modifyInfo;
+/// 此消息是否可编辑
+- (BOOL)edit_isMessageEditable;
 
 @end
 

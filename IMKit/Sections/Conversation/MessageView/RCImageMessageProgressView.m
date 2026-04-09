@@ -8,6 +8,7 @@
 
 #import "RCImageMessageProgressView.h"
 #import "RCKitConfig.h"
+#import "RCKitCommonDefine.h"
 
 @implementation RCImageMessageProgressView
 #pragma mark - Life Cycle
@@ -20,12 +21,12 @@
         [label setTextAlignment:NSTextAlignmentCenter];
         self.label.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         [self.label setBackgroundColor:[UIColor clearColor]];
-        [self.label setTextColor:[UIColor whiteColor]];
+        [self.label setTextColor:RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff")];
         label.text = @"0%";
         [self addSubview:label];
         [label setCenter:CGPointMake(frame.size.width / 2 - 4, frame.size.height / 2 + 13)];
 
-        [self setBackgroundColor:[UIColor blackColor]];
+        [self setBackgroundColor:RCDynamicColor(@"mask_color", @"0x000000", @"0x000000")];
         [self setAlpha:0.7f];
 
         self.indicatorView =

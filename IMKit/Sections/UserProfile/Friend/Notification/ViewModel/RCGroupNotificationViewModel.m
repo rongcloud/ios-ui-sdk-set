@@ -114,9 +114,12 @@ static void *__rc_group_notification_operation_queueTag = &__rc_group_notificati
                     [array addObject:vm];
                 }
                 items = array;
-                if ([self.delegate respondsToSelector:@selector(applyFriendListViewModel:willLoadItemsInDataSource:)]) {
+                if ([self.delegate respondsToSelector:@selector(groupNotificationViewModel:willLoadItemsInDataSource:)]) {
                     items = [self.delegate groupNotificationViewModel:self willLoadItemsInDataSource:array];
                 }
+            }
+            if (items) {
+                [self removeSeparatorLineIfNeed:@[items]];
             }
             [self.dataSource addObjectsFromArray:items];
             [self reloadData:self.dataSource.count == 0];

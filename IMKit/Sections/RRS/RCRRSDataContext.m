@@ -10,6 +10,7 @@
 #import "RCIMThreadLock.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 #import "RCConversationModel+RRS.h"
+#import "RCRRSUtil.h"
 
 @interface RCRRSDataContext()
 @property (nonatomic, strong) RCIMThreadLock *lock;
@@ -56,7 +57,7 @@
         for (RCReadReceiptInfoV5 *info in infoList) {
             NSString *key = [self keyByIdentifier:info.identifier];
             if (key && info.readCount>0) {
-                self.cacheInfo[key] = info.messageUId;
+                self.cacheInfo[key] = info;
             }
         }
     }];
@@ -75,10 +76,13 @@
         }
     }
     [self.lock performWriteLockBlock:^{
-        for (RCReadReceiptResponseV5 *info in array) {
-            NSString *key = [self keyByIdentifier:info.identifier];
-            if (key && info.readCount>0) {
-                self.cacheInfo[key] = info.messageUId;
+        for (RCReadReceiptResponseV5 *response in array) {
+            NSString *key = [self keyByIdentifier:response.identifier];
+            if (key && response.readCount > 0) {
+                RCReadReceiptInfoV5 *info = [RCRRSUtil infoFromResponse:response];
+                if (info) {
+                    self.cacheInfo[key] = info;
+                }
             }
         }
     }];
@@ -90,16 +94,36 @@
 }
 
 - (void)refreshConversationsCachedIfNeeded:(NSArray <RCConversationModel *>*)conversations {
-    __block NSSet *setMessageUIDs = nil;
+    if (conversations.count == 0) {
+        return;
+    }
+    
+    // 复制一份缓存快照，避免长时间持有读锁
+    __block NSDictionary *cacheSnapshot = nil;
     [self.lock performReadLockBlock:^{
-        NSArray *array = [self.cacheInfo allValues];
-        setMessageUIDs = [NSSet setWithArray:array];
+        cacheSnapshot = [self.cacheInfo copy];
     }];
+    
+    // 遍历会话列表，直接用 key 查询缓存
     for (RCConversationModel *model in conversations) {
-        if ([model rrs_couldFetchConversationReadReceipt]) {
-            if ([setMessageUIDs containsObject:model.latestMessageUId]) {
-                model.readReceiptCount = 1;
-                model.sentStatus = SentStatus_READ;
+        if (![model rrs_couldFetchConversationReadReceipt]) {
+            continue;
+        }
+        // 构建缓存 key
+        RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc] initWithConversationIdentifier:model.conversationType targetId:model.targetId];
+        NSString *key = [self keyByIdentifier:identifier];
+        // 从缓存中查询
+        id cachedValue = cacheSnapshot[key];
+        if (!cachedValue) {
+            continue;
+        }
+        
+        if ([cachedValue isKindOfClass:[RCReadReceiptInfoV5 class]]) {
+            RCReadReceiptInfoV5 *info = (RCReadReceiptInfoV5 *)cachedValue;
+            // 验证 messageUId 匹配且有已读数
+            if ([info.messageUId isEqualToString:model.latestMessageUId]
+                && info.readCount > 0) {
+                model.readReceiptInfoV5 = info;
             }
         }
     }

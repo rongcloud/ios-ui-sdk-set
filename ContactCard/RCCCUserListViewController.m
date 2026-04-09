@@ -152,18 +152,28 @@
         [_searchBar setPlaceholder:RCLocalizedString(@"ToSearch")];
         [_searchBar setDelegate:self];
         [_searchBar setKeyboardType:UIKeyboardTypeDefault];
+        _searchBar.showsCancelButton = NO;
+        
+        // 设置搜索图标颜色
         if (@available(iOS 13.0, *)) {
-            _searchBar.searchTextField.backgroundColor =
-                [RCKitUtility generateDynamicColor:[UIColor whiteColor]
-                                         darkColor:[UIColor colorWithHexString:@"262626" alpha:0.6]];
+            UIImageView *iconView = (UIImageView *)_searchBar.searchTextField.leftView;
+            if (iconView && [iconView isKindOfClass:[UIImageView class]]) {
+                iconView.tintColor = RCDynamicColor(@"primary_color", @"0x0047ff", @"0x0047ff");
+            }
         }
-        //设置顶部搜索栏的背景色
-        _searchBar.barTintColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"f0f0f6" alpha:0.6]
-                                                           darkColor:[UIColor blackColor]];
-        _searchBar.layer.borderColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"f0f0f6" alpha:1]
-                                                                darkColor:[UIColor blackColor]]
-                                           .CGColor;
-        _searchBar.layer.borderWidth = 1;
+   
+        // 设置所有背景为透明
+        _searchBar.backgroundColor = [UIColor clearColor];
+        _searchBar.barTintColor = [UIColor clearColor];
+        _searchBar.backgroundImage = [UIImage new];
+        
+        // 移除边框
+        _searchBar.layer.borderWidth = 0;
+        
+        if (@available(iOS 13.0, *)) {
+            _searchBar.searchTextField.backgroundColor = [UIColor clearColor];
+        }
+ 
         if ([RCKitUtility isRTL]) {
             _searchBar.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
         }else{
@@ -172,16 +182,25 @@
     }
     return _searchBar;
 }
+
 - (RCBaseTableView *)tableView {
     if (!_tableView) {
         _tableView = [[RCBaseTableView alloc]
             initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, self.view.bounds.size.height)
                     style:UITableViewStyleGrouped];
+        _tableView.backgroundColor =  RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
+        if (@available(iOS 15.0, *)) {
+            _tableView.sectionHeaderTopPadding = 0;
+        }
+        //设置右侧索引
+        _tableView.sectionIndexBackgroundColor = [UIColor clearColor];
+        _tableView.sectionIndexColor = RCDynamicColor(@"text_secondary_color", @"0x6f6f6f", @"0x6f6f6f");
+
+        
         [_tableView setDelegate:self];
         [_tableView setDataSource:self];
-        _tableView.backgroundColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"f0f0f6" alpha:1] darkColor:[UIColor colorWithHexString:@"111111" alpha:1]];
-        _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
-        _tableView.tableHeaderView = self.searchBar;
+        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        _tableView.tableHeaderView =[self containerViewFor:self.searchBar];
         // cell无数据时，不显示间隔线
         UIView *v = [[UIView alloc] initWithFrame:CGRectZero];
         [_tableView setTableFooterView:v];
@@ -196,6 +215,37 @@
     return _tableView;
 }
 
+
+- (UIView *)containerViewFor:(UIView *)bar {
+    bar.translatesAutoresizingMaskIntoConstraints = NO;
+    CGRect frame = CGRectMake(0, 0, self.view.bounds.size.width, 68);
+
+    UIView *outer = [[UIView alloc] initWithFrame:frame];;
+    CGFloat barHeight = 40;
+    UIView *inner = [UIView new];
+    inner.translatesAutoresizingMaskIntoConstraints = NO;
+    inner.layer.cornerRadius = barHeight/2;
+    inner.layer.masksToBounds = YES;
+    inner.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFFFFFF", @"0x000000");
+    
+    [outer addSubview:inner];
+    [inner addSubview:bar];
+   
+    [NSLayoutConstraint activateConstraints:@[
+        [inner.leadingAnchor constraintEqualToAnchor:outer.leadingAnchor constant:16],
+        [inner.trailingAnchor constraintEqualToAnchor:outer.trailingAnchor constant:-16],
+        [inner.centerYAnchor constraintEqualToAnchor:outer.centerYAnchor],
+        [inner.heightAnchor constraintEqualToConstant:barHeight],
+        
+        [bar.centerYAnchor constraintEqualToAnchor:inner.centerYAnchor],
+        [bar.leadingAnchor constraintEqualToAnchor:inner.leadingAnchor],
+        [bar.trailingAnchor constraintEqualToAnchor:inner.trailingAnchor],
+    ]];
+    // 在iOS26 上缺省下边的代码, 搜索框会有背景色
+    [outer setNeedsLayout];
+    [outer layoutIfNeeded];
+    return outer;
+}
 #pragma mark - UITableView delegate
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     if (self.isSearchResult == NO) {
@@ -242,13 +292,16 @@
         cell = [[RCCCContactTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                                reuseIdentifier:reusableCellWithIdentifier];
     }
+    BOOL isLastItem = NO;
     RCCCUserInfo *userInfo;
     if (self.isSearchResult == NO) {
         NSString *letter = _allKeys[indexPath.section];
         NSArray *sectionUserInfoList = _contactsDic[letter];
         userInfo = sectionUserInfoList[indexPath.row];
+        isLastItem = (indexPath.row == sectionUserInfoList.count-1);
     } else {
         userInfo = [self.matchSearchList objectAtIndex:indexPath.row];
+        isLastItem = (indexPath.row == self.matchSearchList.count-1);
     }
     if (userInfo) {
         if (userInfo.displayName.length > 0) {
@@ -262,6 +315,7 @@
     cell.portraitView.contentMode = UIViewContentModeScaleAspectFill;
     cell.nicknameLabel.font = [UIFont systemFontOfSize:15.f];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.lineView.hidden = isLastItem;
     return cell;
 }
 

@@ -20,7 +20,17 @@
 @end
 @implementation RCConversationDataSource (RRS)
 
-- (void)rrs_fetchReadReceiptV5Info:(NSDictionary *)dic {
+- (void)rrs_fetchReadReceiptV5Info:(NSArray <RCMessageModel *>*)models {
+    if (!models.count) {
+        return;
+    }
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    
+    for (RCMessageModel *model in models) {
+        if ([model rrs_shouldFetchReadReceiptV5]) {
+            dic[model.messageUId] = model;
+        }
+    }
     if([dic allKeys].count) {
         NSArray *messageUIDs = [dic allKeys];
         RCConversationIdentifier *identifier = [RCConversationIdentifier new];
@@ -33,9 +43,9 @@
                 for (RCReadReceiptInfoV5 *info in infoList) {
                     if (info.messageUId && info.readCount > 0) {
                         RCMessageModel *model = dic[info.messageUId];
-                        model.readReceiptCount = info.readCount;
+                        model.readReceiptInfoV5 = info;
                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                            [self.chatVC.util sendMessageStatusNotification:CONVERSATION_CELL_STATUS_SEND_READCOUNT messageId:model.messageId progress:model.readReceiptCount];
+                            [self.chatVC.util sendMessageReadReceiptV5Notification:model];
                         });
                     }
                 }
@@ -60,21 +70,5 @@
         }];
     }
 }
-- (void)rrs_dealReadReceiptV5Info:(NSArray <RCMessageModel *>*)models {
-    if (!models.count) {
-        return;
-    }
-    NSMutableDictionary *dicFetch = [NSMutableDictionary dictionary];
-    NSMutableDictionary *dicResponse = [NSMutableDictionary dictionary];
-    
-    for (RCMessageModel *model in models) {
-        if ([model rrs_shouldFetchReadReceiptV5]) {
-            dicFetch[model.messageUId] = model;
-        } else if([model rrs_shouldResponseReadReceiptV5]) {
-            dicResponse[model.messageUId] = model;
-        }
-    }
-    [self rrs_fetchReadReceiptV5Info:dicFetch];
-    [self rrs_responseReadReceiptV5Info:dicResponse];
-}
+
 @end

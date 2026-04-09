@@ -61,10 +61,14 @@
     if (!content) {
         return nil;
     }
+    UIColor *color = RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc");
+    if (!color) {
+        color = [RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+    }
     NSAttributedString *attributedStr =
     [[NSAttributedString alloc] initWithString:self.content
                                     attributes:@{NSFontAttributeName: [[RCKitConfig defaultConfig].font fontOfSecondLevel],
-                                                 NSForegroundColorAttributeName: [RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]}];
+                                                 NSForegroundColorAttributeName: color}];
     return attributedStr;
 }
 

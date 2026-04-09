@@ -16,14 +16,17 @@ NSString  * const RCGroupProfileMembersCellIdentifier = @"RCGroupProfileMembersC
 
 - (void)setupView {
     [super setupView];
-    self.contentView.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                            darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
-    [self.contentView addSubview:self.membersView];
+    [self.paddingContainerView addSubview:self.membersView];
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    self.membersView.frame = CGRectMake(0, RCGroupProfileMembersCellTextTopSpace, self.frame.size.width, self.frame.size.height - RCGroupProfileMembersCellTextTopSpace - RCGroupProfileMembersCellTextBottomSpace);
+- (void)setupConstraints {
+    [super setupConstraints];
+    [NSLayoutConstraint activateConstraints:@[
+           [self.membersView.leadingAnchor constraintEqualToAnchor:self.paddingContainerView.leadingAnchor],
+           [self.membersView.trailingAnchor constraintEqualToAnchor:self.paddingContainerView.trailingAnchor],
+           [self.membersView.topAnchor constraintEqualToAnchor:self.paddingContainerView.topAnchor constant:RCGroupProfileMembersCellTextTopSpace],
+           [self.membersView.bottomAnchor constraintEqualToAnchor:self.paddingContainerView.bottomAnchor]
+       ]];
 }
 
 #pragma mark -- getter
@@ -31,7 +34,21 @@ NSString  * const RCGroupProfileMembersCellIdentifier = @"RCGroupProfileMembersC
 - (RCGroupMembersCollectionView *)membersView {
     if (!_membersView) {
         UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+        layout.itemSize = CGSizeMake(RCGroupMembersCollectionViewModelItemWidth, RCGroupMembersCollectionViewModelItemHeight); // 每个item的大小
+        layout.minimumLineSpacing = RCGroupMembersCollectionViewModelLineSpace;
+        layout.sectionInset = UIEdgeInsetsMake(0, RCGroupMembersCollectionViewModelLineSpace, 0, RCGroupMembersCollectionViewModelLineSpace);
+        CGFloat width = [UIScreen mainScreen].bounds.size.width;
+        CGFloat padding = (width-32 - 5 * layout.itemSize.width - RCGroupMembersCollectionViewModelLineSpace * 2)/4;
+        if (padding<0) { // 如果屏幕宽度无法满足布局, 则压缩宽度
+            CGFloat newWidth = RCGroupMembersCollectionViewModelItemWidth - (5*4-padding)/5;
+            if (newWidth !=0) {
+                layout.itemSize = CGSizeMake(newWidth, RCGroupMembersCollectionViewModelItemHeight);
+            }
+            padding = 5;
+        }
+        layout.minimumInteritemSpacing = padding;
         _membersView = [[RCGroupMembersCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
+        _membersView.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return _membersView;
 }

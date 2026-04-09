@@ -95,16 +95,16 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.destructBackgroundView.hidden = YES;
     if (gifMessage.destructDuration > 0) {
         self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundHeight);
-        self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+        self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
         self.destructBackgroundView.frame = CGRectMake(0, 0, DestructBackGroundWidth, DestructBackGroundHeight);
         self.destructPicture.frame = CGRectMake(50, 43, 31, 25);
         self.destructLabel.frame = CGRectMake(0,CGRectGetMaxY(self.destructPicture.frame)+4, self.destructBackgroundView.frame.size.width, 17);
         if (self.model.messageDirection == MessageDirection_SEND) {
-            [self.destructLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040a0f)];
-            self.destructPicture.image = RCResourceImage(@"burnPicture");
+            [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040a0f")];
+            self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_pic_img",@"burnPicture");
         }else{
-            [self.destructLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
-            self.destructPicture.image = RCResourceImage(@"from_burn_picture");
+            [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+            self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_pic_img", @"from_burn_picture");
         }
     }
 
@@ -420,7 +420,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseButton *)loadBackButton {
     if (!_loadBackButton) {
         _loadBackButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        _loadBackButton.backgroundColor = RGBCOLOR(216, 216, 216);
+        _loadBackButton.backgroundColor = RCDynamicColor(@"text_secondary_color", @"0xd8d8d8", @"0xd8d8d8");
         [_loadBackButton addTarget:self
                             action:@selector(didClickLoadBackButton:)
                   forControlEvents:(UIControlEventTouchUpInside)];
@@ -432,7 +432,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseImageView *)needLoadImageView {
     if (!_needLoadImageView) {
         _needLoadImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _needLoadImageView.image = RCResourceImage(@"gif_needload");
+        _needLoadImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_needload_img", @"gif_needload");
         _needLoadImageView.hidden = YES;
         _needLoadImageView.tag = 1;
         [self.loadBackButton addSubview:_needLoadImageView];
@@ -443,7 +443,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
         _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _loadingImageView.image = RCResourceImage(@"gif_loading");
+        _loadingImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_loading_img",@"gif_loading");
         _loadingImageView.hidden = YES;
         _loadingImageView.tag = 2;
         [self.loadBackButton addSubview:_loadingImageView];
@@ -454,7 +454,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (RCGIFMessageProgressView *)gifDownLoadPropressView {
     if (!_gifDownLoadPropressView) {
         _gifDownLoadPropressView = [[RCGIFMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 36, 36)];
-        _gifDownLoadPropressView.backgroundColor = [UIColor colorWithPatternImage:RCResourceImage(@"gif_loadprogress")];
+        _gifDownLoadPropressView.backgroundColor = [UIColor colorWithPatternImage:RCDynamicImage(@"conversation_msg_cell_gif_loadprogress_img",@"gif_loadprogress")];
         _gifDownLoadPropressView.tag = 3;
         _gifDownLoadPropressView.hidden = YES;
         [self.loadBackButton addSubview:_gifDownLoadPropressView];
@@ -466,7 +466,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     if (!_loadfailedImageView) {
         _loadfailedImageView =
             [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _loadfailedImageView.image = RCResourceImage(@"gif_loadfailed");
+        _loadfailedImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_loadfailed_img", @"gif_loadfailed");
         _loadfailedImageView.hidden = YES;
         _loadfailedImageView.tag = 4;
         [self.loadBackButton addSubview:_loadfailedImageView];
@@ -481,7 +481,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _sizeLabel.numberOfLines = 1;
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
         _sizeLabel.backgroundColor = [UIColor clearColor];
-        _sizeLabel.textColor = [UIColor whiteColor];
+        _sizeLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF");
         _sizeLabel.hidden = YES;
         [self.loadBackButton addSubview:_sizeLabel];
     }

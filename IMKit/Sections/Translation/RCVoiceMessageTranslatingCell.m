@@ -63,7 +63,7 @@
 
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
-    self.translationBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+    self.translationBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
     [self.indicatorView startAnimating];
 }
 

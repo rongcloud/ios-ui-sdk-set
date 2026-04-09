@@ -12,6 +12,7 @@
 #import "RCMessageModel+RRS.h"
 #import "RCConversationModel+RRS.h"
 #import "RCRRSDataContext.h"
+#import "RCRRSUtil.h"
 
 const NSInteger RCReadReceiptParamsMaxCount = 100;
 
@@ -29,17 +30,13 @@ const NSInteger RCReadReceiptParamsMaxCount = 100;
         if (![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(res.identifier.type)]) {
             continue;
         }
-        long readTime = 0;
-        if (res.users.count) {
-            RCReadReceiptUser *user = res.users.firstObject;
-            readTime = user.timestamp;
-        }
         for (RCConversationModel *model in self.dataList) {
             if ([model isMatching:res.identifier.type targetId:res.identifier.targetId]) {
-                if (model.lastestMessageDirection == MessageDirection_SEND &&
-                    model.sentTime <= readTime && model.sentStatus != SentStatus_READ) {
-                    model.sentStatus = SentStatus_READ;
-                    model.readReceiptCount = res.readCount;
+                if (model.lastestMessageDirection == MessageDirection_SEND
+                    && model.needReceipt
+                    && model.readReceiptInfoV5.readCount == 0) {
+                    model.readReceiptInfoV5 = [RCRRSUtil infoFromResponse:res];
+                    
                     RCConversationCellUpdateInfo *updateInfo =
                     [[RCConversationCellUpdateInfo alloc] init];
                     updateInfo.model = model;
@@ -109,6 +106,9 @@ const NSInteger RCReadReceiptParamsMaxCount = 100;
     NSMutableArray *array = [NSMutableArray array];
     for (RCConversationModel *model in conversations) {
         if ([model rrs_shouldFetchConversationReadReceipt]) {// 是否应该获取
+            if (model.readReceiptInfoV5.readCount > 0 && model.readReceiptInfoV5.unreadCount == 0) {
+                continue;
+            }
             RCMessageIdentifier *identifier = [model rrs_messageIdentifier];
             if (identifier) {
                 [array addObject:identifier];
@@ -135,10 +135,8 @@ const NSInteger RCReadReceiptParamsMaxCount = 100;
         }
         for (RCConversationModel *model in conversations) {// 先刷请求数据
             if ([model isMatching:res.identifier.type targetId:res.identifier.targetId]) {
-                if (model.lastestMessageDirection == MessageDirection_SEND &&
-                    model.sentStatus != SentStatus_READ) {
-                    model.sentStatus = SentStatus_READ;
-                    model.readReceiptCount = res.readCount;
+                if (model.lastestMessageDirection == MessageDirection_SEND) {
+                    model.readReceiptInfoV5 = res;
                 }
             }
         }
@@ -155,10 +153,8 @@ const NSInteger RCReadReceiptParamsMaxCount = 100;
                 continue;
             }
             if ([model isMatching:res.identifier.type targetId:res.identifier.targetId]) {// 处理不在请求列表中的数据
-                if (model.lastestMessageDirection == MessageDirection_SEND &&
-                    model.sentStatus != SentStatus_READ) {
-                    model.sentStatus = SentStatus_READ;
-                    model.readReceiptCount = res.readCount;
+                if (model.lastestMessageDirection == MessageDirection_SEND) {
+                    model.readReceiptInfoV5 = res;
                     RCConversationCellUpdateInfo *updateInfo =
                     [[RCConversationCellUpdateInfo alloc] init];
                     updateInfo.model = model;
@@ -172,4 +168,5 @@ const NSInteger RCReadReceiptParamsMaxCount = 100;
         }
     }
 }
+
 @end

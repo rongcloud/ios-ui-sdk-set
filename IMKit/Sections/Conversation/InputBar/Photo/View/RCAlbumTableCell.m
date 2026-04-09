@@ -13,8 +13,7 @@
 @implementation RCAlbumTableCell
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                          darkColor:HEXCOLOR(0x111111)];
+    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x111111");
     self.imageView.frame = CGRectMake(0, 0, 65, 65);
     self.imageView.center = CGPointMake(self.imageView.frame.size.width / 2, self.imageView.frame.size.height / 2);
     CGRect labelFrame = self.textLabel.frame;
@@ -37,19 +36,25 @@
 - (void)configCellWithItem:(RCAlbumModel *)model {
     self.imageView.clipsToBounds = YES;
     self.imageView.contentMode = UIViewContentModeScaleAspectFill;
-
+    UIColor *color = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
+    if (!color) {
+        color = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
+    }
     NSMutableAttributedString *nameString =
         [[NSMutableAttributedString alloc] initWithString:model.albumName
                                                attributes:@{
                                                    NSFontAttributeName : [[RCKitConfig defaultConfig].font fontOfSecondLevel],
-                                                   NSForegroundColorAttributeName : [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]]
+                                                   NSForegroundColorAttributeName :color
                                                }];
+    UIColor *foreColor = RCDynamicColor(@"disabled_color", @"0xD3D3D3", @"0x585858");
+    if (!foreColor) {
+        foreColor = [RCKitUtility generateDynamicColor:[UIColor lightGrayColor] darkColor:HEXCOLOR(0x585858)];
+    }
     NSAttributedString *countString = [[NSAttributedString alloc]
         initWithString:[NSString stringWithFormat:@"  (%ld)", model.count]
             attributes:@{
                 NSFontAttributeName : [[RCKitConfig defaultConfig].font fontOfSecondLevel],
-                NSForegroundColorAttributeName :
-                    [RCKitUtility generateDynamicColor:[UIColor lightGrayColor] darkColor:RCDYCOLOR(0x666666, 0x585858)]
+                NSForegroundColorAttributeName :foreColor
             }];
     [nameString appendAttributedString:countString];
     self.textLabel.attributedText = nameString;
