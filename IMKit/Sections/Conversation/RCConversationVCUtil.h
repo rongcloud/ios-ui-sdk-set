@@ -62,6 +62,27 @@
 //是否可以引用消息
 - (BOOL)canReferenceMessage:(RCMessageModel *)message;
 
+/// V2 引用回复开启时，将当前引用态附加到待发送消息上。
+- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message;
+
+/// IMKit 内部使用：根据消息 UId 批量查询消息。
++ (void)getMessagesByUIds:(nonnull NSArray<NSString *> *)messageUIds
+         conversationType:(RCConversationType)conversationType
+                 targetId:(nonnull NSString *)targetId
+                channelId:(nullable NSString *)channelId
+               completion:(nullable void (^)(NSArray<RCMessageResult *> *_Nonnull results, RCErrorCode code))completion;
+
+/// IMKit 内部使用：为一批消息批量加载 V2 引用消息，并回调需要刷新的消息 model。
++ (void)loadQuotedMessagesForModels:(nonnull NSArray<RCMessageModel *> *)models
+                          completion:(nullable void (^)(NSArray<RCMessageModel *> *_Nonnull reloadModels))completion;
+
+/// IMKit 内部使用：标记本地已知的 V2 被引用消息终态，避免再次触发 getMessagesByUIds 远端补拉。
++ (void)markQuoteMessageUIds:(nonnull NSArray<NSString *> *)messageUIds
+            conversationType:(RCConversationType)conversationType
+                    targetId:(nonnull NSString *)targetId
+                   channelId:(nullable NSString *)channelId
+                       status:(RCQuoteMessageStatus)status;
+
 
 /// 根据消息ID获取model
 /// - Parameter messageID
@@ -89,4 +110,3 @@
 - (void)clearEditingState;
 
 @end
-

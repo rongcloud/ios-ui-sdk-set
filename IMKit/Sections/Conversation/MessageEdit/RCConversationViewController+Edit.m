@@ -90,6 +90,13 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
     return self.editInputBarControl && self.editingInputBarConfig;
 }
 
+- (RCMessageContent *)edit_displayContentForEditedModel:(RCMessageModel *)model {
+    if (model.modifyInfo.content) {
+        return model.modifyInfo.content;
+    }
+    return model.content;
+}
+
 #pragma mark - 编辑控件管理
 
 - (void)edit_createEditBarControl {
@@ -531,9 +538,11 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
     if (!self.currentSelectedModel) {
         self.currentSelectedModel = model;
     }
+    RCMessageContent *displayContent = [self edit_displayContentForEditedModel:model];
+    model.content = displayContent;
     [self performOnMainThread: ^{
         self.referencingView.referModel = model;
-        self.referencingView.textLabel.text = [RCKitUtility formatMessage:model.content
+        self.referencingView.textLabel.text = [RCKitUtility formatMessage:displayContent
                                                                  targetId:model.targetId
                                                          conversationType:model.conversationType
                                                              isAllMessage:YES];
@@ -571,7 +580,7 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
         if (editInputBarControl) {
             // 只有状态为有修改时，才需要更新 content。删除和撤回时，引用消息会显示为已删除或已撤回。
             if (status == RCReferenceMessageStatusModified) {
-                refMessageContent.referMsg = referMessageModel.content;
+                refMessageContent.referMsg = [self edit_displayContentForEditedModel:referMessageModel];
             }
             refMessageContent.referMsgStatus = status;
             

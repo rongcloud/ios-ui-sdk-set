@@ -249,6 +249,11 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         RCLocationPickerViewController *picker = [[locationPickType alloc] init];
         picker.conversationType = self.conversationType;
         picker.targetId = self.targetId;
+        SEL locationPickerSelector = NSSelectorFromString(@"locationPicker:didSelectLocation:locationName:mapScreenShot:");
+        if ([self.delegate respondsToSelector:locationPickerSelector] &&
+            [picker respondsToSelector:@selector(setDelegate:)]) {
+            [(id)picker setDelegate:(id)self.delegate];
+        }
         RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:picker];
         [self.delegate presentViewController:rootVC functionTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
     }

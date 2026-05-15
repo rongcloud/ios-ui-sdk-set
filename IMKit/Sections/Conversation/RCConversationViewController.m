@@ -60,6 +60,7 @@
 #import "RCVoiceMessageTranslatingCell.h"
 #import "RCLocationViewController+imkit.h"
 #import "RCLocationMessage+imkit.h"
+#import "RCReferencedContentView.h"
 #import "RCSemanticContext.h"
 #import "RCIMThreadLock.h"
 #import "RCStreamMessageCell.h"
@@ -799,7 +800,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                                              selector:@selector(onMessagesModifiedNotification:)
                                                  name:RCKitDispatchMessagesModifiedNotification
                                                object:nil];
-    
+     
     // 注册在线状态变化通知
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onUserOnlineStatusChanged:)
@@ -1574,6 +1575,38 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
+- (void)locationPicker:(id)locationPicker
+     didSelectLocation:(CLLocationCoordinate2D)location
+          locationName:(NSString *)locationName
+         mapScreenShot:(UIImage *)mapScreenShot {
+    Class locationMessageClass = NSClassFromString(@"RCLocationMessage");
+    SEL selector = NSSelectorFromString(@"messageWithLocationImage:location:locationName:");
+    if (!locationMessageClass || ![locationMessageClass respondsToSelector:selector]) {
+        return;
+    }
+
+    NSMethodSignature *signature = [locationMessageClass methodSignatureForSelector:selector];
+    if (!signature) {
+        return;
+    }
+
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+    invocation.target = locationMessageClass;
+    invocation.selector = selector;
+    UIImage *locationImage = mapScreenShot;
+    NSString *safeLocationName = locationName ?: @"";
+    [invocation setArgument:&locationImage atIndex:2];
+    [invocation setArgument:&location atIndex:3];
+    [invocation setArgument:&safeLocationName atIndex:4];
+    [invocation invoke];
+
+    __unsafe_unretained RCMessageContent *tmpMessage = nil;
+    [invocation getReturnValue:&tmpMessage];
+    RCMessageContent *locationMessage = tmpMessage;
+    if (locationMessage) {
+        [self sendMessage:locationMessage pushContent:nil];
+    }
+}
 
 - (void)presentFilePreviewViewController:(RCMessageModel *)model {
     RCFilePreviewViewController *fileViewController = [[RCFilePreviewViewController alloc] init];
@@ -1606,6 +1639,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self.util doSendMessage:messageContent pushContent:pushContent];
 }
 
+- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message {
+    return [self.util applyQuoteInfoIfActiveToMessage:message];
+}
+
 - (void)sendMediaMessage:(RCMessageContent *)messageContent
              pushContent:(NSString *)pushContent
                appUpload:(BOOL)appUpload {
@@ -1613,17 +1650,25 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [self sendMessage:messageContent pushContent:pushContent];
         return;
     }
+    messageContent = [self willSendMessage:messageContent];
+    if (messageContent == nil) {
+        return;
+    }
     __weak typeof(self) ws = self;
     RCConversationType conversationType = self.conversationType;
     NSString *targetId = [self.targetId copy];
-    [[RCCoreClient sharedCoreClient] sendMediaMessage:conversationType
-                                             targetId:targetId
-                                              content:messageContent
+    RCMessage *message = [[RCMessage alloc] initWithType:conversationType
+                                                targetId:targetId
+                                               channelId:self.channelId
+                                               direction:MessageDirection_SEND
+                                                 content:messageContent];
+    [self applyQuoteInfoIfActiveToMessage:message];
+    [[RCCoreClient sharedCoreClient] sendMediaMessage:message
                                           pushContent:pushContent
                                              pushData:@""
-                                             attached:^(RCMessage * _Nullable message) {
+                                             attached:^(RCMessage * _Nullable attachedMessage) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"RCKitSendingMessageNotification"
-                                                            object:message
+                                                            object:attachedMessage
                                                           userInfo:nil];
     }uploadPrepare:^(RCUploadMediaStatusListener *uploadListener) {
         [ws uploadMedia:uploadListener.currentMessage uploadListener:uploadListener];
@@ -3629,7 +3674,28 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if ([self disableReferencedPreview:messageModel]) {
         return;
     }
-    
+
+    if (![messageModel.content isKindOfClass:[RCReferenceMessage class]] &&
+        messageModel.quoteInfo.messageUId.length > 0) {
+        NSString *messageUId = [messageModel.quoteInfo.messageUId copy];
+        [[RCCoreClient sharedCoreClient] getMessageByUId:messageUId completion:^(RCMessage * _Nullable message) {
+            // 与 v1 保持一致：消息不存在、已删除或已撤回时，引用卡片已展示对应状态文案，
+            // 点击不做任何跳转（同 disableReferencedPreview 的行为）
+            if (!message || message.messageId == 0 ||
+                [message.content isKindOfClass:[RCRecallNotificationMessage class]]) {
+                return;
+            }
+            RCMessageModel *referenceModel = [RCMessageModel modelWithMessage:message];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self p_previewReferenceContentWithModel:referenceModel];
+            });
+        }];
+        return;
+    }
+    [self p_previewReferenceContentWithModel:messageModel];
+}
+
+- (void)p_previewReferenceContentWithModel:(RCMessageModel *)messageModel {
     RCMessageContent *msgContent = messageModel.content;
     if ([messageModel.content isKindOfClass:[RCReferenceMessage class]]) {
         RCReferenceMessage *refer = (RCReferenceMessage *)messageModel.content;
@@ -3677,9 +3743,14 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         UIButton *recordBtn = (UIButton *)self.chatSessionInputBarControl.recordButton;
         UIButton *emojiBtn = (UIButton *)self.chatSessionInputBarControl.emojiButton;
         UIButton *additionalBtn = (UIButton *)self.chatSessionInputBarControl.additionalButton;
-        //文本输入或者表情输入状态下，才可以发送引用消息
-        if ((recordBtn.hidden || emojiBtn.state == UIControlStateHighlighted) &&
-            additionalBtn.state == UIControlStateNormal) {
+        BOOL shouldKeepReferencingView = RCKitConfigCenter.message.enableQuoteV2;
+        if (!shouldKeepReferencingView) {
+            // V1 仅支持文本引用，切换到语音/扩展面板后保持原有清空行为。
+            shouldKeepReferencingView =
+                (recordBtn.hidden || emojiBtn.state == UIControlStateHighlighted) &&
+                additionalBtn.state == UIControlStateNormal;
+        }
+        if (shouldKeepReferencingView) {
             [self.referencingView setOffsetY:CGRectGetMinY(self.chatSessionInputBarControl.frame) -
                                              self.referencingView.frame.size.height];
 
@@ -3711,18 +3782,63 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (BOOL)sendReferenceMessage:(NSString *)content {
-    if (self.referencingView.referModel) {
+    RCReferencingView *referencingView = self.referencingView;
+    RCMessageModel *referModel = referencingView.referModel;
+    if (referModel) {
+        if (RCKitConfigCenter.message.enableQuoteV2) {
+            NSString *messageUId = [referModel.messageUId copy];
+            NSString *targetId = [self.targetId copy];
+            NSString *channelId = [self.channelId copy];
+            NSString *textContent = [content copy] ?: @"";
+            RCMentionedInfo *mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
+            __weak typeof(self) weakSelf = self;
+            __block BOOL didSend = NO;
+            [[RCChannelClient sharedChannelManager] getBatchLocalMessages:self.conversationType
+                                                                  targetId:targetId
+                                                                 channelId:channelId
+                                                               messageUIDs:@[ messageUId ?: @"" ]
+                                                                   success:^(NSArray<RCMessage *> *messages,
+                                                                             NSArray<NSString *> *mismatch) {
+                dispatch_main_async_safe(^{
+                    __strong typeof(weakSelf) strongSelf = weakSelf;
+                    if (!strongSelf || didSend) {
+                        return;
+                    }
+                    if (referencingView != strongSelf.referencingView ||
+                        ![strongSelf.referencingView.referModel.messageUId isEqualToString:messageUId]) {
+                        return;
+                    }
+                    RCMessage *quotedMessage = nil;
+                    for (RCMessage *message in messages) {
+                        if ([message.messageUId isEqualToString:messageUId]) {
+                            quotedMessage = message;
+                            break;
+                        }
+                    }
+                    if (quotedMessage.messageId <= 0 || !quotedMessage.content) {
+                        return;
+                    }
+                    didSend = YES;
+                    RCTextMessage *messageContent = [RCTextMessage messageWithContent:textContent];
+                    messageContent.mentionedInfo = mentionedInfo;
+                    [strongSelf sendMessage:messageContent pushContent:nil];
+                    // 与 v1 保持一致，显式 dismiss 引用视图，不依赖 applyQuoteInfoIfActiveToMessage 内的异步 dismiss
+                    [strongSelf dismissReferencingView:referencingView];
+                });
+            } error:nil];
+            return YES;
+        }
         RCReferenceMessage *reference = [[RCReferenceMessage alloc] init];
         reference.content = content;
-        reference.referMsg = self.referencingView.referModel.content;
-        reference.referMsgUserId = self.referencingView.referModel.senderUserId;
+        reference.referMsg = referModel.content;
+        reference.referMsgUserId = referModel.senderUserId;
         reference.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
-        reference.referMsgUid = self.referencingView.referModel.messageUId;
-        if (self.referencingView.referModel.hasChanged) {
+        reference.referMsgUid = referModel.messageUId;
+        if (referModel.hasChanged) {
             [reference setValue:@(RCReferenceMessageStatusModified) forKey:@"referMsgStatus"];
         }
         [self sendMessage:reference pushContent:nil];
-        [self dismissReferencingView:self.referencingView];
+        [self dismissReferencingView:referencingView];
         return YES;
     }
     return NO;

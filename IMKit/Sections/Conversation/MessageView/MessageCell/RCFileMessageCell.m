@@ -12,13 +12,84 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
+#import "RCReferencedContentView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 #define FILE_CONTENT_HEIGHT 69.f
+#define FILE_CONTENT_MIN_WIDTH 180.f
+#define FILE_QUOTE_CONTENT_HEIGHT 50.f
+#define QUOTE_CARD_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_TOP_SPACING 6
+#define QUOTE_DIVIDER_HEIGHT 1
+#define QUOTE_DIVIDER_BOTTOM_SPACING 10
+#define QUOTE_BODY_BOTTOM_SPACING 10
+#define FILE_CONTENT_HORIZONTAL_INSET 12
+#define FILE_ICON_SIZE 48
+#define FILE_ICON_TEXT_SPACING 10
+#define FILE_QUOTE_CONTENT_HORIZONTAL_INSET 8
+#define FILE_QUOTE_ICON_SIZE 32
+#define FILE_QUOTE_ICON_TEXT_SPACING 8
+#define FILE_QUOTE_NAME_TOP 7
+#define FILE_QUOTE_BOTTOM_INSET 7
+#define FILE_QUOTE_SIZE_HEIGHT 15
+
+static CGFloat RCFileMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
+    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
+    return RCQuoteCardTopMargin + cardHeight;
+}
+
+static CGFloat RCFileMessageQuoteBodyTopSpacing(void) {
+    return QUOTE_DIVIDER_TOP_SPACING + QUOTE_DIVIDER_HEIGHT + QUOTE_DIVIDER_BOTTOM_SPACING;
+}
+
+static CGFloat RCFileMessageBodyCardWidth(RCMessageModel *model, CGFloat maxWidth) {
+    if (maxWidth <= 0) {
+        return 0;
+    }
+    RCFileMessage *fileMessage = [model.content isKindOfClass:[RCFileMessage class]] ? (RCFileMessage *)model.content : nil;
+    CGFloat maxTextWidth = MAX(maxWidth - FILE_QUOTE_CONTENT_HORIZONTAL_INSET * 2 -
+                               FILE_QUOTE_ICON_SIZE - FILE_QUOTE_ICON_TEXT_SPACING, 0);
+    NSString *fileName = fileMessage.name ?: @"";
+    NSString *fileSize = fileMessage ? [RCKitUtility getReadableStringForFileSize:fileMessage.size] : @"";
+    CGSize nameSize = [RCKitUtility getTextDrawingSize:fileName
+                                                  font:[[RCKitConfig defaultConfig].font fontOfGuideLevel]
+                                       constrainedSize:CGSizeMake(CGFLOAT_MAX, FILE_CONTENT_HEIGHT)];
+    CGSize sizeSize = [RCKitUtility getTextDrawingSize:fileSize
+                                                  font:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]
+                                       constrainedSize:CGSizeMake(CGFLOAT_MAX, FILE_CONTENT_HEIGHT)];
+    CGFloat textWidth = MIN(MAX(ceilf(nameSize.width), ceilf(sizeSize.width)), maxTextWidth);
+    CGFloat width = FILE_QUOTE_CONTENT_HORIZONTAL_INSET * 2 + FILE_QUOTE_ICON_SIZE +
+                    FILE_QUOTE_ICON_TEXT_SPACING + textWidth;
+    return MIN(MAX(width, MIN(FILE_CONTENT_MIN_WIDTH, maxWidth)), maxWidth);
+}
+
+static CGFloat RCFileMessageQuoteBubbleWidth(RCMessageModel *model) {
+    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat maxContentWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model
+                                                                               maxWidth:maxContentWidth];
+    CGFloat fileCardWidth = RCFileMessageBodyCardWidth(model, maxContentWidth);
+    CGFloat contentWidth = MAX(quoteCardSize.width, fileCardWidth);
+    return MIN(contentWidth + QUOTE_CARD_HORIZONTAL_INSET * 2, maxBubbleWidth);
+}
+
+static UIImage *RCFileMessageResizableBubbleImage(UIImage *image) {
+    if (!image) {
+        return nil;
+    }
+    CGFloat halfWidth = image.size.width * 0.5;
+    CGFloat halfHeight = image.size.height * 0.5;
+    return [image resizableImageWithCapInsets:UIEdgeInsetsMake(halfHeight, halfWidth, halfHeight, halfWidth)];
+}
 
 @interface RCFileMessageCell ()
 
 @property (nonatomic, strong) NSMutableArray *messageContentConstraint;
+@property (nonatomic, strong) NSMutableArray *layoutConstraints;
+@property (nonatomic, strong) UIView *quoteDividerView;
+@property (nonatomic, strong) UIView *fileContainerView;
 
 @end
 
@@ -47,10 +118,15 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
-    CGFloat __messagecontentview_height = FILE_CONTENT_HEIGHT;
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:model];
+    CGFloat __messagecontentview_height = showsQuoteCard ? FILE_QUOTE_CONTENT_HEIGHT : FILE_CONTENT_HEIGHT;
 
     if (__messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
         __messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
+    }
+    // 有引用卡片时增加内容体与卡片之间的间距
+    if (showsQuoteCard) {
+        __messagecontentview_height += RCFileMessageQuoteBodyTopSpacing() + QUOTE_BODY_BOTTOM_SPACING;
     }
     __messagecontentview_height += extraHeight;
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
@@ -63,6 +139,21 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.sizeLabel.text = [RCKitUtility getReadableStringForFileSize:fileMessage.size];
     self.typeIconView.image = [RCKitUtility imageWithFileSuffix:fileMessage.type];
     [self setAutoLayout];
+}
+
+- (UIImage *)getDefaultMessageCellBackgroundImage {
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+    if (self.model.messageDirection == MessageDirection_SEND && showsQuoteCard) {
+        UIImage *bubbleImage = RCDynamicImage(@"conversation_msg_cell_bg_to_img", @"chat_to_bg_normal");
+        if (bubbleImage.imageAsset) {
+            bubbleImage = [bubbleImage.imageAsset imageWithTraitCollection:self.traitCollection];
+        }
+        if ([RCKitUtility isRTL]) {
+            bubbleImage = [bubbleImage imageFlippedForRightToLeftLayoutDirection];
+        }
+        return RCFileMessageResizableBubbleImage(bubbleImage);
+    }
+    return [super getDefaultMessageCellBackgroundImage];
 }
 
 - (void)updateStatusContentView:(RCMessageModel *)model {
@@ -127,15 +218,23 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (void)initialize {
     self.messageContentConstraint = [[NSMutableArray alloc] init];
+    self.layoutConstraints = [[NSMutableArray alloc] init];
 
     [self showBubbleBackgroundView:YES];
-    [self.messageContentView addSubview:self.nameLabel];
-    [self.messageContentView addSubview:self.sizeLabel];
-    [self.messageContentView addSubview:self.typeIconView];
+    [self.messageContentView addSubview:self.fileContainerView];
+    [self.fileContainerView addSubview:self.nameLabel];
+    [self.fileContainerView addSubview:self.sizeLabel];
+    [self.fileContainerView addSubview:self.typeIconView];
     [self.typeIconView addSubview:self.progressView];
-    [self.messageContentView addSubview:self.cancelLabel];
+    [self.fileContainerView addSubview:self.cancelLabel];
 
-    [self updateBubbleBackgroundViewConstraints];
+    // 引用卡片与文件内容之间的分隔线
+    self.quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0x3a3a3a");
+    self.quoteDividerView.hidden = YES;
+    [self.messageContentView addSubview:self.quoteDividerView];
+
+    [self updateBubbleBackgroundViewConstraintsWithTopInset:10];
     self.messageActivityIndicatorView.hidden = YES;
     
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -147,7 +246,40 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 - (void)setAutoLayout {
     self.cancelSendButton.hidden = YES;
     self.cancelLabel.hidden = YES;
-    self.messageContentView.contentSize = CGSizeMake([RCMessageCellTool getMessageContentViewMaxWidth], FILE_CONTENT_HEIGHT);
+
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+    CGFloat bubbleWidth = showsQuoteCard ? RCFileMessageQuoteBubbleWidth(self.model) : [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat quoteOffset = showsQuoteCard ? RCFileMessageQuoteContentOffset(self.model, bubbleWidth) : 0;
+    CGFloat bodyOffset = showsQuoteCard ? RCFileMessageQuoteBodyTopSpacing() : 0;
+    CGFloat bottomOffset = showsQuoteCard ? QUOTE_BODY_BOTTOM_SPACING : 0;
+    CGFloat fileBodyHeight = showsQuoteCard ? FILE_QUOTE_CONTENT_HEIGHT : FILE_CONTENT_HEIGHT;
+    CGFloat contentHeight = fileBodyHeight + quoteOffset + bodyOffset + bottomOffset;
+    CGFloat fileContainerX = showsQuoteCard ? FILE_CONTENT_HORIZONTAL_INSET : 0;
+    CGFloat fileContainerWidth = showsQuoteCard ? MAX(bubbleWidth - FILE_CONTENT_HORIZONTAL_INSET * 2, 0) : bubbleWidth;
+
+    self.messageContentView.contentSize = CGSizeMake(bubbleWidth, contentHeight);
+    self.fileContainerView.frame = CGRectMake(fileContainerX,
+                                              quoteOffset + bodyOffset,
+                                              fileContainerWidth,
+                                              fileBodyHeight);
+    [self updateFileContainerStyleForQuote:showsQuoteCard];
+
+    // 根据引用卡片偏移重建内容约束
+    [self updateBubbleBackgroundViewConstraintsWithTopInset:10];
+
+    // 分隔线
+    self.quoteDividerView.hidden = !showsQuoteCard;
+    if (showsQuoteCard) {
+        CGFloat dividerWidth = MAX(bubbleWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
+        self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
+                                                  quoteOffset + QUOTE_DIVIDER_TOP_SPACING,
+                                                  dividerWidth,
+                                                  QUOTE_DIVIDER_HEIGHT);
+        [self.messageContentView bringSubviewToFront:self.quoteDividerView];
+    } else {
+        self.quoteDividerView.frame = CGRectZero;
+    }
+
     if (MessageDirection_RECEIVE == self.messageDirection) {
         self.progressView.hidden = YES;
     } else {
@@ -194,68 +326,107 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     });
 }
 
-- (void)updateBubbleBackgroundViewConstraints{
+/// 重建文件内容子视图的约束，topInset 控制距文件卡片顶部的偏移
+- (void)updateBubbleBackgroundViewConstraintsWithTopInset:(CGFloat)topInset {
+    // 移除旧约束
+    if (self.layoutConstraints.count > 0) {
+        [self.fileContainerView removeConstraints:self.layoutConstraints];
+        [self.layoutConstraints removeAllObjects];
+    }
+    if (self.messageContentConstraint.count > 0) {
+        [self.fileContainerView removeConstraints:self.messageContentConstraint];
+        [self.messageContentConstraint removeAllObjects];
+    }
+
     self.nameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.sizeLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.typeIconView.translatesAutoresizingMaskIntoConstraints = NO;
     self.cancelSendButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.cancelLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     [self displayCancelButton];
-    
-    
+
     NSDictionary *views = NSDictionaryOfVariableBindings(_nameLabel, _sizeLabel, _typeIconView);
-    [self.messageContentView
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-10-[_typeIconView(48)]"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
-    [self.messageContentView
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-12-[_typeIconView(48)]-10-[_nameLabel]-12-|"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
-    [self.messageContentView
-     
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-10-[_typeIconView(48)]"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
- 
-    [self.messageContentView
-     
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-12-[_typeIconView(48)]-10-[_nameLabel]-12-|"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
-    [self.messageContentView
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-10-[_nameLabel]-(>=0)-[_sizeLabel(13)]-10-|"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
-    [self.messageContentView
-     addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_typeIconView]-12-[_sizeLabel]"
-                                                            options:0
-                                                            metrics:nil
-                                                              views:views]];
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+    CGFloat iconSize = showsQuoteCard ? FILE_QUOTE_ICON_SIZE : FILE_ICON_SIZE;
+    CGFloat iconTop = showsQuoteCard ? (FILE_QUOTE_CONTENT_HEIGHT - FILE_QUOTE_ICON_SIZE) / 2.0 : topInset;
+    CGFloat iconTextSpacing = showsQuoteCard ? FILE_QUOTE_ICON_TEXT_SPACING : FILE_ICON_TEXT_SPACING;
+    CGFloat horizontalInset = showsQuoteCard ? FILE_QUOTE_CONTENT_HORIZONTAL_INSET : FILE_CONTENT_HORIZONTAL_INSET;
+    CGFloat nameTop = showsQuoteCard ? FILE_QUOTE_NAME_TOP : topInset;
+    CGFloat bottomInset = showsQuoteCard ? FILE_QUOTE_BOTTOM_INSET : 10;
+    CGFloat sizeHeight = showsQuoteCard ? FILE_QUOTE_SIZE_HEIGHT : 13;
+    NSDictionary *metrics = @{
+        @"iconTop": @(iconTop),
+        @"nameTop": @(nameTop),
+        @"bottom": @(bottomInset),
+        @"iconSize": @(iconSize),
+        @"sizeHeight": @(sizeHeight),
+        @"left": @(horizontalInset),
+        @"right": @(horizontalInset),
+        @"spacing": @(iconTextSpacing)
+    };
+    self.progressView.frame = CGRectMake(-10, -10, iconSize + 20, iconSize + 20);
+
+    NSArray *c1 = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-iconTop-[_typeIconView(iconSize)]"
+                                                          options:0
+                                                          metrics:metrics
+                                                            views:views];
+    NSArray *c2 = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-left-[_typeIconView(iconSize)]-spacing-[_nameLabel]-right-|"
+                                                          options:0
+                                                          metrics:metrics
+                                                            views:views];
+    NSArray *c3 = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-nameTop-[_nameLabel]-(>=0)-[_sizeLabel(sizeHeight)]-bottom-|"
+                                                          options:0
+                                                          metrics:metrics
+                                                            views:views];
+    NSArray *c4 = [NSLayoutConstraint constraintsWithVisualFormat:@"H:[_typeIconView]-spacing-[_sizeLabel]"
+                                                          options:0
+                                                          metrics:metrics
+                                                            views:views];
+
+    [self.layoutConstraints addObjectsFromArray:c1];
+    [self.layoutConstraints addObjectsFromArray:c2];
+    [self.layoutConstraints addObjectsFromArray:c3];
+    [self.layoutConstraints addObjectsFromArray:c4];
+    [self.fileContainerView addConstraints:self.layoutConstraints];
+}
+
+- (void)updateFileContainerStyleForQuote:(BOOL)showsQuoteCard {
+    if (showsQuoteCard) {
+        self.fileContainerView.backgroundColor = RCDynamicColor(@"file_quote_card_background", @"0xffffff", @"0x1f1f1f");
+        self.fileContainerView.layer.cornerRadius = 6;
+        self.fileContainerView.layer.borderWidth = 0.5;
+        self.fileContainerView.layer.borderColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0x3a3a3a").CGColor;
+        self.fileContainerView.layer.masksToBounds = YES;
+    } else {
+        self.fileContainerView.backgroundColor = UIColor.clearColor;
+        self.fileContainerView.layer.cornerRadius = 0;
+        self.fileContainerView.layer.borderWidth = 0;
+        self.fileContainerView.layer.borderColor = UIColor.clearColor.CGColor;
+        self.fileContainerView.layer.masksToBounds = NO;
+    }
+}
+
+- (BOOL)usesTopQuoteCardLayout {
+    return YES;
 }
 
 - (void)displayCancelLabel {
-    [self.messageContentView addSubview:self.cancelLabel];
+    [self.fileContainerView addSubview:self.cancelLabel];
     [self.messageContentConstraint
         addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[_cancelLabel]-16.5-|"
                                                                     options:0
                                                                     metrics:nil
                                                                       views:NSDictionaryOfVariableBindings(
                                                                                 _nameLabel, _sizeLabel, _typeIconView, _cancelLabel)]];
-    [self.messageContentView addConstraint:[NSLayoutConstraint constraintWithItem:_cancelLabel
+    [self.messageContentConstraint addObject:[NSLayoutConstraint constraintWithItem:_cancelLabel
                                                                           attribute:NSLayoutAttributeCenterY
                                                                           relatedBy:NSLayoutRelationEqual
                                                                              toItem:self.sizeLabel
                                                                           attribute:NSLayoutAttributeCenterY
                                                                          multiplier:1
                                                                            constant:0]];
-    [self.messageContentView addConstraints:self.messageContentConstraint];
+    [self.fileContainerView addConstraints:self.messageContentConstraint];
     self.cancelLabel.hidden = NO;
 }
 
@@ -355,5 +526,12 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         _cancelLabel.hidden = YES;
     }
     return _cancelLabel;
+}
+
+- (UIView *)fileContainerView {
+    if (!_fileContainerView) {
+        _fileContainerView = [[UIView alloc] initWithFrame:CGRectZero];
+    }
+    return _fileContainerView;
 }
 @end

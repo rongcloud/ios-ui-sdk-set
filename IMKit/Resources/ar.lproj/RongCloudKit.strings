@@ -494,6 +494,8 @@
 "MessageEdited"="تم تحريره";
 "ReferencedMessageDeleted"="تم حذف هذه الرسالة";
 "ReferencedMessageRecalled"="تم سحب هذه الرسالة";
+"ReferencedMessageLoading"="loading...";
+"ReferencedMessageLoadFailed"="Message failed to load.";
 "MessageEditNotExist"="الرسالة السحابية غير موجودة ولا يمكن تحريرها.";
 "MessageEditContentSensitive"="يحتوي المحتوى المحرر على معلومات حساسة، وفشل التحديث.";
 "MessageEditExpiredToast"="تجاوز وقت التحرير الفعلي ولا يمكن تحريره";

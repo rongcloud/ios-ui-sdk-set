@@ -10,6 +10,19 @@
 #import <RongIMLibCore/RongIMLibCore.h>
 #import "RCKitCommonDefine.h"
 
+static NSArray<NSString *> *RCDefaultQuoteMessageTypeWhiteList(void) {
+    return @[
+        @"RC:TxtMsg",
+        @"RC:ImgMsg",
+        RCGIFMessageTypeIdentifier,
+        @"RC:SightMsg",
+        @"RC:VcMsg",
+        @"RC:HQVCMsg",
+        @"RC:FileMsg",
+        @"RC:LBSMsg"
+    ];
+}
+
 @implementation RCKitMessageConf
 - (instancetype)init
 {
@@ -35,11 +48,17 @@
         self.enableDestructMessage = NO;
         self.reeditDuration = 300;
         self.enableMessageReference = YES;
+        self.enableQuoteV2 = NO;
+        self.quoteMessageTypeWhiteList = RCDefaultQuoteMessageTypeWhiteList();
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
         self.enableEditMessage = NO;
     }
     return self;
+}
+
+- (void)setQuoteMessageTypeWhiteList:(NSArray<NSString *> *)quoteMessageTypeWhiteList {
+    _quoteMessageTypeWhiteList = [quoteMessageTypeWhiteList copy] ?: RCDefaultQuoteMessageTypeWhiteList();
 }
 
 - (void)setDisableMessageAlertSound:(BOOL)disableMessageAlertSound {

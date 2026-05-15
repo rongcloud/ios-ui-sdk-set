@@ -481,8 +481,10 @@
 "MessageEditFailed"="更新失败，点击重试";
 "MessageEditRetryFailed"="重试失败，请稍后再试！";
 "MessageEdited"="已编辑";
+"ReferencedMessageLoading"="消息加载中...";
 "ReferencedMessageDeleted"="此消息已删除";
 "ReferencedMessageRecalled"="此消息已撤回";
+"ReferencedMessageLoadFailed"="消息获取失败";
 "MessageEditNotExist"="云端消息不存在，无法编辑";
 "MessageEditContentSensitive"="编辑内容含有敏感信息，更新失败";
 "MessageEditExpiredToast"="超过有效编辑时间，无法编辑";

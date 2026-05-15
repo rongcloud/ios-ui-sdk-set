@@ -17,12 +17,61 @@
 #import "RCCoreClient+Destructing.h"
 #import "RCMessageModel+Txt.h"
 #import "RCBaseButton.h"
+#import "RCReferencedContentView.h"
 #define TEXT_SPACE_LEFT 12
 #define TEXT_SPACE_RIGHT 12
 #define TEXT_SPACE_TOP 9.5
 #define TEXT_SPACE_BOTTOM 9.5
 #define DESTRUCT_TEXT_ICON_WIDTH 13
 #define DESTRUCT_TEXT_ICON_HEIGHT 28
+#define QUOTE_CARD_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_TOP_SPACING 6
+#define QUOTE_DIVIDER_HEIGHT 1
+#define QUOTE_DIVIDER_BOTTOM_SPACING 10
+#define QUOTE_BODY_BOTTOM_PADDING 10
+#define QUOTE_BODY_TRAILING_PADDING 14
+#define QUOTE_TEXT_HORIZONTAL_PADDING 26
+
+static CGFloat RCComplexTextMessageQuoteMaxBubbleWidth(void) {
+    return MAX([RCMessageCellTool getMessageContentViewMaxWidth], 0);
+}
+
+static CGFloat RCComplexTextMessageQuoteMaxTextWidth(void) {
+    return MAX(RCComplexTextMessageQuoteMaxBubbleWidth() - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
+}
+
+static CGFloat RCComplexTextMessageQuoteTextWidth(CGFloat bubbleWidth) {
+    return MAX(bubbleWidth - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
+}
+
+static CGFloat RCComplexTextMessageQuoteBubbleWidth(RCMessageModel *model, CGSize labelSize) {
+    CGFloat maxBubbleWidth = RCComplexTextMessageQuoteMaxBubbleWidth();
+    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
+    CGFloat quoteWidth = quoteCardSize.width + QUOTE_CARD_HORIZONTAL_INSET * 2;
+    CGFloat textWidth = labelSize.width + QUOTE_TEXT_HORIZONTAL_PADDING;
+    return MIN(MAX(quoteWidth, textWidth), maxBubbleWidth);
+}
+
+static CGFloat RCComplexTextMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
+    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
+    return RCQuoteCardTopMargin + cardHeight;
+}
+
+static CGFloat RCComplexTextMessageQuoteBodyTopSpacing(void) {
+    return QUOTE_DIVIDER_TOP_SPACING + QUOTE_DIVIDER_HEIGHT + QUOTE_DIVIDER_BOTTOM_SPACING;
+}
+
+static CGFloat RCComplexTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelSize) {
+    CGFloat bodyHeight = RCComplexTextMessageQuoteBodyTopSpacing() + labelSize.height + QUOTE_BODY_BOTTOM_PADDING;
+    if ([model isKindOfClass:[RCCustomerServiceMessageModel class]] &&
+        [((RCCustomerServiceMessageModel *)model) isNeedEvaluateArea]) {
+        bodyHeight += 25;
+    }
+    return bodyHeight;
+}
 
 NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellIdentifier";
 
@@ -31,8 +80,11 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 @property (nonatomic, strong) RCBaseButton *acceptBtn;
 @property (nonatomic, strong) RCBaseButton *rejectBtn;
 @property (nonatomic, strong) UIView *separateLine;
+@property (nonatomic, strong) UIView *quoteDividerView;
 @property (nonatomic, strong) RCBaseImageView *destructTextImage;
 @property (nonatomic, strong) UILabel *tipLablel;
++ (CGSize)getQuoteTextSize:(RCMessageModel *)model;
++ (CGSize)getTextSize:(RCMessageModel *)model maxWidth:(CGFloat)textMaxWidth;
 @end
 
 @implementation RCComplexTextMessageCell
@@ -64,7 +116,21 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:model];
     CGFloat __messagecontentview_height = [self getMessageContentHeight:model];
+    if (showsQuoteCard) {
+        CGSize labelSize = [self getQuoteTextSize:model];
+        CGFloat bubbleWidth = RCComplexTextMessageQuoteBubbleWidth(model, labelSize);
+        CGFloat quoteOffset = RCComplexTextMessageQuoteContentOffset(model, bubbleWidth);
+        __messagecontentview_height = quoteOffset + RCComplexTextMessageQuoteBodyHeight(model, labelSize);
+        // 文本消息使用 top layout，引用卡片高度已包含在上方计算中；
+        // 但 referenceExtraHeight: 对所有消息统一追加了 quoteCardHeight + RCQuoteCardTopMargin，
+        // 需扣除以避免重复计算导致气泡下方出现大面积空白
+        CGFloat duplicatedCardHeight =
+            [RCReferencedContentView quoteCardHeightForMessageModel:model
+                                                           maxWidth:[RCMessageCellTool getMessageContentViewMaxWidth]];
+        extraHeight -= (duplicatedCardHeight + RCQuoteCardTopMargin);
+    }
     __messagecontentview_height += extraHeight;
 
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
@@ -100,31 +166,57 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 - (void)initialize {
     [self showBubbleBackgroundView:YES];
     [self.messageContentView addSubview:self.contentAyncLab];
+    [self.messageContentView addSubview:self.quoteDividerView];
     [self.messageContentView addSubview:self.destructTextImage];
 }
 
 
 - (void)setAutoLayout {
-    CGSize labelSize = [[self class] getTextSize:self.model];//textlabelsize
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+    CGSize labelSize = showsQuoteCard ? [[self class] getQuoteTextSize:self.model] : [[self class] getTextSize:self.model];
     
     float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
     CGFloat bubbleHeight = [[self class] getMessageContentHeight:self.model];
+    CGFloat quoteBubbleWidth = showsQuoteCard ? RCComplexTextMessageQuoteBubbleWidth(self.model, labelSize) : 0;
+    CGFloat quoteOffset = showsQuoteCard ? RCComplexTextMessageQuoteContentOffset(self.model, quoteBubbleWidth) : 0;
     CGFloat bubbleWidth = labelSize.width + TEXT_SPACE_RIGHT + TEXT_SPACE_LEFT;
+    CGFloat contentHeight = bubbleHeight + quoteOffset;
+    CGFloat textOriginY = quoteOffset + (bubbleHeight - labelSize.height) / 2;
     if (bubbleWidth >= maxWidth) {
         bubbleWidth = maxWidth;
     }
+    if (showsQuoteCard) {
+        bubbleWidth = quoteBubbleWidth;
+        contentHeight = quoteOffset + RCComplexTextMessageQuoteBodyHeight(self.model, labelSize);
+        textOriginY = quoteOffset + RCComplexTextMessageQuoteBodyTopSpacing();
+    }
     
-    [self setCSEvaUILayout:bubbleWidth bubbleHeight:bubbleHeight];
+    [self setCSEvaUILayout:bubbleWidth bubbleHeight:contentHeight];
 
-    self.messageContentView.contentSize = CGSizeMake(bubbleWidth, bubbleHeight);
+    self.messageContentView.contentSize = CGSizeMake(bubbleWidth, contentHeight);
+    self.quoteDividerView.hidden = !showsQuoteCard;
+    if (showsQuoteCard) {
+        CGFloat dividerWidth = MAX(bubbleWidth - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
+        self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
+                                                 quoteOffset + QUOTE_DIVIDER_TOP_SPACING,
+                                                 dividerWidth,
+                                                 QUOTE_DIVIDER_HEIGHT);
+        [self.messageContentView bringSubviewToFront:self.quoteDividerView];
+    } else {
+        self.quoteDividerView.frame = CGRectZero;
+    }
     if (self.model.messageDirection == MessageDirection_RECEIVE) {
         if ([RCKitUtility isRTL] && !self.destructTextImage.hidden) {
-            self.contentAyncLab.frame =  CGRectMake(DESTRUCT_TEXT_ICON_WIDTH / 2 + DESTRUCT_TEXT_ICON_WIDTH + TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
+            CGFloat textOriginX = DESTRUCT_TEXT_ICON_WIDTH / 2 + DESTRUCT_TEXT_ICON_WIDTH + TEXT_SPACE_LEFT;
+            CGFloat textWidth = showsQuoteCard ? MAX(bubbleWidth - textOriginX - QUOTE_BODY_TRAILING_PADDING, 0) : labelSize.width;
+            self.contentAyncLab.frame =  CGRectMake(textOriginX, textOriginY, textWidth, labelSize.height);
         } else {
-            self.contentAyncLab.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
+            CGFloat textWidth = showsQuoteCard ? RCComplexTextMessageQuoteTextWidth(bubbleWidth) : labelSize.width;
+            self.contentAyncLab.frame =  CGRectMake(TEXT_SPACE_LEFT, textOriginY, textWidth, labelSize.height);
         }
     } else {
-        self.contentAyncLab.frame =  CGRectMake(TEXT_SPACE_LEFT, (bubbleHeight - labelSize.height) / 2, labelSize.width, labelSize.height);
+        CGFloat textWidth = showsQuoteCard ? RCComplexTextMessageQuoteTextWidth(bubbleWidth) : labelSize.width;
+        self.contentAyncLab.frame =  CGRectMake(TEXT_SPACE_LEFT, textOriginY, textWidth, labelSize.height);
     }
 
     RCTextMessage *textMessage = (RCTextMessage *)self.model.content;
@@ -139,6 +231,10 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
     }else{
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
     }
+}
+
+- (BOOL)usesTopQuoteCardLayout {
+    return YES;
 }
 
 - (NSDictionary *)attributeDictionary {
@@ -236,7 +332,16 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
 }
 
 + (CGSize)getTextSize:(RCMessageModel *)model{
-    CGFloat textMaxWidth = [RCMessageCellTool getMessageContentViewMaxWidth] - TEXT_SPACE_LEFT - TEXT_SPACE_RIGHT;
+    // 保持 v1 原有逻辑：使用 CoreText + 缓存的 txt_textSize
+    return [model txt_textSize];
+}
+
++ (CGSize)getQuoteTextSize:(RCMessageModel *)model {
+    // quote 路径需要自定义 maxWidth，不能复用 txt_textSize 的固定宽度
+    return [self getTextSize:model maxWidth:RCComplexTextMessageQuoteMaxTextWidth()];
+}
+
++ (CGSize)getTextSize:(RCMessageModel *)model maxWidth:(CGFloat)textMaxWidth{
     RCTextMessage *textMessage = (RCTextMessage *)model.content;
     CGSize textMessageSize;
     NSNumber *numDuration = [[RCCoreClient sharedCoreClient] getDestructMessageRemainDuration:model.messageUId];
@@ -248,10 +353,10 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
                              constrainedSize:CGSizeMake(textMaxWidth, 80000)];
         textMessageSize.width += 20;
     } else {
-        textMessageSize = [model txt_textSize];
-//        [RCKitUtility getTextDrawingSize:textMessage.content
-//                                                       font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]
-//                                            constrainedSize:CGSizeMake(textMaxWidth, 80000)];
+        textMessageSize =
+            [RCKitUtility getTextDrawingSize:textMessage.content
+                                        font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]
+                             constrainedSize:CGSizeMake(textMaxWidth, 80000)];
     }
     if (textMessageSize.width > textMaxWidth) {
         textMessageSize.width = textMaxWidth;
@@ -343,6 +448,15 @@ NSString *const RCComplexTextMessageCellIdentifier = @"RCComplexTextMessageCellI
         _contentAyncLab.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     }
     return _contentAyncLab;
+}
+
+- (UIView *)quoteDividerView {
+    if (!_quoteDividerView) {
+        _quoteDividerView = [UIView new];
+        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
+        _quoteDividerView.hidden = YES;
+    }
+    return _quoteDividerView;
 }
 
 @end

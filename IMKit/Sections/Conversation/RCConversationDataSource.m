@@ -171,6 +171,172 @@ static BOOL msgRoamingServiceAvailable = YES;
     };
 }
 
+- (void)loadQuotedMessagesForModels:(NSArray<RCMessageModel *> *)models {
+    if (models.count <= 0) {
+        return;
+    }
+    __weak typeof(self) weakSelf = self;
+    [RCConversationVCUtil loadQuotedMessagesForModels:models completion:^(NSArray<RCMessageModel *> *reloadModels) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf reloadQuoteReferenceCellsForModels:reloadModels];
+    }];
+}
+
+- (NSIndexPath *)quoteReferenceTopVisibleIndexPathInCollectionView:(UICollectionView *)collectionView {
+    NSArray<NSIndexPath *> *visibleIndexPaths = [collectionView indexPathsForVisibleItems];
+    if (visibleIndexPaths.count <= 0) {
+        return nil;
+    }
+    NSIndexPath *anchorIndexPath = nil;
+    CGFloat minY = CGFLOAT_MAX;
+    for (NSIndexPath *indexPath in visibleIndexPaths) {
+        UICollectionViewLayoutAttributes *attributes =
+            [collectionView layoutAttributesForItemAtIndexPath:indexPath];
+        if (!attributes) {
+            continue;
+        }
+        if (attributes.frame.origin.y < minY) {
+            minY = attributes.frame.origin.y;
+            anchorIndexPath = indexPath;
+        }
+    }
+    return anchorIndexPath;
+}
+
+- (CGFloat)quoteReferenceVisibleOffsetForIndexPath:(NSIndexPath *)indexPath
+                                   collectionView:(UICollectionView *)collectionView {
+    if (!indexPath) {
+        return 0;
+    }
+    UICollectionViewLayoutAttributes *attributes =
+        [collectionView layoutAttributesForItemAtIndexPath:indexPath];
+    if (!attributes) {
+        return 0;
+    }
+    return attributes.frame.origin.y - collectionView.contentOffset.y;
+}
+
+- (RCMessageModel *)quoteReferenceVisibleModelForIndexPath:(NSIndexPath *)indexPath
+                                            collectionView:(UICollectionView *)collectionView {
+    if (!indexPath) {
+        return nil;
+    }
+    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+    if ([cell isKindOfClass:[RCMessageBaseCell class]]) {
+        return ((RCMessageBaseCell *)cell).model;
+    }
+    return nil;
+}
+
+- (NSIndexPath *)quoteReferenceIndexPathForModel:(RCMessageModel *)model
+                               fallbackIndexPath:(NSIndexPath *)fallbackIndexPath {
+    NSIndexPath *targetIndexPath = fallbackIndexPath;
+    if (model) {
+        NSUInteger index = [self.chatVC.conversationDataRepository indexOfObjectIdenticalTo:model];
+        if (index == NSNotFound) {
+            index = [self.chatVC.conversationDataRepository indexOfObject:model];
+        }
+        if (index != NSNotFound) {
+            targetIndexPath = [NSIndexPath indexPathForItem:index inSection:0];
+        }
+    }
+    return targetIndexPath;
+}
+
+- (void)restoreQuoteReferenceVisibleOffset:(CGFloat)visibleOffset
+                                  forModel:(RCMessageModel *)model
+                         fallbackIndexPath:(NSIndexPath *)fallbackIndexPath
+                            collectionView:(UICollectionView *)collectionView {
+    NSIndexPath *indexPath = [self quoteReferenceIndexPathForModel:model
+                                                 fallbackIndexPath:fallbackIndexPath];
+    if (!indexPath || indexPath.item >= [collectionView numberOfItemsInSection:indexPath.section]) {
+        return;
+    }
+    UICollectionViewLayoutAttributes *attributes =
+        [collectionView layoutAttributesForItemAtIndexPath:indexPath];
+    if (!attributes) {
+        return;
+    }
+    UIEdgeInsets contentInset = collectionView.contentInset;
+    CGFloat minOffsetY = -contentInset.top;
+    CGFloat maxOffsetY = MAX(minOffsetY,
+                             collectionView.contentSize.height -
+                             collectionView.bounds.size.height +
+                             contentInset.bottom);
+    CGFloat offsetY = attributes.frame.origin.y - visibleOffset;
+    offsetY = MIN(MAX(offsetY, minOffsetY), maxOffsetY);
+    collectionView.contentOffset = CGPointMake(collectionView.contentOffset.x, offsetY);
+}
+
+- (void)reloadQuoteReferenceCellsForModels:(NSArray<RCMessageModel *> *)models {
+    if (models.count <= 0 || self.chatVC.conversationDataRepository.count <= 0) {
+        return;
+    }
+
+    UICollectionView *collectionView = self.chatVC.conversationMessageCollectionView;
+    NSIndexPath *anchorIndexPath = [self quoteReferenceTopVisibleIndexPathInCollectionView:collectionView];
+    RCMessageModel *anchorModel = [self quoteReferenceVisibleModelForIndexPath:anchorIndexPath
+                                                                collectionView:collectionView];
+    CGFloat anchorVisibleOffset = [self quoteReferenceVisibleOffsetForIndexPath:anchorIndexPath
+                                                                 collectionView:collectionView];
+    NSInteger itemCount = [self.chatVC.conversationMessageCollectionView numberOfItemsInSection:0];
+    if (itemCount != self.chatVC.conversationDataRepository.count) {
+        NSArray<RCMessageModel *> *modelsToReload = [models copy];
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            UICollectionView *retryCollectionView = strongSelf.chatVC.conversationMessageCollectionView;
+            NSInteger retryItemCount = [retryCollectionView numberOfItemsInSection:0];
+            if (retryItemCount == strongSelf.chatVC.conversationDataRepository.count) {
+                [strongSelf reloadQuoteReferenceCellsForModels:modelsToReload];
+                return;
+            }
+            NSIndexPath *retryAnchorIndexPath =
+                [strongSelf quoteReferenceTopVisibleIndexPathInCollectionView:retryCollectionView];
+            RCMessageModel *retryAnchorModel =
+                [strongSelf quoteReferenceVisibleModelForIndexPath:retryAnchorIndexPath
+                                                    collectionView:retryCollectionView];
+            CGFloat retryAnchorVisibleOffset =
+                [strongSelf quoteReferenceVisibleOffsetForIndexPath:retryAnchorIndexPath
+                                                     collectionView:retryCollectionView];
+            [UIView performWithoutAnimation:^{
+                [retryCollectionView reloadData];
+                [retryCollectionView layoutIfNeeded];
+                [strongSelf restoreQuoteReferenceVisibleOffset:retryAnchorVisibleOffset
+                                                      forModel:retryAnchorModel
+                                             fallbackIndexPath:retryAnchorIndexPath
+                                                collectionView:retryCollectionView];
+            }];
+        });
+        return;
+    }
+
+    NSMutableArray<NSIndexPath *> *indexPaths = [NSMutableArray array];
+    for (RCMessageModel *model in models) {
+        NSUInteger index = [self.chatVC.conversationDataRepository indexOfObjectIdenticalTo:model];
+        if (index == NSNotFound) {
+            index = [self.chatVC.conversationDataRepository indexOfObject:model];
+        }
+        if (index != NSNotFound && index < itemCount) {
+            [indexPaths addObject:[NSIndexPath indexPathForItem:index inSection:0]];
+        }
+    }
+    if (indexPaths.count <= 0) {
+        return;
+    }
+    [UIView performWithoutAnimation:^{
+        [collectionView reloadItemsAtIndexPaths:indexPaths];
+        [collectionView layoutIfNeeded];
+        [self restoreQuoteReferenceVisibleOffset:anchorVisibleOffset
+                                        forModel:anchorModel
+                               fallbackIndexPath:anchorIndexPath
+                                  collectionView:collectionView];
+    }];
+}
+
 - (void (^)(void))throttleReloadAction{
     if (!_throttleReloadAction) {
         __weak typeof(self) ws = self;
@@ -181,6 +347,7 @@ static BOOL msgRoamingServiceAvailable = YES;
                 RCConversationViewController *chatVC = ws.chatVC;
                 NSUInteger dataRepositorycount = ws.chatVC.conversationDataRepository.count;
                 [chatVC.conversationDataRepository addObjectsFromArray:ws.cachedReloadMessages];
+                [ws loadQuotedMessagesForModels:ws.cachedReloadMessages];
             
                 // v5
                 NSMutableArray *itemToFetchReceipt = [NSMutableArray array];
@@ -467,6 +634,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
     }
     [self rrs_fetchReadReceiptV5Info:itemToFetchReceipt];
+    [self loadQuotedMessagesForModels:itemToFetchReceipt];
     self.isIndicatorLoading = NO;
     return count;
 }
@@ -528,6 +696,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
     }
     [self rrs_fetchReadReceiptV5Info:itemToFetchReceipt];
+    [self loadQuotedMessagesForModels:itemToFetchReceipt];
 
     if (self.chatVC.conversationDataRepository.count <= 0) {
         return;
@@ -619,6 +788,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         self.allMessagesAreLoaded = NO;
     }
 
+    NSMutableArray *itemToLoadQuoteReference = [NSMutableArray array];
     for (int i = 0; i < __messageArray.count; i++) {
         RCMessage *rcMsg = [__messageArray objectAtIndex:i];
         RCMessageModel *model = [RCMessageModel modelWithMessage:rcMsg];
@@ -626,7 +796,9 @@ static BOOL msgRoamingServiceAvailable = YES;
             RCCustomerServiceMessageModel *csModel = (RCCustomerServiceMessageModel *)model;
             [csModel disableEvaluate];
         }
-        [self pushOldMessageModel:model];
+        if ([self pushOldMessageModel:model]) {
+            [itemToLoadQuoteReference addObject:model];
+        }
         [self showUnreadViewInMessageCell:model];
         // 2.如果 self.locatedMessageSentTime
         //不为0,判断定位的那条消息之前的消息如果小于拉取的数量self.defaultMessageCount，则再次拉取需要从远端拉消息，如果定位的那条消息之后的消息大于拉取的数量self.defaultMessageCount，证明此时已经没有最新消息，isLoadingHistoryMessage
@@ -641,6 +813,7 @@ static BOOL msgRoamingServiceAvailable = YES;
             }
         }
     }
+    [self loadQuotedMessagesForModels:itemToLoadQuoteReference];
     [self.chatVC.util figureOutAllConversationDataRepository];
     [self handleAfterLoadLastestMessage];
 }
@@ -756,6 +929,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         [self showUnreadViewInMessageCell:model];
     }
     [self rrs_fetchReadReceiptV5Info:itemToFetchReceipt];
+    [self loadQuotedMessagesForModels:itemToFetchReceipt];
     [self.chatVC.util figureOutAllConversationDataRepository];
     [self.chatVC.conversationMessageCollectionView reloadData];
     [self handleAfterLoadLastestMessage];
@@ -782,6 +956,7 @@ static BOOL msgRoamingServiceAvailable = YES;
         }
     }
     [self rrs_fetchReadReceiptV5Info:itemToFetchReceipt];
+    [self loadQuotedMessagesForModels:itemToFetchReceipt];
     if (indexPaths.count > 0) {
         /* bugfix:PAASIOSDEV-259
          调用在 insertItemsAtIndexPaths 时, 需要满足以下公式:

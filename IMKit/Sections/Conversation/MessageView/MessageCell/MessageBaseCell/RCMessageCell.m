@@ -17,6 +17,7 @@
 #import "RCMessageCellTool.h"
 #import "RCResendManager.h"
 #import "RCCoreClient+Destructing.h"
+#import "RCReferencedContentView.h"
 #import <RongPublicService/RongPublicService.h>
 #import "RCIM.h"
 #import "RCMessageModel+StreamCellVM.h"
@@ -31,10 +32,11 @@
 #define StatusContentViewWidth 100
 #define DestructBtnWidth 20
 #define StatusViewAndContentViewSpace 8
+#define QuoteCardHorizontalInset 12
 
 NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     @"KNotificationMessageBaseCellUpdateCanReceiptStatus";
-@interface RCMessageCell() {
+@interface RCMessageCell() <RCReferencedContentViewDelegate> {
     BOOL _showPortrait;
 }
 @property (nonatomic, assign) BOOL showBubbleBackgroundView;
@@ -47,6 +49,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 /// 消息编辑状态
 @property (nonatomic, assign) RCMessageModifyStatus editStatus;
+@property (nonatomic, assign) CGSize quoteCardBaseContentSize;
+@property (nonatomic, assign) BOOL quoteCardLayoutApplied;
 
 @end
 @implementation RCMessageCell
@@ -94,6 +98,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
+    [self resetQuoteCardLayoutState];
     [self p_showBubbleBackgroundView];
     self.messageFailedStatusView.hidden = YES;
     [self p_setReadStatus];
@@ -102,6 +107,11 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     [self messageDestructing];
     [self edit_showEditStatusIfNeeded];
     [self updateReadReceiptViewV5];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [self updateQuoteCardLayout];
 }
 
 - (UICollectionView *)hostCollectionView {
@@ -290,6 +300,7 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     [self.baseContentView addSubview:self.nicknameLabel];
     [self.baseContentView addSubview:self.messageContentView];
     [self.baseContentView addSubview:self.statusContentView];
+    [self.messageContentView addSubview:self.quoteCardView];
     
     [self.messageContentView addSubview:self.destructView];
     
@@ -443,7 +454,6 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
 
     if ([RCRRSUtil isSupportReadReceiptV5]) {
         size = 12;
-        receiptImage = RCDynamicImage(@"conversation_msg_rrs_v5_unread_gray_img", @"msg_rrs_v5_unread_gray");
     }
     // 计算位置
     CGFloat y = statusFrame.size.height - size;
@@ -451,16 +461,69 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     
     // 设置 frame 和图片
     self.receiptView.frame = CGRectMake(x, y, size, size);
-    [self.receiptView setImage:receiptImage forState:UIControlStateNormal];
     
     if ([RCRRSUtil isSupportReadReceiptV5]) {
         // 已读回执 V5 需要设置已读进度视图的 frame
         self.receiptProgressView.frame = CGRectMake(x, y, size, size);
+    } else {
+        [self.receiptView setImage:receiptImage forState:UIControlStateNormal];
     }
 }
 
 - (void)messageContentViewFrameDidChanged {
-    
+    [self updateQuoteCardLayout];
+}
+
+- (BOOL)shouldShowQuoteCard {
+    return [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+}
+
+- (BOOL)usesTopQuoteCardLayout {
+    return NO;
+}
+
+- (void)updateQuoteCardLayout {
+    if (![self shouldShowQuoteCard]) {
+        if (_quoteCardView) {
+            _quoteCardView.hidden = YES;
+            _quoteCardView.frame = CGRectZero;
+        }
+        return;
+    }
+
+    CGSize contentSize = self.messageContentView.contentSize;
+    if (contentSize.width <= 0 || contentSize.height <= 0) {
+        return;
+    }
+    CGFloat cardWidth = MAX(contentSize.width - QuoteCardHorizontalInset * 2, 0);
+    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:self.model maxWidth:cardWidth];
+    if ([self usesTopQuoteCardLayout]) {
+        CGRect cardFrame = CGRectMake(QuoteCardHorizontalInset, RCQuoteCardTopMargin,
+                                      cardWidth, cardHeight);
+        self.quoteCardView.hidden = NO;
+        [self.messageContentView bringSubviewToFront:self.quoteCardView];
+        // setMessage:contentSize: 内部会用 CGRectMake(0,0,...) 重置 origin，
+        // 必须先调用它，再设置最终 frame，否则外部设好的 x 偏移会被覆盖。
+        [self.quoteCardView setMessage:self.model contentSize:cardFrame.size];
+        self.quoteCardView.frame = cardFrame;
+        return;
+    }
+    if (!self.quoteCardLayoutApplied) {
+        self.quoteCardBaseContentSize = contentSize;
+        self.quoteCardLayoutApplied = YES;
+        self.messageContentView.contentSize = CGSizeMake(contentSize.width,
+                                                         contentSize.height + RCQuoteCardTopMargin + cardHeight);
+        contentSize = self.quoteCardBaseContentSize;
+    } else if (!CGSizeEqualToSize(self.quoteCardBaseContentSize, CGSizeZero)) {
+        contentSize = self.quoteCardBaseContentSize;
+    }
+
+    CGRect cardFrame = CGRectMake(QuoteCardHorizontalInset, contentSize.height + RCQuoteCardTopMargin,
+                                  cardWidth, cardHeight);
+    self.quoteCardView.hidden = NO;
+    [self.messageContentView bringSubviewToFront:self.quoteCardView];
+    [self.quoteCardView setMessage:self.model contentSize:cardFrame.size];
+    self.quoteCardView.frame = cardFrame;
 }
 
 - (void)setPortraitStyle:(RCUserAvatarStyle)portraitStyle {
@@ -1104,14 +1167,64 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     if (press.state == UIGestureRecognizerStateEnded) {
         return;
     } else if (press.state == UIGestureRecognizerStateBegan) {
+        // 长按落在引用卡片区域（含 margin/分隔线）时不触发消息长按菜单
+        if (_quoteCardView && !_quoteCardView.hidden) {
+            CGPoint point = [press locationInView:self.messageContentView];
+            if ([self usesTopQuoteCardLayout]) {
+                if (point.y <= CGRectGetMaxY(_quoteCardView.frame) + 10) {
+                    return;
+                }
+            } else {
+                if (point.y >= CGRectGetMinY(_quoteCardView.frame) - 10) {
+                    return;
+                }
+            }
+        }
         [self.delegate didLongTouchMessageCell:self.model inView:self.messageContentView];
     }
+}
+
+/// 拦截 messageContentView 的 tap，当触摸点落在引用卡片所在区域（含周边 margin/分隔线）时
+/// 直接 return 不处理，避免触发原始消息操作（如语音播放、文件打开等）。
+- (void)handleMessageContentViewTap:(UITapGestureRecognizer *)gesture {
+    if (_quoteCardView && !_quoteCardView.hidden) {
+        CGPoint point = [gesture locationInView:self.messageContentView];
+        // quoteCardView.frame 不包含外围 margin 和分隔线区域，
+        // 需将拦截范围扩展到整个引用区段，防止点击 margin 空白处穿透
+        if ([self usesTopQuoteCardLayout]) {
+            // 引用卡片在顶部：拦截从 y=0 到卡片底部 + 分隔线间距的全部区域
+            if (point.y <= CGRectGetMaxY(_quoteCardView.frame) + 10) {
+                return;
+            }
+        } else {
+            // 引用卡片在底部：拦截从卡片顶部 - 间距到底部的全部区域
+            if (point.y >= CGRectGetMinY(_quoteCardView.frame) - 10) {
+                return;
+            }
+        }
+    }
+    [self didTapMessageContentView];
 }
 
 - (void)didTapMessageContentView{
     DebugLog(@"%s", __FUNCTION__);
     if ([self.delegate respondsToSelector:@selector(didTapMessageCell:)]) {
         [self.delegate didTapMessageCell:self.model];
+    }
+}
+
+- (void)didTapReferencedContentView:(RCMessageModel *)message {
+    if ([self.delegate respondsToSelector:@selector(didTapReferencedContentView:)]) {
+        [self.delegate didTapReferencedContentView:message];
+    }
+}
+
+- (void)resetQuoteCardLayoutState {
+    self.quoteCardBaseContentSize = CGSizeZero;
+    self.quoteCardLayoutApplied = NO;
+    if (_quoteCardView) {
+        _quoteCardView.hidden = YES;
+        _quoteCardView.frame = CGRectZero;
     }
 }
 
@@ -1239,13 +1352,22 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         [_messageContentView addGestureRecognizer:longPress];
 
         UITapGestureRecognizer *tap =
-            [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapMessageContentView)];
+            [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleMessageContentViewTap:)];
         tap.numberOfTapsRequired = 1;
         tap.numberOfTouchesRequired = 1;
         [_messageContentView addGestureRecognizer:tap];
         _messageContentView.userInteractionEnabled = YES;
     }
     return _messageContentView;
+}
+
+- (RCReferencedContentView *)quoteCardView {
+    if (!_quoteCardView) {
+        _quoteCardView = [[RCReferencedContentView alloc] init];
+        _quoteCardView.delegate = self;
+        _quoteCardView.hidden = YES;
+    }
+    return _quoteCardView;
 }
 
 - (RCBaseImageView *)bubbleBackgroundView{

@@ -481,8 +481,10 @@
 "MessageEditFailed"="Update failed. Click to retry";
 "MessageEditRetryFailed"="Retry failed. Please try again later.";
 "MessageEdited"="Edited";
+"ReferencedMessageLoading"="loading...";
 "ReferencedMessageDeleted"="This message was deleted.";
 "ReferencedMessageRecalled"="This message was recalled.";
+"ReferencedMessageLoadFailed"="Message failed to load.";
 "MessageEditNotExist"="The cloud message does not exist and cannot be edited.";
 "MessageEditContentSensitive"="The edited content contains sensitive information, and the update faile.";
 "MessageEditExpiredToast"="Exceeded the effective editing time and cannot be edited.";

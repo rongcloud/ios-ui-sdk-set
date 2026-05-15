@@ -11,6 +11,8 @@
 #import "RCConversationViewController.h"
 #import "RCKitCommonDefine.h"
 #import "RCMessageModel+Edit.h"
+#import "RCReferencedContentView.h"
+#import "RCConversationVCUtil.h"
 
 @interface RCConversationDataSource ()
 
@@ -75,17 +77,46 @@
     if (messageUIds.count == 0) {
         return;
     }
+    RCQuoteMessageStatus quoteStatus = RCQuoteMessageStatusDefault;
+    RCQuoteReferenceLoadStatus quoteLoadStatus = RCQuoteReferenceLoadStatusUnknown;
+    if (status == RCReferenceMessageStatusDeleted) {
+        quoteStatus = RCQuoteMessageStatusDeleted;
+        quoteLoadStatus = RCQuoteReferenceLoadStatusDeleted;
+    } else if (status == RCReferenceMessageStatusRecalled) {
+        quoteStatus = RCQuoteMessageStatusRecalled;
+        quoteLoadStatus = RCQuoteReferenceLoadStatusRecalled;
+    }
+    if (quoteStatus != RCQuoteMessageStatusDefault) {
+        [RCConversationVCUtil markQuoteMessageUIds:messageUIds
+                                  conversationType:self.chatVC.conversationType
+                                          targetId:self.chatVC.targetId
+                                         channelId:self.chatVC.channelId
+                                             status:quoteStatus];
+    }
     NSSet<NSString *> *uidSet = [NSSet setWithArray:messageUIds];
     NSMutableArray *indexPaths = [NSMutableArray array];
     NSArray<RCMessageModel *> *repository = self.chatVC.conversationDataRepository;
     for (NSUInteger i = 0; i < repository.count; i++) {
         RCMessageModel *model = repository[i];
-        if (![model.content isKindOfClass:[RCReferenceMessage class]]) {
-            continue;
+        BOOL shouldUpdate = NO;
+        // v1: RCReferenceMessage 类型
+        if ([model.content isKindOfClass:[RCReferenceMessage class]]) {
+            RCReferenceMessage *refMsg = (RCReferenceMessage *)model.content;
+            if (refMsg.referMsgUid.length > 0 && [uidSet containsObject:refMsg.referMsgUid]) {
+                refMsg.referMsgStatus = status;
+                shouldUpdate = YES;
+            }
         }
-        RCReferenceMessage *refMsg = (RCReferenceMessage *)model.content;
-        if (refMsg.referMsgUid.length > 0 && [uidSet containsObject:refMsg.referMsgUid]) {
-            refMsg.referMsgStatus = status;
+        // v2: 普通消息携带 quoteInfo
+        if (model.quoteInfo.messageUId.length > 0 && [uidSet containsObject:model.quoteInfo.messageUId]) {
+            if (quoteStatus != RCQuoteMessageStatusDefault) {
+                model.quoteInfo.quoteMessageStatus = quoteStatus;
+                model.quoteReferenceLoadStatus = quoteLoadStatus;
+                model.quoteReferencedMessage = nil;
+            }
+            shouldUpdate = YES;
+        }
+        if (shouldUpdate) {
             model.cellSize = CGSizeZero;
             [indexPaths addObject:[NSIndexPath indexPathForItem:i inSection:0]];
         }
@@ -96,6 +127,92 @@
     dispatch_main_async_safe(^{
         [self.chatVC.conversationMessageCollectionView reloadItemsAtIndexPaths:indexPaths];
     });
+}
+
+- (NSArray<NSString *> *)edit_quotedMessageUIdsForModel:(RCMessageModel *)model {
+    if (!model) {
+        return @[];
+    }
+    NSMutableArray<NSString *> *messageUIds = [NSMutableArray arrayWithCapacity:2];
+    if ([model.content isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *refMsg = (RCReferenceMessage *)model.content;
+        if (refMsg.referMsgUid.length > 0) {
+            [messageUIds addObject:refMsg.referMsgUid];
+        }
+    }
+    if (model.quoteInfo.messageUId.length > 0 && ![messageUIds containsObject:model.quoteInfo.messageUId]) {
+        [messageUIds addObject:model.quoteInfo.messageUId];
+    }
+    return messageUIds.copy;
+}
+
+- (BOOL)edit_model:(RCMessageModel *)model quotesMessageUIdInSet:(NSSet<NSString *> *)uidSet {
+    if (uidSet.count == 0) {
+        return NO;
+    }
+    for (NSString *messageUId in [self edit_quotedMessageUIdsForModel:model]) {
+        if ([uidSet containsObject:messageUId]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (RCMessageContent *)edit_displayContentForEditedModel:(RCMessageModel *)model {
+    if (model.modifyInfo.content) {
+        return model.modifyInfo.content;
+    }
+    return model.content;
+}
+
+- (void)edit_addReferenceIndex:(NSUInteger)idx
+                forMessageUId:(NSString *)messageUId
+             referUidToIndexes:(NSMutableDictionary<NSString *, NSMutableIndexSet *> *)referUidToIndexes {
+    if (messageUId.length == 0) {
+        return;
+    }
+    NSMutableIndexSet *set = referUidToIndexes[messageUId];
+    if (!set) {
+        set = [NSMutableIndexSet indexSet];
+        referUidToIndexes[messageUId] = set;
+    }
+    [set addIndex:idx];
+}
+
+- (void)edit_applyReferenceModel:(RCMessageModel *)refModel
+                withEditedModel:(RCMessageModel *)newModel
+                  updateIndexes:(NSMutableIndexSet *)needUpdateIndexes
+                           index:(NSUInteger)refIdx {
+    RCMessageContent *editedContent = [self edit_displayContentForEditedModel:newModel];
+    if ([refModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *refMsg = (RCReferenceMessage *)refModel.content;
+        if (newModel.hasChanged) {
+            refMsg.referMsgStatus = RCReferenceMessageStatusModified;
+        }
+
+        if ([editedContent isKindOfClass:[RCTextMessage class]] &&
+            [refMsg.referMsg isKindOfClass:[RCTextMessage class]]) {
+            ((RCTextMessage *)refMsg.referMsg).content = ((RCTextMessage *)editedContent).content;
+        } else if ([editedContent isKindOfClass:[RCReferenceMessage class]] &&
+                   [refMsg.referMsg isKindOfClass:[RCReferenceMessage class]]) {
+            ((RCReferenceMessage *)refMsg.referMsg).content = ((RCReferenceMessage *)editedContent).content;
+        }
+    } else if (refModel.quoteInfo.messageUId.length > 0 &&
+               [refModel.quoteInfo.messageUId isEqualToString:newModel.messageUId] &&
+               refModel.quoteReferencedMessage) {
+        RCMessage *quotedMessage = refModel.quoteReferencedMessage;
+        quotedMessage.content = editedContent;
+        quotedMessage.objectName = newModel.objectName;
+        quotedMessage.hasChanged = newModel.hasChanged;
+        quotedMessage.messageId = newModel.messageId;
+        quotedMessage.senderUserId = newModel.senderUserId;
+        quotedMessage.sentTime = newModel.sentTime;
+        quotedMessage.receivedTime = newModel.receivedTime;
+        quotedMessage.extra = newModel.extra;
+        refModel.quoteReferenceLoadStatus = RCQuoteReferenceLoadStatusLoaded;
+    }
+    refModel.cellSize = CGSizeZero;
+    [needUpdateIndexes addIndex:refIdx];
 }
 
 - (void)edit_refreshUIMessagesEditedStatus:(NSArray<RCMessageModel *> *)models {
@@ -143,7 +260,7 @@
     }
     NSMutableDictionary<NSString *, RCMessageModel *> *dict = [NSMutableDictionary dictionaryWithCapacity:models.count];
     for (RCMessageModel *model in models) {
-        if (model.messageUId.length > 0 && model.content) {
+        if (model.messageUId.length > 0 && [self edit_displayContentForEditedModel:model]) {
             dict[model.messageUId] = model;
         }
     }
@@ -159,16 +276,10 @@
         if (model.messageUId.length > 0) {
             uidToIndex[model.messageUId] = @(idx);
         }
-        if ([model.content isKindOfClass:[RCReferenceMessage class]]) {
-            RCReferenceMessage *ref = (RCReferenceMessage *)model.content;
-            if (ref.referMsgUid.length > 0) {
-                NSMutableIndexSet *set = referUidToIndexes[ref.referMsgUid];
-                if (!set) {
-                    set = [NSMutableIndexSet indexSet];
-                    referUidToIndexes[ref.referMsgUid] = set;
-                }
-                [set addIndex:idx];
-            }
+        for (NSString *quotedMessageUId in [self edit_quotedMessageUIdsForModel:model]) {
+            [self edit_addReferenceIndex:idx
+                           forMessageUId:quotedMessageUId
+                        referUidToIndexes:referUidToIndexes];
         }
     }
 }
@@ -185,17 +296,18 @@
         if (indexNumber) {
             NSUInteger idx = indexNumber.unsignedIntegerValue;
             RCMessageModel *oldModel = repository[idx];
+            RCMessageContent *editedContent = [self edit_displayContentForEditedModel:newModel];
             
             if ([oldModel.content isKindOfClass:[RCReferenceMessage class]] &&
-                [newModel.content isKindOfClass:[RCReferenceMessage class]]) {
+                [editedContent isKindOfClass:[RCReferenceMessage class]]) {
                 RCReferenceMessage *oldRef = (RCReferenceMessage *)oldModel.content;
-                RCReferenceMessage *newRef = (RCReferenceMessage *)newModel.content;
+                RCReferenceMessage *newRef = (RCReferenceMessage *)editedContent;
                 if (oldRef.referMsgStatus > newRef.referMsgStatus) {
                     newRef.referMsgStatus = oldRef.referMsgStatus;
                 }
             }
             
-            oldModel.content = newModel.content;
+            oldModel.content = editedContent;
             oldModel.modifyInfo = newModel.modifyInfo;
             oldModel.hasChanged = newModel.hasChanged;
             oldModel.cellSize = CGSizeZero;
@@ -206,22 +318,10 @@
         if (refIndexes.count > 0) {
             [refIndexes enumerateIndexesUsingBlock:^(NSUInteger refIdx, BOOL *stopRef) {
                 RCMessageModel *refModel = repository[refIdx];
-                RCReferenceMessage *refMsg = (RCReferenceMessage *)refModel.content;
-                
-                if (newModel.hasChanged) {
-                    refMsg.referMsgStatus = RCReferenceMessageStatusModified;
-                }
-                
-                if ([newModel.content isKindOfClass:[RCTextMessage class]] &&
-                    [refMsg.referMsg isKindOfClass:[RCTextMessage class]]) {
-                    ((RCTextMessage *)refMsg.referMsg).content = ((RCTextMessage *)newModel.content).content;
-                } else if ([newModel.content isKindOfClass:[RCReferenceMessage class]] &&
-                           [refMsg.referMsg isKindOfClass:[RCReferenceMessage class]]) {
-                    ((RCReferenceMessage *)refMsg.referMsg).content = ((RCReferenceMessage *)newModel.content).content;
-                }
-                
-                refModel.cellSize = CGSizeZero;
-                [needUpdateIndexes addIndex:refIdx];
+                [self edit_applyReferenceModel:refModel
+                               withEditedModel:newModel
+                                 updateIndexes:needUpdateIndexes
+                                          index:refIdx];
             }];
         }
     }];

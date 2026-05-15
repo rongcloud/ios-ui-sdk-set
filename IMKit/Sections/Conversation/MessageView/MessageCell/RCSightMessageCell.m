@@ -12,7 +12,35 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
+#import "RCReferencedContentView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
+
+#define QUOTE_CARD_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_TOP_OFFSET 8
+#define QUOTE_BODY_TOP_SPACING 16
+#define QUOTE_MIN_BUBBLE_WIDTH 170.0f
+#define QUOTE_MEDIA_INSET QUOTE_DIVIDER_HORIZONTAL_INSET
+
+static CGFloat RCSightMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
+    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
+    return RCQuoteCardTopMargin + cardHeight;
+}
+
+static CGFloat RCSightMessageQuoteMinimumBubbleWidth(void) {
+    CGFloat maxContentWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    return maxContentWidth < QUOTE_MIN_BUBBLE_WIDTH ? maxContentWidth : QUOTE_MIN_BUBBLE_WIDTH;
+}
+
+static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imageSize) {
+    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
+    CGFloat contentWidth = MAX(imageSize.width, quoteCardSize.width);
+    CGFloat bubbleWidth = contentWidth + QUOTE_MEDIA_INSET * 2;
+    return MIN(MAX(bubbleWidth, RCSightMessageQuoteMinimumBubbleWidth()), maxBubbleWidth);
+}
 
 @interface RCSightMessageCell ()
 @property (nonatomic, strong) UIView *playButtonView;
@@ -22,6 +50,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) UILabel *destructLabel;
 @property (nonatomic, strong) UILabel *destructDurationLabel;
 @property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
+@property (nonatomic, strong) UIView *quoteDividerView;
 @end
 
 @implementation RCSightMessageCell
@@ -63,6 +92,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
     messagecontentview_height += extraHeight;
+    if ([RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
+        messagecontentview_height += QUOTE_BODY_TOP_SPACING + QUOTE_MEDIA_INSET;
+    }
     return CGSizeMake(collectionViewWidth, messagecontentview_height);
 }
 
@@ -77,9 +109,41 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
             CGSize imageSize = [RCSightMessageCell getSightImageSize:self.model];
             self.durationLabel.text = [self getSightDurationLabelText:sightMessage.duration];
             self.thumbnailView.image = sightMessage.thumbnailImage;
-    
-            self.messageContentView.contentSize = imageSize;
-            self.thumbnailView.frame = self.messageContentView.bounds;
+
+            BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+            CGFloat contentWidth = imageSize.width;
+            CGFloat mediaInset = 0;
+            if (showsQuoteCard) {
+                contentWidth = RCSightMessageQuoteBubbleWidth(self.model, imageSize);
+                mediaInset = QUOTE_MEDIA_INSET;
+            }
+            CGFloat quoteOffset = showsQuoteCard ? RCSightMessageQuoteContentOffset(self.model, contentWidth) : 0;
+            CGFloat bodyOffset = showsQuoteCard ? QUOTE_BODY_TOP_SPACING : 0;
+            CGFloat contentX = mediaInset;
+            if (showsQuoteCard) {
+                BOOL alignsTrailing = ([RCKitUtility isRTL]
+                                       ? self.model.messageDirection == MessageDirection_RECEIVE
+                                       : self.model.messageDirection == MessageDirection_SEND);
+                if (alignsTrailing) {
+                    contentX = MAX(contentWidth - imageSize.width - mediaInset, mediaInset);
+                }
+            }
+
+            self.messageContentView.contentSize = CGSizeMake(contentWidth, imageSize.height + quoteOffset + bodyOffset + mediaInset);
+            self.thumbnailView.frame = CGRectMake(contentX, quoteOffset + bodyOffset, imageSize.width, imageSize.height);
+            self.quoteDividerView.hidden = !showsQuoteCard;
+            self.bubbleBackgroundView.hidden = !showsQuoteCard;
+            if (showsQuoteCard) {
+                CGFloat dividerWidth = MAX(contentWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
+                self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
+                                                         quoteOffset + QUOTE_DIVIDER_TOP_OFFSET,
+                                                         dividerWidth,
+                                                         1);
+                [self.messageContentView bringSubviewToFront:self.quoteDividerView];
+            } else {
+                self.quoteDividerView.frame = CGRectZero;
+            }
+
             if (self.progressView.superview) {
                 [self.progressView removeFromSuperview];
             }
@@ -187,7 +251,9 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 }
 
 - (void)initialize {
+    [self showBubbleBackgroundView:YES];
     [self.messageContentView addSubview:self.thumbnailView];
+    [self.messageContentView addSubview:self.quoteDividerView];
     [self.messageContentView addSubview:self.destructBackgroundView];
 
     [self.destructBackgroundView addSubview:self.destructPicture];
@@ -361,6 +427,19 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
         [_destructDurationLabel setBackgroundColor:[UIColor clearColor]];
     }
     return _destructDurationLabel;
+}
+
+- (UIView *)quoteDividerView {
+    if (!_quoteDividerView) {
+        _quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
+        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
+        _quoteDividerView.hidden = YES;
+    }
+    return _quoteDividerView;
+}
+
+- (BOOL)usesTopQuoteCardLayout {
+    return YES;
 }
 
 @end

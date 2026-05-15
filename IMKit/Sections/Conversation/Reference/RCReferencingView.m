@@ -119,25 +119,33 @@
 }
 
 - (NSString *)getUserDisplayName {
-    if ([self.referModel.content.senderUserInfo.userId isEqualToString:self.referModel.senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        return [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
+    NSString *senderUserId = self.referModel.senderUserId;
+    if ([self.referModel.content.senderUserInfo.userId isEqualToString:senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        NSString *senderName = [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
+        if (senderName.length > 0) {
+            return senderName;
+        }
     }
-    NSString *name;
+    RCUserInfo *userInfo = nil;
     if (ConversationType_GROUP == self.referModel.conversationType) {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId
-                                                                         inGroupId:self.referModel.targetId];
-        self.referModel.userInfo = userInfo;
-        if (userInfo) {
-            name = userInfo.name;
+        RCUserInfo *groupUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId
+                                                                              inGroupId:self.referModel.targetId];
+        RCUserInfo *ordinaryUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
+        if (groupUserInfo) {
+            groupUserInfo.alias = ordinaryUserInfo.alias.length > 0 ? ordinaryUserInfo.alias : groupUserInfo.alias;
+            if (groupUserInfo.name.length <= 0 && ordinaryUserInfo.name.length > 0) {
+                groupUserInfo.name = ordinaryUserInfo.name;
+            }
+            userInfo = groupUserInfo;
+        } else {
+            userInfo = ordinaryUserInfo;
         }
     } else {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId];
-        self.referModel.userInfo = userInfo;
-        if (userInfo) {
-            name = userInfo.name;
-        }
+        userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
     }
-    return name;
+    self.referModel.userInfo = userInfo;
+    NSString *name = [RCKitUtility getDisplayName:userInfo];
+    return name.length > 0 ? name : (senderUserId ?: @"");
 }
 
 - (void)addNotification {
