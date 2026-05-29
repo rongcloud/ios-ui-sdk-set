@@ -55,16 +55,16 @@
 - (void)refreshViewFrameForMessageDirection:(RCMessageDirection)direction
                                   baseFrame:(CGRect)frame {
     CGFloat width = [RCMessageCellTool getMessageContentViewMaxWidth];
-    
+    CGFloat height = [self.viewModel speedToTextContentHeight];
     if ([RCKitUtility isRTL]) {
         if (direction == MessageDirection_SEND) {
-            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width,  [self.viewModel speedToTextContentHeight]);
+            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width, height);
         } else {
             CGFloat xOffset = CGRectGetMaxX(frame);
             self.frame = CGRectMake(xOffset - width,
                                     CGRectGetMaxY(frame)+4,
                                     width,
-                                   0);
+                                    height);
         }
     } else {
         if (direction == MessageDirection_SEND) {
@@ -72,9 +72,9 @@
             self.frame = CGRectMake(xOffset - width,
                                     CGRectGetMaxY(frame)+4,
                                     width,
-                                    [self.viewModel speedToTextContentHeight]);
+                                    height);
         } else {
-            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width, 0);
+            self.frame = CGRectMake(CGRectGetMinX(frame), CGRectGetMaxY(frame)+4, width, height);
         }
     }
 }

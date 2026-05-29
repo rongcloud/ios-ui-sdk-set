@@ -11,6 +11,23 @@
 #import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 
+static NSInteger const RCKitDefaultMessageInputLimit = 5000;
+static NSInteger const RCKitConfiguredMessageInputLimit = 1500;
+
+static NSInteger RCKitMessageInputLimit(void) {
+    return [[RCCoreClient sharedCoreClient] getAppSettings].message_size_limit > 0 ? RCKitConfiguredMessageInputLimit
+                                                                                   : RCKitDefaultMessageInputLimit;
+}
+
+static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSString *replacementText) {
+    NSString *currentText = textView.text ?: @"";
+    if (range.location > currentText.length || range.length > currentText.length - range.location) {
+        return NO;
+    }
+    NSString *updatedText = [currentText stringByReplacingCharactersInRange:range withString:replacementText ?: @""];
+    return updatedText.length <= RCKitMessageInputLimit();
+}
+
 @interface RCInputStateManager ()
 
 /// 关联的文本输入框
@@ -171,6 +188,10 @@
             }
             mentionedPosition = (cursorPosition >= 1) ? (cursorPosition - 1) : 0;
             changeRangeLength = [insertContent length] + 1; // +1 包含已存在的'@'符号
+        }
+
+        if (!RCKitCanApplyTextChange(self.textView, NSMakeRange(cursorPosition, 0), insertContent)) {
+            return;
         }
         
         // 创建属性字符串

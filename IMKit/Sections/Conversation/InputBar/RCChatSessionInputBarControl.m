@@ -45,6 +45,23 @@
 
 NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotification";
 
+static NSInteger const RCKitDefaultMessageInputLimit = 5000;
+static NSInteger const RCKitConfiguredMessageInputLimit = 1500;
+
+static NSInteger RCKitMessageInputLimit(void) {
+    return [[RCCoreClient sharedCoreClient] getAppSettings].message_size_limit > 0 ? RCKitConfiguredMessageInputLimit
+                                                                                   : RCKitDefaultMessageInputLimit;
+}
+
+static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSString *replacementText) {
+    NSString *currentText = textView.text ?: @"";
+    if (range.location > currentText.length || range.length > currentText.length - range.location) {
+        return NO;
+    }
+    NSString *updatedText = [currentText stringByReplacingCharactersInRange:range withString:replacementText ?: @""];
+    return updatedText.length <= RCKitMessageInputLimit();
+}
+
 @interface RCChatSessionInputBarControl () <RCEmojiViewDelegate, RCPluginBoardViewDelegate, UINavigationControllerDelegate,
     UIImagePickerControllerDelegate, RCAlbumListViewControllerDelegate,
     RCFileSelectorViewControllerDelegate, RCSelectingUserDataSource,
@@ -482,6 +499,10 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         return NO;
     }
 
+    if (!RCKitCanApplyTextChange(inputTextView, range, text)) {
+        return NO;
+    }
+
     BOOL shouldUseDefaultChangeText = [self willUpdateInputTextMetionedInfo:text range:range];
     return shouldUseDefaultChangeText;
 }
@@ -516,7 +537,16 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
         }
     } else {
         NSString *replaceString = string;
-        if (replaceString.length < 5000) {
+        NSInteger cursorPosition;
+        if (self.inputTextView.selectedTextRange) {
+            cursorPosition = self.inputTextView.selectedRange.location;
+        } else {
+            cursorPosition = 0;
+        }
+        if (cursorPosition > self.inputTextView.textStorage.length) {
+            cursorPosition = self.inputTextView.textStorage.length;
+        }
+        if (RCKitCanApplyTextChange(self.inputTextView, NSMakeRange(cursorPosition, 0), replaceString)) {
             NSMutableAttributedString *attStr = [[NSMutableAttributedString alloc] initWithString:replaceString];
             [attStr addAttribute:NSFontAttributeName
                            value:self.inputTextView.font
@@ -527,16 +557,6 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
                                value:foreColor
                                range:NSMakeRange(0, replaceString.length)];
             }
-       
-            NSInteger cursorPosition;
-            if (self.inputTextView.selectedTextRange) {
-                cursorPosition = self.inputTextView.selectedRange.location;
-            } else {
-                cursorPosition = 0;
-            }
-            //获取光标位置
-            if (cursorPosition > self.inputTextView.textStorage.length)
-                cursorPosition = self.inputTextView.textStorage.length;
             [self.inputTextView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
             //输入表情触发文本框变化，更新@信息的range
             if ([self.inputTextView.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
@@ -1029,6 +1049,10 @@ NSString *const RCKitKeyboardWillShowNotification = @"RCKitKeyboardWillShowNotif
             }
             mentionedPosition = (cursorPosition >= 1) ? (cursorPosition - 1) : 0;
             changeRangeLength = [insertContent length] + 1;
+        }
+
+        if (!RCKitCanApplyTextChange(self.inputTextView, NSMakeRange(cursorPosition, 0), insertContent)) {
+            return;
         }
 
         NSMutableAttributedString *attStr = [[NSMutableAttributedString alloc] initWithString:insertContent];

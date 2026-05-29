@@ -19,6 +19,27 @@ const CGFloat Height_EmojiBoardView = 223.5f; // 表情面板高度
 // 键盘通知常量
 extern NSString *const RCKitKeyboardWillShowNotification;
 
+static NSInteger const RCKitDefaultMessageInputLimit = 5000;
+static NSInteger const RCKitConfiguredMessageInputLimit = 1500;
+
+static NSInteger RCKitMessageInputLimit(void) {
+    return [[RCCoreClient sharedCoreClient] getAppSettings].message_size_limit > 0 ? RCKitConfiguredMessageInputLimit
+                                                                                   : RCKitDefaultMessageInputLimit;
+}
+
+static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSString *replacementText) {
+    NSString *currentText = textView.text ?: @"";
+    if (range.location > currentText.length || range.length > currentText.length - range.location) {
+        return NO;
+    }
+    NSString *updatedText = [currentText stringByReplacingCharactersInRange:range withString:replacementText ?: @""];
+    return updatedText.length <= RCKitMessageInputLimit();
+}
+
+static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
+    return (text ?: @"").length <= RCKitMessageInputLimit();
+}
+
 @interface RCEditInputBarControl () <RCInputStateManagerDelegate, RCInputKeyboardManagerDelegate>
 
 /// 编辑输入容器
@@ -379,6 +400,9 @@ extern NSString *const RCKitKeyboardWillShowNotification;
 }
 
 - (void)editInputContainerViewEditConfirm:(RCEditInputContainerView *)editContainerView withText:(NSString *)text {
+    if (!RCKitIsTextWithinMessageInputLimit(text)) {
+        return;
+    }
     if ([self.delegate respondsToSelector:@selector(editInputBarControl:didConfirmWithText:)]) {
         [self.delegate editInputBarControl:self didConfirmWithText:text];
     }
@@ -427,9 +451,16 @@ extern NSString *const RCKitKeyboardWillShowNotification;
        shouldChangeTextInRange:(NSRange)range
                replacementText:(NSString *)text {
     if ([text isEqualToString:@"\n"]) {
+        if (!RCKitIsTextWithinMessageInputLimit(textView.text)) {
+            return NO;
+        }
         if ([self.delegate respondsToSelector:@selector(editInputBarControl:didConfirmWithText:)]) {
             [self.delegate editInputBarControl:self didConfirmWithText:textView.text];
         }
+        return NO;
+    }
+
+    if (!RCKitCanApplyTextChange(textView, range, text)) {
         return NO;
     }
     
@@ -456,7 +487,17 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     } else {
         // 插入表情
         NSString *replaceString = string;
-        if (replaceString.length < 5000) {
+        NSInteger cursorPosition;
+        if (textView.selectedTextRange) {
+            cursorPosition = textView.selectedRange.location;
+        } else {
+            cursorPosition = 0;
+        }
+        // 获取光标位置
+        if (cursorPosition > textView.textStorage.length) {
+            cursorPosition = textView.textStorage.length;
+        }
+        if (RCKitCanApplyTextChange(textView, NSMakeRange(cursorPosition, 0), replaceString)) {
             NSMutableAttributedString *attStr = [[NSMutableAttributedString alloc] initWithString:replaceString];
             [attStr addAttribute:NSFontAttributeName
                            value:textView.font
@@ -467,17 +508,6 @@ extern NSString *const RCKitKeyboardWillShowNotification;
                                value:foreColor
                                range:NSMakeRange(0, replaceString.length)];
             }
-            
-            NSInteger cursorPosition;
-            if (textView.selectedTextRange) {
-                cursorPosition = textView.selectedRange.location;
-            } else {
-                cursorPosition = 0;
-            }
-            
-            // 获取光标位置
-            if (cursorPosition > textView.textStorage.length)
-                cursorPosition = textView.textStorage.length;
             
             [textView.textStorage insertAttributedString:attStr atIndex:cursorPosition];
             
@@ -517,6 +547,9 @@ extern NSString *const RCKitKeyboardWillShowNotification;
     NSString *formatString = [sendText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (0 == [formatString length]) {
         // 空文本不能发送
+        return;
+    }
+    if (!RCKitIsTextWithinMessageInputLimit(sendText)) {
         return;
     }
     

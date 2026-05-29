@@ -96,6 +96,18 @@ NSString *const RCConversationViewScrollNotification = @"RCConversationViewScrol
 NSString *const RCKitReferencedMessageUId = @"referenceMessageUId";
 NSUInteger const RCStreamMessageTextLimit = 10000;
 
+static NSInteger const RCKitDefaultMessageInputLimit = 5000;
+static NSInteger const RCKitConfiguredMessageInputLimit = 1500;
+
+static NSInteger RCKitMessageInputLimit(void) {
+    return [[RCCoreClient sharedCoreClient] getAppSettings].message_size_limit > 0 ? RCKitConfiguredMessageInputLimit
+                                                                                   : RCKitDefaultMessageInputLimit;
+}
+
+static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
+    return (text ?: @"").length <= RCKitMessageInputLimit();
+}
+
 @interface RCConversationViewController () <
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
@@ -1860,6 +1872,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (void)inputTextViewDidTouchSendKey:(UITextView *)inputTextView {
+    if (!RCKitIsTextWithinMessageInputLimit(inputTextView.text)) {
+        return;
+    }
     if ([self sendReferenceMessage:inputTextView.text]) {
         return;
     }
@@ -1997,11 +2012,14 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (void)emojiView:(RCEmojiBoardView *)emojiView didTouchSendButton:(UIButton *)sendButton {
-    if ([self sendReferenceMessage:self.chatSessionInputBarControl.inputTextView.text]) {
+    NSString *inputText = self.chatSessionInputBarControl.inputTextView.text;
+    if (!RCKitIsTextWithinMessageInputLimit(inputText)) {
         return;
     }
-    RCTextMessage *rcTextMessage =
-        [RCTextMessage messageWithContent:self.chatSessionInputBarControl.inputTextView.text];
+    if ([self sendReferenceMessage:inputText]) {
+        return;
+    }
+    RCTextMessage *rcTextMessage = [RCTextMessage messageWithContent:inputText];
     rcTextMessage.mentionedInfo = self.chatSessionInputBarControl.mentionedInfo;
 
     [self sendMessage:rcTextMessage pushContent:nil];
