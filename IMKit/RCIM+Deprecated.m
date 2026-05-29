@@ -202,22 +202,6 @@
 - (void)setEnableMessageReference:(BOOL)enableMessageReference {
     RCKitConfigCenter.message.enableMessageReference = enableMessageReference;
 }
-
-- (BOOL)enableQuoteV2 {
-    return RCKitConfigCenter.message.enableQuoteV2;
-}
-
-- (void)setEnableQuoteV2:(BOOL)enableQuoteV2 {
-    RCKitConfigCenter.message.enableQuoteV2 = enableQuoteV2;
-}
-
-- (NSArray<NSString *> *)quoteMessageTypeWhiteList {
-    return RCKitConfigCenter.message.quoteMessageTypeWhiteList;
-}
-
-- (void)setQuoteMessageTypeWhiteList:(NSArray<NSString *> *)quoteMessageTypeWhiteList {
-    RCKitConfigCenter.message.quoteMessageTypeWhiteList = [quoteMessageTypeWhiteList copy];
-}
 //sightRecordMaxDuration
 - (NSUInteger)sightRecordMaxDuration {
     return RCKitConfigCenter.message.sightRecordMaxDuration;

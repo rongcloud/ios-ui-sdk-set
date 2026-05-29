@@ -11,27 +11,32 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 
-#define RCUProfileImageCellPortraitSize 32
+#define RCUProfileImageCellPortraitTrailingSpace 10
+#define RCUProfileImageCellPortraitTop 5
+#define RCUProfileImageCellPortraitSize 34
 
 NSString  * const RCUProfileImageCellIdentifier = @"RCUProfileImageCellIdentifier";
-@interface RCProfileCommonImageCell ()
-
-@property (nonatomic, strong) NSLayoutConstraint *portraitTrailingToArrowConstraint;
-@property (nonatomic, strong) NSLayoutConstraint *portraitTrailingToContentViewConstraint;
-
-@end
 
 @implementation RCProfileCommonImageCell
 
 - (void)setupView {
     [super setupView];
-    [self.contentStackView addArrangedSubview:self.titleLabel];
-    [self.contentStackView addArrangedSubview:self.portraitImageView];
-    [self.contentStackView addArrangedSubview:self.arrowView];
+    [self.contentView addSubview:self.portraitImageView];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (self.arrowView.hidden) {
+        self.portraitImageView.frame = CGRectMake(CGRectGetMaxX(self.arrowView.frame)-RCUProfileImageCellPortraitSize, RCUProfileImageCellPortraitTop, RCUProfileImageCellPortraitSize, RCUProfileImageCellPortraitSize);
+    } else {
+        self.portraitImageView.frame = CGRectMake(CGRectGetMinX(self.arrowView.frame)-RCUProfileImageCellPortraitSize - RCUProfileImageCellPortraitTrailingSpace, RCUProfileImageCellPortraitTop, RCUProfileImageCellPortraitSize, RCUProfileImageCellPortraitSize);
+    }
 }
 
 - (void)hiddenArrow:(BOOL)hiddenArrow {
     self.arrowView.hidden = hiddenArrow;
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
 }
 
 #pragma mark - getter
@@ -45,12 +50,7 @@ NSString  * const RCUProfileImageCellIdentifier = @"RCUProfileImageCellIdentifie
             _portraitImageView.layer.cornerRadius = 5.f;
         }
         _portraitImageView.layer.masksToBounds = YES;
-        _portraitImageView.translatesAutoresizingMaskIntoConstraints = NO;
-        [_portraitImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
-        [NSLayoutConstraint activateConstraints:@[
-            [_portraitImageView.widthAnchor constraintEqualToConstant:RCUProfileImageCellPortraitSize],
-            [_portraitImageView.heightAnchor constraintEqualToConstant:RCUProfileImageCellPortraitSize]
-        ]];
+        [_portraitImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
     }
     return _portraitImageView;
 }

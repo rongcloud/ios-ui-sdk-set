@@ -156,7 +156,6 @@
     if ([self.delegate respondsToSelector:@selector(groupManagement:willLoadItemsInDataSource:)]) {
         list = [self.delegate groupManagement:self willLoadItemsInDataSource:list].mutableCopy;
     }
-    [self removeSeparatorLineIfNeed:list];
     dispatch_async(dispatch_get_main_queue(), ^{
         self.dataSources = list;
         [self.responder reloadData:self.dataSources.count == 0];

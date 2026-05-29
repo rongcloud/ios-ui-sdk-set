@@ -10,17 +10,6 @@
 #import <RongIMLibCore/RongIMLibCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
-/// IMKit V2 引用消息展示态。
-typedef NS_ENUM(NSInteger, RCQuoteReferenceLoadStatus) {
-    RCQuoteReferenceLoadStatusUnknown = 0,
-    RCQuoteReferenceLoadStatusLoading,
-    RCQuoteReferenceLoadStatusLoaded,
-    RCQuoteReferenceLoadStatusDeleted,
-    RCQuoteReferenceLoadStatusRecalled,
-    RCQuoteReferenceLoadStatusFailed
-};
-
 /*!
  消息Cell的数据模型类
  */
@@ -50,11 +39,6 @@ typedef NS_ENUM(NSInteger, RCQuoteReferenceLoadStatus) {
  目标会话ID
  */
 @property (nonatomic, copy) NSString *targetId;
-
-/*!
- 所属频道 ID
- */
-@property (nonatomic, copy, nullable) NSString *channelId;
 
 /*!
  消息ID
@@ -127,15 +111,6 @@ typedef NS_ENUM(NSInteger, RCQuoteReferenceLoadStatus) {
  */
 @property (nonatomic, copy, nullable) NSString *messageUId;
 
-/// 引用消息 V2 的引用关系信息。
-@property (nonatomic, strong, nullable) RCQuoteInfo *quoteInfo;
-
-/// 引用消息 V2 批量查询后的原消息。
-@property (nonatomic, strong, nullable) RCMessage *quoteReferencedMessage;
-
-/// 引用消息 V2 批量查询展示态。
-@property (nonatomic, assign) RCQuoteReferenceLoadStatus quoteReferenceLoadStatus;
-
 /*!
  消息是否可以发送请求回执
 
@@ -166,28 +141,6 @@ typedef NS_ENUM(NSInteger, RCQuoteReferenceLoadStatus) {
  媒体消息上传进度
 */
 @property (nonatomic, assign) NSInteger uploadProgress;
-
-/// 消息是否已被编辑
-@property (nonatomic, assign) BOOL hasChanged;
-
-/// 消息编辑信息
-@property (nonatomic, strong) RCMessageModifyInfo *modifyInfo;
-
-/// 消息已读回执操作标识。
-///
-/// - Note: 消息已读回执 V5 专用
-/// - Since: 5.30.0
-@property (nonatomic, assign) BOOL needReceipt;
-
-/// 已读回执是否已发送。
-///
-/// - Note: 消息已读回执 V5 专用
-/// - Since: 5.30.0
-@property (nonatomic, assign) BOOL sentReceipt;
-
-/// 已读 V5 信息
-@property (nonatomic, strong) RCReadReceiptInfoV5 *readReceiptInfoV5;
-
 /*!
  初始化消息Cell的数据模型
 

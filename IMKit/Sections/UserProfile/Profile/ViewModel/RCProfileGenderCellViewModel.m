@@ -10,6 +10,8 @@
 #import "RCProfileGenderCell.h"
 #import "RCKitCommonDefine.h"
 
+#define RCProfileGenderCellHeight 44
+
 @interface RCProfileGenderCellViewModel ()
 @property (nonatomic, weak) UITableView *tableView;
 @property (nonatomic, strong) NSIndexPath *indexPath;
@@ -29,12 +31,11 @@
     cell.titleLabel.text = [self getGenderString:self.gender];
     cell.selectView.hidden = !self.isSelect;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return RCProfileGenderCellHeight;
 }
 
 - (void)reloadData {

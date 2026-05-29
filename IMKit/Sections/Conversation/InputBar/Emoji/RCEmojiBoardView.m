@@ -80,7 +80,7 @@ static int rc_currentSelectIndexPage;
         [self generateDefaultLayoutParameters];
         lastFrameWith = self.frame.size.width;
         self.emojiBackgroundView = [[RCBaseScrollView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 186)];
-        self.emojiBackgroundView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+        self.emojiBackgroundView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
         self.emojiBackgroundView.pagingEnabled = YES;
         self.emojiBackgroundView.contentSize = CGSizeMake(self.emojiTotalPage * self.frame.size.width, 186);
         self.emojiBackgroundView.showsHorizontalScrollIndicator = NO;
@@ -196,12 +196,12 @@ static int rc_currentSelectIndexPage;
     UIButton *sendButton = (UIButton *)[self viewWithTag:333];
     if (enableSend) {
         sendButton.userInteractionEnabled = YES;
-        sendButton.backgroundColor = RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007Acc");
-        [sendButton setTitleColor:RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff") forState:UIControlStateNormal];
+        sendButton.backgroundColor = RCDYCOLOR(0x0099ff, 0x007Acc);
+        [sendButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     } else {
         sendButton.userInteractionEnabled = NO;
-        sendButton.backgroundColor = RCDynamicColor(@"disabled_color", @"0xfafafa", @"0x0b0b0c");
-        [sendButton setTitleColor:RCDynamicColor(@"text_secondary_color",@"0x999999", @"0x505050") forState:UIControlStateNormal];
+        sendButton.backgroundColor = RCDYCOLOR(0xfafafa, 0x0b0b0c);
+        [sendButton setTitleColor:RCDYCOLOR(0x999999, 0x505050) forState:UIControlStateNormal];
     }
 }
 
@@ -262,7 +262,7 @@ static int rc_currentSelectIndexPage;
     if ([RCKitUtility isRTL]) {
         [self.emojiBackgroundView setTransform:CGAffineTransformMakeScale(-1, 1)];
     }
-    self.emojiBackgroundView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");
+    self.emojiBackgroundView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
     self.emojiBackgroundView.pagingEnabled = YES;
     self.emojiBackgroundView.contentSize = CGSizeMake(self.emojiTotalPage * self.frame.size.width, 186);
     self.emojiBackgroundView.showsHorizontalScrollIndicator = NO;
@@ -446,7 +446,7 @@ static int rc_currentSelectIndexPage;
             frame.origin.x = self.frame.size.width - startPos_X - offset + pageIndex * self.frame.size.width;
             frame.size = CGSizeMake(RC_EMOJI_WIDTH, RC_EMOJI_WIDTH);
             deleteButton.frame = frame;
-            [deleteButton setImage:RCDynamicImage(@"conversation_msg_cell_emoji_delete_img", @"emoji_btn_delete") forState:UIControlStateNormal];
+            [deleteButton setImage:RCResourceImage(@"emoji_btn_delete") forState:UIControlStateNormal];
             deleteButton.contentEdgeInsets = UIEdgeInsetsMake(3, 0, 0, 0);
             [self.emojiBackgroundView addSubview:deleteButton];
         }
@@ -481,7 +481,7 @@ static int rc_currentSelectIndexPage;
 - (void)loadCustomerEmoticonPackage {
     NSMutableArray *emojiList = [NSMutableArray array];
     if(!self.disableDefaultEmoji) {
-        UIImage *img = RCDynamicImage(@"emoji_tab_face_img", @"emoji_btn_normal");
+        UIImage *img = RCResourceImage(@"emoji_btn_normal");
         if (img) {
             [emojiList addObject:img];
         }
@@ -616,9 +616,8 @@ static int rc_currentSelectIndexPage;
 - (RCEmojiTabView *)tabbarView{
     if (!_tabbarView) {
         _tabbarView = [[RCEmojiTabView alloc] initWithFrame:CGRectMake(0, self.frame.size.height - 38, self.frame.size.width, 38)];
-        _tabbarView.backgroundColor = RCDynamicColor(@"auxiliary_background_2_color", @"0xffffff", @"0x1a1a1a");
+        _tabbarView.backgroundColor = RCDYCOLOR(0xffffff, 0x1a1a1a);
         _tabbarView.delegate = self;
-        _tabbarView.accessibilityLabel = @"emoji_tabbarView";
     }
     return _tabbarView;
 }

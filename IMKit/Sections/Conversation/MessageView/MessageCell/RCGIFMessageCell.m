@@ -16,31 +16,11 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
-#import "RCReferencedContentView.h"
 #define GIFLOADIMAGEWIDTH 36.0f
 #define GIFLABLEWIGHT 40.0f
 #define GIFLABLEHEIGHT 10.0f
-#define QUOTE_CARD_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_TOP_OFFSET 8
-#define QUOTE_BODY_TOP_SPACING 16
-#define QUOTE_MEDIA_INSET QUOTE_DIVIDER_HORIZONTAL_INSET
 
 extern NSString *const RCKitDispatchDownloadMediaNotification;
-
-static CGFloat RCGIFMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
-    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
-    return RCQuoteCardTopMargin + cardHeight;
-}
-
-static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSize) {
-    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
-    CGFloat contentWidth = MAX(gifSize.width, quoteCardSize.width);
-    return MIN(contentWidth + QUOTE_MEDIA_INSET * 2, maxBubbleWidth);
-}
 
 @interface RCGIFMessageCell ()
 
@@ -63,8 +43,6 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 @property (nonatomic, strong) UILabel *destructLabel;
 
 @property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
-
-@property (nonatomic, strong) UIView *quoteDividerView;
 
 @end
 
@@ -102,9 +80,6 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
         __messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
     __messagecontentview_height += extraHeight;
-    if ([RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
-        __messagecontentview_height += QUOTE_BODY_TOP_SPACING + QUOTE_MEDIA_INSET;
-    }
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
@@ -115,21 +90,21 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
     }
     [super setDataModel:model];
     self.currentModel = model;
-    RCGIFMessage *gifMessage = (RCGIFMessage *)model.content;
-    [self calculateContenViewSize];
+    __block RCGIFMessage *gifMessage = (RCGIFMessage *)model.content;
+    [self calculateContenViewSize:gifMessage];
     self.destructBackgroundView.hidden = YES;
     if (gifMessage.destructDuration > 0) {
         self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundHeight);
-        self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
+        self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
         self.destructBackgroundView.frame = CGRectMake(0, 0, DestructBackGroundWidth, DestructBackGroundHeight);
         self.destructPicture.frame = CGRectMake(50, 43, 31, 25);
         self.destructLabel.frame = CGRectMake(0,CGRectGetMaxY(self.destructPicture.frame)+4, self.destructBackgroundView.frame.size.width, 17);
         if (self.model.messageDirection == MessageDirection_SEND) {
-            [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040a0f")];
-            self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_pic_img",@"burnPicture");
+            [self.destructLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040a0f)];
+            self.destructPicture.image = RCResourceImage(@"burnPicture");
         }else{
-            [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
-            self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_pic_img", @"from_burn_picture");
+            [self.destructLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+            self.destructPicture.image = RCResourceImage(@"from_burn_picture");
         }
     }
 
@@ -176,10 +151,8 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 #pragma mark - Private Methods
 
 - (void)initialize {
-    [self showBubbleBackgroundView:YES];
     [self.messageContentView addSubview:self.gifImageView];
     [self.messageContentView addSubview:self.loadBackButton];
-    [self.messageContentView addSubview:self.quoteDividerView];
     [self.messageContentView addSubview:self.destructBackgroundView];
     
     [self.destructBackgroundView addSubview:self.destructPicture];
@@ -196,37 +169,12 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
     [super prepareForReuse];
 }
 
-- (void)calculateContenViewSize {
+- (void)calculateContenViewSize:(RCGIFMessage *)gifMessage {
     CGSize gifSize = [RCGIFUtility calculatecollectionViewHeight:self.currentModel];
-    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.currentModel];
-    CGFloat contentWidth = gifSize.width;
-    CGFloat mediaInset = 0;
-    if (showsQuoteCard) {
-        contentWidth = RCGIFMessageQuoteBubbleWidth(self.currentModel, gifSize);
-        mediaInset = QUOTE_MEDIA_INSET;
-    }
-    CGFloat quoteOffset = showsQuoteCard ? RCGIFMessageQuoteContentOffset(self.currentModel, contentWidth) : 0;
-    CGFloat bodyOffset = showsQuoteCard ? QUOTE_BODY_TOP_SPACING : 0;
-    self.messageContentView.contentSize = CGSizeMake(contentWidth, gifSize.height + quoteOffset + bodyOffset + mediaInset);
-    self.gifImageView.frame = CGRectMake(mediaInset, quoteOffset + bodyOffset, gifSize.width, gifSize.height);
+    self.messageContentView.contentSize = CGSizeMake(gifSize.width, gifSize.height);
+    self.gifImageView.frame = CGRectMake(0, 0, gifSize.width, gifSize.height);
     self.progressView.frame = self.gifImageView.bounds;
     self.loadBackButton.frame = self.gifImageView.frame;
-    self.quoteDividerView.hidden = !showsQuoteCard;
-    self.bubbleBackgroundView.hidden = !showsQuoteCard;
-    if (showsQuoteCard) {
-        CGFloat dividerWidth = MAX(contentWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
-        self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
-                                                 quoteOffset + QUOTE_DIVIDER_TOP_OFFSET,
-                                                 dividerWidth,
-                                                 1);
-        [self.messageContentView bringSubviewToFront:self.quoteDividerView];
-    } else {
-        self.quoteDividerView.frame = CGRectZero;
-    }
-}
-
-- (BOOL)usesTopQuoteCardLayout {
-    return YES;
 }
 
 - (void)didClickLoadBackButton:(UIButton *)button {
@@ -305,14 +253,12 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 }
 
 - (void)showView:(UIView *)showView {
-    CGPoint loadButtonContentCenter =
-        CGPointMake(CGRectGetMidX(self.loadBackButton.bounds), CGRectGetMidY(self.loadBackButton.bounds));
-    showView.center = (showView.superview == self.loadBackButton) ? loadButtonContentCenter : self.loadBackButton.center;
+    showView.center = self.loadBackButton.center;
     if (self.loadBackButton.hidden) {
         self.loadBackButton.hidden = NO;
     }
     self.sizeLabel.center =
-        CGPointMake(loadButtonContentCenter.x, loadButtonContentCenter.y + 10 + GIFLOADIMAGEWIDTH / 2);
+        CGPointMake(self.loadBackButton.center.x, self.loadBackButton.center.y + 10 + GIFLOADIMAGEWIDTH / 2);
     RCGIFMessage *gifMessage = (RCGIFMessage *)self.model.content;
 
     NSString *size = [self getGIFSize:gifMessage.gifDataSize];
@@ -474,7 +420,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 - (RCBaseButton *)loadBackButton {
     if (!_loadBackButton) {
         _loadBackButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
-        _loadBackButton.backgroundColor = RCDynamicColor(@"text_secondary_color", @"0xd8d8d8", @"0xd8d8d8");
+        _loadBackButton.backgroundColor = RGBCOLOR(216, 216, 216);
         [_loadBackButton addTarget:self
                             action:@selector(didClickLoadBackButton:)
                   forControlEvents:(UIControlEventTouchUpInside)];
@@ -486,7 +432,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 - (RCBaseImageView *)needLoadImageView {
     if (!_needLoadImageView) {
         _needLoadImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _needLoadImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_needload_img", @"gif_needload");
+        _needLoadImageView.image = RCResourceImage(@"gif_needload");
         _needLoadImageView.hidden = YES;
         _needLoadImageView.tag = 1;
         [self.loadBackButton addSubview:_needLoadImageView];
@@ -497,7 +443,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 - (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
         _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _loadingImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_loading_img",@"gif_loading");
+        _loadingImageView.image = RCResourceImage(@"gif_loading");
         _loadingImageView.hidden = YES;
         _loadingImageView.tag = 2;
         [self.loadBackButton addSubview:_loadingImageView];
@@ -508,7 +454,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
 - (RCGIFMessageProgressView *)gifDownLoadPropressView {
     if (!_gifDownLoadPropressView) {
         _gifDownLoadPropressView = [[RCGIFMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 36, 36)];
-        _gifDownLoadPropressView.backgroundColor = [UIColor colorWithPatternImage:RCDynamicImage(@"conversation_msg_cell_gif_loadprogress_img",@"gif_loadprogress")];
+        _gifDownLoadPropressView.backgroundColor = [UIColor colorWithPatternImage:RCResourceImage(@"gif_loadprogress")];
         _gifDownLoadPropressView.tag = 3;
         _gifDownLoadPropressView.hidden = YES;
         [self.loadBackButton addSubview:_gifDownLoadPropressView];
@@ -520,7 +466,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
     if (!_loadfailedImageView) {
         _loadfailedImageView =
             [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, GIFLOADIMAGEWIDTH, GIFLOADIMAGEWIDTH)];
-        _loadfailedImageView.image = RCDynamicImage(@"conversation_msg_cell_gif_loadfailed_img", @"gif_loadfailed");
+        _loadfailedImageView.image = RCResourceImage(@"gif_loadfailed");
         _loadfailedImageView.hidden = YES;
         _loadfailedImageView.tag = 4;
         [self.loadBackButton addSubview:_loadfailedImageView];
@@ -535,7 +481,7 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
         _sizeLabel.numberOfLines = 1;
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
         _sizeLabel.backgroundColor = [UIColor clearColor];
-        _sizeLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF");
+        _sizeLabel.textColor = [UIColor whiteColor];
         _sizeLabel.hidden = YES;
         [self.loadBackButton addSubview:_sizeLabel];
     }
@@ -564,14 +510,5 @@ static CGFloat RCGIFMessageQuoteBubbleWidth(RCMessageModel *model, CGSize gifSiz
         _destructPicture = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 26)];
     }
     return _destructPicture;
-}
-
-- (UIView *)quoteDividerView {
-    if (!_quoteDividerView) {
-        _quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
-        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
-        _quoteDividerView.hidden = YES;
-    }
-    return _quoteDividerView;
 }
 @end

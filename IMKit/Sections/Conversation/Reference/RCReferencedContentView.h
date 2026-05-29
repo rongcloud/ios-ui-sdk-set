@@ -10,12 +10,7 @@
 #import "RCMessageModel.h"
 #import "RCBaseImageView.h"
 #import "RCBaseLabel.h"
-#import "RCAttributedLabel.h"
 #define name_and_image_view_space 5
-
-UIKIT_EXTERN CGFloat const RCQuoteCardDefaultHeight;
-UIKIT_EXTERN CGFloat const RCQuoteCardTopMargin;
-
 @protocol RCReferencedContentViewDelegate <NSObject>
 @optional
 
@@ -38,11 +33,4 @@ UIKIT_EXTERN CGFloat const RCQuoteCardTopMargin;
 @property (nonatomic, weak) id<RCReferencedContentViewDelegate> delegate;
 
 - (void)setMessage:(RCMessageModel *)message contentSize:(CGSize)contentSize;
-
-+ (BOOL)shouldShowQuoteCardForMessageModel:(RCMessageModel *)message;
-+ (CGSize)quoteCardContentSizeForMessageModel:(RCMessageModel *)message
-                                     maxWidth:(CGFloat)maxWidth;
-+ (CGFloat)quoteCardHeightForMessageModel:(RCMessageModel *)message
-                                 maxWidth:(CGFloat)maxWidth;
-
 @end

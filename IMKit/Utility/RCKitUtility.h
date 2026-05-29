@@ -388,7 +388,4 @@
 
 //判断是否是暗黑模式
 + (BOOL)isDarkMode;
-
-/// 是否使用欢快主题
-+ (BOOL)isTraditionInnerThemes;
 @end

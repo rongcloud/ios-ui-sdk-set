@@ -26,10 +26,6 @@
 #import "RCPublicServiceWebViewController.h"
 #import "NSDictionary+RCAccessor.h"
 #import "RCStreamUtilities.h"
-#import "RCRRSUtil.h"
-#import "RCKitConfig.h"
-#import "RCKitLanguageManager.h"
-
 @interface RCKitWeakRefObject : NSObject
 @property (nonatomic, weak) id weakRefObj;
 + (instancetype)refWithObject:(id)obj;
@@ -324,20 +320,16 @@
 }
 
 + (BOOL)isVisibleMessage:(RCMessage *)message {
-    BOOL isUnkownMessage = [self isUnkownMessage:message.messageId content:message.content];
-    if (isUnkownMessage && RCKitConfigCenter.message.showUnkownMessage) {
+    if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
         return YES;
-    } else  if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
+    } else if (!message.content && message.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;
 }
 
 + (BOOL)isUnkownMessage:(long)messageId content:(RCMessageContent *)content {
-    if([content isKindOfClass:[RCUnknownMessage class]]) {
-        return YES;
-    }
-    if (!content && messageId > 0) {
+    if (!content && messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;
@@ -421,8 +413,7 @@
         }
     }
     NSString *fileTypeIcon = [RCKitUtility getFileTypeIcon:type];
-    NSString *fileTypeKey = [NSString stringWithFormat:@"conversation_msg_cell_file_%@_img", fileTypeIcon];
-    return RCDynamicImage(fileTypeKey, fileTypeIcon);
+    return RCResourceImage(fileTypeIcon);
 }
 
 + (NSString *)getFileTypeIcon:(NSString *)fileType {
@@ -507,26 +498,26 @@
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
         if (model.conversationType == ConversationType_SYSTEM || model.conversationType == ConversationType_PRIVATE ||
             model.conversationType == ConversationType_CUSTOMERSERVICE) {
-            return RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg");
+            return RCResourceImage(@"default_portrait_msg");
         } else if (model.conversationType == ConversationType_GROUP) {
-            return RCDynamicImage(@"conversation-list_cell_group_portrait_img", @"default_group_portrait");
+            return RCResourceImage(@"default_group_portrait");
         } else if (model.conversationType == ConversationType_DISCUSSION) {
-            return RCDynamicImage(@"conversation-list_cell_discussion_portrait_img",@"default_discussion_portrait");
+            return RCResourceImage(@"default_discussion_portrait");
         }
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_COLLECTION) {
         if (model.conversationType == ConversationType_PRIVATE || model.conversationType == ConversationType_SYSTEM) {
-            return RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
+            return RCResourceImage(@"default_portrait");
         } else if (model.conversationType == ConversationType_CUSTOMERSERVICE) {
-            return RCDynamicImage(@"conversation-list_cell_portrait_kefu_img",@"portrait_kefu");
+            return RCResourceImage(@"portrait_kefu");
         } else if (model.conversationType == ConversationType_DISCUSSION) {
-            return RCDynamicImage(@"conversation-list_cell_discussion_collection_portrait_img", @"default_discussion_collection_portrait");
+            return RCResourceImage(@"default_discussion_collection_portrait");
         } else if (model.conversationType == ConversationType_GROUP) {
-            return RCDynamicImage(@"conversation-list_cell_collection_portrait_img",@"default_collection_portrait");
+            return RCResourceImage(@"default_collection_portrait");
         }
     } else if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_PUBLIC_SERVICE) {
-        return RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
+        return RCResourceImage(@"default_portrait");
     }
-    return RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
+    return RCResourceImage(@"default_portrait");
 }
 
 + (NSString *)defaultTitleForCollectionConversation:(RCConversationType)conversationType {
@@ -588,20 +579,11 @@
         return;
     }
     if (conversation.conversationType == ConversationType_PRIVATE && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversation.conversationType)]) {
-        if ([RCRRSUtil isSupportReadReceiptV5]) {
-            [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
-                                                               targetId:conversation.targetId
-                                                                   time:conversation.sentTime
-                                                                success:nil
-                                                                  error:nil];
-        } else {
-            [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:conversation.conversationType
-                                                           targetId:conversation.targetId
-                                                               time:conversation.sentTime
-                                                            success:nil
-                                                              error:nil];
-        }
-        
+        [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:conversation.conversationType
+                                                     targetId:conversation.targetId
+                                                         time:conversation.sentTime
+                                                      success:nil
+                                                        error:nil];
     } else if ((conversation.conversationType == ConversationType_PRIVATE &&
                 ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(conversation.conversationType)]) ||
                conversation.conversationType == ConversationType_GROUP ||
@@ -1400,8 +1382,37 @@
     }
     return userInfo.name;
 }
+
+
 + (NSString *)localizedString:(NSString *)key table:(NSString *)table {
-    return [[RCKitLanguageManager sharedManager] localizedStringForKey:key table:table];
+    
+    NSString *language = [[NSLocale preferredLanguages] firstObject];
+    if (language.length == 0) {
+        return key;
+    }
+    NSString *fileNamePrefix = @"en";
+    if([language hasPrefix:@"zh"]) {
+        fileNamePrefix = @"zh-Hans";
+    } else if ([language hasPrefix:@"ar"]) {
+        fileNamePrefix = @"ar";
+    }
+    NSString *fullName = [NSString stringWithFormat:@"%@.strings", table];
+  
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    NSString *path = [mainBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *filePath = [path stringByAppendingPathComponent:fullName];
+    if (![fileManager fileExistsAtPath:filePath]) {
+        NSBundle *frameworkBundle = [NSBundle bundleForClass:[self class]];
+        path = [frameworkBundle pathForResource:fileNamePrefix ofType:@"lproj"];
+    }
+    
+    NSBundle *bundle = [NSBundle bundleWithPath:path];
+    NSString *localizedString = [bundle localizedStringForKey:key value:nil table:table];
+    if (!localizedString) {
+        localizedString = key;
+    }
+    return localizedString;
 }
 
 
@@ -1456,9 +1467,5 @@
         }
     }
     return NO;
-}
-
-+ (BOOL)isTraditionInnerThemes {
-    return [RCIMKitThemeManager currentInnerThemesType] == RCIMKitInnerThemesTypeTradition;
 }
 @end

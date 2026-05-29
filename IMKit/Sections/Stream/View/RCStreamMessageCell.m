@@ -152,14 +152,14 @@ extern NSString *const RCConversationViewScrollNotification;
             self.unfoldButton.enabled = YES;
             self.unfoldButton.frame = CGRectMake(0, self.messageContentView.frame.size.height - rcUnfoldButtonHeight, self.messageContentView.frame.size.width, rcUnfoldButtonHeight);
             [self.unfoldButton setTitle:RCLocalizedString(@"StreamMessageUnfold") forState:(UIControlStateNormal)];
-            [self.unfoldButton setTitleColor:RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff") forState:UIControlStateNormal];
+            [self.unfoldButton setTitleColor:HEXCOLOR(0x0099ff) forState:UIControlStateNormal];
         } break;
         case RCStreamMessageStatusBottomLoading:{
             self.unfoldButton.hidden = NO;
             self.unfoldButton.enabled = NO;
             self.unfoldButton.frame = CGRectMake(0, self.messageContentView.frame.size.height - rcUnfoldButtonHeight, self.messageContentView.frame.size.width, rcUnfoldButtonHeight);
             [self.unfoldButton setTitle:RCLocalizedString(@"StreamMessageLoading") forState:(UIControlStateNormal)];
-            [self.unfoldButton setTitleColor:RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff") forState:UIControlStateNormal];
+            [self.unfoldButton setTitleColor:HEXCOLOR(0x959595) forState:UIControlStateNormal];
             if (self.timer) {
                 return;
             }
@@ -172,7 +172,7 @@ extern NSString *const RCConversationViewScrollNotification;
             self.unfoldButton.enabled = YES;
             self.unfoldButton.frame = CGRectMake(0, self.messageContentView.frame.size.height - rcUnfoldButtonHeight, self.messageContentView.frame.size.width, rcUnfoldButtonHeight);
             [self.unfoldButton setTitle:RCLocalizedString(@"StreamMessageRequestFailed") forState:(UIControlStateNormal)];
-            [self.unfoldButton setTitleColor:RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff") forState:UIControlStateNormal];
+            [self.unfoldButton setTitleColor:HEXCOLOR(0x0099ff) forState:UIControlStateNormal];
         } break;
         default:{
             if (self.unfoldButton.hidden) {
@@ -346,17 +346,10 @@ extern NSString *const RCConversationViewScrollNotification;
         [_unfoldButton addTarget:self action:@selector(unfoldButtonDidClick) forControlEvents:(UIControlEventTouchUpInside)];
         CAGradientLayer *gradientLayer = [CAGradientLayer layer];
         gradientLayer.frame = CGRectMake(0, -50, [RCMessageCellTool getMessageContentViewMaxWidth], 50);
-        UIColor *color = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x111111");
-        if (color) {
-            gradientLayer.colors = @[
-                (id)[UIColor clearColor].CGColor,
-                (id)color.CGColor];
-        } else {
-            gradientLayer.colors = @[
-                (id)[RCDYCOLOR(0xffffff, 0x111111) colorWithAlphaComponent:0.0].CGColor,
-                (id)RCDYCOLOR(0xffffff, 0x111111).CGColor];
-        }
-      
+        gradientLayer.colors = @[
+            (id)[RCDYCOLOR(0xffffff, 0x111111) colorWithAlphaComponent:0.0].CGColor,
+            (id)RCDYCOLOR(0xffffff, 0x111111).CGColor
+        ];
         gradientLayer.locations = @[@0, @1];
         // 添加渐变层
         [_unfoldButton.layer addSublayer:gradientLayer];
@@ -368,7 +361,7 @@ extern NSString *const RCConversationViewScrollNotification;
 - (UIView *)lineView {
     if (!_lineView) {
         _lineView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [RCMessageCellTool getMessageContentViewMaxWidth], 0.5)];
-        _lineView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
+        _lineView.backgroundColor = HEXCOLOR(0xE2E4E5);
     }
     return _lineView;
 }

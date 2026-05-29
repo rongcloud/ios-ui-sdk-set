@@ -19,8 +19,6 @@
 #import "RCBaseCollectionView.h"
 #import "RCBaseButton.h"
 #import "RCBaseImageView.h"
-#import "RCEditInputBarControl.h"
-#import "RCFullScreenEditView.h"
 
 @class RCLocationMessage;
 @class RCCustomerServiceInfo,RCPublicServiceMenuItem;
@@ -156,12 +154,6 @@ typedef enum : NSUInteger {
 /// 会话页面下方的输入工具栏
 @property (nonatomic, strong) RCChatSessionInputBarControl *chatSessionInputBarControl;
 
-/// 消息编辑普通输入框控件
-@property (nonatomic, strong) RCEditInputBarControl *editInputBarControl;
-
-/// 消息编辑全屏编辑视图
-@property (nonatomic, strong, nullable) RCFullScreenEditView *fullScreenEditView;
-
 /// 禁用系统表情, 建议在RCConversationViewController 创建后立刻赋值
 @property (nonatomic, assign) BOOL  disableSystemEmoji;
 
@@ -294,12 +286,6 @@ typedef enum : NSUInteger {
 - (void)sendMediaMessage:(RCMessageContent *)messageContent
              pushContent:(nullable NSString *)pushContent
                appUpload:(BOOL)appUpload;
-
-/// 将当前引用状态附加到待发送消息上。
-/// 当开发者重写发送逻辑并手动构造 RCMessage 时，可在调用 RCIM/RCCoreClient 发送前调用此方法，保持 V2 引用生效。
-/// - Parameter message: 待发送的消息对象
-/// - Returns: 是否成功附加引用信息
-- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message;
 
 /// 上传媒体信息到App指定的服务器的回调
 /// - Parameter message:        媒体消息（图片消息或文件消息）的实体
@@ -456,19 +442,6 @@ typedef enum : NSUInteger {
 /// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
 - (void)didTapMessageCell:(RCMessageModel *)model;
 
-
-/// 长按Cell中的语音转文本内容的回调
-/// - Parameters:
-/// - Parameter model: 消息Cell的数据模型
-/// - Parameter view:  长按区域的View
-- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view;
-
-/// 获取长按Cell中的语音转文本时的菜单
-/// - Parameter model: 消息Cell的数据模型
-/// SDK在此长按事件中，会展示此方法返回的菜单。
-/// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
-- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model;
-
 /// 长按Cell中的消息内容的回调
 /// - Parameter model: 消息Cell的数据模型
 /// - Parameter view:  长按区域的View
@@ -513,8 +486,6 @@ typedef enum : NSUInteger {
 ///
 /// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
 - (BOOL)didTapCommonPhrasesButton;
-
-- (void)didTapReceiptStatusView:(RCMessageModel *)model;
 
 #pragma mark - 语音消息、图片消息、位置消息、文件消息显示与操作
 
@@ -619,8 +590,6 @@ typedef enum : NSUInteger {
 /// - Parameter completedBlock:   返回需要转发到的会话的列表。
 /// 开发者如果想更换转发消息的选择会话界面，可以重写此方法，弹出自定义的选择会话界面，选择结束之后，调用completedBlock传入选中的会话即可。
 - (void)forwardMessage:(NSInteger)index completed:(void (^)(NSArray<RCConversation *> *conversationList))completedBlock;
-
-- (void)addMentionedUserToCurrentInput:(RCUserInfo *)userInfo;
 
 @end
 NS_ASSUME_NONNULL_END

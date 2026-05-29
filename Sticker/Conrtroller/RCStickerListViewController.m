@@ -35,7 +35,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.title = RongStickerString(@"my_stickers");
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf0f0f6", @"0x000000");
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     self.navigationController.navigationBar.titleTextAttributes =
         @{NSForegroundColorAttributeName : RCKitConfigCenter.ui.globalNavigationBarTintColor};
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -65,7 +65,7 @@
 
 - (void)setNav {
     self.navigationController.navigationBar.translucent = NO;
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     imgMirror = [self imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RongStickerString(@"back") target:self action:@selector(backAction)];
 }
@@ -157,8 +157,8 @@
         _tableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
         _tableView.delegate = self;
         _tableView.dataSource = self;
-        _tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x272727");
-        _tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
+        _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+        _tableView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);;
     }
     return _tableView;
 }
@@ -168,7 +168,7 @@
         _headerView = [[UIView alloc] init];
         RCBaseLabel *headerLabel = [[RCBaseLabel alloc] init];
         headerLabel.font = [UIFont systemFontOfSize:12];
-        headerLabel.textColor = RCDynamicColor(@"text_secondary_color",@"0x999999", @"0x999999");
+        headerLabel.textColor = HEXCOLOR(0x999999);
         headerLabel.text = RongStickerString(@"download_package");
         headerLabel.frame = CGRectMake(15, 10, ScreenWidth-30, 17);
         [_headerView addSubview:headerLabel];
@@ -189,7 +189,7 @@
         UILabel *descLabel = [[UILabel alloc] init];
         descLabel.font = [UIFont systemFontOfSize:18];
         descLabel.textAlignment = NSTextAlignmentCenter;
-        descLabel.textColor = RCDynamicColor(@"text_secondary_color",@"0x666666", @"0x666666");
+        descLabel.textColor = HEXCOLOR(0x666666);
         descLabel.text = RongStickerString(@"package_list_empty");
         descLabel.frame = CGRectMake(0, CGRectGetMaxY(emptyImage.frame) + 72, ScreenWidth, 25);
         [_emptyView addSubview:descLabel];

@@ -28,7 +28,7 @@
     [btn addTarget:self
             action:@selector(rightBarItemClicked:)
   forControlEvents:UIControlEventTouchUpInside];
-    UIImage *image = RCDynamicImage(@"friend_list_add_new_img", @"friend_list_add_new");
+    UIImage *image = RCResourceImage(@"friend_list_add_new");
     [btn setImage:image forState:UIControlStateNormal];
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
     return @[item];

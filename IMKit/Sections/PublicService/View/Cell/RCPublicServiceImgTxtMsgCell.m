@@ -85,7 +85,7 @@
     self.titleLabel.numberOfLines = 0;
     self.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
     
-    self.titleLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x262626", @"0x262626");
+    self.titleLabel.textColor = RGBCOLOR(38, 38, 38);
     self.titleLabel.textAlignment = NSTextAlignmentLeft;
     self.titleLabel.text = content.richContent.title;
     yOffset += titleframe.size.height;
@@ -110,7 +110,7 @@
     self.contentLabel.numberOfLines = 0;
     self.contentLabel.font = [[RCKitConfig defaultConfig].font fontOfThirdLevel];
     
-    self.contentLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x7f7f7f", @"0x7f7f7f");
+    self.contentLabel.textColor = RGBCOLOR(127, 127, 127);
     self.contentLabel.textAlignment = NSTextAlignmentLeft;
     self.contentLabel.text = content.richContent.digest;
 
@@ -126,8 +126,7 @@
     [linePath addLineToPoint:CGPointMake(self.line.frame.size.width, 0)];
     CAShapeLayer *lineLayer = [CAShapeLayer layer];
     lineLayer.lineWidth = self.line.frame.size.height;
-    UIColor *color = RCDynamicColor(@"line_background_color", @"0xe5e5e5", @"0xe5e5e5");
-    lineLayer.strokeColor = color.CGColor;
+    lineLayer.strokeColor = [UIColor colorWithRed:229 / 255.0 green:229 / 255.0 blue:229 / 255.0 alpha:1].CGColor;
     lineLayer.path = linePath.CGPath;
     lineLayer.fillColor = nil;
     [self.line.layer addSublayer:lineLayer];
@@ -143,7 +142,7 @@
     //    UILabel *readallLabel = [[UILabel alloc] initWithFrame:readallframe];
     self.readallLabel.numberOfLines = 0;
     self.readallLabel.font = [[RCKitConfig defaultConfig].font fontOfThirdLevel];
-    self.readallLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x262626", @"0x262626");
+    self.readallLabel.textColor = RGBCOLOR(38, 38, 38);
     self.readallLabel.textAlignment = NSTextAlignmentLeft;
     self.readallLabel.text = readAll;
     self.arrow.frame =
@@ -156,7 +155,7 @@
     self.container.frame = CGRectMake(
         RCPublicServiceSingleCellPaddingLeft, RCPublicServiceSingleCellPaddingTop,
         self.frame.size.width - RCPublicServiceSingleCellPaddingLeft - RCPublicServiceSingleCellPaddingRight, yOffset);
-    [self.container setBackgroundColor:RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff")];
+    [self.container setBackgroundColor:[UIColor whiteColor]];
 
     self.container.layer.cornerRadius = 4;
     self.container.layer.masksToBounds = YES;
@@ -275,7 +274,7 @@
 - (RCBaseImageView *)arrow {
     if (!_arrow) {
         _arrow = [RCBaseImageView new];
-        [_arrow setImage:RCDynamicImage(@"cell_right_arrow_img", @"right_arrow")];
+        [_arrow setImage:RCResourceImage(@"right_arrow")];
         [self.container addSubview:_arrow];
     }
     return _arrow;

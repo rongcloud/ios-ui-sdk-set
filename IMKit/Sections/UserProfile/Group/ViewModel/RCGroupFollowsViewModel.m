@@ -9,12 +9,11 @@
 #import "RCGroupFollowsViewModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 #import "RCGroupFollowCellViewModel.h"
+#import "RCProfileCommonCellViewModel.h"
 #import "RCGroupManager.h"
 #import "RCKitCommonDefine.h"
 #import "RCSelectGroupMemberViewController.h"
 #import "RCAlertView.h"
-#import "RCGroupMemberAdditionalCellViewModel.h"
-
 @interface RCGroupFollowsViewModel ()<RCGroupFollowCellViewModelDelegate, RCGroupEventDelegate>
 @property (nonatomic, copy) NSString *groupId;
 @property (nonatomic, strong) NSMutableArray <RCBaseCellViewModel *>*mutableFollowList;
@@ -40,7 +39,6 @@
         if (followInfos.count == 0) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self resetMutableFollowList];
-                [self removeSeparatorLineIfNeed:@[self.mutableFollowList]];
                 [self.responder reloadData:YES];
             });
             return;
@@ -56,9 +54,6 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self resetMutableFollowList];
                 [self.mutableFollowList addObjectsFromArray:cellVMs];
-                if (self.mutableFollowList.count) {
-                    [self removeSeparatorLineIfNeed:@[self.mutableFollowList]];
-                }
                 [self.responder reloadData:self.mutableFollowList.count == 1];
             });
         }];
@@ -112,8 +107,8 @@
 #pragma mark -- RCListViewModelProtocol
 
 - (void)registerCellForTableView:(UITableView *)tableView {
+    [RCProfileCommonCellViewModel registerCellForTableView:tableView];
     [RCGroupFollowCellViewModel registerCellForTableView:tableView];
-    [RCGroupMemberAdditionalCellViewModel registerCellForTableView:tableView];
 }
 
 - (void)viewController:(UIViewController*)viewController
@@ -121,7 +116,6 @@
           didSelectRow:(NSIndexPath *)indexPath {
     if (indexPath.section == 0 && indexPath.row == 0) {
         [self pushSelectVC:viewController];
-        
     }
 }
 
@@ -195,9 +189,7 @@
 
 - (void)resetMutableFollowList {
     self.mutableFollowList = [NSMutableArray array];
-    UIImage *image = RCDynamicImage(@"group_manage_add_member_img", @"group_manage_add_member");
-    RCGroupMemberAdditionalCellViewModel *addVM = [[RCGroupMemberAdditionalCellViewModel alloc] initWithTitle:RCLocalizedString(@"AddFollowsMember")
-                                                                                                     portrait:image];
+    RCProfileCommonCellViewModel *addVM = [[RCProfileCommonCellViewModel alloc] initWithCellType:RCUProfileCellTypeText title:RCLocalizedString(@"AddFollowsMember") detail:nil];
     [self.mutableFollowList addObject:addVM];
 }
 

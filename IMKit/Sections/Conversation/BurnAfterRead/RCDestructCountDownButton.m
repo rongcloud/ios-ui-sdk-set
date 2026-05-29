@@ -15,12 +15,12 @@
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf4b50b", @"0xfa9d3b");
+        self.backgroundColor = RCDYCOLOR(0xf4b50b, 0xfa9d3b);
         self.layer.masksToBounds = YES;
         self.layer.cornerRadius = 10;
         self.userInteractionEnabled = NO;
         self.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
-        [self setTitleColor:RCDynamicColor(@"hint_color", @"0xffffff", @"0x111111") forState:(UIControlStateNormal)];
+        [self setTitleColor:RCDYCOLOR(0xffffff, 0x111111) forState:(UIControlStateNormal)];
     }
     return self;
 }

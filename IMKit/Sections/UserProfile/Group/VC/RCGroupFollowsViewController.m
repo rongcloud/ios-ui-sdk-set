@@ -7,7 +7,7 @@
 //
 
 #import "RCGroupFollowsViewController.h"
-#import "RCSelectUserView.h"
+#import "RCBaseTableView.h"
 #import "RCKitCommonDefine.h"
 
 @interface RCGroupFollowsViewController ()<
@@ -16,7 +16,7 @@ UITableViewDataSource,
 RCListViewModelResponder
 >
 
-@property (nonatomic, strong) RCSelectUserView *selectUserView;
+@property (nonatomic, strong) RCBaseTableView *tableView;
 
 @property (nonatomic, strong) RCGroupFollowsViewModel *viewModel;
 
@@ -37,12 +37,12 @@ RCListViewModelResponder
 }
 
 - (void)loadView {
-    self.view = self.selectUserView;
+    self.view = self.tableView;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.viewModel registerCellForTableView:self.selectUserView.tableView];
+    [self.viewModel registerCellForTableView:self.tableView];
     [self setNavigationBarItems];
     [self setupView];
     [self.viewModel fetchGroupFollows];
@@ -51,11 +51,12 @@ RCListViewModelResponder
 #pragma mark -- private
 
 - (void)setNavigationBarItems {
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
 - (void)setupView {
+    [self.tableView addSubview:self.emptyLabel];
 }
 
 #pragma mark -- action
@@ -67,8 +68,13 @@ RCListViewModelResponder
 #pragma mark -- RCListViewModelResponder
 
 - (void)reloadData:(BOOL)isEmpty {
-    [self.selectUserView.tableView reloadData];
-    self.selectUserView.emptyLabel.hidden = !isEmpty;
+    [self.tableView reloadData];
+    self.emptyLabel.hidden = !isEmpty;
+    if (!self.emptyLabel.hidden) {
+        self.emptyLabel.text = RCLocalizedString(@"NoGroupFollows");
+        [self.emptyLabel sizeToFit];
+        self.emptyLabel.center = CGPointMake(self.view.center.x, 150);
+    }
 }
 
 - (UIViewController *)currentViewController {
@@ -97,14 +103,41 @@ RCListViewModelResponder
 
 #pragma mark -- getter
 
-- (RCSelectUserView *)selectUserView {
-    if (!_selectUserView) {
-        _selectUserView = [RCSelectUserView new];
-        _selectUserView.tableView.delegate = self;
-        _selectUserView.tableView.dataSource = self;
-        _selectUserView.emptyLabel.text = RCLocalizedString(@"NoGroupFollows");
+- (RCBaseTableView *)tableView {
+    if (!_tableView) {
+        _tableView = [RCBaseTableView new];
+        _tableView.delegate = self;
+        _tableView.dataSource = self;
+        _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+        _tableView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);
+        _tableView.tableFooterView = [UIView new];
+        _tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, 15)];
+        _tableView.sectionHeaderHeight = 0;
+        if (@available(iOS 15.0, *)) {
+            _tableView.sectionHeaderTopPadding = 15;
+        }
+        if ([_tableView respondsToSelector:@selector(setSeparatorInset:)]) {
+            _tableView.separatorInset = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
+        if ([_tableView respondsToSelector:@selector(setLayoutMargins:)]) {
+            _tableView.layoutMargins = UIEdgeInsetsMake(0, 64, 0, 0);
+        }
     }
-    return _selectUserView;
+    return _tableView;
 }
+
+- (UILabel *)emptyLabel {
+    if (!_emptyLabel) {
+        UILabel *lab = [[UILabel alloc] init];
+        lab.textColor = RCDYCOLOR(0x939393, 0x666666);
+        lab.font = [UIFont systemFontOfSize:17];
+        lab.textAlignment = NSTextAlignmentCenter;
+        lab.hidden = YES;
+        [lab sizeToFit];
+        _emptyLabel = lab;
+    }
+    return _emptyLabel;
+}
+
 
 @end

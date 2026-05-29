@@ -14,67 +14,13 @@
 #import "RCHQVoiceMsgDownloadManager.h"
 #import "RCHQVoiceMsgDownloadInfo.h"
 #import "RCMessageCellTool.h"
-#import "RCSTTContentView.h"
-#import "RCMessageModel+STT.h"
-#import "RCReferencedContentView.h"
-
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
-static BOOL hq_previousShowsQuoteCard;
 
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
 #define Play_Voice_View_Width 16
-#define QUOTE_CARD_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_TOP_SPACING 6
-#define QUOTE_DIVIDER_HEIGHT 1
-#define QUOTE_DIVIDER_BOTTOM_SPACING 10
-#define QUOTE_BODY_BOTTOM_PADDING 10
-#define QUOTE_VOICE_HORIZONTAL_INSET 12
-#define QUOTE_VOICE_ICON_TEXT_SPACING 8
-
-static CGFloat RCHQVoiceMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
-    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
-    return RCQuoteCardTopMargin + cardHeight;
-}
-
-static CGFloat RCHQVoiceMessageQuoteBubbleWidth(RCMessageModel *model, CGFloat audioBubbleWidth) {
-    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
-    CGFloat quoteWidth = quoteCardSize.width + QUOTE_CARD_HORIZONTAL_INSET * 2;
-    return MIN(MAX(audioBubbleWidth, quoteWidth), maxBubbleWidth);
-}
-
-static CGFloat RCHQVoiceMessageQuoteBodyTopSpacing(void) {
-    return QUOTE_DIVIDER_TOP_SPACING + QUOTE_DIVIDER_HEIGHT + QUOTE_DIVIDER_BOTTOM_SPACING;
-}
-
-static CGFloat RCHQVoiceMessageQuoteVoiceRowHeight(void) {
-    return ceilf([[RCKitConfig defaultConfig].font fontOfSecondLevel].lineHeight);
-}
-
-static CGFloat RCHQVoiceMessageQuoteBodyHeight(void) {
-    return RCHQVoiceMessageQuoteBodyTopSpacing() + RCHQVoiceMessageQuoteVoiceRowHeight() + QUOTE_BODY_BOTTOM_PADDING;
-}
-
-static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirection direction, NSInteger index) {
-    BOOL usesReceiveStyleImage = showsQuoteCard || direction == MessageDirection_RECEIVE;
-    NSString *imageName = usesReceiveStyleImage ? [NSString stringWithFormat:@"from_voice_%ld", (long)index]
-                                                : [NSString stringWithFormat:@"to_voice_%ld", (long)index];
-    NSString *imageKey = usesReceiveStyleImage
-        ? [NSString stringWithFormat:@"conversation_msg_cell_receive_voice_%ld_img", (long)index]
-        : [NSString stringWithFormat:@"conversation_msg_cell_send_voice_%ld_img", (long)index];
-    UIImage *image = RCDynamicImage(imageKey, imageName);
-    if ([RCKitUtility isRTL]) {
-        image = [image imageFlippedForRightToLeftLayoutDirection];
-    }
-    return image;
-}
-
 @interface RCMessageCell()
 - (void)messageContentViewFrameDidChanged;
 @end
@@ -84,10 +30,6 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
 @property (nonatomic, strong) NSTimer *animationTimer;
 @property (nonatomic) int animationIndex;
 @property (nonatomic, strong) RCVoicePlayer *voicePlayer;
-@property (nonatomic, strong) RCSTTContentView *sttContentView;
-@property (nonatomic, strong) UIView *quoteDividerView;
-
-
 @end
 
 @implementation RCHQVoiceMessageCell
@@ -119,21 +61,18 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
-    [RCSTTContentViewModel configureSTTIfNeeded:model];
-    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:model];
-    CGFloat __messagecontentview_height = showsQuoteCard ? RCHQVoiceMessageQuoteBodyHeight() : Voice_Height;
+    CGFloat __messagecontentview_height = Voice_Height;
 
     if (__messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
         __messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
 
     __messagecontentview_height += extraHeight;
-    __messagecontentview_height += [self sstInfoHeight:model];
+
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
-    RCSTTLog(@" model changed %p to %p  on %p ", self.model, model, self);
     [super setDataModel:model];
     [self resetAnimationTimer];
 
@@ -142,7 +81,6 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
     [self setMessageInfo:voiceMessage];
     [self updateSubViewsLayout:voiceMessage];
     [self updateVoiceDownloadStatusView:voiceMessage];
-    [self configureSTTContentViewIfNeed];
 }
 
 #pragma mark - Public API
@@ -278,10 +216,9 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
 
 - (void)initialize {
     [self showBubbleBackgroundView:YES];
-    self.messageContentView.accessibilityLabel = @"messageContentView";
+    
     [self.messageContentView addSubview:self.playVoiceView];
     [self.messageContentView addSubview:self.voiceDurationLabel];
-    [self.messageContentView addSubview:self.quoteDividerView];
     
     [self registerNotification];
 }
@@ -336,72 +273,41 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
 
 - (void)updateSubViewsLayout:(RCHQVoiceMessage *)voiceMessage{
     CGFloat audioBubbleWidth = [self getBubbleWidth:voiceMessage.duration];
-    CGFloat voiceHeight = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
-    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-    CGFloat contentWidth = audioBubbleWidth;
-    if (showsQuoteCard) {
-        contentWidth = RCHQVoiceMessageQuoteBubbleWidth(self.model, audioBubbleWidth);
+    CGSize size = self.messageContentView.contentSize;
+    size.width = audioBubbleWidth;
+    if (size.height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
+        size.height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
-    CGFloat quoteOffset = showsQuoteCard ? RCHQVoiceMessageQuoteContentOffset(self.model, contentWidth) : 0;
-    CGFloat bodyTopSpacing = showsQuoteCard ? RCHQVoiceMessageQuoteBodyTopSpacing() : 0;
-    CGFloat voiceRowHeight = showsQuoteCard ? RCHQVoiceMessageQuoteVoiceRowHeight() : voiceHeight;
-    CGFloat contentHeight = showsQuoteCard ? quoteOffset + RCHQVoiceMessageQuoteBodyHeight() : voiceHeight;
-    self.messageContentView.contentSize = CGSizeMake(contentWidth, contentHeight);
-    self.quoteDividerView.hidden = !showsQuoteCard;
-    if (showsQuoteCard) {
-        CGFloat dividerWidth = MAX(contentWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
-        self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
-                                                 quoteOffset + QUOTE_DIVIDER_TOP_SPACING,
-                                                 dividerWidth,
-                                                 QUOTE_DIVIDER_HEIGHT);
-        [self.messageContentView bringSubviewToFront:self.quoteDividerView];
-    } else {
-        self.quoteDividerView.frame = CGRectZero;
-    }
-    CGFloat voiceRowY = quoteOffset + bodyTopSpacing;
-    if (showsQuoteCard) {
-        self.playVoiceView.image = RCHQVoiceMessageVoiceImage(YES, self.model.messageDirection, 3);
-        [self.voiceDurationLabel setTextColor:self.model.messageDirection == MessageDirection_SEND
-                                           ? RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")
-                                           : RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
-        self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
-        self.playVoiceView.frame = CGRectMake(QUOTE_VOICE_HORIZONTAL_INSET,
-                                              voiceRowY + (voiceRowHeight - Play_Voice_View_Width) / 2,
-                                              Play_Voice_View_Width,
-                                              Play_Voice_View_Width);
-        CGFloat labelX = CGRectGetMaxX(self.playVoiceView.frame) + QUOTE_VOICE_ICON_TEXT_SPACING;
-        self.voiceDurationLabel.frame = CGRectMake(labelX,
-                                                   voiceRowY,
-                                                   MAX(contentWidth - labelX - QUOTE_VOICE_HORIZONTAL_INSET, 0),
-                                                   voiceRowHeight);
-    } else if ([RCKitUtility isRTL]) {
+    self.messageContentView.contentSize = size;
+    CGFloat voiceHeight = size.height;
+    if ([RCKitUtility isRTL]) {
         if (self.model.messageDirection == MessageDirection_SEND) {
-            self.playVoiceView.image = RCHQVoiceMessageVoiceImage(NO, MessageDirection_RECEIVE, 3);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
-            self.playVoiceView.frame = CGRectMake(12, voiceRowY + (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, voiceRowY, contentWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
+            self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
         } else {
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
-            self.playVoiceView.frame = CGRectMake(contentWidth - 12 - Play_Voice_View_Width, voiceRowY + (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(12, voiceRowY, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
-            self.playVoiceView.image = RCHQVoiceMessageVoiceImage(NO, MessageDirection_SEND, 3);
+            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
+            [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
+            self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }
     } else {
         
         if (self.model.messageDirection == MessageDirection_SEND) {
             self.voiceDurationLabel.textAlignment = NSTextAlignmentRight;
-            self.playVoiceView.frame = CGRectMake(contentWidth - 12 - Play_Voice_View_Width, voiceRowY + (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(12, voiceRowY, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
-            self.playVoiceView.image = RCHQVoiceMessageVoiceImage(NO, self.model.messageDirection, 3);
+            self.playVoiceView.frame = CGRectMake(self.messageContentView.frame.size.width-12-Play_Voice_View_Width, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(12, 0, CGRectGetMinX(self.playVoiceView.frame) - 20, voiceHeight);
+            [self.voiceDurationLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040A0F)];
+            self.playVoiceView.image = RCResourceImage(@"to_voice_3");
         }else{
-            self.playVoiceView.image = RCHQVoiceMessageVoiceImage(NO, self.model.messageDirection, 3);
-            [self.voiceDurationLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+            self.playVoiceView.image = RCResourceImage(@"from_voice_3");
+            [self.voiceDurationLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
             self.voiceDurationLabel.textAlignment = NSTextAlignmentLeft;
-            self.playVoiceView.frame = CGRectMake(12, voiceRowY + (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
-            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, voiceRowY, contentWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
+            self.playVoiceView.frame = CGRectMake(12, (voiceHeight - Play_Voice_View_Width)/2, Play_Voice_View_Width, Play_Voice_View_Width);
+            self.voiceDurationLabel.frame = CGRectMake(CGRectGetMaxX(self.playVoiceView.frame) + 8, 0, audioBubbleWidth - (CGRectGetMaxX(self.playVoiceView.frame) + 8), voiceHeight);
         }
     }
     
@@ -439,19 +345,14 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
     self.voiceUnreadTagView.image = nil;
     [self.voiceUnreadTagView setHidden:YES];
     CGSize size = self.messageContentView.contentSize;
+    CGFloat voiceHeight = size.height;
     if (MessageDirection_RECEIVE == self.model.messageDirection) {
         CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
         if ([RCKitUtility isRTL]) {
             x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
         }
         if (NO == self.model.receivedStatusInfo.isListened) {
-            // 红点应对齐语音条的垂直中心，而非整个 contentSize（含引用卡片区域）
-            BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-            CGFloat quoteOffset = showsQuoteCard ? RCHQVoiceMessageQuoteContentOffset(self.model, size.width) : 0;
-            CGFloat bodyTopSpacing = showsQuoteCard ? RCHQVoiceMessageQuoteBodyTopSpacing() : 0;
-            CGFloat voiceRowHeight = showsQuoteCard ? RCHQVoiceMessageQuoteVoiceRowHeight() : Voice_Height;
-            CGFloat voiceBarCenterY = quoteOffset + bodyTopSpacing + voiceRowHeight / 2.0;
-            self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + voiceBarCenterY - voice_Unread_View_Width / 2.0, voice_Unread_View_Width, voice_Unread_View_Width)];
+            self.voiceUnreadTagView = [[RCBaseImageView alloc] initWithFrame:CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width)];
             self.voiceUnreadTagView.accessibilityLabel = @"voiceUnreadTagView";
             if (voiceMessage.localPath.length > 0) {
                 [self.voiceUnreadTagView setHidden:NO];
@@ -459,7 +360,7 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
                 [self.voiceUnreadTagView setHidden:YES];
             }
             [self.baseContentView addSubview:self.voiceUnreadTagView];
-            self.voiceUnreadTagView.image = RCDynamicImage(@"conversation_msg_cell_voice_unread_img",@"voice_unread");
+            self.voiceUnreadTagView.image = RCResourceImage(@"voice_unread");
         }
     }
 }
@@ -472,68 +373,24 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
     }
 }
 
-- (BOOL)usesTopQuoteCardLayout {
-    return YES;
-}
-
 #pragma mark - Overwrite
 - (void)messageContentViewFrameDidChanged {
     [super messageContentViewFrameDidChanged];
     if (MessageDirection_RECEIVE == self.model.messageDirection) {
         CGSize size = self.messageContentView.contentSize;
+        CGFloat voiceHeight = size.height;
         if (MessageDirection_RECEIVE == self.model.messageDirection) {
             CGFloat x = CGRectGetMaxX(self.messageContentView.frame) + 8;
             if ([RCKitUtility isRTL]) {
                 x = CGRectGetMinX(self.messageContentView.frame) - 8 - voice_Unread_View_Width;
             }
             if (NO == self.model.receivedStatusInfo.isListened) {
-                // 红点对齐语音条垂直中心
-                BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-                CGFloat quoteOffset = showsQuoteCard ? RCHQVoiceMessageQuoteContentOffset(self.model, size.width) : 0;
-                CGFloat bodyTopSpacing = showsQuoteCard ? RCHQVoiceMessageQuoteBodyTopSpacing() : 0;
-                CGFloat voiceRowHeight = showsQuoteCard ? RCHQVoiceMessageQuoteVoiceRowHeight() : Voice_Height;
-                CGFloat voiceBarCenterY = quoteOffset + bodyTopSpacing + voiceRowHeight / 2.0;
-                self.voiceUnreadTagView.frame = CGRectMake(x, self.messageContentView.frame.origin.y + voiceBarCenterY - voice_Unread_View_Width / 2.0, voice_Unread_View_Width, voice_Unread_View_Width);
+                self.voiceUnreadTagView.frame = CGRectMake(x, self.messageContentView.frame.origin.y + (voiceHeight-voice_Unread_View_Width)/2, voice_Unread_View_Width, voice_Unread_View_Width);
+                
             }
         }
     }
 }
-
-#pragma mark - STT
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    if (self.sttContentView) {
-        [self.sttContentView bindCollectionView:self.hostCollectionView];
-        [self.sttContentView layoutContentView];
-    }
-}
-
-+ (CGFloat)sstInfoHeight:(RCMessageModel *)model {
-    RCSTTContentViewModel *vm =  [model stt_sttViewModel];
-    return [vm speedToTextContentHeight]+4;
-}
-
-- (void)configureSTTContentViewIfNeed {
-    RCSTTContentViewModel *vm = [self.model stt_sttViewModel];
-    if (vm) {
-        if (!self.sttContentView) {
-            self.sttContentView = [RCSTTContentView new];
-            __weak __typeof(self)weakSelf = self;
-            self.sttContentView.sttFinishedBlock = ^(){
-                [weakSelf removeUnreadTagView];
-            };
-            [self.baseContentView addSubview:self.sttContentView];
-        }
-    }
-    [self.sttContentView bindViewModel:vm
-                             baseFrame:self.messageContentView.frame];
-}
-
-- (void)setDelegate:(id<RCMessageCellDelegate>)delegate {
-    [super setDelegate:delegate];
-    [self.sttContentView bindGestureDelegate:delegate];
-}
-
 #pragma mark - stop and disable timer during background mode.
 - (void)resetActiveEventInBackgroundMode {
     [self stopPlayingVoiceData];
@@ -693,7 +550,6 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
     hq_previousAnimationTimer = self.animationTimer;
     hq_previousPlayVoiceImageView = self.playVoiceView;
     hq_previousMessageDirection = self.model.messageDirection;
-    hq_previousShowsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
 }
 
 
@@ -704,8 +560,17 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
     DebugLog(@"%s", __FUNCTION__);
 
     self.animationIndex++;
-    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-    UIImage *image = RCHQVoiceMessageVoiceImage(showsQuoteCard, self.model.messageDirection, self.animationIndex % 4);
+    NSString *playingIndicatorIndex;
+    if (MessageDirection_SEND == self.model.messageDirection) {
+        playingIndicatorIndex = [NSString stringWithFormat:@"to_voice_%d", (self.animationIndex % 4)];
+    } else {
+        playingIndicatorIndex = [NSString stringWithFormat:@"from_voice_%d", (self.animationIndex % 4)];
+    }
+    DebugLog(@"playingIndicatorIndex > %@", playingIndicatorIndex);
+    UIImage *image = RCResourceImage(playingIndicatorIndex);;
+    if ([RCKitUtility isRTL]) {
+        image = [image imageFlippedForRightToLeftLayoutDirection];
+    }
     self.playVoiceView.image = image;
 }
 
@@ -715,8 +580,17 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
         self.animationTimer = nil;
         self.animationIndex = 0;
     }
-    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-    self.playVoiceView.image = RCHQVoiceMessageVoiceImage(showsQuoteCard, self.model.messageDirection, 3);
+    UIImage *image;
+    if (MessageDirection_SEND == self.model.messageDirection) {
+        image = RCResourceImage(@"to_voice_3");
+    } else {
+        image = RCResourceImage(@"from_voice_3");
+    }
+    if ([RCKitUtility isRTL]) {
+        self.playVoiceView.image = [image imageFlippedForRightToLeftLayoutDirection];
+    } else {
+        self.playVoiceView.image = image;
+    }
 }
 
 - (void)disablePreviousAnimationTimer {
@@ -728,12 +602,13 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
          *  reset the previous playVoiceView indicator image
          */
         if (hq_previousPlayVoiceImageView) {
-            hq_previousPlayVoiceImageView.image = RCHQVoiceMessageVoiceImage(hq_previousShowsQuoteCard,
-                                                                             hq_previousMessageDirection,
-                                                                             3);
+            if (MessageDirection_SEND == self.model.messageDirection) {
+                hq_previousPlayVoiceImageView.image = RCResourceImage(@"to_voice_3");
+            } else {
+                hq_previousPlayVoiceImageView.image = RCResourceImage(@"from_voice_3");
+            }
             hq_previousPlayVoiceImageView = nil;
             hq_previousMessageDirection = 0;
-            hq_previousShowsQuoteCard = NO;
         }
     }
 }
@@ -761,14 +636,5 @@ static UIImage *RCHQVoiceMessageVoiceImage(BOOL showsQuoteCard, RCMessageDirecti
         _voiceDurationLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
     }
     return _voiceDurationLabel;
-}
-
-- (UIView *)quoteDividerView {
-    if (!_quoteDividerView) {
-        _quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
-        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
-        _quoteDividerView.hidden = YES;
-    }
-    return _quoteDividerView;
 }
 @end

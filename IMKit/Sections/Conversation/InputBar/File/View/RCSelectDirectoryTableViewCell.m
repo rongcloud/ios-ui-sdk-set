@@ -16,7 +16,7 @@
     self = [super initWithFrame:frame];
     if (self) {
         [self setupSelectDirectoryCellView];
-        self.contentView.backgroundColor =RCDynamicColor(@"common_background_color", @"0xffffff", @"0x191919");
+        self.contentView.backgroundColor =RCDYCOLOR(0xffffff, 0x191919);
     }
     return self;
 }
@@ -26,13 +26,13 @@
 
     _directoryImageView = [RCBaseImageView new];
     _directoryImageView.translatesAutoresizingMaskIntoConstraints = NO;
-    _directoryImageView.image = RCDynamicImage(@"file_list_folder_img", @"folder");
+    _directoryImageView.image = RCResourceImage(@"folder");
     [self.contentView addSubview:_directoryImageView];
 
     _directoryNameLabel = [RCBaseLabel new];
     _directoryNameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _directoryNameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-    _directoryNameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
+    _directoryNameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.9)];
 
     [self.contentView addSubview:_directoryNameLabel];
 

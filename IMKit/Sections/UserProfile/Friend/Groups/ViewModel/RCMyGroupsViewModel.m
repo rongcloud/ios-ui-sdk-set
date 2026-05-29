@@ -26,8 +26,6 @@ static void *__rc_mygroups_operation_queueTag = &__rc_mygroups_operation_queueTa
 @property (nonatomic, strong) dispatch_queue_t queue;
 
 @property (nonatomic, strong) RCPagingQueryOption *option;
-
-@property (nonatomic, weak) RCGroupInfoCellViewModel *lastBottomCellVM;
 @end
 
 @implementation RCMyGroupsViewModel
@@ -99,7 +97,7 @@ static void *__rc_mygroups_operation_queueTag = &__rc_mygroups_operation_queueTa
 ///   - tableView: tableView
 ///   - indexPath: indexPath
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return 56;
 }
 
 /// 加载更多
@@ -178,7 +176,6 @@ static void *__rc_mygroups_operation_queueTag = &__rc_mygroups_operation_queueTa
                     items = [self.delegate myGroupsViewModel:self willLoadItemsInDataSource:array];
                 }
             }
-            [self removeSeparatorWithArray:items];
             [self.dataSource addObjectsFromArray:items];
             [self reloadData:self.dataSource.count == 0];
             [self refreshingFinished:YES withTips:nil];
@@ -191,15 +188,6 @@ static void *__rc_mygroups_operation_queueTag = &__rc_mygroups_operation_queueTa
   
 }
 
-- (void)removeSeparatorWithArray:(NSArray *)array {
-    if (array.count) {
-        [self removeSeparatorLineIfNeed:@[array]];
-        if ([self.lastBottomCellVM isKindOfClass:[RCBaseCellViewModel class]]) {// 上一屏的最后一个cell
-            self.lastBottomCellVM.hideSeparatorLine = NO; // 加载更多时, 上次的last cell 需要显示line
-        }
-        self.lastBottomCellVM = array.lastObject;
-    }
-}
 - (void)performOperationQueueBlock:(dispatch_block_t)block {
     if (dispatch_get_specific(__rc_mygroups_operation_queueTag)) {
         block();

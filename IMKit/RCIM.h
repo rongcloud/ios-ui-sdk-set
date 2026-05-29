@@ -98,17 +98,6 @@ FOUNDATION_EXPORT NSString *const RCKitMessageDestructingNotification;
 /// - Remark: 事件监听
 FOUNDATION_EXPORT NSString *const RCKitDispatchConversationStatusChangeNotification;
 
-/// 收到消息修改的 Notification。
-/// 
-/// 收到消息修改之后，IMKit 会分发此通知。
-/// 
-/// Notification 的 object 是 `RCMessage` 对象的数组，userInfo 为 nil。
-/// 
-/// 收到这个消息之后可以更新您的消息状态。
-/// 
-/// - Remark: 事件监听
-FOUNDATION_EXPORT NSString *const RCKitDispatchMessagesModifiedNotification;
-
 /// 收到会话草稿更新通知。
 ///
 /// Notification 的 userInfo 结构是 @{ @"conversationType": @(conversationType), @"targetId": targetId, @"channelId": channelId}
@@ -117,31 +106,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchMessagesModifiedNotification;
 ///
 /// - Remark: 事件监听
 FOUNDATION_EXPORT NSString *const RCKitDispatchConversationDraftUpdateNotification;
-
-/// 用户在线状态变化的通知
-/// 
-/// 用户在线状态发生变化时，SDK会分发此通知。
-/// 
-/// Notification 的 userInfo 结构是 @{ RCKitUserOnlineStatusChangedUserIdsKey : changedUserIds }
-/// 
-/// 收到这个消息之后可以更新您的用户在线状态。
-/// 
-/// - Remark: 事件监听
-FOUNDATION_EXPORT NSString *const RCKitUserOnlineStatusChangedNotification;
-
-/// 用户在线状态变化的通知中用户ID列表的key
-FOUNDATION_EXPORT NSString *const RCKitUserOnlineStatusChangedUserIdsKey;
-
-/// 会话列表中在线状态变化的通知
-/// 
-/// 会话列表中在线状态发生变化时，SDK会分发此通知。
-/// 
-/// Notification 的 userInfo 结构是 @{ RCKitUserOnlineStatusChangedUserIdsKey : changedUserIds }
-/// 
-/// 收到这个消息之后可以更新您的会话列表中的在线状态。
-/// 
-/// - Remark: 事件监听
-FOUNDATION_EXPORT NSString *const RCKitConversationCellOnlineStatusUpdateNotification;
 
 #pragma mark - 用户信息提供者、群组信息提供者、群名片信息提供者
 
@@ -1000,12 +964,6 @@ typedef NS_ENUM(NSUInteger, RCDataSourceType) {
 /// - Parameter userId:  用户ID
 /// - Returns: SDK中缓存的用户信息
 - (nullable RCUserInfo *)getUserInfoCache:(NSString *)userId;
-
-/// 获取用户信息(首先从缓存中获取, 没有缓存从远端获取)
-/// - Parameters:
-///   - userId:  用户ID
-///   - completeBlock:completeBlock
-- (void)getUserInfo:(NSString *)userId complete:(void (^)(RCUserInfo *userInfo))completeBlock;
 
 /// 清空SDK中所有的用户信息缓存
 /// 

@@ -33,7 +33,7 @@
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     [self setNav];
     [self addSubViews];
     [self configModel];
@@ -47,7 +47,7 @@
 
 - (void)setNav {
     //设置左键
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }
@@ -105,14 +105,14 @@
 }
 
 - (void)showFailedView{
-    RCBaseImageView *failedImageView = [[RCBaseImageView alloc] init];
-    failedImageView.image = RCDynamicImage(@"conversation_msg_cell_image_broken_img", @"broken");
+    RCBaseImageView *failedImageView = [[RCBaseImageView alloc] initWithImage:RCResourceImage(@"broken")];
+    failedImageView.image = RCResourceImage(@"broken");
     failedImageView.frame = CGRectMake(0, 0, 81, 60);
     failedImageView.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2-60);
     UILabel *failLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75, self.view.frame.size.height / 2 - 26, 150, 30)];
     failLabel.text = RCLocalizedString(@"ImageLoadFailed");
     failLabel.textAlignment = NSTextAlignmentCenter;
-    failLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
+    failLabel.textColor = HEXCOLOR(0x999999);
     [self.view addSubview:failedImageView];
     [self.view addSubview:failLabel];
 }
@@ -200,7 +200,7 @@
         _progressView =
             [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
         _progressView.label.hidden = YES;
-        _progressView.indicatorView.color = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
+        _progressView.indicatorView.color = HEXCOLOR(0x999999);
         _progressView.backgroundColor = [UIColor clearColor];
     }
     return _progressView;

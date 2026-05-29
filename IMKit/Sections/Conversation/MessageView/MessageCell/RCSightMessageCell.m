@@ -12,35 +12,7 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCResendManager.h"
-#import "RCReferencedContentView.h"
 extern NSString *const RCKitDispatchDownloadMediaNotification;
-
-#define QUOTE_CARD_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
-#define QUOTE_DIVIDER_TOP_OFFSET 8
-#define QUOTE_BODY_TOP_SPACING 16
-#define QUOTE_MIN_BUBBLE_WIDTH 170.0f
-#define QUOTE_MEDIA_INSET QUOTE_DIVIDER_HORIZONTAL_INSET
-
-static CGFloat RCSightMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
-    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
-    return RCQuoteCardTopMargin + cardHeight;
-}
-
-static CGFloat RCSightMessageQuoteMinimumBubbleWidth(void) {
-    CGFloat maxContentWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    return maxContentWidth < QUOTE_MIN_BUBBLE_WIDTH ? maxContentWidth : QUOTE_MIN_BUBBLE_WIDTH;
-}
-
-static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imageSize) {
-    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
-    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
-    CGFloat contentWidth = MAX(imageSize.width, quoteCardSize.width);
-    CGFloat bubbleWidth = contentWidth + QUOTE_MEDIA_INSET * 2;
-    return MIN(MAX(bubbleWidth, RCSightMessageQuoteMinimumBubbleWidth()), maxBubbleWidth);
-}
 
 @interface RCSightMessageCell ()
 @property (nonatomic, strong) UIView *playButtonView;
@@ -50,7 +22,6 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
 @property (nonatomic, strong) UILabel *destructLabel;
 @property (nonatomic, strong) UILabel *destructDurationLabel;
 @property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
-@property (nonatomic, strong) UIView *quoteDividerView;
 @end
 
 @implementation RCSightMessageCell
@@ -92,9 +63,6 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
         messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
     messagecontentview_height += extraHeight;
-    if ([RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
-        messagecontentview_height += QUOTE_BODY_TOP_SPACING + QUOTE_MEDIA_INSET;
-    }
     return CGSizeMake(collectionViewWidth, messagecontentview_height);
 }
 
@@ -109,47 +77,15 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
             CGSize imageSize = [RCSightMessageCell getSightImageSize:self.model];
             self.durationLabel.text = [self getSightDurationLabelText:sightMessage.duration];
             self.thumbnailView.image = sightMessage.thumbnailImage;
-
-            BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-            CGFloat contentWidth = imageSize.width;
-            CGFloat mediaInset = 0;
-            if (showsQuoteCard) {
-                contentWidth = RCSightMessageQuoteBubbleWidth(self.model, imageSize);
-                mediaInset = QUOTE_MEDIA_INSET;
-            }
-            CGFloat quoteOffset = showsQuoteCard ? RCSightMessageQuoteContentOffset(self.model, contentWidth) : 0;
-            CGFloat bodyOffset = showsQuoteCard ? QUOTE_BODY_TOP_SPACING : 0;
-            CGFloat contentX = mediaInset;
-            if (showsQuoteCard) {
-                BOOL alignsTrailing = ([RCKitUtility isRTL]
-                                       ? self.model.messageDirection == MessageDirection_RECEIVE
-                                       : self.model.messageDirection == MessageDirection_SEND);
-                if (alignsTrailing) {
-                    contentX = MAX(contentWidth - imageSize.width - mediaInset, mediaInset);
-                }
-            }
-
-            self.messageContentView.contentSize = CGSizeMake(contentWidth, imageSize.height + quoteOffset + bodyOffset + mediaInset);
-            self.thumbnailView.frame = CGRectMake(contentX, quoteOffset + bodyOffset, imageSize.width, imageSize.height);
-            self.quoteDividerView.hidden = !showsQuoteCard;
-            self.bubbleBackgroundView.hidden = !showsQuoteCard;
-            if (showsQuoteCard) {
-                CGFloat dividerWidth = MAX(contentWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
-                self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
-                                                         quoteOffset + QUOTE_DIVIDER_TOP_OFFSET,
-                                                         dividerWidth,
-                                                         1);
-                [self.messageContentView bringSubviewToFront:self.quoteDividerView];
-            } else {
-                self.quoteDividerView.frame = CGRectZero;
-            }
-
+    
+            self.messageContentView.contentSize = imageSize;
+            self.thumbnailView.frame = self.messageContentView.bounds;
             if (self.progressView.superview) {
                 [self.progressView removeFromSuperview];
             }
             self.progressView = [[RCSightMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 44, 44)];
             [self.progressView setHidden:YES];
-            self.progressView.progressTintColor =  RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF");
+            self.progressView.progressTintColor = [UIColor whiteColor];
             [self.thumbnailView addSubview:self.progressView];
             [self.playImage setCenter:CGPointMake(self.thumbnailView.bounds.size.width / 2,
                                                   self.thumbnailView.bounds.size.height / 2)];
@@ -208,20 +144,19 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
     self.thumbnailView.frame = CGRectZero;
     self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundWidth);
     self.destructBackgroundView.frame = self.messageContentView.bounds;
-    self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
+    self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
     self.destructPicture.frame = CGRectMake(55, 43, 22, 22);
     self.destructLabel.frame = CGRectMake(0, CGRectGetMaxY(self.destructPicture.frame)+8, self.destructBackgroundView.frame.size.width, 14);
     CGRect durationLabelFrame = CGRectMake(0, self.destructBackgroundView.bounds.size.height - 20, self.destructBackgroundView.bounds.size.width - 8, 14);
     self.destructDurationLabel.frame = durationLabelFrame;
     if (self.model.messageDirection == MessageDirection_SEND) {
-        self.destructDurationLabel.textColor =
-        RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F");
-        self.destructLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F");
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_video_img", @"burn_video_picture");
+        self.destructDurationLabel.textColor = RCDYCOLOR(0x111f2c, 0x040a0f);
+        self.destructLabel.textColor = RCDYCOLOR(0x111f2c, 0x040a0f);
+        self.destructPicture.image = RCResourceImage(@"burn_video_picture");
     }else{
-        self.destructDurationLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
-        self.destructLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
-        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_video_img",@"from_burn_video_picture");
+        self.destructDurationLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        self.destructLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        self.destructPicture.image = RCResourceImage(@"from_burn_video_picture");
     }
 }
 
@@ -251,9 +186,7 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
 }
 
 - (void)initialize {
-    [self showBubbleBackgroundView:YES];
     [self.messageContentView addSubview:self.thumbnailView];
-    [self.messageContentView addSubview:self.quoteDividerView];
     [self.messageContentView addSubview:self.destructBackgroundView];
 
     [self.destructBackgroundView addSubview:self.destructPicture];
@@ -356,7 +289,7 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
         _durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 120, 21)];
         [_durationLabel setTextAlignment:NSTextAlignmentRight];
         [_durationLabel setBackgroundColor:[UIColor clearColor]];
-        [_durationLabel setTextColor:RCDynamicColor(@"control_title_white_color", @"0xFFFFFF", @"0xFFFFFF")];
+        [_durationLabel setTextColor:[UIColor whiteColor]];
         [_durationLabel setFont:[[RCKitConfig defaultConfig].font fontOfAnnotationLevel]];
     }
     return _durationLabel;
@@ -365,7 +298,7 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
 - (RCBaseImageView *)playImage {
     if (!_playImage) {
         _playImage = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 41, 41)];
-        UIImage *image = RCDynamicImage(@"conversation_msg_cell_sight_icon_img",@"sight_message_icon");
+        UIImage *image = RCResourceImage(@"sight_message_icon");
         _playImage.image = image;
     }
     return _playImage;
@@ -379,7 +312,7 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
         RCBaseImageView *backgroudView =
             [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, self.thumbnailView.bounds.size.height - 21,
                                                           self.thumbnailView.bounds.size.width, 21)];
-        backgroudView.image = RCDynamicImage(@"conversation_msg_cell_player_shadow_bottom_img",@"player_shadow_bottom");
+        backgroudView.image = RCResourceImage(@"player_shadow_bottom");
         [_playButtonView addSubview:backgroudView];
         [backgroudView addSubview:self.durationLabel];
     }
@@ -427,19 +360,6 @@ static CGFloat RCSightMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imag
         [_destructDurationLabel setBackgroundColor:[UIColor clearColor]];
     }
     return _destructDurationLabel;
-}
-
-- (UIView *)quoteDividerView {
-    if (!_quoteDividerView) {
-        _quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
-        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
-        _quoteDividerView.hidden = YES;
-    }
-    return _quoteDividerView;
-}
-
-- (BOOL)usesTopQuoteCardLayout {
-    return YES;
 }
 
 @end

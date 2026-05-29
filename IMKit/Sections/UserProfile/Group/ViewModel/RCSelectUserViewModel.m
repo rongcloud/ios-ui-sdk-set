@@ -147,19 +147,14 @@ static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTa
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     UIView *view = [[UIView alloc] initWithFrame:CGRectZero];
     view.frame = CGRectMake(0, 0, tableView.frame.size.width, 32);
-    view.backgroundColor = RCDynamicColor(@"clear_color", @"0xf0f0f6", @"0x000000");
+    view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     UILabel *title = [[UILabel alloc] initWithFrame:CGRectZero];
     title.font = [UIFont systemFontOfSize:14.f];
-    title.textColor = RCDynamicColor(@"text_primary_color", @"0x3b3b3b", @"0xA7a7a7");
-    title.translatesAutoresizingMaskIntoConstraints = NO;
+    title.textColor = RCDYCOLOR(0x3b3b3b, 0xA7a7a7);
     [view addSubview:title];
-   
     title.text = self.indexTitles[section];
     [title sizeToFit];
-    [NSLayoutConstraint activateConstraints:@[
-        [title.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
-        [title.centerYAnchor constraintEqualToAnchor:view.centerYAnchor]
-    ]];
+    title.center = CGPointMake(13+title.bounds.size.width/2, 16);
     return view;
 }
 
@@ -312,8 +307,7 @@ static void *__rc_userlist_operation_queueTag = &__rc_userlist_operation_queueTa
             }
             return [obj1 compare:obj2 options:NSNumericSearch];
         }];
-        NSArray *allFriends = [self.dicInfo allValues];
-        [self removeSeparatorLineIfNeed:allFriends];
+        
         // 通知vc 刷新列表
         [self reloadData];
     });

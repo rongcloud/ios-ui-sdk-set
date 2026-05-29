@@ -122,7 +122,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame = CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-33, 14);
         }
         _durationLabel = [[RCBaseLabel alloc] initWithFrame:frame];
-        _durationLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
+        _durationLabel.textColor = [UIColor whiteColor];
         _durationLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
         [self.typeBackgroundView addSubview:_durationLabel];
     }
@@ -132,7 +132,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 - (RCBaseImageView *)videoIcon {
     if (!_videoIcon) {
         CGRect frame = (CGRect){6, self.typeBackgroundView.frame.size.height-21, 19, 19};
-        UIImage *image = RCDynamicImage(@"photo_picker_cell_video_img", @"fileicon_video_wall");
+        UIImage *image = RCResourceImage(@"fileicon_video_wall");
         if ([RCKitUtility isRTL]) {
             frame =(CGRect){self.typeBackgroundView.frame.size.width - 6-19, self.typeBackgroundView.frame.size.height-21, 19, 19};
         }
@@ -150,7 +150,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame =CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-6, 14);
         }
         _gifLabel = [[RCBaseLabel alloc] initWithFrame:frame];
-        _gifLabel.textColor = RCDynamicColor(@"pop_layer_background_color", @"0xffffff", @"0xffffff");
+        _gifLabel.textColor = [UIColor whiteColor];
         _gifLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
         _gifLabel.text = @"GIF";
         [self.typeBackgroundView addSubview:_gifLabel];

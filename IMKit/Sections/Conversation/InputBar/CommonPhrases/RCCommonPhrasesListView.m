@@ -21,7 +21,7 @@
 - (instancetype)initWithFrame:(CGRect)frame dataSource:(NSArray *)dataSource {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xF5F6F9", @"0x1c1c1c");;
+        self.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);;
         self.dataSource = dataSource;
         [self addSubview:self.commmonPhrasesTableView];
     }
@@ -87,9 +87,8 @@
             _commmonPhrasesTableView.insetsContentViewsToSafeArea = NO;
         }
         _commmonPhrasesTableView.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0);
-        _commmonPhrasesTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        _commmonPhrasesTableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
         _commmonPhrasesTableView.showsVerticalScrollIndicator = NO;
-        _commmonPhrasesTableView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1a1a1a");
     }
     return _commmonPhrasesTableView;
 }

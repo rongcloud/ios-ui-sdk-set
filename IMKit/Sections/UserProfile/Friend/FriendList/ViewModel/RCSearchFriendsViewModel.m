@@ -147,9 +147,6 @@ static void *__rc_friendlist_search_operation_queueTag = &__rc_friendlist_search
             array = [self.delegate searchFriendsViewModel:self
                                 willLoadItemsInDataSource:tmp];
             }
-        if (array) {
-            [self removeSeparatorLineIfNeed:@[array]];
-        }
         dispatch_async(dispatch_get_main_queue(), ^{
             self.dataSource = array;
             // 通知vc 刷新列表

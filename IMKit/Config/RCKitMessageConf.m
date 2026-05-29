@@ -8,20 +8,6 @@
 
 #import "RCKitMessageConf.h"
 #import <RongIMLibCore/RongIMLibCore.h>
-#import "RCKitCommonDefine.h"
-
-static NSArray<NSString *> *RCDefaultQuoteMessageTypeWhiteList(void) {
-    return @[
-        @"RC:TxtMsg",
-        @"RC:ImgMsg",
-        RCGIFMessageTypeIdentifier,
-        @"RC:SightMsg",
-        @"RC:VcMsg",
-        @"RC:HQVCMsg",
-        @"RC:FileMsg",
-        @"RC:LBSMsg"
-    ];
-}
 
 @implementation RCKitMessageConf
 - (instancetype)init
@@ -48,17 +34,10 @@ static NSArray<NSString *> *RCDefaultQuoteMessageTypeWhiteList(void) {
         self.enableDestructMessage = NO;
         self.reeditDuration = 300;
         self.enableMessageReference = YES;
-        self.enableQuoteV2 = NO;
-        self.quoteMessageTypeWhiteList = RCDefaultQuoteMessageTypeWhiteList();
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
-        self.enableEditMessage = NO;
     }
     return self;
-}
-
-- (void)setQuoteMessageTypeWhiteList:(NSArray<NSString *> *)quoteMessageTypeWhiteList {
-    _quoteMessageTypeWhiteList = [quoteMessageTypeWhiteList copy] ?: RCDefaultQuoteMessageTypeWhiteList();
 }
 
 - (void)setDisableMessageAlertSound:(BOOL)disableMessageAlertSound {
@@ -68,13 +47,6 @@ static NSArray<NSString *> *RCDefaultQuoteMessageTypeWhiteList(void) {
 }
 - (NSTimeInterval)uploadVideoDurationLimit {
     return [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
-}
-
-- (UIColor *)editedTextColor {
-    if (!_editedTextColor) {
-        _editedTextColor = RCDynamicColor(@"text_primary_color", @"0x7C838E", @"0xFFFFFF");
-    }
-    return _editedTextColor;
 }
 
 @end

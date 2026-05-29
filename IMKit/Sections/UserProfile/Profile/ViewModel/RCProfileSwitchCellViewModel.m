@@ -9,6 +9,8 @@
 #import "RCProfileSwitchCellViewModel.h"
 #import "RCProfileCommonSwitchCell.h"
 
+#define RCProfileSwitchCellHeight 44
+
 @interface RCProfileSwitchCellViewModel ()<RCProfileCommonSwitchCellDelegate>
 
 @end
@@ -22,12 +24,11 @@
     cell.arrowView.hidden = YES;
     cell.switchView.on = self.switchOn;
     cell.delegate = self;
-    cell.hideSeparatorLine = self.hideSeparatorLine;
     return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return RCUserManagementCellHeight;
+    return RCProfileSwitchCellHeight;
 }
 
 #pragma mark -- RCProfileCommonSwitchCellDelegate

@@ -33,7 +33,7 @@
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf0f0f6", @"0x000000");
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     [self setNav];
     [self addSubViews];
     [self configModel];
@@ -165,7 +165,7 @@
 
 - (void)setNav {
     //设置左键
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }

@@ -6,14 +6,14 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import "RCStackTableViewCell.h"
+#import "RCBaseTableViewCell.h"
 #import "RCBaseImageView.h"
 
 UIKIT_EXTERN NSString  * _Nonnull const RCProfileGenderCellIdentifier;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCProfileGenderCell : RCStackTableViewCell
+@interface RCProfileGenderCell : RCBaseTableViewCell
 
 @property (nonatomic, strong) UILabel *titleLabel;
 

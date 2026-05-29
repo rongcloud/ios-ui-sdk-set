@@ -25,7 +25,7 @@
 @implementation RCReferencingView
 - (instancetype)initWithModel:(RCMessageModel *)model inView:(UIView *)view {
     if (self = [super init]) {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c");
+        self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff) darkColor:HEXCOLOR(0x1c1c1c)];
         self.inView = view;
         self.referModel = model;
         [self addNotification];
@@ -119,33 +119,25 @@
 }
 
 - (NSString *)getUserDisplayName {
-    NSString *senderUserId = self.referModel.senderUserId;
-    if ([self.referModel.content.senderUserInfo.userId isEqualToString:senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        NSString *senderName = [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
-        if (senderName.length > 0) {
-            return senderName;
-        }
+    if ([self.referModel.content.senderUserInfo.userId isEqualToString:self.referModel.senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        return [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
     }
-    RCUserInfo *userInfo = nil;
+    NSString *name;
     if (ConversationType_GROUP == self.referModel.conversationType) {
-        RCUserInfo *groupUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId
-                                                                              inGroupId:self.referModel.targetId];
-        RCUserInfo *ordinaryUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
-        if (groupUserInfo) {
-            groupUserInfo.alias = ordinaryUserInfo.alias.length > 0 ? ordinaryUserInfo.alias : groupUserInfo.alias;
-            if (groupUserInfo.name.length <= 0 && ordinaryUserInfo.name.length > 0) {
-                groupUserInfo.name = ordinaryUserInfo.name;
-            }
-            userInfo = groupUserInfo;
-        } else {
-            userInfo = ordinaryUserInfo;
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId
+                                                                         inGroupId:self.referModel.targetId];
+        self.referModel.userInfo = userInfo;
+        if (userInfo) {
+            name = userInfo.name;
         }
     } else {
-        userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
+        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId];
+        self.referModel.userInfo = userInfo;
+        if (userInfo) {
+            name = userInfo.name;
+        }
     }
-    self.referModel.userInfo = userInfo;
-    NSString *name = [RCKitUtility getDisplayName:userInfo];
-    return name.length > 0 ? name : (senderUserId ?: @"");
+    return name;
 }
 
 - (void)addNotification {
@@ -194,7 +186,7 @@
 - (RCBaseButton *)dismissButton {
     if (!_dismissButton) {
         _dismissButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-        [_dismissButton setImage:RCDynamicImage(@"conversation_msg_referencing_dismiss_img", @"referencing_view_dismiss_icon") forState:UIControlStateNormal];
+        [_dismissButton setImage:RCResourceImage(@"referencing_view_dismiss_icon") forState:UIControlStateNormal];
         [_dismissButton addTarget:self
                            action:@selector(didClickDismissButton:)
                  forControlEvents:UIControlEventTouchUpInside];
@@ -205,7 +197,7 @@
 - (RCBaseLabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[RCBaseLabel alloc] init];
-        _nameLabel.textColor =  RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
+        _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
     }
     return _nameLabel;
@@ -217,7 +209,7 @@
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
-        _textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
+        _textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
         UITapGestureRecognizer *messageTap =
             [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapContentView:)];
         messageTap.numberOfTapsRequired = 1;

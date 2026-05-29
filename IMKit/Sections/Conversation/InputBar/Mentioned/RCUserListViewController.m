@@ -40,7 +40,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.definesPresentationContext = YES;
-    self.tableView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
+    self.tableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
     [self registerUserInfoObserver];
     if ([self respondsToSelector:@selector(setExtendedLayoutIncludesOpaqueBars:)]) {
         [self setExtendedLayoutIncludesOpaqueBars:YES];
@@ -355,7 +355,7 @@
         portraitView.frame = CGRectMake(self.view.bounds.size.width-RCKitConfigCenter.ui.globalMessagePortraitSize.height-10, 5.0, RCKitConfigCenter.ui.globalMessagePortraitSize.width,
                                         RCKitConfigCenter.ui.globalMessagePortraitSize.height);
     }
-    [portraitView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
+    [portraitView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
     [portraitView setImageURL:portraitURL];
 
     if (RCKitConfigCenter.ui.globalMessageAvatarStyle == RC_USER_AVATAR_RECTANGLE) {
@@ -380,11 +380,11 @@
         _searchController.searchBar.placeholder = RCLocalizedString(@"ToSearch");
         [_searchController.searchBar setKeyboardType:UIKeyboardTypeDefault];
         //设置顶部搜索栏的背景色
-        _searchController.searchBar.barTintColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
-        _searchController.searchBar.layer.borderColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000").CGColor;
+        _searchController.searchBar.barTintColor = RCDYCOLOR(0xffffff, 0x000000);
+        _searchController.searchBar.layer.borderColor = RCDYCOLOR(0xffffff, 0x000000).CGColor;
         _searchController.searchBar.layer.borderWidth = 1;
         if (@available(iOS 13.0, *)) {
-            _searchController.searchBar.searchTextField.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf9f9f9", @"0x1c1c1e99");
+            _searchController.searchBar.searchTextField.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xf9f9f9) darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.6]];;
         }
         _searchController.dimsBackgroundDuringPresentation = NO;
         if ([RCKitUtility isRTL]) {
@@ -407,7 +407,7 @@
         [_tableView setDataSource:self];
         [_tableView setSectionIndexBackgroundColor:[UIColor clearColor]];
         [_tableView setSectionIndexColor:[UIColor darkGrayColor]];
-        [_tableView setBackgroundColor:RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f0", @"0xf0f0f0")];
+        [_tableView setBackgroundColor:[UIColor colorWithRed:240.0 / 255 green:240.0 / 255 blue:240.0 / 255 alpha:1]];
         // cell无数据时，不显示间隔线
         UIView *v = [[UIView alloc] initWithFrame:CGRectZero];
         [_tableView setTableFooterView:v];

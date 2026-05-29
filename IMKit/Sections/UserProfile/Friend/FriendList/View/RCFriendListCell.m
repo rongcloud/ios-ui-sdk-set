@@ -31,7 +31,7 @@ NSString  * const RCFriendListCellIdentifier = @"RCFriendListCellIdentifier";
 - (void)setupView {
     [super setupView];
     self.line = [UIView new];
-    self.line.backgroundColor = RCDynamicColor(@"line_background_color",@"0xE3E5E6", @"0x272727");;
+    self.line.backgroundColor = RCDYCOLOR(0xE3E5E6, 0x272727);;
 //    [self.contentView addSubview:self.line];
 }
 
@@ -49,7 +49,7 @@ NSString  * const RCFriendListCellIdentifier = @"RCFriendListCellIdentifier";
     if (url.length) {
         [self.portraitImageView setImageURL:[NSURL URLWithString:url]];
     } else {
-        [self.portraitImageView setImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
+        [self.portraitImageView setImage:RCResourceImage(@"default_portrait_msg")];
     }
 }
 

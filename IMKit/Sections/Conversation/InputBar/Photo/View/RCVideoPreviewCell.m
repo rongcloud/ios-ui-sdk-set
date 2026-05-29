@@ -125,7 +125,7 @@
 - (RCBaseButton *)playBtn {
     if (!_playBtn) {
         _playBtn = [[RCBaseButton alloc] initWithFrame:(CGRect){0, 0, 80, 80}];
-        [_playBtn setImage:RCDynamicImage(@"video_preview_play_btn_normal_img", @"play_btn_normal") forState:UIControlStateNormal];
+        [_playBtn setImage:RCResourceImage(@"play_btn_normal") forState:UIControlStateNormal];
         [_playBtn addTarget:self action:@selector(playAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _playBtn;

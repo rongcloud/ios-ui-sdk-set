@@ -7,7 +7,6 @@
 //
 
 #import "RCSightPreviewView.h"
-#import "RongSightAdaptiveHeader.h"
 
 #define FOCUS_BOX_BOUNDS CGRectMake(0.0f, 0.0f, 100.0f, 100.0f)
 
@@ -24,7 +23,7 @@
 #pragma mark - Api
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
-        self.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
+        self.backgroundColor = [UIColor blackColor];
         [self setup];
     }
     return self;
@@ -68,7 +67,7 @@
     if (!_focusBox) {
         _focusBox = [[UIView alloc] initWithFrame:FOCUS_BOX_BOUNDS];
         _focusBox.backgroundColor = [UIColor clearColor];
-        _focusBox.layer.borderColor = RCDynamicColor(@"hint_color", @"0xFF0000", @"0xFF0000").CGColor;
+        _focusBox.layer.borderColor = [UIColor redColor].CGColor;
         _focusBox.layer.borderWidth = 1.0f;
         _focusBox.hidden = YES;
     }

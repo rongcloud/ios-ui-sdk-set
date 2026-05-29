@@ -6,11 +6,13 @@
 //  Copyright © 2024 RongCloud. All rights reserved.
 //
 
-#import "RCSearchBarListView.h"
+#import "RCBaseView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RCGroupNotificationView : RCSearchBarListView
+@interface RCGroupNotificationView : RCBaseView
+@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) UILabel *labEmpty;
 /// 添加刷新事件
 - (void)addRefreshingTarget:(id)target withSelector:(SEL)selector;
 

@@ -39,10 +39,11 @@
 #pragma mark – Private Methods
 
 - (void)setUpView {
-    self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
+    self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
+                                                    darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
     self.groupName = [[UILabel alloc] initWithFrame:CGRectMake(45, (self.contentView.frame.size.height - 20) / 2,
                                                                self.contentView.frame.size.width - 45, 20)];
-    self.groupName.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
+    self.groupName.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
     self.groupName.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
     [self.contentView addSubview:self.groupName];
 

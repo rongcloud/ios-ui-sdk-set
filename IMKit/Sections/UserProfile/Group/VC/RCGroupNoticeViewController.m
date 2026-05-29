@@ -79,7 +79,7 @@
         self.confirmButton.enabled = NO;
     }
     
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
 }
 
@@ -106,10 +106,10 @@
 
 - (RCBaseButton *)confirmButton {
     if (!_confirmButton) {
-        _confirmButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-        [_confirmButton setTitle:RCLocalizedString(@"Save") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
-        [_confirmButton setTitleColor:RCDynamicColor(@"disabled_color",@"0xa0a5ab", @"0xa0a5ab") forState:(UIControlStateDisabled)];
+        _confirmButton = [[RCBaseButton alloc] initWithFrame:CGRectMake(0, 0, 100, 40)];
+        [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
+        [_confirmButton setTitleColor:RCDYCOLOR(0x0099ff, 0x007acc) forState:(UIControlStateNormal)];
+        [_confirmButton setTitleColor:HEXCOLOR(0xa0a5ab) forState:(UIControlStateDisabled)];
         [_confirmButton addTarget:self action:@selector(confirmButtonDidClick) forControlEvents:UIControlEventTouchUpInside];
         [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:15]];
         _confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;

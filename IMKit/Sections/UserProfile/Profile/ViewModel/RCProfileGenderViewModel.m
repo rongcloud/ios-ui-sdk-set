@@ -30,7 +30,7 @@
         
         RCProfileGenderCellViewModel *femaleVM = [RCProfileGenderCellViewModel cellViewModel:RCUserGenderFemale];
         femaleVM.isSelect = (self.profle.gender == RCUserGenderFemale);
-        femaleVM.hideSeparatorLine = YES;
+        
         _dataSource = @[maleVM, femaleVM];
     }
     return _dataSource;

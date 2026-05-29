@@ -32,7 +32,7 @@
 
     if (self) {
         self.url = URLString;
-        self.backButtonTextColor =  RCDynamicColor(@"common_background_color", @"0xffffff", @"0xffffff");
+        self.backButtonTextColor = [UIColor whiteColor];
     }
 
     return self;
@@ -41,7 +41,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:RCDynamicImage(@"conversation_setting_img",@"rc_setting")
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:RCResourceImage(@"rc_setting")
                                                              style:UIBarButtonItemStylePlain
                                                             target:self
                                                             action:@selector(onOptionButtonPressed)];
@@ -57,7 +57,7 @@
         [self.webView loadRequest:[NSURLRequest requestWithURL:loadUrl]];
     }
 
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(leftBarButtonItemPressed:)];
 }
 
@@ -135,7 +135,7 @@
     CGRect bounds = [[UIScreen mainScreen] bounds];
     bounds.size.height = bounds.size.height - CGRectGetMaxY(navFrame);
     self.view = [[UIView alloc] initWithFrame:bounds];
-    [self.view setBackgroundColor:RCDynamicColor(@"common_background_color", @"0xFFFFFF", @"0xFFFFFF")];
+    [self.view setBackgroundColor:[UIColor whiteColor]];
 
     self.webView = [[WKWebView alloc] initWithFrame:bounds];
     self.webView.navigationDelegate = self;

@@ -54,7 +54,7 @@
     self.title.numberOfLines = 0;
     self.title.textAlignment = NSTextAlignmentLeft;
     self.title.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    self.title.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
+    self.title.textColor = RCDYCOLOR(0x00000, 0x9f9f9f);
     [self.contentView addSubview:self.title];
     self.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 }
