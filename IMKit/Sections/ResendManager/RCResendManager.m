@@ -157,7 +157,7 @@
     
     NSString *pushContent = nil;
     if (messageContent.destructDuration > 0) {
-        pushContent = RCLocalizedString(@"BurnAfterRead");
+        pushContent = NSLocalizedStringFromTable(@"BurnAfterRead", @"RongCloudKit", nil);
     }
     
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {

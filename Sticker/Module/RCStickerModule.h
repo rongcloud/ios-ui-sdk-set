@@ -19,6 +19,8 @@
 
 @property (nonatomic, strong) NSString *userId;
 
+@property (nonatomic, strong) RCUserInfo *userInfo;
+
 + (instancetype)sharedModule;
 
 - (void)reloadEmoticonTabSource;

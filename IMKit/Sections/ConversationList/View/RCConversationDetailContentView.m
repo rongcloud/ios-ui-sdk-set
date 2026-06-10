@@ -83,8 +83,7 @@
         if (self.prefixName.length == 0 || model.lastestMessageDirection == MessageDirection_SEND ||
             [model.lastestMessage isMemberOfClass:[RCRecallNotificationMessage class]] ||
             [model.lastestMessage isKindOfClass:[RCInformationNotificationMessage class]] ||
-            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]] ||
-            [model.lastestMessage isKindOfClass:[RCUnknownMessage class]]) {
+            [model.lastestMessage isKindOfClass:[RCGroupNotificationMessage class]]) {
             messageContent = [self formatMessageContent:model];
         } else {
             messageContent = [NSString stringWithFormat:@"%@: %@", self.prefixName, [self formatMessageContent:model]];
@@ -153,9 +152,7 @@
     if ([RCKitUtility isUnkownMessage:model.lastestMessageId content:model.lastestMessage] &&
         RCKitConfigCenter.message.showUnkownMessage) {
         return RCLocalizedString(@"unknown_message_cell_tip");
-    } else if ([model.lastestMessage isKindOfClass:[RCStreamMessage class]]) {
-        return [RCKitUtility formatStreamDigest:[[RCCoreClient sharedCoreClient] getMessage:model.lastestMessageId]];
-    }  else {
+    } else {
         return [RCKitUtility formatMessage:model.lastestMessage
                                   targetId:model.targetId
                           conversationType:model.conversationType];

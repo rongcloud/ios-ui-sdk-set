@@ -46,12 +46,6 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    [self setBaseAutoLayout];
-    [self updateUIForMultiSelect];
-}
-
 #pragma mark - Public Methods
 
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
@@ -116,7 +110,6 @@ NSString *const KNotificationMessageBaseCellUpdateSendingStatus = @"KNotificatio
 - (void)onChangedMessageMultiSelectStatus:(NSNotification *)notification {
     [self setDataModel:self.model];
 }
-
 
 - (void)updateUIForMultiSelect {
     [self.contentView removeGestureRecognizer:self.multiSelectTap];

@@ -200,10 +200,6 @@
     return key;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 15;
-}
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString *key = [_allKeys objectAtIndex:indexPath.section];
     NSArray *arrayForKey = [_allFriends objectForKey:key];

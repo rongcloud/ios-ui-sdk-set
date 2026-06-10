@@ -12,7 +12,6 @@
 #import "RCUserInfoCacheManager.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
-#import "RCIM.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -20,8 +19,6 @@
 @property (nonatomic, strong) RCMessageModel *referModel;
 @property (nonatomic, assign) CGSize contentSize;
 @property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) RCMessageContent *referedContent;
-@property (nonatomic, copy) NSString *referedSenderId;
 @end
 @implementation RCReferencedContentView
 - (instancetype)init {
@@ -36,9 +33,6 @@
     self.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
     self.referModel = message;
     self.contentSize = contentSize;
-    if (![self fetchReferedContentInfo]) {
-        return;
-    }
     [self addNotification];
     [self setUserDisplayName];
     [self setContentInfo];
@@ -46,33 +40,19 @@
 }
 
 #pragma mark - Private Methods
-- (BOOL)fetchReferedContentInfo {
-    if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
-        RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
-        self.referedContent = content.referMsg;
-        self.referedSenderId = content.referMsgUserId;
-        return YES;
-    } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
-        RCStreamMessage *content = (RCStreamMessage *)self.referModel.content;
-        self.referedContent = content.referMsg.content;
-        self.referedSenderId = content.referMsg.senderId;
-        return YES;
-    }
-    return NO;
-}
-
 - (void)setContentInfo {
+    RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
     NSString *messageInfo = @"";
-    if ([self.referedContent isKindOfClass:[RCFileMessage class]]) {
-        RCFileMessage *msg = (RCFileMessage *)self.referedContent;
+    if ([content.referMsg isKindOfClass:[RCFileMessage class]]) {
+        RCFileMessage *msg = (RCFileMessage *)content.referMsg;
         messageInfo = [NSString
             stringWithFormat:@"%@ %@", RCLocalizedString(@"RC:FileMsg"), msg.name];
-    } else if ([self.referedContent isKindOfClass:[RCRichContentMessage class]]) {
-        RCRichContentMessage *msg = (RCRichContentMessage *)self.referedContent;
+    } else if ([content.referMsg isKindOfClass:[RCRichContentMessage class]]) {
+        RCRichContentMessage *msg = (RCRichContentMessage *)content.referMsg;
         messageInfo = [NSString
             stringWithFormat:@"%@ %@", RCLocalizedString(@"RC:ImgTextMsg"), msg.title];
-    } else if ([self.referedContent isKindOfClass:[RCImageMessage class]]) {
-        RCImageMessage *msg = (RCImageMessage *)self.referedContent;
+    } else if ([content.referMsg isKindOfClass:[RCImageMessage class]]) {
+        RCImageMessage *msg = (RCImageMessage *)content.referMsg;
         self.msgImageView.image = msg.thumbnailImage;
         CGSize imageSize = [RCMessageCellTool getThumbnailImageSize:msg.thumbnailImage];
         if ([RCKitUtility isRTL]) {
@@ -80,23 +60,20 @@
         } else {
             self.msgImageView.frame = CGRectMake(0, name_and_image_view_space, imageSize.width, imageSize.height);
         }
-    } else if ([self.referedContent isKindOfClass:[RCTextMessage class]] ||
-               [self.referedContent isKindOfClass:[RCReferenceMessage class]]) {
+    } else if ([content.referMsg isKindOfClass:[RCTextMessage class]] ||
+               [content.referMsg isKindOfClass:[RCReferenceMessage class]]) {
         // 设置 text 之前设置 textColor，textLabel 的 attributeDictionary 设置才有效
-        messageInfo = [RCKitUtility formatMessage:self.referedContent
+        messageInfo = [RCKitUtility formatMessage:content.referMsg
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
-    } else if ([self.referedContent isKindOfClass:[RCStreamMessage class]]) {
-        RCStreamMessage *msg = (RCStreamMessage *)self.referedContent;
-        messageInfo = msg.content;
-    } else if ([self.referedContent isKindOfClass:[RCMessageContent class]]) {
-        messageInfo = [RCKitUtility formatMessage:self.referedContent
+    } else if ([content.referMsg isKindOfClass:[RCMessageContent class]]) {
+        messageInfo = [RCKitUtility formatMessage:content.referMsg
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
         if (messageInfo.length <= 0 ||
-            [messageInfo isEqualToString:[[self.referedContent class] getObjectName]]) {
+            [messageInfo isEqualToString:[[content.referMsg class] getObjectName]]) {
             messageInfo = RCLocalizedString(@"unknown_message_cell_tip");
         }
     }
@@ -110,7 +87,7 @@
     if(self.referModel.messageDirection == MessageDirection_SEND){
         self.leftLimitLine.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
         self.nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
-        if ([self.referedContent isKindOfClass:[RCFileMessage class]] || [self.referedContent isKindOfClass:[RCRichContentMessage class]]) {
+        if ([content.referMsg isKindOfClass:[RCFileMessage class]] || [content.referMsg isKindOfClass:[RCRichContentMessage class]]) {
             self.textLabel.textColor = RCDYCOLOR(0x0099ff, 0x005F9E);
         }else{
             self.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:RCMASKCOLOR(0x040a0f, 0.4)];
@@ -118,7 +95,7 @@
     }else{
         self.nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:HEXCOLOR(0x999999)];
         self.leftLimitLine.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xA0A5Ab) darkColor:HEXCOLOR(0x999999)];
-        if ([self.referedContent isKindOfClass:[RCFileMessage class]] || [self.referedContent isKindOfClass:[RCRichContentMessage class]]) {
+        if ([content.referMsg isKindOfClass:[RCFileMessage class]] || [content.referMsg isKindOfClass:[RCRichContentMessage class]]) {
             self.textLabel.textColor = RCDYCOLOR(0x0099ff, 0x1290e2);
         }else{
             self.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:HEXCOLOR(0x999999)];
@@ -131,10 +108,11 @@
     [self addSubview:self.leftLimitLine];
     [self addSubview:self.nameLabel];
     [self addSubview:self.contentView];
-    if ([self.referedContent isKindOfClass:[RCImageMessage class]]) {
+    RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
+    if ([content.referMsg isKindOfClass:[RCImageMessage class]]) {
         [self.contentView addSubview:self.msgImageView];
-    } else if ([self.referedContent isKindOfClass:[RCRichContentMessage class]] ||
-               [self.referedContent isKindOfClass:[RCFileMessage class]]) {
+    } else if ([content.referMsg isKindOfClass:[RCRichContentMessage class]] ||
+               [content.referMsg isKindOfClass:[RCFileMessage class]]) {
         [self.contentView addSubview:self.textLabel];
     } else {
         [self.contentView addSubview:self.textLabel];
@@ -155,13 +133,12 @@
 
 - (void)setUserDisplayName {
     NSString *name;
-    if ([self.referedContent.senderUserInfo.userId isEqualToString:self.referedSenderId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
-        name = [RCKitUtility getDisplayName:self.referedContent.senderUserInfo];
-    } else {
-        NSString *referUserId = self.referedSenderId;
+    if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
+        NSString *referUserId = content.referMsgUserId;
         if (ConversationType_GROUP == self.referModel.conversationType) {
             RCUserInfo *userInfo =
-            [[RCUserInfoCacheManager sharedManager] getUserInfo:referUserId inGroupId:self.referModel.targetId];
+                [[RCUserInfoCacheManager sharedManager] getUserInfo:referUserId inGroupId:self.referModel.targetId];
             self.referModel.userInfo = userInfo;
             if (userInfo) {
                 name = userInfo.name;
@@ -173,16 +150,16 @@
                 name = userInfo.name;
             }
         }
+        __weak typeof(self) weakSelf = self;
+        dispatch_main_async_safe(^{
+            if([RCKitUtility isRTL]) {
+                weakSelf.nameLabel.text = [@":" stringByAppendingString:name ?: @""];
+            } else {
+                weakSelf.nameLabel.text = [name stringByAppendingString:@":"];
+            }
+            
+        });
     }
-    __weak typeof(self) weakSelf = self;
-    dispatch_main_async_safe(^{
-        if([RCKitUtility isRTL]) {
-            weakSelf.nameLabel.text = [@":" stringByAppendingString:name ?: @""];
-        } else {
-            weakSelf.nameLabel.text = [name stringByAppendingString:@":"];
-        }
-        
-    });
 }
 
 - (NSDictionary *)attributeDictionary {
@@ -210,7 +187,8 @@
 - (void)onUserInfoUpdate:(NSNotification *)notification {
     NSDictionary *userInfoDic = notification.object;
     if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
-        if ([self.referedSenderId isEqualToString:userInfoDic[@"userId"]]) {
+        RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
+        if ([content.referMsgUserId isEqualToString:userInfoDic[@"userId"]]) {
             //重新取一下混合的用户信息
             [self setUserDisplayName];
         }
@@ -220,9 +198,10 @@
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {
     if (self.referModel.conversationType == ConversationType_GROUP &&
         [self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
         NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
         if ([self.referModel.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
-            [self.referedSenderId isEqualToString:groupUserInfoDic[@"userId"]]) {
+            [content.referMsgUserId isEqualToString:groupUserInfoDic[@"userId"]]) {
             //重新取一下混合的用户信息
             [self setUserDisplayName];
         }
