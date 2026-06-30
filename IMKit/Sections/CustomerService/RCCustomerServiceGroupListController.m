@@ -96,8 +96,8 @@
 - (void)setTableView{
     [self.tableView registerClass:[RCCustomerServiceGroupCell class] forCellReuseIdentifier:CellIdentifier];
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
-    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
+    self.tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)]) {
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 45, 0, 0)];
     }

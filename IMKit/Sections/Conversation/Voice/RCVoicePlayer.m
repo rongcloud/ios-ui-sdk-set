@@ -11,9 +11,12 @@
 #import <AVFoundation/AVFoundation.h>
 #import "RCKitConfig.h"
 #import "RCKitCommonDefine.h"
+#import "RCHQVoiceMsgDownloadManager.h"
 
+NSString *const kRCContinuousPlayNotification = @"RCContinuousPlayNotification";
 NSString *const kNotificationStopVoicePlayer = @"kNotificationStopVoicePlayer";
-
+NSString *const kNotificationVoiceWillPlayNotification = @"kNotificationVoiceWillPlayNotification";
+NSString *const kNotificationPlayVoice = @"kNotificationPlayVoice";
 static BOOL bSensorStateStart = YES;
 static RCVoicePlayer *rcVoicePlayerHandler = nil;
 
@@ -22,7 +25,6 @@ static RCVoicePlayer *rcVoicePlayerHandler = nil;
 @property (nonatomic, strong) AVAudioPlayer *audioPlayer;
 @property (nonatomic) BOOL isPlaying;
 @property (nonatomic, weak) id<RCVoicePlayerObserver> voicePlayerObserver;
-@property (nonatomic) RCMessageDirection messageDirection;
 @property (nonatomic) NSString *playerCategory;
 - (void)enableSystemProperties;
 - (void)setDefaultAudioSession:(NSString *)category;
@@ -41,6 +43,7 @@ static RCVoicePlayer *rcVoicePlayerHandler = nil;
     }
     return rcVoicePlayerHandler;
 }
+
 - (void)setDefaultAudioSession:(NSString *)category {
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     DebugLog(@"[RongIMKit]: [audioSession category ] %@", [audioSession category]);
@@ -71,13 +74,50 @@ static RCVoicePlayer *rcVoicePlayerHandler = nil;
     }
 }
 
+- (void)playAudio:(RCMessageModel *)model {
+    [self sendVoiceWillPlayNotification:model];
+    if ([model.content isKindOfClass:RCVoiceMessage.class]) {
+        [self playNormalVoiceMessage:model];
+    } else if ([model.content isKindOfClass:RCHQVoiceMessage.class]) {
+        [self playHQVoiceMessage:model];
+    } else {
+        DebugLog(@"[RongIMKit]:  messages are not supported play");
+    }
+}
+
+- (void)playNormalVoiceMessage:(RCMessageModel *)model {
+    RCVoiceMessage *voiceContent = (RCVoiceMessage *)model.content;
+    if (voiceContent.wavAudioData) {
+        [self playVoice:model.conversationType targetId:model.targetId messageId:model.messageId voiceData:voiceContent.wavAudioData observer:nil];
+    } else {
+        DebugLog(@"[RongIMKit]: RCVoiceMessage.voiceData is NULL");
+    }
+}
+
+- (void)playHQVoiceMessage:(RCMessageModel *)model {
+    RCHQVoiceMessage *voiceContent = (RCHQVoiceMessage *)model.content;
+    if (voiceContent.localPath > 0 && [[NSFileManager defaultManager] fileExistsAtPath:voiceContent.localPath]) {
+        NSError *error;
+        NSData *wavAudioData =
+            [[NSData alloc] initWithContentsOfFile:voiceContent.localPath options:NSDataReadingMappedAlways error:&error];
+        [self playVoice:model.conversationType targetId:model.targetId messageId:model.messageId voiceData:wavAudioData observer:nil];
+    } else {
+        self.messageId = model.messageId;
+        self.conversationType = model.conversationType;
+        self.targetId = model.targetId;
+        [[RCCoreClient sharedCoreClient] getMessage:model.messageId completion:^(RCMessage * _Nullable message) {
+            if (message) {
+                [[RCHQVoiceMsgDownloadManager defaultManager] pushVoiceMsgs:@[message] priority:YES];
+            }
+        }];
+    }
+}
+
 - (BOOL)playVoice:(RCConversationType)conversationType
          targetId:(NSString *)targetId
         messageId:(long)messageId
-        direction:(RCMessageDirection)messageDirection
         voiceData:(NSData *)data
          observer:(id<RCVoicePlayerObserver>)observer {
-
     if (self.isPlaying) {
         [self resetPlayer];
     }
@@ -88,9 +128,6 @@ static RCVoicePlayer *rcVoicePlayerHandler = nil;
     self.targetId = targetId;
     [self enableSystemProperties];
     [self setDefaultAudioSession:_playerCategory];
-
-    self.messageDirection = messageDirection;
-
     return [self startPlayVoice:data];
 }
 
@@ -118,22 +155,30 @@ static RCVoicePlayer *rcVoicePlayerHandler = nil;
         [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
         [audioSession setActive:YES error:nil];
     }
-
     [self sendPlayFinishNotification];
     [self sendContinuousPlayNotification];
 }
 
 - (void)sendContinuousPlayNotification {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RCContinuousPlayNotification"
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRCContinuousPlayNotification
                                                         object:@(self.messageId)
                                                       userInfo:@{
-                                                          @"conversationType" : @(self.conversationType),
-                                                          @"targetId" : self.targetId
+        @"conversationType" : @(self.conversationType),
+        @"targetId" : self.targetId
+    }];
+}
+
+- (void)sendVoiceWillPlayNotification:(RCMessageModel *)model {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationVoiceWillPlayNotification
+                                                        object:@(model.messageId)
+                                                      userInfo:@{
+                                                          @"conversationType" : @(model.conversationType),
+                                                          @"targetId" : model.targetId
                                                       }];
 }
 
 - (void)sendPlayStartNotification {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"kNotificationPlayVoice"
+    [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationPlayVoice
                                                         object:@(self.messageId)
                                                       userInfo:@{
                                                           @"conversationType" : @(self.conversationType),

@@ -10,7 +10,7 @@
 #import "RCMessageCellNotificationModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 
-@class RCConversationViewController,RCMessageModel;
+@class RCConversationViewController,RCMessageModel,RCEditInputBarConfig;
 
 @interface RCConversationVCUtil : NSObject
 - (instancetype)init:(RCConversationViewController *)chatVC;
@@ -36,6 +36,8 @@
 //通知消息 cell 的状态
 - (void)sendMessageStatusNotification:(NSString *)actionNametatus messageId:(long)messageId progress:(NSInteger)progress;
 
+- (void)sendMessageReadReceiptV5Notification:(RCMessageModel *)model;
+
 #pragma mark - 阅后即焚
 //初次使用阅后即焚给用户提示
 - (BOOL)alertDestructMessageRemind;
@@ -60,10 +62,35 @@
 //是否可以引用消息
 - (BOOL)canReferenceMessage:(RCMessageModel *)message;
 
+/// V2 引用回复开启时，将当前引用态附加到待发送消息上。
+- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message;
+
+/// IMKit 内部使用：根据消息 UId 批量查询消息。
++ (void)getMessagesByUIds:(nonnull NSArray<NSString *> *)messageUIds
+         conversationType:(RCConversationType)conversationType
+                 targetId:(nonnull NSString *)targetId
+                channelId:(nullable NSString *)channelId
+               completion:(nullable void (^)(NSArray<RCMessageResult *> *_Nonnull results, RCErrorCode code))completion;
+
+/// IMKit 内部使用：为一批消息批量加载 V2 引用消息，并回调需要刷新的消息 model。
++ (void)loadQuotedMessagesForModels:(nonnull NSArray<RCMessageModel *> *)models
+                          completion:(nullable void (^)(NSArray<RCMessageModel *> *_Nonnull reloadModels))completion;
+
+/// IMKit 内部使用：标记本地已知的 V2 被引用消息终态，避免再次触发 getMessagesByUIds 远端补拉。
++ (void)markQuoteMessageUIds:(nonnull NSArray<NSString *> *)messageUIds
+            conversationType:(RCConversationType)conversationType
+                    targetId:(nonnull NSString *)targetId
+                   channelId:(nullable NSString *)channelId
+                       status:(RCQuoteMessageStatus)status;
+
 
 /// 根据消息ID获取model
-/// - Parameter messageID: <#messageID description#>
+/// - Parameter messageID
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
+
+/// 根据消息 UId 获取页面中的 model
+- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId;
+
 #pragma mark - Util
 //保存草稿
 - (void)saveDraftIfNeed;
@@ -73,5 +100,13 @@
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)errorCode;
 
 + (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model;
-@end
 
+#pragma mark - Edit
+
+/// 获取编辑状态
+- (RCEditInputBarConfig *)getCacheEditConfig;
+
+/// 清理编辑状态
+- (void)clearEditingState;
+
+@end

@@ -55,9 +55,8 @@
 
 - (void)initialize {
     self.messageLabel = [RCTipLabel greyTipLabel];
-    self.messageLabel.backgroundColor =
-        [RCKitUtility generateDynamicColor:HEXCOLOR(0xc9c9c9) darkColor:HEXCOLOR(0x232323)];
-    self.messageLabel.textColor = RCDYCOLOR(0xffffff, 0x707070);
+    self.messageLabel.backgroundColor = RCDynamicColor(@"common_background_color", @"0xc9c9c9", @"0x232323");
+    self.messageLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xffffff", @"0x707070");
     [self.baseContentView addSubview:self.messageLabel];
     self.messageLabel.marginInsets = UIEdgeInsetsMake(0.5f, 0.5f, 0.5f, 0.5f);
 }

@@ -9,9 +9,9 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import <UIKit/UIKit.h>
-#define RongStickerImage(name) [UIImage imageNamed:[@"RongSticker.bundle" stringByAppendingPathComponent:name]]
+#define RongStickerImage(name) [RCStickerUtility imageNamed:(name) ofBundle:@"RongSticker.bundle"]
 
-#define RongStickerString(string) NSLocalizedStringFromTable(string, @"RongSticker", nil)
+#define RongStickerString(key) [RCStickerUtility localizedString:(key) table:@"RongSticker"]
 
 #define RongStickerLog(s, ...)                                                                                         \
     NSLog(@"[RongSticker]: %s, line: %d, desc: %@", __func__, __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__]);
@@ -92,5 +92,22 @@
  @return 代理设置好的 NSURLSessionConfiguration 实例
 */
 + (NSURLSessionConfiguration *)rcSessionConfiguration;
+
+/*
+ 本地化
+
+ @param key  key
+ @param table  string 文件名
+ @return 修正后的图片
+*/
++ (NSString *)localizedString:(NSString *)key table:(NSString *)table;
+/*
+ 加载图片
+
+ @param name  图片名称
+ @param bundleName  bundle 文件名
+ @return 修正后的图片
+*/
++ (UIImage *)imageNamed:(NSString *)name ofBundle:(NSString *)bundleName;
 
 @end

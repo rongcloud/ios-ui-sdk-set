@@ -25,7 +25,7 @@
             [self.playerController setFirstFrameThumbnail:sightMessage.thumbnailImage];
             //判断如果 localPath 有效，优先使用。之前的逻辑无法使用本地路径插入小视频消息。
             NSString *localPath = nil;
-            if (sightMessage.localPath != nil && sightMessage.localPath.length > 0) {
+            if (sightMessage.localPath && [[NSFileManager defaultManager] fileExistsAtPath:sightMessage.localPath]) {
                 localPath = sightMessage.localPath;
             } else if (sightMessage.sightUrl != nil && sightMessage.sightUrl.length > 0) {
                 localPath = [RCFileUtility getSightCachePath:sightMessage.sightUrl];

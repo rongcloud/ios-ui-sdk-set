@@ -7,6 +7,7 @@
 //
 
 #import "RCGIFMessageProgressView.h"
+#import "RCKitCommonDefine.h"
 
 @interface RCGIFMessageProgressView ()
 
@@ -27,7 +28,8 @@
                                                             endAngle:endAngle
                                                            clockwise:YES];
     [sectorPath addLineToPoint:origin];
-    [[UIColor whiteColor] set];
+    UIColor *color = RCDynamicColor(@"selected_background_color ", @"0xFFFFFF", @"0xFFFFFF");
+    [color set];
     [sectorPath fill];
 }
 

@@ -50,12 +50,12 @@
 
     self.title.numberOfLines = 0;
     self.title.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    self.title.textColor = RCDYCOLOR(0x00000, 0x9f9f9f);
+    self.title.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
     self.title.textAlignment = NSTextAlignmentLeft;
     self.content.numberOfLines = 0;
     self.content.lineBreakMode = NSLineBreakByCharWrapping;
     self.content.textAlignment = NSTextAlignmentRight;
-    self.content.textColor = [RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x707070)];
+    self.content.textColor = RCDynamicColor(@"text_secondary_color", @"0xd9d9d9", @"0x707070");
     self.content.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
     [self.contentView addSubview:self.title];
     [self.contentView addSubview:self.content];
@@ -63,7 +63,14 @@
 
 - (void)onTel:(id)sender {
     NSMutableString *str = [[NSMutableString alloc] initWithFormat:@"telprompt://%@", self.content.text];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]];
+    if (@available(iOS 10.0, *)) {
+          [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]
+                                             options:@{}
+                                   completionHandler:^(BOOL success) {
+          }];
+      } else {
+          [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str]];
+      }
 }
 
 - (void)updateFrame {

@@ -8,6 +8,20 @@
 
 #import "RCKitMessageConf.h"
 #import <RongIMLibCore/RongIMLibCore.h>
+#import "RCKitCommonDefine.h"
+
+static NSArray<NSString *> *RCDefaultQuoteMessageTypeWhiteList(void) {
+    return @[
+        @"RC:TxtMsg",
+        @"RC:ImgMsg",
+        RCGIFMessageTypeIdentifier,
+        @"RC:SightMsg",
+        @"RC:VcMsg",
+        @"RC:HQVCMsg",
+        @"RC:FileMsg",
+        @"RC:LBSMsg"
+    ];
+}
 
 @implementation RCKitMessageConf
 - (instancetype)init
@@ -34,10 +48,28 @@
         self.enableDestructMessage = NO;
         self.reeditDuration = 300;
         self.enableMessageReference = YES;
+        self.enableQuoteV2 = NO;
+        self.quoteMessageTypeWhiteList = RCDefaultQuoteMessageTypeWhiteList();
         self.sightRecordMaxDuration = 10;
         self.enableMessageResend = YES;
+        self.enableEditMessage = NO;
+        self.enableMessageReaction = NO;
+        self.messageReactionDisplayMode = RCMessageReactionDisplayModeCountOnly;
+        self.frequentlyUsedReactionDisplayCount = 14;
     }
     return self;
+}
+
+- (void)setFrequentlyUsedReactionDisplayCount:(NSInteger)frequentlyUsedReactionDisplayCount {
+    if (frequentlyUsedReactionDisplayCount < 1 || frequentlyUsedReactionDisplayCount > 20) {
+        _frequentlyUsedReactionDisplayCount = 14;
+        return;
+    }
+    _frequentlyUsedReactionDisplayCount = frequentlyUsedReactionDisplayCount;
+}
+
+- (void)setQuoteMessageTypeWhiteList:(NSArray<NSString *> *)quoteMessageTypeWhiteList {
+    _quoteMessageTypeWhiteList = [quoteMessageTypeWhiteList copy] ?: RCDefaultQuoteMessageTypeWhiteList();
 }
 
 - (void)setDisableMessageAlertSound:(BOOL)disableMessageAlertSound {
@@ -47,6 +79,13 @@
 }
 - (NSTimeInterval)uploadVideoDurationLimit {
     return [[RCCoreClient sharedCoreClient] getVideoDurationLimit];
+}
+
+- (UIColor *)editedTextColor {
+    if (!_editedTextColor) {
+        _editedTextColor = RCDynamicColor(@"text_primary_color", @"0x7C838E", @"0xFFFFFF");
+    }
+    return _editedTextColor;
 }
 
 @end

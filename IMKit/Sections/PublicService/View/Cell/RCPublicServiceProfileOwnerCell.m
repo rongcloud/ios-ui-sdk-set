@@ -59,11 +59,11 @@
 
     self.title.numberOfLines = 0;
     self.title.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    self.title.textColor = RCDYCOLOR(0x00000, 0x9f9f9f);
+    self.title.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
     self.title.textAlignment = NSTextAlignmentLeft;
     self.content.numberOfLines = 0;
     self.content.lineBreakMode = NSLineBreakByCharWrapping;
-    self.content.textColor = [RCKitUtility generateDynamicColor:[UIColor grayColor] darkColor:HEXCOLOR(0x707070)];
+    self.content.textColor = RCDynamicColor(@"text_secondary_color", @"0xd9d9d9", @"0x707070");
     self.content.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
     [self.contentView addSubview:self.title];
     [self.contentView addSubview:self.content];

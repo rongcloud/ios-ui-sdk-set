@@ -11,6 +11,10 @@
 #import "RCKitCommonDefine.h"
 #import "RCUserInfoCacheManager.h"
 #import "RCKitConfig.h"
+#import "RCIM.h"
+#import "RCStreamUtilities.h"
+#import "RCStreamMessage+Internal.h"
+
 @interface RCReferencingView ()
 @property (nonatomic, strong) UIView *inView;
 @end
@@ -19,32 +23,23 @@
 #define textlabel_and_dismiss_space 8
 #define dismiss_right_space 12
 #define dismiss_width 16
+#define referencing_default_height 60
 @implementation RCReferencingView
 - (instancetype)initWithModel:(RCMessageModel *)model inView:(UIView *)view {
     if (self = [super init]) {
-        self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff) darkColor:HEXCOLOR(0x1c1c1c)];
+        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1c");
         self.inView = view;
-        self.referModel = model;
         [self addNotification];
-        [self setContentInfo];
+        [self setReferencedMessageModel:model];
         [self setupSubviews];
     }
     return self;
 }
 
-- (void)setOffsetY:(CGFloat)offsetY {
-    [UIView animateWithDuration:0.25
-                     animations:^{
-                         CGRect rect = self.frame;
-                         rect.origin.y = offsetY;
-                         self.frame = rect;
-                     }];
-}
-
 #pragma mark - Private Methods
 
 - (void)setupSubviews {
-    self.frame = CGRectMake(0, self.inView.frame.size.height, self.inView.frame.size.width,60);
+    self.frame = CGRectMake(0, self.inView.frame.size.height, self.inView.frame.size.width, referencing_default_height);
     if ([RCKitUtility isRTL]) {
         self.dismissButton.frame = CGRectMake(dismiss_right_space, (self.frame.size.height - dismiss_width)/2, dismiss_width, dismiss_width);
         self.nameLabel.frame = CGRectMake(textlabel_left_space, 10, self.frame.size.width - self.dismissButton.frame.origin.x - textlabel_left_space - textlabel_and_dismiss_space, 20);
@@ -75,7 +70,18 @@
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
                                              isAllMessage:YES];
-    } else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
+    } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
+        RCStreamMessage *msg = (RCStreamMessage *)self.referModel.content;
+        if (msg.isSync) {
+            messageInfo = msg.content;
+        } else {
+            RCStreamSummaryModel *summary = [RCStreamUtilities parserStreamSummary:self.referModel];
+            if (summary.isComplete) {
+                messageInfo = summary.summary;
+                msg.content = summary.summary;
+            }
+        }
+    }  else if ([self.referModel.content isKindOfClass:[RCMessageContent class]]) {
         messageInfo = [RCKitUtility formatMessage:self.referModel.content
                                                  targetId:self.referModel.targetId
                                          conversationType:self.referModel.conversationType
@@ -105,22 +111,33 @@
 }
 
 - (NSString *)getUserDisplayName {
-    NSString *name;
-    if (ConversationType_GROUP == self.referModel.conversationType) {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId
-                                                                         inGroupId:self.referModel.targetId];
-        self.referModel.userInfo = userInfo;
-        if (userInfo) {
-            name = userInfo.name;
-        }
-    } else {
-        RCUserInfo *userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:self.referModel.senderUserId];
-        self.referModel.userInfo = userInfo;
-        if (userInfo) {
-            name = userInfo.name;
+    NSString *senderUserId = self.referModel.senderUserId;
+    if ([self.referModel.content.senderUserInfo.userId isEqualToString:senderUserId] && [RCIM sharedRCIM].currentDataSourceType == RCDataSourceTypeInfoManagement) {
+        NSString *senderName = [RCKitUtility getDisplayName:self.referModel.content.senderUserInfo];
+        if (senderName.length > 0) {
+            return senderName;
         }
     }
-    return name;
+    RCUserInfo *userInfo = nil;
+    if (ConversationType_GROUP == self.referModel.conversationType) {
+        RCUserInfo *groupUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId
+                                                                              inGroupId:self.referModel.targetId];
+        RCUserInfo *ordinaryUserInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
+        if (groupUserInfo) {
+            groupUserInfo.alias = ordinaryUserInfo.alias.length > 0 ? ordinaryUserInfo.alias : groupUserInfo.alias;
+            if (groupUserInfo.name.length <= 0 && ordinaryUserInfo.name.length > 0) {
+                groupUserInfo.name = ordinaryUserInfo.name;
+            }
+            userInfo = groupUserInfo;
+        } else {
+            userInfo = ordinaryUserInfo;
+        }
+    } else {
+        userInfo = [[RCUserInfoCacheManager sharedManager] getUserInfo:senderUserId];
+    }
+    self.referModel.userInfo = userInfo;
+    NSString *name = [RCKitUtility getDisplayName:userInfo];
+    return name.length > 0 ? name : (senderUserId ?: @"");
 }
 
 - (void)addNotification {
@@ -139,7 +156,6 @@
         [self.delegate didTapReferencingView:self.referModel];
     }
 }
-
 
 #pragma mark - UserInfo Update
 - (void)onUserInfoUpdate:(NSNotification *)notification {
@@ -166,10 +182,28 @@
 }
 
 #pragma mark - Getters and Setters
+- (void)setReferencedMessageModel:(RCMessageModel *)messageModel {
+    [super setReferencedMessageModel:messageModel];
+    if (messageModel) {
+        [self setContentInfo];
+    } else {
+        self.nameLabel.text = nil;
+        self.textLabel.text = nil;
+    }
+}
+
+- (void)setReferModel:(RCMessageModel *)referModel {
+    [self setReferencedMessageModel:referModel];
+}
+
+- (RCMessageModel *)referModel {
+    return self.messageModel;
+}
+
 - (RCBaseButton *)dismissButton {
     if (!_dismissButton) {
         _dismissButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
-        [_dismissButton setImage:RCResourceImage(@"referencing_view_dismiss_icon") forState:UIControlStateNormal];
+        [_dismissButton setImage:RCDynamicImage(@"conversation_msg_referencing_dismiss_img", @"referencing_view_dismiss_icon") forState:UIControlStateNormal];
         [_dismissButton addTarget:self
                            action:@selector(didClickDismissButton:)
                  forControlEvents:UIControlEventTouchUpInside];
@@ -180,7 +214,7 @@
 - (RCBaseLabel *)nameLabel {
     if (!_nameLabel) {
         _nameLabel = [[RCBaseLabel alloc] init];
-        _nameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
+        _nameLabel.textColor =  RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
     }
     return _nameLabel;
@@ -192,7 +226,7 @@
         _textLabel.numberOfLines = 1;
         [_textLabel setLineBreakMode:NSLineBreakByTruncatingTail];
         _textLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
-        _textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
+        _textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffff66");
         UITapGestureRecognizer *messageTap =
             [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapContentView:)];
         messageTap.numberOfTapsRequired = 1;
@@ -201,4 +235,5 @@
     }
     return _textLabel;
 }
+
 @end

@@ -9,6 +9,18 @@
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
+/// IMKit V2 引用消息展示态。
+typedef NS_ENUM(NSInteger, RCQuoteReferenceLoadStatus) {
+    RCQuoteReferenceLoadStatusUnknown = 0,
+    RCQuoteReferenceLoadStatusLoading,
+    RCQuoteReferenceLoadStatusLoaded,
+    RCQuoteReferenceLoadStatusDeleted,
+    RCQuoteReferenceLoadStatusRecalled,
+    RCQuoteReferenceLoadStatusFailed
+};
+
 /*!
  消息Cell的数据模型类
  */
@@ -27,7 +39,7 @@
 /*!
  用户信息
  */
-@property (nonatomic, strong) RCUserInfo *userInfo;
+@property (nonatomic, strong, nullable) RCUserInfo *userInfo;
 
 /*!
  会话类型
@@ -38,6 +50,11 @@
  目标会话ID
  */
 @property (nonatomic, copy) NSString *targetId;
+
+/*!
+ 所属频道 ID
+ */
+@property (nonatomic, copy, nullable) NSString *channelId;
 
 /*!
  消息ID
@@ -60,7 +77,7 @@
 @property (nonatomic, assign) RCReceivedStatus receivedStatus __deprecated_msg("Use receivedStatusInfo instead");
 
 /// 消息的接收状态类(针对接收的消息生效)
-@property (nonatomic, strong) RCReceivedStatusInfo *receivedStatusInfo;
+@property (nonatomic, strong, nullable) RCReceivedStatusInfo *receivedStatusInfo;
 
 /*!
  消息的发送状态
@@ -90,12 +107,12 @@
 /*!
  阅读回执状态
  */
-@property (nonatomic, strong) RCReadReceiptInfo *readReceiptInfo;
+@property (nonatomic, strong, nullable) RCReadReceiptInfo *readReceiptInfo;
 
 /*!
  消息的附加字段
  */
-@property (nonatomic, copy) NSString *extra;
+@property (nonatomic, copy, nullable) NSString *extra;
 
 /*!
  消息展示时的Cell高度
@@ -108,7 +125,31 @@
 
   服务器消息唯一ID（在同一个Appkey下全局唯一）
  */
-@property (nonatomic, copy) NSString *messageUId;
+@property (nonatomic, copy, nullable) NSString *messageUId;
+
+/// 消息是否存在回应。
+///
+/// - Since: 5.42.0
+@property (nonatomic, assign) BOOL hasReactions;
+
+/// 消息回应摘要缓存。
+///
+/// - Since: 5.42.0
+@property (nonatomic, copy, nullable) NSArray<RCMessageReaction *> *messageReactions;
+
+/// 消息回应摘要分页标记。
+///
+/// - Since: 5.42.0
+@property (nonatomic, copy, nullable) NSString *messageReactionNextPageToken;
+
+/// 引用消息 V2 的引用关系信息。
+@property (nonatomic, strong, nullable) RCQuoteInfo *quoteInfo;
+
+/// 引用消息 V2 批量查询后的原消息。
+@property (nonatomic, strong, nullable) RCMessage *quoteReferencedMessage;
+
+/// 引用消息 V2 批量查询展示态。
+@property (nonatomic, assign) RCQuoteReferenceLoadStatus quoteReferenceLoadStatus;
 
 /*!
  消息是否可以发送请求回执
@@ -135,7 +176,32 @@
  
   扩展信息只支持单聊和群组，其它会话类型不能设置扩展信息
 */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *expansionDic;
+@property (nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> *expansionDic;
+/*!
+ 媒体消息上传进度
+*/
+@property (nonatomic, assign) NSInteger uploadProgress;
+
+/// 消息是否已被编辑
+@property (nonatomic, assign) BOOL hasChanged;
+
+/// 消息编辑信息
+@property (nonatomic, strong) RCMessageModifyInfo *modifyInfo;
+
+/// 消息已读回执操作标识。
+///
+/// - Note: 消息已读回执 V5 专用
+/// - Since: 5.30.0
+@property (nonatomic, assign) BOOL needReceipt;
+
+/// 已读回执是否已发送。
+///
+/// - Note: 消息已读回执 V5 专用
+/// - Since: 5.30.0
+@property (nonatomic, assign) BOOL sentReceipt;
+
+/// 已读 V5 信息
+@property (nonatomic, strong) RCReadReceiptInfoV5 *readReceiptInfoV5;
 
 /*!
  初始化消息Cell的数据模型
@@ -153,3 +219,4 @@
  */
 - (instancetype)initWithMessage:(RCMessage *)rcMessage;
 @end
+NS_ASSUME_NONNULL_END

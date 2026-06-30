@@ -19,10 +19,16 @@
 #import "RCBaseCollectionView.h"
 #import "RCBaseButton.h"
 #import "RCBaseImageView.h"
+#import "RCEditInputBarControl.h"
+#import "RCFullScreenEditView.h"
 
 @class RCLocationMessage;
 @class RCCustomerServiceInfo,RCPublicServiceMenuItem;
+@class RCMessageReaction;
+@class RCMessageReactionUser;
+@class RCMessageCellReferenceContentView;
 
+NS_ASSUME_NONNULL_BEGIN
 /// 客服服务状态
 typedef NS_ENUM(NSUInteger, RCCustomerServiceStatus) {
     /// 无客服服务
@@ -70,7 +76,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, copy) NSString *targetId;
 
 /// 目标频道ID
-@property (nonatomic, copy) NSString *channelId;
+@property (nonatomic, copy, nullable) NSString *channelId;
 
 #pragma mark - 会话页面属性
 
@@ -91,7 +97,7 @@ typedef enum : NSUInteger {
 /// 需要统计未读数的会话类型数组（在导航栏的返回按钮中显示）
 /// 此属性表明在导航栏的返回按钮中需要统计显示哪部分的会话类型的未读数。
 /// (需要将RCConversationType转为NSNumber构建Array)
-@property (nonatomic, strong) NSArray *displayConversationTypeArray;
+@property (nonatomic, strong, nullable) NSArray *displayConversationTypeArray;
 
 /// 更新导航栏返回按钮中显示的未读消息数
 /// 如果您重写此方法，需要注意调用super。
@@ -153,6 +159,12 @@ typedef enum : NSUInteger {
 /// 会话页面下方的输入工具栏
 @property (nonatomic, strong) RCChatSessionInputBarControl *chatSessionInputBarControl;
 
+/// 消息编辑普通输入框控件
+@property (nonatomic, strong) RCEditInputBarControl *editInputBarControl;
+
+/// 消息编辑全屏编辑视图
+@property (nonatomic, strong, nullable) RCFullScreenEditView *fullScreenEditView;
+
 /// 禁用系统表情, 建议在RCConversationViewController 创建后立刻赋值
 @property (nonatomic, assign) BOOL  disableSystemEmoji;
 
@@ -194,6 +206,11 @@ typedef enum : NSUInteger {
 /// - Parameter pluginBoardView 输入扩展功能板View
 /// - Parameter tag             输入扩展功能(Item)的唯一标识
 - (void)pluginBoardView:(RCPluginBoardView *)pluginBoardView clickedItemWithTag:(NSInteger)tag;
+
+/// 取消当前输入框引用状态。
+///
+/// SDK 内部负责清除引用状态、移除输入框引用区域并刷新输入框 UI。
+- (void)cancelReference;
 
 #pragma mark - 显示设置
 
@@ -273,7 +290,7 @@ typedef enum : NSUInteger {
 /// SDK内置的消息类型，如果您将pushContent置为nil，会使用默认的推送格式进行远程推送。
 /// 自定义类型的消息，需要您自己设置pushContent来定义推送内容，否则将不会进行远程推送。
 /// 如果您需要设置发送的pushData，可以使用RCIM的发送消息接口。
-- (void)sendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
+- (void)sendMessage:(RCMessageContent *)messageContent pushContent:(nullable NSString *)pushContent;
 
 /// 发送媒体消息(上传图片或文件到App指定的服务器)
 /// - Parameter messageContent: 消息的内容
@@ -283,8 +300,14 @@ typedef enum : NSUInteger {
 /// 需要您在该回调中上传媒体信息（图片或文件），并通过uploadListener监听通知SDK同步显示上传进度。
 /// 如果appUpload设置为NO，将会和普通媒体消息的发送一致，上传到融云默认的服务器并发送。
 - (void)sendMediaMessage:(RCMessageContent *)messageContent
-             pushContent:(NSString *)pushContent
+             pushContent:(nullable NSString *)pushContent
                appUpload:(BOOL)appUpload;
+
+/// 将当前引用状态附加到待发送消息上。
+/// 当开发者重写发送逻辑并手动构造 RCMessage 时，可在调用 RCIM/RCCoreClient 发送前调用此方法，保持 V2 引用生效。
+/// - Parameter message: 待发送的消息对象
+/// - Returns: 是否成功附加引用信息
+- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message;
 
 /// 上传媒体信息到App指定的服务器的回调
 /// - Parameter message:        媒体消息（图片消息或文件消息）的实体
@@ -352,7 +375,7 @@ typedef enum : NSUInteger {
 /// - Returns: 修改后的消息内容
 /// 此回调在消息准备向外发送时会回调，您可以在此回调中对消息内容进行过滤和修改等操作。
 /// 如果此回调的返回值不为nil，SDK会对外发送返回的消息内容。
-- (RCMessageContent *)willSendMessage:(RCMessageContent *)messageContent;
+- (nullable RCMessageContent *)willSendMessage:(RCMessageContent *)messageContent;
 
 /// 发送消息完成的回调
 /// - Parameter status:          发送状态，0表示成功，非0表示失败
@@ -441,6 +464,19 @@ typedef enum : NSUInteger {
 /// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
 - (void)didTapMessageCell:(RCMessageModel *)model;
 
+
+/// 长按Cell中的语音转文本内容的回调
+/// - Parameters:
+/// - Parameter model: 消息Cell的数据模型
+/// - Parameter view:  长按区域的View
+- (void)didLongTouchSTTInfo:(RCMessageModel *)model inView:(UIView *)view;
+
+/// 获取长按Cell中的语音转文本时的菜单
+/// - Parameter model: 消息Cell的数据模型
+/// SDK在此长按事件中，会展示此方法返回的菜单。
+/// 您在重写此回调时，如果想保留SDK原有的功能，需要注意调用super。
+- (NSArray<UIMenuItem *> *)getLongTouchSTTInfoMenuList:(RCMessageModel *)model;
+
 /// 长按Cell中的消息内容的回调
 /// - Parameter model: 消息Cell的数据模型
 /// - Parameter view:  长按区域的View
@@ -485,6 +521,8 @@ typedef enum : NSUInteger {
 ///
 /// - Returns: 是否执行内部逻辑，返回 YES 不执行 SDK 内部逻辑，NO 执行 SDK 内部逻辑，
 - (BOOL)didTapCommonPhrasesButton;
+
+- (void)didTapReceiptStatusView:(RCMessageModel *)model;
 
 #pragma mark - 语音消息、图片消息、位置消息、文件消息显示与操作
 
@@ -590,4 +628,105 @@ typedef enum : NSUInteger {
 /// 开发者如果想更换转发消息的选择会话界面，可以重写此方法，弹出自定义的选择会话界面，选择结束之后，调用completedBlock传入选中的会话即可。
 - (void)forwardMessage:(NSInteger)index completed:(void (^)(NSArray<RCConversation *> *conversationList))completedBlock;
 
+- (void)addMentionedUserToCurrentInput:(RCUserInfo *)userInfo;
+
 @end
+
+/// 消息回应操作的回调。
+///
+/// 开发者可在 RCConversationViewController 子类中重写这些方法来自定义消息回应行为。
+@interface RCConversationViewController (MessageReaction)
+
+/// 是否执行消息回应操作。
+///
+/// 当用户点击消息上的回应，或在回应面板中选择某个回应时，会回调此方法。
+/// 默认返回 YES，继续执行 IMKit 内置的添加或移除回应逻辑。
+/// - Parameter reactionId: 被点击或选中的回应 ID
+/// - Parameter message: 回应所属的消息
+/// - Returns: 是否继续执行本次回应操作。YES 表示继续执行内置逻辑，NO 表示拦截本次操作并由开发者自行处理
+/// - Since: 5.42.0
+- (BOOL)willPerformMessageReactionWithReactionId:(NSString *)reactionId message:(RCMessageModel *)message;
+
+/// 点击消息回应详情页中的用户。
+///
+/// 当用户在消息回应详情页的用户列表中点击某个回应用户时，会回调此方法。
+/// 默认不做处理，开发者可在 RCConversationViewController 子类中重写此方法，自行展示用户资料页或执行其他业务逻辑。
+/// - Parameter user: 被点击的回应用户
+/// - Parameter message: 回应所属的消息
+/// - Parameter reaction: 被点击用户所属的回应
+/// - Since: 5.42.0
+- (void)didTapUserInMessageReactionDetail:(RCMessageReactionUser *)user
+                                  message:(RCMessageModel *)message
+                                 reaction:(RCMessageReaction *)reaction;
+
+/// 展示默认消息回应详情页。
+///
+/// 当用户点击消息回应详情入口，准备展示 IMKit 默认回应详情页时，会回调此方法。
+/// 默认展示 IMKit 内置的回应详情页。开发者可在 RCConversationViewController 子类中重写此方法，自行展示回应详情页；如需保留默认详情页，请调用 super。
+/// - Parameter message: 回应所属的消息
+/// - Parameter reaction: 被点击的回应
+/// - Since: 5.42.0
+- (void)presentMessageReactionDetailForMessage:(RCMessageModel *)message
+                                      reaction:(RCMessageReaction *)reaction;
+
+/// 展示消息回应操作失败提示。
+///
+/// 当添加或移除消息回应失败时，会回调此方法。
+/// 默认展示 IMKit 内置的错误提示。开发者可在 RCConversationViewController 子类中重写此方法，自行处理错误；如需保留默认错误提示，请调用 super。
+/// - Parameter errorCode: 失败错误码
+/// - Parameter message: 操作失败的消息
+/// - Parameter reactionId: 操作失败的回应 ID
+/// - Since: 5.42.0
+- (void)showMessageReactionErrorWithErrorCode:(RCErrorCode)errorCode
+                                      message:(RCMessageModel *)message
+                                   reactionId:(NSString *)reactionId;
+
+@end
+
+@interface RCConversationViewController (RCMessageCellReferenceContentView)
+
+/// 注册消息 cell 内的自定义引用展示内容 View。
+///
+/// Quote V2 被引用消息加载完成后，如被引用消息类型命中已注册 View，
+/// 消息 cell 内的被引用消息展示区会优先使用该 View 展示。
+/// 建议在会话页面子类 registerCustomCellsAndMessages 方法中调用。
+/// - Parameters:
+///   - viewClass: 消息 cell 内的自定义引用展示内容 View 类，需要继承于 `RCMessageCellReferenceContentView`。
+///   - messageClass: 对应的消息类，需要继承于 `RCMessageContent`。
+- (void)registerMessageCellReferenceContentViewClass:(Class)viewClass forMessageClass:(Class)messageClass;
+
+/// 是否显示当前消息的引用入口。
+///
+/// SDK 会先校验引用功能开关、输入框状态、会话类型、消息发送状态等基础条件；
+/// 基础条件满足后，再调用该方法判断是否展示“引用”入口。
+/// 默认实现支持文本、图片、文件、图文、引用消息。
+/// 子类重写时，如需保留 SDK 默认支持范围，可先调用 super。
+/// - Parameter messageModel: 当前长按的消息模型。
+/// - Returns: 是否显示引用入口。
+- (BOOL)shouldShowReferenceMenuItemForMessageModel:(RCMessageModel *)messageModel;
+
+/// 返回聊天页面输入框上方自定义引用区域 View。
+///
+/// 返回 nil 时，SDK 使用默认输入框引用区域。自定义 View 需要继承于 `RCReferenceInputBarView`。
+/// 自定义 View 可在返回前设置 frame 高度，或重写 `sizeThatFits:` 返回期望尺寸；
+/// SDK 会使用内部可展示宽度调用 `sizeThatFits:`，并在布局时统一设置 View 宽度。
+/// SDK 只负责添加、布局、绑定引用消息模型和移除该 View，
+/// 不会添加默认取消按钮、整块点击手势或处理 View 内部交互。
+/// - Parameter messageModel: 当前输入框引用的消息模型。
+- (nullable RCReferenceInputBarView *)referenceInputBarViewForMessageModel:(RCMessageModel *)messageModel;
+
+/// 消息 cell 内的自定义引用展示 View 触发自定义事件的回调。
+///
+/// 默认实现为空。开发者可以在会话页面子类中重写该方法，结合
+/// `referenceContentView.messageModel` 和 `referenceContentView.referencedContent`
+/// 处理业务事件。
+/// - Parameters:
+///   - referenceContentView: 触发事件的消息 cell 内自定义引用展示 View。
+///   - action: 业务自定义事件标识。
+///   - extra: 业务自定义事件参数。
+- (void)messageCellReferenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
+                       didPerformAction:(NSString *)action
+                                  extra:(nullable NSDictionary *)extra;
+
+@end
+NS_ASSUME_NONNULL_END

@@ -16,7 +16,7 @@
     self = [super initWithFrame:frame];
     if (self) {
         [self setupSelectFilesCellView];
-        self.contentView.backgroundColor = RCDYCOLOR(0xffffff, 0x191919);
+        self.contentView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x191919");
     }
     return self;
 }
@@ -24,9 +24,9 @@
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
     [super setSelected:selected animated:animated];
     if (selected) {
-        _selectedImageView.image = RCResourceImage(@"message_cell_select");
+        _selectedImageView.image = RCDynamicImage(@"conversation_msg_cell_select_img", @"message_cell_select");
     } else {
-        _selectedImageView.image = RCResourceImage(@"message_cell_unselect");
+        _selectedImageView.image = RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect");
     }
 }
 
@@ -43,7 +43,7 @@
     _fileNameLabel = [RCBaseLabel new];
     _fileNameLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _fileNameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-    _fileNameLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x000000) darkColor:RCMASKCOLOR(0xffffff, 0.9)];
+    _fileNameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0xffffffe5");
     _fileNameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     [self.contentView addSubview:_fileNameLabel];
 

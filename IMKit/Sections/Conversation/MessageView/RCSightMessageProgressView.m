@@ -7,6 +7,7 @@
 //
 
 #import "RCSightMessageProgressView.h"
+#import "RCKitCommonDefine.h"
 
 #define DEGREES_TO_RADIANS(x) (x) / 180.0 * M_PI
 #define RADIANS_TO_DEGREES(x) (x) / M_PI * 180.0
@@ -208,19 +209,20 @@ typedef NS_ENUM(NSUInteger, RCEAnimationStatus) {
 #pragma mark - Private Methods
 
 - (void)setup {
-    _progressTintColor = [UIColor blackColor];
+    _progressTintColor = RCDynamicColor(@"mask_color", @"0x000000", @"0x000000");
 
     self.backgroundLayer.frame = self.bounds;
-    self.backgroundLayer.tintColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.8];
+    self.backgroundLayer.tintColor = RCDynamicColor(@"control_title_white_color", @"0xffffffcc", @"0xffffffcc");
     ;
-    self.backgroundLayer.backgroundColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:0.2].CGColor;
+    UIColor *bgColor = RCDynamicColor(@"mask_color", @"0xcccccccc", @"0xcccccccc");
+    self.backgroundLayer.backgroundColor = bgColor.CGColor;
     self.backgroundLayer.cornerRadius = self.bounds.size.width / 2;
     [self.layer addSublayer:self.backgroundLayer];
 
     CAShapeLayer *shapeLayer = [[CAShapeLayer alloc] init];
     shapeLayer.frame = self.bounds;
     shapeLayer.fillColor = nil;
-    shapeLayer.strokeColor = [UIColor whiteColor].CGColor; // self.progressTintColor.CGColor;
+    shapeLayer.strokeColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff").CGColor; // self.progressTintColor.CGColor;
 
     [self.layer addSublayer:shapeLayer];
     self.shapeLayer = shapeLayer;

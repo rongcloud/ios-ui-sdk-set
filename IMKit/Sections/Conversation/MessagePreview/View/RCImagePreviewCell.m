@@ -137,7 +137,7 @@
     if (!_labFailed) {
         UILabel *failLabel = [[UILabel alloc] init];
         failLabel.textAlignment = NSTextAlignmentCenter;
-        failLabel.textColor = HEXCOLOR(0x999999);
+        failLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x999999", @"0x999999");
         _labFailed = failLabel;
     }
     return _labFailed;
@@ -159,13 +159,13 @@
         [self.progressView setHidden:YES];
     }
     if ([imageUrl hasPrefix:@"http"]) {
-        self.imgFailed.image = RCResourceImage(@"broken");
+        self.imgFailed.image = RCDynamicImage(@"conversation_msg_cell_image_broken_img", @"broken");
         self.imgFailed.frame = CGRectMake(0, 0, 81, 60);
         self.imgFailed.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         self.labFailed.frame = CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 44, 150, 30);
         self.labFailed.text = RCLocalizedString(@"ImageLoadFailed");
     } else {
-        self.imgFailed.image = RCResourceImage(@"exclamation");
+        self.imgFailed.image = RCDynamicImage(@"image_preview_exclamation_img", @"exclamation");
         self.imgFailed.frame = CGRectMake(0, 0, 71, 71);
         self.imgFailed.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         self.labFailed.frame = CGRectMake(self.frame.size.width / 2 - 75, self.frame.size.height / 2 + 49.5, 150, 30);
@@ -328,7 +328,7 @@
         _progressView =
             [[RCImageMessageProgressView alloc] initWithFrame:CGRectMake(0, 0, 135, 135)];
         _progressView.label.hidden = YES;
-        _progressView.indicatorView.color = [UIColor blackColor];
+        _progressView.indicatorView.color = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
         _progressView.backgroundColor = [UIColor clearColor];
         [_progressView setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
         _progressView.userInteractionEnabled = NO;

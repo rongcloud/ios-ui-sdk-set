@@ -34,9 +34,7 @@
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
         self.selectionStyle = UITableViewCellSelectionStyleNone;
-        self.contentView.backgroundColor =
-            [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                     darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+        self.contentView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
         [self.contentView addSubview:self.selectedImageView];
         [self.contentView addSubview:self.headerImageView];
         [self.contentView addSubview:self.nameLabel];
@@ -74,9 +72,9 @@
     [self.headerImageView setPlaceholderImage:defaultHeaderImg];
     
     if (ifSelected) {
-        [self.selectedImageView setImage:RCResourceImage(@"message_cell_select")];
+        [self.selectedImageView setImage:RCDynamicImage(@"conversation_msg_cell_select_img", @"message_cell_select")];
     } else {
-        [self.selectedImageView setImage:RCResourceImage(@"message_cell_unselect")];
+        [self.selectedImageView setImage:RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect")];
     }
     if (conversation.conversationType == ConversationType_GROUP) {
         RCGroup *group = [[RCUserInfoCacheManager sharedManager] getGroupInfo:conversation.targetId];
@@ -84,7 +82,7 @@
             [self.headerImageView setImageURL:[NSURL URLWithString:group.portraitUri]];
             [self.nameLabel setText:group.groupName];
         } else {
-            [self.headerImageView setPlaceholderImage:RCResourceImage(@"default_group_portrait")];
+            [self.headerImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_group_portrait_img", @"default_group_portrait")];
             [self.nameLabel setText:conversation.targetId];
         }
     } else {
@@ -93,7 +91,7 @@
             [self.headerImageView setImageURL:[NSURL URLWithString:userInfo.portraitUri]];
             [self.nameLabel setText:[RCKitUtility getDisplayName:userInfo]];
         } else {
-            [self.headerImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+            [self.headerImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
             [self.nameLabel setText:conversation.targetId];
         }
     }
@@ -102,8 +100,8 @@
 #pragma mark - Private Methods
 
 - (void)resetSubviews {
-    [self.selectedImageView setImage:RCResourceImage(@"message_cell_unselect")];
-    [self.headerImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+    [self.selectedImageView setImage:RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect")];
+    [self.headerImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
     self.nameLabel.text = nil;
 }
 
@@ -157,7 +155,7 @@
         } else {
             _selectedImageView.frame = CGRectMake(10, 25, 20, 20);
         }
-        [_selectedImageView setImage:RCResourceImage(@"message_cell_unselect")];
+        [_selectedImageView setImage:RCDynamicImage(@"conversation_msg_cell_unselect_img", @"message_cell_unselect")];
     }
     return _selectedImageView;
 }
@@ -166,7 +164,7 @@
     if (!_headerImageView) {
         _headerImageView = [[RCloudImageView alloc] init];
         _headerImageView.contentMode = UIViewContentModeScaleAspectFill;
-        [_headerImageView setPlaceholderImage:RCResourceImage(@"default_portrait_msg")];
+        [_headerImageView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
         if ([RCKitUtility isRTL]) {
             _headerImageView.frame = CGRectMake(self.bounds.size.width - 45, 5, 60, 60);
         } else {
@@ -186,7 +184,7 @@
         } else {
             _nameLabel.frame = CGRectMake(110, 5, self.bounds.size.width - 110, 60);
         }
-        _nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
+        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
     }
     return _nameLabel;
 }

@@ -8,15 +8,41 @@
 
 #import "RCImageMessageCell.h"
 #import "RCIM.h"
-#import "RCKitUtility.h"
 #import "RCKitCommonDefine.h"
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
+#import "RCKitUtility.h"
 #import "RCResendManager.h"
+#import "RCReferencedContentView.h"
+#import "RCMessageCell+Internal.h"
+#import "RCMessageModel+MessageReaction.h"
+
+#define QUOTE_CARD_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_HORIZONTAL_INSET 12
+#define QUOTE_DIVIDER_TOP_OFFSET 8
+#define QUOTE_DIVIDER_HEIGHT 1
+#define QUOTE_BODY_TOP_SPACING 10
+#define QUOTE_MEDIA_INSET QUOTE_DIVIDER_HORIZONTAL_INSET
+
+static CGFloat RCImageMessageQuoteContentOffset(RCMessageModel *model, CGFloat bubbleWidth) {
+    CGFloat cardWidth = MAX(bubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGFloat cardHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:cardWidth];
+    return RCQuoteCardTopMargin + cardHeight;
+}
+
+static CGFloat RCImageMessageQuoteBubbleWidth(RCMessageModel *model, CGSize imageSize) {
+    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
+    CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
+    CGFloat contentWidth = MAX(imageSize.width, quoteCardSize.width);
+    return MIN(contentWidth + QUOTE_MEDIA_INSET * 2, maxBubbleWidth);
+}
+
 @interface RCImageMessageCell ()
 @property (nonatomic, strong) RCBaseImageView *destructPicture;
 @property (nonatomic, strong) UILabel *destructLabel;
 @property (nonatomic, strong) RCBaseImageView *destructBackgroundView;
+@property (nonatomic, strong) UIView *quoteDividerView;
 @end
 
 @implementation RCImageMessageCell
@@ -44,19 +70,33 @@
          referenceExtraHeight:(CGFloat)extraHeight {
     CGFloat messagecontentview_height = [self getMessageContentHeight:model];
     messagecontentview_height += extraHeight;
+    if (model.content.destructDuration <= 0) {
+        BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:model];
+        if (showsQuoteCard) {
+            messagecontentview_height += QUOTE_DIVIDER_TOP_OFFSET + QUOTE_DIVIDER_HEIGHT + QUOTE_BODY_TOP_SPACING + QUOTE_MEDIA_INSET;
+        } else if ([model rc_hasVisibleReactions]) {
+            messagecontentview_height += QUOTE_BODY_TOP_SPACING + QUOTE_MEDIA_INSET;
+        }
+    }
     return CGSizeMake(collectionViewWidth, messagecontentview_height);
 }
 
 - (void)setDataModel:(RCMessageModel *)model {
     if (self.model && self.model.messageId != model.messageId) {
         [self showProgressView];
-        [self.progressView updateProgress:0];
+        [self.progressView updateProgress:model.uploadProgress];
     }
     [super setDataModel:model];
 
     [self setAutoLayout];
     [self updateStatusContentView:self.model];
     [self updateProgressView];
+}
+
+- (void)messageContentViewFrameDidChange {
+    [super messageContentViewFrameDidChange];
+    [self updateImageMediaFrameIfNeeded];
+    [self updateQuoteDividerLayoutIfNeeded];
 }
 
 - (void)updateStatusContentView:(RCMessageModel *)model{
@@ -80,16 +120,16 @@
     self.destructBackgroundView.hidden = NO;
     self.pictureView.frame = CGRectZero;
     self.messageContentView.contentSize = CGSizeMake(DestructBackGroundWidth, DestructBackGroundHeight);
-    self.destructBackgroundView.image = [RCMessageCellTool getDefaultMessageCellBackgroundImage:self.model];
+    self.destructBackgroundView.image = [self getDefaultMessageCellBackgroundImage];
     self.destructBackgroundView.frame = CGRectMake(0, 0, DestructBackGroundWidth, DestructBackGroundHeight);
     self.destructPicture.frame = CGRectMake(50, 43, 31, 25);
     self.destructLabel.frame = CGRectMake(0,CGRectGetMaxY(self.destructPicture.frame)+4, self.destructBackgroundView.frame.size.width, 17);
     if (self.model.messageDirection == MessageDirection_SEND) {
-        [self.destructLabel setTextColor:RCDYCOLOR(0x111f2c, 0x040a0f)];
-        self.destructPicture.image = RCResourceImage(@"burnPicture");
+        [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0x040A0F")];
+        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_destruct_pic_img",@"burnPicture");
     }else{
-        [self.destructLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
-        self.destructPicture.image = RCResourceImage(@"from_burn_picture");
+        [self.destructLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc")];
+        self.destructPicture.image = RCDynamicImage(@"conversation_msg_cell_receive_destruct_pic_img", @"from_burn_picture");
     }
 }
 
@@ -114,14 +154,16 @@
         return imageMessage.thumbnailImage;
     }
     if (model.messageDirection == MessageDirection_SEND) {
-        return RCResourceImage(@"to_thumb_image_broken");
+        return RCDynamicImage(@"conversation_msg_cell_to_thumb_broken_img", @"to_thumb_image_broken");
     } else {
-        return RCResourceImage(@"from_thumb_image_broken");
+        return RCDynamicImage(@"conversation_msg_cell_from_thumb_broken_img",@"from_thumb_image_broken");
     }
 }
 
 - (void)initialize {
+    [self showBubbleBackgroundView:YES];
     [self.messageContentView addSubview:self.pictureView];
+    [self.messageContentView addSubview:self.quoteDividerView];
     [self.messageContentView addSubview:self.destructBackgroundView];
     [self.destructBackgroundView addSubview:self.destructPicture];
     [self.destructBackgroundView addSubview:self.destructLabel];
@@ -136,14 +178,115 @@
             self.destructBackgroundView.hidden = YES;
             UIImage *displayImage = [[self class] getDisplayImage:self.model];
             CGSize imageSize = [RCMessageCellTool getThumbnailImageSize:displayImage];
+            BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+            BOOL usesBubbleContainer = showsQuoteCard || [self.model rc_hasVisibleReactions];
+            CGFloat contentWidth = imageSize.width;
+            CGFloat mediaInset = 0;
+            if (usesBubbleContainer) {
+                contentWidth = RCImageMessageQuoteBubbleWidth(self.model, imageSize);
+                mediaInset = QUOTE_MEDIA_INSET;
+            }
+            CGFloat quoteOffset = showsQuoteCard ? RCImageMessageQuoteContentOffset(self.model, contentWidth) : 0;
+            CGFloat bodyOffset = [self bodyTopOffsetWithQuoteCardVisible:showsQuoteCard
+                                                      bubbleContainerUsed:usesBubbleContainer];
             self.pictureView.image = displayImage;
-            self.messageContentView.contentSize = imageSize;
-            self.pictureView.frame = self.messageContentView.bounds;
-            self.progressView.frame = self.pictureView.bounds;
+            self.messageContentView.contentSize = CGSizeMake(contentWidth, imageSize.height + quoteOffset + bodyOffset + mediaInset);
+            [self updateImageMediaFrameWithImageSize:imageSize
+                                        contentWidth:contentWidth
+                                         quoteOffset:quoteOffset
+                                          bodyOffset:bodyOffset
+                                          mediaInset:mediaInset
+                                    showsQuoteCard:showsQuoteCard];
+            self.quoteDividerView.hidden = !showsQuoteCard;
+            self.bubbleBackgroundView.hidden = !usesBubbleContainer;
+            if (showsQuoteCard) {
+                CGFloat dividerWidth = MAX(contentWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
+                self.quoteDividerView.frame = CGRectMake(QUOTE_DIVIDER_HORIZONTAL_INSET,
+                                                         quoteOffset + QUOTE_DIVIDER_TOP_OFFSET,
+                                                         dividerWidth,
+                                                         QUOTE_DIVIDER_HEIGHT);
+                [self.messageContentView bringSubviewToFront:self.quoteDividerView];
+            } else {
+                self.quoteDividerView.frame = CGRectZero;
+            }
+            [self updateQuoteDividerLayoutIfNeeded];
         }
     } else {
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCImageMessage object");
     }
+}
+
+- (void)updateQuoteDividerLayoutIfNeeded {
+    if (![RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model]) {
+        return;
+    }
+    if (self.quoteDividerView.hidden || CGRectGetWidth(self.quoteDividerView.frame) <= 0) {
+        return;
+    }
+    CGFloat bubbleWidth = CGRectGetWidth(self.messageContentView.bounds);
+    if (bubbleWidth <= 0) {
+        return;
+    }
+    CGRect frame = self.quoteDividerView.frame;
+    frame.size.width = MAX(bubbleWidth - QUOTE_DIVIDER_HORIZONTAL_INSET * 2, 0);
+    self.quoteDividerView.frame = frame;
+}
+
+- (BOOL)usesTopQuoteCardLayout {
+    return YES;
+}
+
+- (void)updateImageMediaFrameIfNeeded {
+    if (self.model.content.destructDuration > 0 || CGRectIsEmpty(self.pictureView.frame)) {
+        return;
+    }
+    BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
+    BOOL usesBubbleContainer = showsQuoteCard || [self.model rc_hasVisibleReactions];
+    self.bubbleBackgroundView.hidden = !usesBubbleContainer;
+    if (!usesBubbleContainer) {
+        return;
+    }
+    CGSize imageSize = self.pictureView.frame.size;
+    CGFloat contentWidth = CGRectGetWidth(self.messageContentView.bounds);
+    CGFloat quoteOffset = showsQuoteCard ? RCImageMessageQuoteContentOffset(self.model, contentWidth) : 0;
+    CGFloat bodyOffset = [self bodyTopOffsetWithQuoteCardVisible:showsQuoteCard
+                                             bubbleContainerUsed:usesBubbleContainer];
+    [self updateImageMediaFrameWithImageSize:imageSize
+                                contentWidth:contentWidth
+                                 quoteOffset:quoteOffset
+                                  bodyOffset:bodyOffset
+                                  mediaInset:QUOTE_MEDIA_INSET
+                            showsQuoteCard:showsQuoteCard];
+}
+
+- (CGFloat)bodyTopOffsetWithQuoteCardVisible:(BOOL)showsQuoteCard
+                         bubbleContainerUsed:(BOOL)usesBubbleContainer {
+    if (showsQuoteCard) {
+        return QUOTE_DIVIDER_TOP_OFFSET + QUOTE_DIVIDER_HEIGHT + QUOTE_BODY_TOP_SPACING;
+    }
+    return usesBubbleContainer ? QUOTE_BODY_TOP_SPACING : 0;
+}
+
+- (void)updateImageMediaFrameWithImageSize:(CGSize)imageSize
+                              contentWidth:(CGFloat)contentWidth
+                               quoteOffset:(CGFloat)quoteOffset
+                                bodyOffset:(CGFloat)bodyOffset
+                                mediaInset:(CGFloat)mediaInset
+                             showsQuoteCard:(BOOL)showsQuoteCard {
+    CGFloat contentX = mediaInset;
+    if (mediaInset > 0) {
+        BOOL hasVisibleReactions = [self.model rc_hasVisibleReactions];
+        BOOL alignsTrailing = (hasVisibleReactions || showsQuoteCard)
+            ? [RCKitUtility isRTL]
+            : ([RCKitUtility isRTL]
+               ? self.model.messageDirection == MessageDirection_RECEIVE
+               : self.model.messageDirection == MessageDirection_SEND);
+        if (alignsTrailing) {
+            contentX = MAX(contentWidth - imageSize.width - mediaInset, mediaInset);
+        }
+    }
+    self.pictureView.frame = CGRectMake(contentX, quoteOffset + bodyOffset, imageSize.width, imageSize.height);
+    self.progressView.frame = self.pictureView.bounds;
 }
 
 - (void)updateProgressView{
@@ -179,6 +322,7 @@
         } else if ([notifyModel.actionName isEqualToString:CONVERSATION_CELL_STATUS_SEND_PROGRESS]) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self showProgressView];
+                self.model.uploadProgress = progress;
                 [self.progressView updateProgress:progress];
             });
         } else if (self.model.sentStatus == SentStatus_READ && self.isDisplayReadStatus) {
@@ -243,5 +387,14 @@
         _progressView.hidden = YES;
     }
     return _progressView;
+}
+
+- (UIView *)quoteDividerView {
+    if (!_quoteDividerView) {
+        _quoteDividerView = [[UIView alloc] initWithFrame:CGRectZero];
+        _quoteDividerView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xE2E4E5", @"0xE2E4E5");
+        _quoteDividerView.hidden = YES;
+    }
+    return _quoteDividerView;
 }
 @end

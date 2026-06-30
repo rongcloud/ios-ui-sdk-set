@@ -9,6 +9,16 @@
 #import <UIKit/UIKit.h>
 #import "RCKitTranslationConfig.h"
 
+/// 消息回应展示模式。
+///
+/// - Since: 5.42.0
+typedef NS_ENUM(NSInteger, RCMessageReactionDisplayMode) {
+    /// 仅显示回应数。
+    RCMessageReactionDisplayModeCountOnly = 0,
+    /// 显示回应用户摘要。
+    RCMessageReactionDisplayModeDetail = 1,
+};
+
 @interface RCKitMessageConf : NSObject
 #pragma mark - Config
 
@@ -109,6 +119,12 @@
 /// 是否支持消息引用功能，默认值是YES ，聊天页面长按消息支持引用（目前仅支持文本消息、文件消息、图文消息、图片消息、引用消息的引用）
 @property (nonatomic, assign) BOOL enableMessageReference;
 
+/// 发送引用消息时是否使用 quote 回复 V2，默认值是 NO。
+@property (nonatomic, assign) BOOL enableQuoteV2;
+
+/// quote 引用态下允许发送的消息类型白名单，默认包含文本、图片、GIF、小视频、语音、高清语音、文件、位置消息。
+@property (nonatomic, copy, nullable) NSArray<NSString *> *quoteMessageTypeWhiteList;
+
 /// 小视频的最长录制时间，单位是秒，默认值是 10s。
 ///
 /// 在集成了融云小视频功能后，可以通过此方法来设置小视频的最长录制时间。录制时间最长不能超过 2 分钟。
@@ -124,5 +140,27 @@
 
 @property (nonatomic, strong) RCKitTranslationConfig *translationConfig;
 
-@end
+/// 是否开启消息编辑功能，默认为 NO
+@property (nonatomic, assign) BOOL enableEditMessage;
 
+/// 已编辑文本的颜色
+/// 默认： 0x7C838E ，暗黑： 0xFFFFFF
+/// 可通过 RCDYCOLOR 宏设置正常和暗黑的颜色
+@property (nonatomic, strong) UIColor *editedTextColor;
+
+/// 是否开启消息回应功能，默认值是 NO。
+///
+/// - Since: 5.42.0
+@property (nonatomic, assign) BOOL enableMessageReaction;
+
+/// 消息回应展示模式，默认值是 ``RCMessageReactionDisplayModeCountOnly``。
+///
+/// - Since: 5.42.0
+@property (nonatomic, assign) RCMessageReactionDisplayMode messageReactionDisplayMode;
+
+/// 常用回应展示数量，默认值是 14，有效范围 [1, 20]。
+///
+/// - Since: 5.42.0
+@property (nonatomic, assign) NSInteger frequentlyUsedReactionDisplayCount;
+
+@end

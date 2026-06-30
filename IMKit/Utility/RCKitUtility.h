@@ -364,4 +364,46 @@
   优先返回 alias，如果 alias 没有值，返回 name
  */
 + (NSString *)getDisplayName:(RCUserInfo *)userInfo;
+
+/**
+ 获取需要显示的用户信息
+
+  groupId 为空时返回普通用户信息；groupId 非空时优先返回群成员信息，并用普通用户信息补齐 alias/name。
+ */
++ (nullable RCUserInfo *)userInfoForDisplayWithUserId:(NSString *)userId groupId:(nullable NSString *)groupId;
+
+/**
+ 获取需要显示的用户信息，只读取缓存，不触发用户信息请求
+
+  groupId 为空时返回普通用户信息；groupId 非空时优先返回群成员信息，并用普通用户信息补齐 alias/name。
+ */
++ (nullable RCUserInfo *)userInfoForDisplayFromCacheOnlyWithUserId:(NSString *_Nonnull)userId
+                                                           groupId:(nullable NSString *)groupId;
+
+
+/// 本地化字符串
+/// - Parameters:
+///   - key: key
+///   - table: 本地化文件名
++ (NSString *)localizedString:(NSString *)key table:(NSString *)table;
+
+/// 查找文件
+/// - Parameter name: 文件名[先找根目录, 再找framework]
++ (NSString *)filePathForName:(NSString *)name;
+
+/// 按照名称查找bundle
+/// - Parameter bundleName: 名称[先找根目录, 再找framework]
++ (NSString *)bundlePathWithName:(NSString *)bundleName;
+
+/// 获取公众号 WebViewController
+/// - Parameter URLString: URL
++ (nullable UIViewController *)getPublicServiceWebViewController:(NSString *)URLString;
+
++ (NSString *)formatStreamDigest:(RCMessage *)message;
+
+//判断是否是暗黑模式
++ (BOOL)isDarkMode;
+
+/// 是否使用欢快主题
++ (BOOL)isTraditionInnerThemes;
 @end

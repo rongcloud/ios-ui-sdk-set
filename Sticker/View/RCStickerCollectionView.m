@@ -51,7 +51,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
 }
 
 - (void)initialize {
-    self.backgroundColor = RCDYCOLOR(0xF2F2F3, 0x0b0b0b);
+    self.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf2f2f3", @"0x0b0b0b");
     self.collectionView.frame = self.bounds;
     UILongPressGestureRecognizer *longPress =
         [[UILongPressGestureRecognizer alloc] initWithTarget:self
@@ -79,7 +79,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
             RongStickerLog(@"Section = %ld,Row = %ld,cellframe = %@", (long)indexPath.section, (long)indexPath.row,
                            NSStringFromCGRect(cell.frame));
             RCStickerSingle *stikerModel = self.stickers[indexPath.row];
-            cell.stickerBackgroundView.backgroundColor = HEXCOLOR(0xD8D8D8);
+            cell.stickerBackgroundView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0xd8d8d8", @"0xd8d8d8");
             [self showPreviewViewWithSticker:stikerModel collectionCell:cell indexPath:indexPath];
             self.lastPreviewCell = cell;
         }
@@ -97,7 +97,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
             RCStickerSingle *stikerModel = self.stickers[indexPath.row];
             [self showPreviewViewWithSticker:stikerModel collectionCell:cell indexPath:indexPath];
             if (self.lastPreviewCell != cell) {
-                cell.stickerBackgroundView.backgroundColor = HEXCOLOR(0xD8D8D8);
+                cell.stickerBackgroundView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0xd8d8d8", @"0xd8d8d8");
                 self.lastPreviewCell.stickerBackgroundView.backgroundColor = [UIColor clearColor];
             }
             self.lastPreviewCell = cell;
@@ -243,7 +243,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
         // -1 是为了解决iphone 14 pro max的 间距问题
         flowLayout.minimumInteritemSpacing = (self.frame.size.width - 4 * 60 - 27 * 2-1) / 3;
         _collectionView = [[RCBaseCollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
-        _collectionView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
+        _collectionView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x1c1c1c");
         _collectionView.dataSource = self;
         _collectionView.delegate = self;
         _collectionView.scrollEnabled = NO;

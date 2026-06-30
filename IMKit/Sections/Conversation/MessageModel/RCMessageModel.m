@@ -9,6 +9,12 @@
 #import "RCMessageModel.h"
 #import "RCCustomerServiceMessageModel.h"
 
+@interface RCMessageModel ()
+
+@property (nonatomic, strong) id cellViewModel;
+
+@end
+
 @implementation RCMessageModel
 
 + (instancetype)modelWithMessage:(RCMessage *)rcMessage {
@@ -24,6 +30,7 @@
     if (self) {
         self.conversationType = rcMessage.conversationType;
         self.targetId = rcMessage.targetId;
+        self.channelId = rcMessage.channelId;
         self.messageId = rcMessage.messageId;
         self.messageDirection = rcMessage.messageDirection;
         self.senderUserId = rcMessage.senderUserId;
@@ -38,12 +45,24 @@
         self.extra = rcMessage.extra;
         self.cellSize = CGSizeMake(0, 0);
         self.messageUId = rcMessage.messageUId;
+        self.hasReactions = rcMessage.hasReactions;
+        self.quoteInfo = rcMessage.quoteInfo;
+        self.quoteReferenceLoadStatus = RCQuoteReferenceLoadStatusUnknown;
+        if (self.quoteInfo.quoteMessageStatus == RCQuoteMessageStatusDeleted) {
+            self.quoteReferenceLoadStatus = RCQuoteReferenceLoadStatusDeleted;
+        } else if (self.quoteInfo.quoteMessageStatus == RCQuoteMessageStatusRecalled) {
+            self.quoteReferenceLoadStatus = RCQuoteReferenceLoadStatusRecalled;
+        }
         self.readReceiptInfo = rcMessage.readReceiptInfo;
         if (self.readReceiptInfo && self.readReceiptInfo.userIdList) {
             self.readReceiptCount = self.readReceiptInfo.userIdList.count;
         }
         self.canIncludeExpansion = rcMessage.canIncludeExpansion;
         self.expansionDic = rcMessage.expansionDic;
+ 		self.hasChanged = rcMessage.hasChanged;
+        self.modifyInfo = rcMessage.modifyInfo;
+        self.needReceipt = rcMessage.needReceipt;
+        self.sentReceipt = rcMessage.sentReceipt;
     }
 
     return self;

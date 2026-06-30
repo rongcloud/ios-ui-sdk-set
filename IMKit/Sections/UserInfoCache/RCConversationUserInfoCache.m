@@ -9,7 +9,7 @@
 #import "RCConversationUserInfoCache.h"
 #import "RCConversationInfo.h"
 #import "RCThreadSafeMutableDictionary.h"
-#import "RCUserInfoCacheManager.h"
+#import "RCInfoProvider.h"
 #import "RCloudImageLoader.h"
 
 static void *cacheRWQueueTag = &cacheRWQueueTag;
