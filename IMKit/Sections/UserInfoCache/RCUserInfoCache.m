@@ -8,7 +8,7 @@
 
 #import "RCUserInfoCache.h"
 #import "RCThreadSafeMutableDictionary.h"
-#import "RCInfoProvider.h"
+#import "RCUserInfoCacheManager.h"
 #import "RCloudImageLoader.h"
 #import "RongIMKitExtensionManager.h"
 

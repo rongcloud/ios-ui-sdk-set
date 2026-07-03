@@ -42,7 +42,7 @@ typedef void (^CompleteBlock)(NSArray *conversationList);
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupNavi];
-    self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     [self.view addSubview:self.conversationTableView];
     self.selectedConversationArray = [[NSMutableArray alloc] init];
     self.listingConversationArray =

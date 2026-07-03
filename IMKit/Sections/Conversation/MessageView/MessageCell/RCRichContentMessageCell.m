@@ -73,11 +73,11 @@
     self.digestLabel.frame = CGRectMake( RICH_CONTENT_PADDING_LEFT, CGRectGetMaxY(self.titleLabel.frame) + RICH_CONTENT_TITLE_CONTENT_PADDING, [RCMessageCellTool getMessageContentViewMaxWidth] - 6 - RICH_CONTENT_PADDING_LEFT - RICH_CONTENT_PADDING_RIGHT - RICH_CONTENT_THUMBNAIL_WIDTH - RICH_CONTENT_THUMBNAIL_CONTENT_PADDING, digestLabelSize.height);
     self.richContentImageView.frame = CGRectMake(self.messageContentView.frame.size.width - 12.5 - 45, CGRectGetMinY(self.digestLabel.frame) - 2,RICH_CONTENT_THUMBNAIL_WIDTH,RICH_CONTENT_THUMBNAIL_HIGHT);
     if(self.model.messageDirection == MessageDirection_RECEIVE){
-        [self.titleLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc")];
-        self.digestLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x888888", @"0xFFFFFF66");
+        [self.titleLabel setTextColor:[RCKitUtility generateDynamicColor:HEXCOLOR(0x262626) darkColor:RCMASKCOLOR(0xffffff, 0.8)]];
+        self.digestLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x888888) darkColor:RCMASKCOLOR(0xffffff, 0.4)];
     }else{
-        [self.titleLabel setTextColor:RCDynamicColor(@"text_primary_color", @"0x262626", @"0x040A0F")];
-        self.digestLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x888888", @"0x040A0F66");
+        [self.titleLabel setTextColor:RCDYCOLOR(0x262626, 0x040A0F)];
+        self.digestLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x888888) darkColor:RCMASKCOLOR(0x040A0F, 0.4)];
     }
 }
 
@@ -140,7 +140,7 @@
 #pragma mark - Getter
 - (RCloudImageView *)richContentImageView{
     if (!_richContentImageView) {
-        _richContentImageView = [[RCloudImageView alloc] initWithPlaceholderImage:RCDynamicImage(@"conversation_msg_cell_rich_placeholder_img", @"rc_richcontentmsg_placeholder")];
+        _richContentImageView = [[RCloudImageView alloc] initWithPlaceholderImage:RCResourceImage(@"rc_richcontentmsg_placeholder")];
         _richContentImageView.layer.cornerRadius = 5.0f;
         _richContentImageView.layer.masksToBounds = YES;
         _richContentImageView.contentMode = UIViewContentModeScaleAspectFill;

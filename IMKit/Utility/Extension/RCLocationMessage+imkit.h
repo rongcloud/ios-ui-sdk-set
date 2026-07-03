@@ -15,10 +15,6 @@
 @property (nonatomic, assign, readonly) double latitude;
 @property (nonatomic, assign, readonly) double longitude;
 
-+ (instancetype)messageWithLocationImage:(UIImage *)image
-                                location:(CLLocationCoordinate2D)location
-                            locationName:(NSString *)locationName;
-
 @end
 
 #endif /* RCLocationMessage_imkit_h */

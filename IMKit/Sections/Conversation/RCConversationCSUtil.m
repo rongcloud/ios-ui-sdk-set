@@ -118,7 +118,7 @@
              removeItemWithTag:PLUGIN_BOARD_ITEM_LOCATION_TAG];
         }
         if (config.evaEntryPoint == RCCSEvaExtention) {
-            [strongSelf.chatVC.chatSessionInputBarControl.pluginBoardView insertItem:RCDynamicImage(@"conversation_plugin_item_comment_img", @"Comment") highlightedImage:RCDynamicImage(@"conversation_plugin_item_comment_highlighted_img", @"Comment_highlighted") title:@"评价" tag:PLUGIN_BOARD_ITEM_EVA_TAG];
+            [strongSelf.chatVC.chatSessionInputBarControl.pluginBoardView insertItem:RCResourceImage(@"Comment") highlightedImage:RCResourceImage(@"Comment_highlighted") title:@"评价" tag:PLUGIN_BOARD_ITEM_EVA_TAG];
         }
         [strongSelf announceViewWillShow];
         }

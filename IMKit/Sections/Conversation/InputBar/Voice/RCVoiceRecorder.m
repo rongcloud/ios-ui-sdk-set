@@ -66,13 +66,12 @@ static RCVoiceRecorder *rcHQVoiceRecorderHandler = nil;
         if (nil == rcHQVoiceRecorderHandler) {
             rcHQVoiceRecorderHandler = [[[self class] alloc] init];
             rcHQVoiceRecorderHandler.recordSettings = @{
-                AVFormatIDKey : @(kAudioFormatMPEG4AAC),
+                AVFormatIDKey : @(kAudioFormatMPEG4AAC_HE),
                 AVNumberOfChannelsKey : @1,
-                AVEncoderBitRateKey : @(32000),
-                AVSampleRateKey : @(16000)
+                AVEncoderBitRateKey : @(32000)
             };
             rcHQVoiceRecorderHandler.recordTempFileURL =
-                [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"HQTempAC.aac"]];
+                [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"HQTempAC.m4a"]];
             DebugLog(@"[RongExtensionKit]: Using File called: %@", rcHQVoiceRecorderHandler.recordTempFileURL);
         }
         return rcHQVoiceRecorderHandler;
