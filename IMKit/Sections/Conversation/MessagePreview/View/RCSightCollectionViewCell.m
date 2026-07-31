@@ -134,9 +134,9 @@
 - (void)longPressed:(id)sender {
     RCSightMessage *sightMessage = (RCSightMessage *)self.messageModel.message.content;
     NSString *localPath = nil;
-    if (sightMessage.localPath != nil && sightMessage.localPath.length > 0) {
+    if (sightMessage.localPath && [[NSFileManager defaultManager] fileExistsAtPath:sightMessage.localPath]) {
         localPath = sightMessage.localPath;
-    } else if (sightMessage.sightUrl != nil && sightMessage.sightUrl.length > 0) {
+    } else if (sightMessage.sightUrl && sightMessage.sightUrl.length > 0) {
         localPath = [RCFileUtility getSightCachePath:sightMessage.sightUrl];
     } else {
         RCLogV(@"LocalPath and sightUrl are nil");

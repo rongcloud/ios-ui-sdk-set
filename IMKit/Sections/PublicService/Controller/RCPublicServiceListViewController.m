@@ -28,8 +28,8 @@
     self.navigationItem.title = RCLocalizedString(@"PublicService");
 
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
-    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
+    self.tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
     [self setTitle:RCLocalizedString(@"PublicService")];
 }
 
@@ -198,6 +198,10 @@
 
     NSString *key = [_allKeys objectAtIndex:section];
     return key;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return 15;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

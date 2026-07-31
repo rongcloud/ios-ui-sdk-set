@@ -8,19 +8,15 @@
 
 #import "RCBaseView.h"
 #import "RCSemanticContext.h"
+
+NSInteger RCUserManagementViewPadding = 16;
 @implementation RCBaseView
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         [self updateRTLUI];
-    }
-    return self;
-}
-
-- (instancetype)init{
-    self = [super init];
-    if(self){
-        [self updateRTLUI];
+        [self setupView];
+        [self setupConstraints];
     }
     return self;
 }
@@ -29,6 +25,8 @@
     self = [super initWithCoder:coder];
     if(self){
         [self updateRTLUI];
+        [self setupView];
+        [self setupConstraints];
     }
     return self;
 }
@@ -39,5 +37,13 @@
     }else{
         self.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
     }
+}
+
+- (void)setupView {
+    
+}
+
+- (void)setupConstraints {
+    
 }
 @end

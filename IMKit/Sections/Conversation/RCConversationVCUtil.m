@@ -22,15 +22,23 @@
 #import "RCKitConfig.h"
 #import "RCSightMessage+imkit.h"
 #import "RCConversationDataSource.h"
+#import "RCReferencedContentView.h"
+#import "RCReferenceInputBarView.h"
+#import "RCMessageModel.h"
+#import "NSMutableDictionary+RCOperation.h"
+#import "RCRRSUtil.h"
 
 NSInteger const RCMessageCellDisplayTimeHeightForCommon = 45;
 NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
+static NSUInteger const RCQuoteReferenceTerminalStatusCacheMaxCount = 50;
 
 @interface RCConversationViewController ()
 @property (nonatomic, strong, readonly) RCConversationDataSource *dataSource;
 
 // 私有方法
 - (void)onlySendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent;
+- (void)cancelReference;
+- (RCReferenceInputBarView *)currentReferenceInputBarView;
 @end
 
 @interface RCConversationVCUtil ()
@@ -45,6 +53,426 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 @end
 
 @implementation RCConversationVCUtil
+
++ (NSMutableDictionary<NSString *, NSNumber *> *)quoteReferenceTerminalStatusCache {
+    static NSMutableDictionary<NSString *, NSNumber *> *cache = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    return cache;
+}
+
++ (NSMutableArray<NSString *> *)quoteReferenceTerminalStatusCacheKeys {
+    static NSMutableArray<NSString *> *cacheKeys = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cacheKeys = [NSMutableArray array];
+    });
+    return cacheKeys;
+}
+
++ (void)quoteReferenceTouchTerminalStatusCacheKey:(NSString *)cacheKey {
+    if (cacheKey.length <= 0) {
+        return;
+    }
+    NSMutableArray<NSString *> *cacheKeys = [self quoteReferenceTerminalStatusCacheKeys];
+    [cacheKeys removeObject:cacheKey];
+    [cacheKeys addObject:cacheKey];
+}
+
++ (void)quoteReferenceRemoveTerminalStatusCacheKey:(NSString *)cacheKey {
+    if (cacheKey.length <= 0) {
+        return;
+    }
+    [[self quoteReferenceTerminalStatusCache] removeObjectForKey:cacheKey];
+    [[self quoteReferenceTerminalStatusCacheKeys] removeObject:cacheKey];
+}
+
++ (void)quoteReferenceTrimTerminalStatusCacheIfNeeded {
+    NSMutableDictionary<NSString *, NSNumber *> *cache = [self quoteReferenceTerminalStatusCache];
+    NSMutableArray<NSString *> *cacheKeys = [self quoteReferenceTerminalStatusCacheKeys];
+    while (cacheKeys.count > RCQuoteReferenceTerminalStatusCacheMaxCount) {
+        NSString *oldestKey = cacheKeys.firstObject;
+        if (oldestKey.length > 0) {
+            [cache removeObjectForKey:oldestKey];
+        }
+        [cacheKeys removeObjectAtIndex:0];
+    }
+}
+
++ (NSString *)quoteReferenceCacheKeyWithConversationType:(RCConversationType)conversationType
+                                                targetId:(NSString *)targetId
+                                               channelId:(NSString *)channelId
+                                              messageUId:(NSString *)messageUId {
+    if (targetId.length <= 0 || messageUId.length <= 0) {
+        return nil;
+    }
+    return [NSString stringWithFormat:@"%ld\n%@\n%@\n%@",
+                                      (long)conversationType,
+                                      targetId ?: @"",
+                                      channelId ?: @"",
+                                      messageUId ?: @""];
+}
+
++ (NSString *)quoteReferenceCacheKeyForModel:(RCMessageModel *)model {
+    return [self quoteReferenceCacheKeyWithConversationType:model.conversationType
+                                                   targetId:model.targetId
+                                                  channelId:model.channelId
+                                                 messageUId:model.quoteInfo.messageUId];
+}
+
++ (RCQuoteMessageStatus)cachedQuoteMessageStatusForModel:(RCMessageModel *)model {
+    NSString *cacheKey = [self quoteReferenceCacheKeyForModel:model];
+    if (cacheKey.length <= 0) {
+        return RCQuoteMessageStatusDefault;
+    }
+    NSNumber *statusNumber = nil;
+    @synchronized([RCConversationVCUtil class]) {
+        statusNumber = [self quoteReferenceTerminalStatusCache][cacheKey];
+        if (statusNumber) {
+            [self quoteReferenceTouchTerminalStatusCacheKey:cacheKey];
+        }
+    }
+    return statusNumber ? (RCQuoteMessageStatus)statusNumber.integerValue : RCQuoteMessageStatusDefault;
+}
+
++ (void)markQuoteMessageUIds:(nonnull NSArray<NSString *> *)messageUIds
+            conversationType:(RCConversationType)conversationType
+                    targetId:(nonnull NSString *)targetId
+                   channelId:(nullable NSString *)channelId
+                       status:(RCQuoteMessageStatus)status {
+    if (messageUIds.count <= 0 || targetId.length <= 0) {
+        return;
+    }
+    @synchronized([RCConversationVCUtil class]) {
+        NSMutableDictionary<NSString *, NSNumber *> *cache = [self quoteReferenceTerminalStatusCache];
+        for (NSString *messageUId in messageUIds) {
+            NSString *cacheKey = [self quoteReferenceCacheKeyWithConversationType:conversationType
+                                                                         targetId:targetId
+                                                                        channelId:channelId
+                                                                       messageUId:messageUId];
+            if (cacheKey.length <= 0) {
+                continue;
+            }
+            if (status == RCQuoteMessageStatusDeleted || status == RCQuoteMessageStatusRecalled) {
+                cache[cacheKey] = @(status);
+                [self quoteReferenceTouchTerminalStatusCacheKey:cacheKey];
+            } else {
+                [self quoteReferenceRemoveTerminalStatusCacheKey:cacheKey];
+            }
+        }
+        [self quoteReferenceTrimTerminalStatusCacheIfNeeded];
+    }
+}
+
++ (void)getMessagesByUIds:(nonnull NSArray<NSString *> *)messageUIds
+         conversationType:(RCConversationType)conversationType
+                 targetId:(nonnull NSString *)targetId
+                channelId:(nullable NSString *)channelId
+               completion:(nullable void (^)(NSArray<RCMessageResult *> *_Nonnull results, RCErrorCode code))completion {
+    if (messageUIds.count <= 0 || targetId.length <= 0) {
+        if (completion) {
+            completion(@[], INVALID_PARAMETER);
+        }
+        return;
+    }
+
+    RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc] init];
+    identifier.type = conversationType;
+    identifier.targetId = targetId;
+    identifier.channelId = channelId;
+
+    RCGetMessagesByUIdsParams *params = [[RCGetMessagesByUIdsParams alloc] init];
+    params.conversationIdentifier = identifier;
+    params.messageUIds = messageUIds;
+
+    [[RCCoreClient sharedCoreClient] getMessagesByUIds:params
+                                               success:^(NSArray<RCMessageResult *> *_Nonnull results) {
+        if (completion) {
+            completion(results ?: @[], RC_SUCCESS);
+        }
+    } error:^(RCErrorCode status) {
+        if (completion) {
+            completion(@[], status);
+        }
+    }];
+}
+
++ (void)loadQuotedMessagesForModels:(nonnull NSArray<RCMessageModel *> *)models
+                          completion:(nullable void (^)(NSArray<RCMessageModel *> *_Nonnull reloadModels))completion {
+    if (models.count <= 0) {
+        if (completion) {
+            dispatch_main_async_safe(^{
+                completion(@[]);
+            });
+        }
+        return;
+    }
+
+    NSMutableDictionary<NSString *, NSMutableOrderedSet<NSString *> *> *uidsByGroupKey = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSMutableArray<RCMessageModel *> *> *> *modelsByUidByGroupKey =
+        [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSDictionary *> *contextsByGroupKey = [NSMutableDictionary dictionary];
+    NSMutableArray<RCMessageModel *> *immediateReloadModels = [NSMutableArray array];
+
+    for (RCMessageModel *model in models) {
+        if (![RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
+            continue;
+        }
+        if ([self applyQuoteTerminalStatusIfNeededForModel:model]) {
+            [immediateReloadModels addObject:model];
+            continue;
+        }
+        if (model.quoteReferenceLoadStatus == RCQuoteReferenceLoadStatusLoaded &&
+            model.quoteReferencedMessage.messageId > 0 &&
+            model.quoteReferencedMessage.content) {
+            continue;
+        }
+        if (model.quoteReferenceLoadStatus == RCQuoteReferenceLoadStatusDeleted ||
+            model.quoteReferenceLoadStatus == RCQuoteReferenceLoadStatusRecalled) {
+            continue;
+        }
+
+        [self updateQuoteReferenceModel:model
+                                 status:RCQuoteReferenceLoadStatusLoading
+                                message:nil];
+
+        NSString *targetId = model.targetId ?: @"";
+        NSString *channelId = model.channelId ?: @"";
+        NSString *groupKey =
+            [NSString stringWithFormat:@"%ld\n%@\n%@", (long)model.conversationType, targetId, channelId];
+        NSMutableOrderedSet<NSString *> *uids = uidsByGroupKey[groupKey];
+        if (!uids) {
+            uids = [NSMutableOrderedSet orderedSet];
+            uidsByGroupKey[groupKey] = uids;
+            contextsByGroupKey[groupKey] = @{
+                @"conversationType" : @(model.conversationType),
+                @"targetId" : targetId,
+                @"channelId" : channelId
+            };
+        }
+        NSString *messageUId = model.quoteInfo.messageUId ?: @"";
+        [uids addObject:messageUId];
+
+        NSMutableDictionary<NSString *, NSMutableArray<RCMessageModel *> *> *modelsByUid = modelsByUidByGroupKey[groupKey];
+        if (!modelsByUid) {
+            modelsByUid = [NSMutableDictionary dictionary];
+            modelsByUidByGroupKey[groupKey] = modelsByUid;
+        }
+        NSMutableArray<RCMessageModel *> *uidModels = modelsByUid[messageUId];
+        if (!uidModels) {
+            uidModels = [NSMutableArray array];
+            modelsByUid[messageUId] = uidModels;
+        }
+        [uidModels addObject:model];
+    }
+
+    if (uidsByGroupKey.count <= 0) {
+        if (completion) {
+            dispatch_main_async_safe(^{
+                completion([self uniqueQuoteReferenceModelsFromModels:immediateReloadModels]);
+            });
+        }
+        return;
+    }
+
+    dispatch_group_t queryGroup = dispatch_group_create();
+    NSMutableArray<RCMessageModel *> *reloadModels = [NSMutableArray arrayWithArray:immediateReloadModels];
+
+    for (NSString *groupKey in uidsByGroupKey) {
+        NSDictionary *context = contextsByGroupKey[groupKey];
+        RCConversationType conversationType = [context[@"conversationType"] integerValue];
+        NSString *targetId = context[@"targetId"];
+        NSString *channelId = context[@"channelId"];
+        NSArray<NSString *> *uids = uidsByGroupKey[groupKey].array;
+        NSMutableDictionary<NSString *, NSMutableArray<RCMessageModel *> *> *modelsByUid = modelsByUidByGroupKey[groupKey];
+
+        for (NSUInteger index = 0; index < uids.count; index += 20) {
+            NSRange range = NSMakeRange(index, MIN((NSUInteger)20, uids.count - index));
+            NSArray<NSString *> *chunkUIds = [uids subarrayWithRange:range];
+            dispatch_group_enter(queryGroup);
+            [self getMessagesByUIds:chunkUIds
+                    conversationType:conversationType
+                            targetId:targetId
+                           channelId:channelId.length > 0 ? channelId : nil
+                          completion:^(NSArray<RCMessageResult *> *results, RCErrorCode code) {
+                dispatch_main_async_safe(^{
+                    NSArray<RCMessageModel *> *changedModels =
+                        [self updateQuoteReferenceModelsByUid:modelsByUid
+                                                         uids:chunkUIds
+                                                      results:results
+                                                         code:code];
+                    [reloadModels addObjectsFromArray:changedModels];
+                    dispatch_group_leave(queryGroup);
+                });
+            }];
+        }
+    }
+
+    dispatch_group_notify(queryGroup, dispatch_get_main_queue(), ^{
+        if (completion) {
+            completion([self uniqueQuoteReferenceModelsFromModels:reloadModels]);
+        }
+    });
+}
+
++ (BOOL)applyQuoteInfoTerminalStatusIfNeededForModel:(RCMessageModel *)model {
+    if (model.quoteInfo.quoteMessageStatus == RCQuoteMessageStatusDeleted) {
+        [self updateQuoteReferenceModel:model
+                                 status:RCQuoteReferenceLoadStatusDeleted
+                                message:nil];
+        return YES;
+    }
+    if (model.quoteInfo.quoteMessageStatus == RCQuoteMessageStatusRecalled) {
+        [self updateQuoteReferenceModel:model
+                                 status:RCQuoteReferenceLoadStatusRecalled
+                                message:nil];
+        return YES;
+    }
+    return NO;
+}
+
++ (NSArray<RCMessageModel *> *)updateQuoteReferenceModelsByUid:
+                                    (NSDictionary<NSString *, NSMutableArray<RCMessageModel *> *> *)modelsByUid
+                                                          uids:(NSArray<NSString *> *)uids
+                                                       results:(NSArray<RCMessageResult *> *)results
+                                                          code:(RCErrorCode)code {
+    NSMutableArray<RCMessageModel *> *reloadModels = [NSMutableArray array];
+    NSMutableDictionary<NSString *, RCMessageResult *> *resultsByUid = [NSMutableDictionary dictionary];
+    for (RCMessageResult *result in results) {
+        if (result.messageUId.length > 0) {
+            resultsByUid[result.messageUId] = result;
+        }
+    }
+
+    for (NSString *uid in uids) {
+        NSArray<RCMessageModel *> *models = modelsByUid[uid];
+        if (models.count <= 0) {
+            continue;
+        }
+        RCMessageResult *result = resultsByUid[uid];
+        RCMessage *message = result.message;
+        for (RCMessageModel *model in models) {
+            RCQuoteReferenceLoadStatus status = RCQuoteReferenceLoadStatusDeleted;
+            RCMessage *referencedMessage = nil;
+
+            if ([self applyQuoteTerminalStatusIfNeededForModel:model]) {
+                [reloadModels addObject:model];
+                continue;
+            }
+
+            if (result && result.code != RC_SUCCESS) {
+                status = [self isQuoteFetchFailedError:result.code]
+                    ? RCQuoteReferenceLoadStatusFailed
+                    : RCQuoteReferenceLoadStatusDeleted;
+            } else if ([self isQuoteFetchFailedError:code]) {
+                status = RCQuoteReferenceLoadStatusFailed;
+            } else if ([message.content isKindOfClass:[RCRecallNotificationMessage class]]) {
+                status = RCQuoteReferenceLoadStatusRecalled;
+            } else if (message.messageId > 0 && message.content) {
+                status = RCQuoteReferenceLoadStatusLoaded;
+                referencedMessage = message;
+            }
+
+            [self cacheQuoteTerminalStatusIfNeeded:status forModel:model];
+
+            if ([self updateQuoteReferenceModel:model status:status message:referencedMessage]) {
+                [reloadModels addObject:model];
+            }
+        }
+    }
+    return reloadModels;
+}
+
++ (BOOL)isQuoteFetchFailedError:(RCErrorCode)code {
+    return code == RC_CHANNEL_INVALID;
+}
+
++ (BOOL)applyQuoteTerminalStatusIfNeededForModel:(RCMessageModel *)model {
+    RCQuoteMessageStatus cachedStatus = [self cachedQuoteMessageStatusForModel:model];
+    if (cachedStatus == RCQuoteMessageStatusDeleted || cachedStatus == RCQuoteMessageStatusRecalled) {
+        model.quoteInfo.quoteMessageStatus = cachedStatus;
+    }
+    return [self applyQuoteInfoTerminalStatusIfNeededForModel:model];
+}
+
++ (BOOL)updateQuoteReferenceModel:(RCMessageModel *)model
+                            status:(RCQuoteReferenceLoadStatus)status
+                           message:(nullable RCMessage *)message {
+    BOOL changed = (model.quoteReferenceLoadStatus != status || model.quoteReferencedMessage != message);
+    model.quoteReferenceLoadStatus = status;
+    model.quoteReferencedMessage = message;
+    if (changed) {
+        model.cellSize = CGSizeZero;
+    }
+    return changed;
+}
+
++ (void)cacheQuoteTerminalStatusIfNeeded:(RCQuoteReferenceLoadStatus)status
+                                forModel:(RCMessageModel *)model {
+    RCQuoteMessageStatus quoteStatus = RCQuoteMessageStatusDefault;
+    if (status == RCQuoteReferenceLoadStatusDeleted) {
+        quoteStatus = RCQuoteMessageStatusDeleted;
+    } else if (status == RCQuoteReferenceLoadStatusRecalled) {
+        quoteStatus = RCQuoteMessageStatusRecalled;
+    } else {
+        return;
+    }
+    model.quoteInfo.quoteMessageStatus = quoteStatus;
+    [self markQuoteMessageUIds:@[ model.quoteInfo.messageUId ?: @"" ]
+              conversationType:model.conversationType
+                      targetId:model.targetId ?: @""
+                     channelId:model.channelId
+                         status:quoteStatus];
+}
+
++ (NSArray<RCMessageModel *> *)uniqueQuoteReferenceModelsFromModels:(NSArray<RCMessageModel *> *)models {
+    NSMutableArray<RCMessageModel *> *uniqueModels = [NSMutableArray array];
+    NSHashTable<RCMessageModel *> *seenModels =
+        [NSHashTable hashTableWithOptions:NSPointerFunctionsObjectPointerPersonality];
+    for (RCMessageModel *model in models) {
+        if (!model || [seenModels containsObject:model]) {
+            continue;
+        }
+        [seenModels addObject:model];
+        [uniqueModels addObject:model];
+    }
+    return uniqueModels;
+}
+
+- (NSString *)quoteObjectNameForModel:(RCMessageModel *)message {
+    if (message.objectName.length > 0) {
+        return message.objectName;
+    }
+    return [[message.content class] getObjectName];
+}
+
+- (NSString *)quoteObjectNameForMessage:(RCMessage *)message {
+    if (message.objectName.length > 0) {
+        return message.objectName;
+    }
+    return [[message.content class] getObjectName];
+}
+
+- (BOOL)isQuoteReplySupportedForObjectName:(NSString *)objectName {
+    if (objectName.length <= 0) {
+        return NO;
+    }
+    NSArray<NSString *> *whiteList = RCKitConfigCenter.message.quoteMessageTypeWhiteList;
+    if ([whiteList containsObject:objectName]) {
+        return YES;
+    }
+    // SealTalk 默认发送高清语音，外部如果配置“语音”白名单，应同时命中普通语音和高清语音。
+    if ([objectName isEqualToString:[RCHQVoiceMessage getObjectName]]) {
+        return [whiteList containsObject:[RCVoiceMessage getObjectName]];
+    }
+    if ([objectName isEqualToString:[RCVoiceMessage getObjectName]]) {
+        return [whiteList containsObject:[RCHQVoiceMessage getObjectName]];
+    }
+    return NO;
+}
+
 - (instancetype)init:(RCConversationViewController *)chatVC {
     self = [super init];
     if(self) {
@@ -63,6 +491,16 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
        [[NSNotificationCenter defaultCenter]
            postNotificationName:KNotificationMessageBaseCellUpdateSendingStatus
                          object:notifyModel];
+    });
+}
+
+- (void)sendMessageReadReceiptV5Notification:(RCMessageModel *)model {
+    RCMessageCellNotificationModel *notifyModel = [[RCMessageCellNotificationModel alloc] init];
+    notifyModel.actionName = CONVERSATION_CELL_STATUS_SEND_READ_RECEIPT_INFO_V5;
+    notifyModel.messageId = model.messageId;
+    notifyModel.readReceiptInfoV5 = model.readReceiptInfoV5;
+    dispatch_main_async_safe(^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationMessageBaseCellUpdateSendingStatus object:notifyModel];
     });
 }
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)nErrorCode {
@@ -180,17 +618,28 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 }
 
 - (void)saveDraftIfNeed {
-    NSString *draft = self.chatVC.chatSessionInputBarControl.draft;
-    [[RCChannelClient sharedChannelManager] getTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(NSString * _Nullable draftInDB) {
+    RCConversationType type = self.chatVC.conversationType;
+    NSString *targetId = self.chatVC.targetId?:@"";
+    NSString *channelId = self.chatVC.channelId?:@"";
+    NSString *draft = self.chatVC.chatSessionInputBarControl.draft?:@"";
+    NSDictionary *userInfo = @{
+        @"conversationType": @(type),
+        @"targetId": targetId,
+        @"channelId": channelId,
+        @"draft": draft,
+    };
+    [[RCChannelClient sharedChannelManager] getTextMessageDraft:type targetId:targetId channelId:channelId completion:^(NSString * _Nullable draftInDB) {
         if (draft && [draft length] > 0) {
             if(![draft isEqualToString:draftInDB]) {
-                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId content:draft completion:^(BOOL result) {
-                    
+                [[RCChannelClient sharedChannelManager] saveTextMessageDraft:type targetId:targetId channelId:channelId content:draft completion:^(BOOL result) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                        object:nil userInfo:userInfo];
                 }];
             }
         } else if (draftInDB.length > 0){
             [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId completion:^(BOOL result) {
-                
+                [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                    object:nil userInfo:userInfo];
             }];
         }
     }];
@@ -208,6 +657,11 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         // name label height
         if (model.isDisplayNickname && model.messageDirection == MessageDirection_RECEIVE) {
             extraHeight += NameHeight + NameAndContentSpace;
+        }
+        if ([RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
+            extraHeight += [RCReferencedContentView quoteCardHeightForMessageModel:model
+                                                                         maxWidth:[RCMessageCellTool getMessageContentViewMaxWidth]];
+            extraHeight += RCQuoteCardTopMargin;
         }
     }
     return extraHeight;
@@ -229,6 +683,16 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
         RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
         if (msg.messageId == messageID && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
+            return msg;
+        }
+    }
+    return nil;
+}
+
+- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId {
+    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
+        if ([msg.messageUId isEqualToString:messageUId] && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
             return msg;
         }
     }
@@ -286,7 +750,12 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 
 - (BOOL)canReferenceMessage:(RCMessageModel *)message {
-    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || self.chatVC.chatSessionInputBarControl.hidden ||
+    BOOL inputHidden = self.chatVC.chatSessionInputBarControl.hidden;
+    if (self.chatVC.editInputBarControl.isVisible) {
+        inputHidden = self.chatVC.editInputBarControl.hidden;
+    }
+    
+    if (!RCKitConfigCenter.message.enableMessageReference || !self.chatVC.chatSessionInputBarControl || inputHidden ||
         self.chatVC.chatSessionInputBarControl.destructMessageMode) {
         return NO;
     }
@@ -296,17 +765,58 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         return NO;
     }
 
-    //发送失败的消息不允许引用
-    if ((message.sentStatus != SentStatus_SENDING && message.sentStatus != SentStatus_FAILED &&
-         message.sentStatus != SentStatus_CANCELED) &&
-        ([message.content isKindOfClass:RCTextMessage.class] || [message.content isKindOfClass:RCFileMessage.class] ||
-         [message.content isKindOfClass:RCRichContentMessage.class] ||
-         [message.content isKindOfClass:RCImageMessage.class] ||
-         [message.content isKindOfClass:RCReferenceMessage.class])) {
-        return YES;
+    BOOL canReferenceByStatus = (message.sentStatus != SentStatus_SENDING &&
+                                 message.sentStatus != SentStatus_FAILED &&
+                                 message.sentStatus != SentStatus_CANCELED);
+    if (!canReferenceByStatus) {
+        return NO;
     }
-    return NO;
+
+    return [self.chatVC shouldShowReferenceMenuItemForMessageModel:message];
 }
+
+- (BOOL)applyQuoteInfoIfActiveToMessage:(RCMessage *)message {
+    if (!RCKitConfigCenter.message.enableQuoteV2) {
+        return NO;
+    }
+    if (message.quoteInfo.messageUId.length > 0) {
+        return NO;
+    }
+    NSString *messageObjectName = [self quoteObjectNameForMessage:message];
+    if (![self isQuoteReplySupportedForObjectName:messageObjectName]) {
+        return NO;
+    }
+
+    // 输入框引用状态是 UI 状态，必须在主线程读取；
+    // dispatch_sync 仅读取两个属性，无阻塞性操作，安全可控。
+    __block RCReferenceInputBarView *referenceView = nil;
+    __block RCMessageModel *referModel = nil;
+    void (^readUIState)(void) = ^{
+        referenceView = [self.chatVC currentReferenceInputBarView];
+        referModel = referenceView.messageModel;
+    };
+    if ([NSThread isMainThread]) {
+        readUIState();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), readUIState);
+    }
+
+    if (!referModel || referModel.messageUId.length <= 0) {
+        return NO;
+    }
+
+    RCQuoteInfo *quoteInfo = [[RCQuoteInfo alloc] initWithMessageUId:referModel.messageUId];
+    quoteInfo.senderId = referModel.senderUserId;
+    quoteInfo.objectName = [self quoteObjectNameForModel:referModel];
+    message.quoteInfo = quoteInfo;
+    dispatch_main_async_safe(^{
+        if (referenceView == [self.chatVC currentReferenceInputBarView]) {
+            [self.chatVC cancelReference];
+        }
+    });
+    return YES;
+}
+
 - (void)doSendMessage:(RCMessageContent *)messageContent pushContent:(NSString *)pushContent {
     messageContent.destructDuration = [self getMessageDestructDuration:messageContent];
     [self doOnlySendMessage:messageContent pushContent:pushContent];
@@ -318,6 +828,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         pushContent = RCLocalizedString(@"BurnAfterRead");
     }
     RCMessage *message = [[RCMessage alloc] initWithType:self.chatVC.conversationType targetId:self.chatVC.targetId channelId:self.chatVC.channelId direction:MessageDirection_SEND content:messageContent];
+    [self applyQuoteInfoIfActiveToMessage:message];
+    
     if ([messageContent isKindOfClass:[RCMediaMessageContent class]]) {
         [[RCIM sharedRCIM] sendMediaMessage:message
                                 pushContent:pushContent
@@ -411,7 +923,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
                                                    attributes:nil
                                                         error:nil];
     }
-    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.m4a", @(currentTime)];
+    NSString *fileName = [NSString stringWithFormat:@"/Voice_%@.aac", @(currentTime)];
     path = [path stringByAppendingPathComponent:fileName];
     return path;
 }
@@ -424,10 +936,14 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     if ([model.content isMemberOfClass:[RCVoiceMessage class]]) {
         RCVoiceMessageCell *cell =
             (RCVoiceMessageCell *)[self.chatVC.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        [cell stopPlayingVoice];
+        if ([cell respondsToSelector:@selector(stopPlayingVoice)]) {
+            [cell stopPlayingVoice];
+        }
     }else if([model.content isMemberOfClass:[RCHQVoiceMessage class]]) {
         RCHQVoiceMessageCell *cell = (RCHQVoiceMessageCell *)[self.chatVC.conversationMessageCollectionView cellForItemAtIndexPath:indexPath];
-        [cell stopPlayingVoice];
+        if ([cell respondsToSelector:@selector(stopPlayingVoice)]) {
+            [cell stopPlayingVoice];
+        }
     }
 }
 
@@ -446,10 +962,13 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
 
 - (void)adaptUnreadButtonSize:(UILabel *)sender {
     UIButton * senderButton;
+    NSString *imageNameKey = nil;
     if (sender.tag == 1001) {
+        imageNameKey = @"conversation_unread_button_arrow_img";
         senderButton = self.chatVC.unReadButton;
     }else {
         senderButton = self.chatVC.unReadMentionedButton;
+        imageNameKey = @"conversation_mention_button_arrow_img";
     }
     CGRect temBut = senderButton.frame;
 
@@ -467,7 +986,7 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     temBut.origin.x = self.chatVC.view.frame.size.width - temBut.size.width;
     senderButton.frame = temBut;
     sender.frame = CGRectMake(temBut.size.width - textRight - rect.size.width, 0, rect.size.width, temBut.size.height);
-    UIImage *image = RCResourceImage(@"up");
+    UIImage *image = [senderButton currentBackgroundImage]; 
     if ([RCKitUtility isRTL]) {
         temBut.origin.x = 0;
         senderButton.frame = temBut;
@@ -478,9 +997,22 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         senderButton.frame = temBut;
         sender.frame = CGRectMake(temBut.size.width - 4 - rect.size.width, 0, rect.size.width, temBut.size.height);
     }
-    image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.width * 0.2, image.size.width * 0.8,
-                                                                image.size.width * 0.2, image.size.width * 0.2)
-                                  resizingMode:UIImageResizingModeStretch];
+    if ([RCKitUtility isTraditionInnerThemes]) {
+        image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(image.size.width * 0.2, image.size.width * 0.8,
+                                                                    image.size.width * 0.2, image.size.width * 0.2)
+                                      resizingMode:UIImageResizingModeStretch];
+    } else {
+        // 处理动态图片的resizable操作
+        if (image.imageAsset) {
+            // 对于动态图片，需要先获取当前trait对应的图片再应用resizable
+            UIImage *currentTraitImage = [image.imageAsset imageWithTraitCollection:self.chatVC.traitCollection];
+            image = [self applyResizableCapInsets:currentTraitImage];
+        } else {
+            // 对于静态图片，直接应用resizable
+            image = [self applyResizableCapInsets:image];
+        }
+    }
+    
     [senderButton setBackgroundImage:image forState:UIControlStateNormal];
     CGRect imageViewFrame = CGRectMake(arrowLeft,(temBut.size.height- 9)/2, arrowWidth, 9);
     if ([RCKitUtility isRTL]) {
@@ -498,10 +1030,19 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         CGPoint center = imageView.center;
         center.y = sender.center.y;
         imageView.center = center;
-        imageView.image = RCResourceImage(@"arrow");
+        imageView.image = RCDynamicImage(imageNameKey, @"arrow");
         imageView.tag = 1010;
         [senderButton addSubview:imageView];
     }
+}
+
+- (UIImage *)applyResizableCapInsets:(UIImage *)image {
+    if (!image) return nil;
+    CGFloat halfWidth = image.size.width * 0.5;
+    CGFloat halfHeight = image.size.height * 0.5;
+    UIEdgeInsets capInsets = UIEdgeInsetsMake(halfHeight, halfWidth, halfHeight, halfWidth);
+    
+    return [image resizableImageWithCapInsets:capInsets];
 }
 
 #pragma mark - 回执请求及响应处理， 同步阅读状态
@@ -515,13 +1056,8 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     if ([self isAutoResponseRobot]) {
         return;
     }
-    //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
-    if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
-         ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
-        self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
-        self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
-        self.chatVC.conversationType == ConversationType_SYSTEM) {
-        
+    
+    void (^syncBlock)(void) = ^{
         if (0 == sentTime){
             for (long i = self.chatVC.conversationDataRepository.count - 1; i >= 0; i--) {
                 RCMessageModel *model = self.chatVC.conversationDataRepository[i];
@@ -533,6 +1069,23 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         }else{
             [self startSyncConversationReadStatus:sentTime needDelay:needDelay];
         }
+    };
+        
+    // 如果开启已读 v5，单聊不能复用已读回执同步多端阅读状态
+    if ([RCRRSUtil isSupportReadReceiptV5]
+        && self.chatVC.conversationType == ConversationType_PRIVATE
+        && [RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) {
+        syncBlock();
+    }
+    
+    //单聊如果开启了已读回执，同步阅读状态功能可以复用已读回执，不需要发送同步命令。
+    if ((self.chatVC.conversationType == ConversationType_PRIVATE &&
+         ![RCKitConfigCenter.message.enabledReadReceiptConversationTypeList containsObject:@(self.chatVC.conversationType)]) ||
+        self.chatVC.conversationType == ConversationType_GROUP || self.chatVC.conversationType == ConversationType_DISCUSSION || self.chatVC.conversationType == ConversationType_Encrypted || self.chatVC.conversationType == ConversationType_APPSERVICE ||
+        self.chatVC.conversationType == ConversationType_PUBLICSERVICE ||
+        self.chatVC.conversationType == ConversationType_SYSTEM) {
+        
+        syncBlock();
     }
 }
 
@@ -568,12 +1121,19 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
         //避免没有新接收的消息，但是仍旧不停的用同一个时间戳来做已读回执
         if(self.lastReadReceiptTime != lastReceiveMessageTime) {
             self.lastReadReceiptTime = lastReceiveMessageTime;
+            // -1 无需发送已读回执
+            if (self.lastReadReceiptTime == -1) {
+                return;
+            }
             [self sendReadReceiptWithTime:self.lastReadReceiptTime];
         }
     }
 }
 
 - (void)sendReadReceiptWithTime:(long long)time {
+    if ([RCRRSUtil isSupportReadReceiptV5]) {
+        return;
+    }
     [[RCCoreClient sharedCoreClient] sendReadReceiptMessage:self.chatVC.conversationType
                                                  targetId:self.chatVC.targetId
                                                      time:time
@@ -621,4 +1181,40 @@ NSInteger const RCMessageCellDisplayTimeHeightForHQVoice = 36;
     }
     return NO;
 }
+
+- (RCMessageModel *)messageModelByUId:(NSString *)messageUId {
+    for (int i = 0; i < self.chatVC.conversationDataRepository.count; i++) {
+        RCMessageModel *msg = (self.chatVC.conversationDataRepository)[i];
+        if (msg.messageUId == messageUId && ![msg.content isKindOfClass:[RCOldMessageNotificationMessage class]]) {
+            return msg;
+        }
+    }
+    return nil;
+}
+
+#pragma mark - 编辑状态管理
+
+- (RCEditInputBarConfig *)getCacheEditConfig {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSDictionary *stateData = [userDefaults objectForKey:[self editingStateDataKey]];
+    if (stateData && stateData.count > 0) {
+        NSData *data = [NSJSONSerialization dataWithJSONObject:stateData options:kNilOptions error:nil];
+        NSString *jsonStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        RCEditInputBarConfig *editConfig = [[RCEditInputBarConfig alloc] initWithData:jsonStr];
+        return editConfig;
+    }
+    return nil;
+}
+
+- (void)clearEditingState {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults removeObjectForKey:[self editingStateDataKey]];
+    [userDefaults synchronize];
+}
+
+- (NSString *)editingStateDataKey {
+    return [NSString stringWithFormat:@"rc_editing_state_%@_%@_%@",
+            @(self.chatVC.conversationType), self.chatVC.targetId, self.chatVC.channelId];
+}
+
 @end

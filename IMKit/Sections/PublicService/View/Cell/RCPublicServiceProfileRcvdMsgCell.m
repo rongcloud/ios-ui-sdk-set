@@ -50,9 +50,9 @@
     self.title.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
     self.title.textAlignment = NSTextAlignmentLeft;
     self.title.font = [[RCKitConfig defaultConfig].font fontOfFirstLevel];
-    self.title.textColor = RCDYCOLOR(0x00000, 0x9f9f9f);
+    self.title.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
     self.switcher = [[UISwitch alloc] init];
-    self.switcher.onTintColor = HEXCOLOR(0x0099ff);
+    self.switcher.onTintColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
     [self.switcher addTarget:self action:@selector(switchAction:) forControlEvents:UIControlEventValueChanged];
 
     [self.contentView addSubview:self.title];

@@ -11,7 +11,7 @@
 #import "RCConversationStatusView.h"
 #import "RCMessageBubbleTipView.h"
 #import "RCThemeDefine.h"
-
+#import "RCOnlineStatusView.h"
 #import <UIKit/UIKit.h>
 
 #define CONVERSATION_ITEM_HEIGHT 65.0f
@@ -47,6 +47,12 @@
  会话标题右侧的标签view
  */
 @property (nonatomic, strong) UIView *conversationTagView;
+
+/*!
+ 在线状态指示器（显示在 conversationTitle 前面的圆点）
+ 在线显示绿色，离线显示灰色
+ */
+@property (nonatomic, strong) RCOnlineStatusView *onlineStatusView;
 
 /*!
  显示最后一条内容的Label
@@ -131,6 +137,16 @@
  */
 - (void)setDataModel:(RCConversationModel *)model;
 
+/*!
+ 更新在线状态图标
+
+ - Parameter isOnline: 是否在线
+ 
+ 此方法会根据在线状态显示或隐藏在线状态图标。
+ 仅在单聊类型的会话中显示。
+ */
+- (void)updateOnlineStatus:(BOOL)isOnline;
+
 @end
 
 /*!
@@ -151,5 +167,8 @@
  - Parameter model: 会话Cell的数据模型
  */
 - (void)didLongPressCellPortrait:(RCConversationModel *)model;
+
+/// cell 收到通知，显示已更新
+- (void)didUpdateCell:(RCConversationCell *)cell model:(RCConversationModel *)model;
 
 @end

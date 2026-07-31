@@ -48,7 +48,7 @@
         [[RCMessageBubbleTipView alloc] initWithParentView:self
                                                  alignment:RC_MESSAGE_BUBBLE_TIP_VIEW_ALIGNMENT_TOP_RIGHT];
     }
-    self.bubbleView.bubbleTipBackgroundColor = HEXCOLOR(0xf43530);
+    self.bubbleView.bubbleTipBackgroundColor =  RCDynamicColor(@"hint_color", @"0xf43530", @"0xf43530");
     
     [self addSubviewConstraints];
 }
@@ -150,7 +150,7 @@
         _headerImageView.layer.cornerRadius = 4;
         _headerImageView.layer.masksToBounds = YES;
         _headerImageView.image = nil;
-        _headerImageView.placeholderImage = RCResourceImage(@"default_portrait");
+        _headerImageView.placeholderImage = RCDynamicImage(@"conversation-list_cell_portrait_img",@"default_portrait");
         _headerImageView.userInteractionEnabled = YES;
     }
     return _headerImageView;

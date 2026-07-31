@@ -12,6 +12,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// - Since: 5.4.0
 @interface RCBaseTableViewCell : UITableViewCell
 
+- (void)setupView;
+
+/// 设置约束布局
+- (void)setupConstraints;
+
 @end
 
 NS_ASSUME_NONNULL_END
