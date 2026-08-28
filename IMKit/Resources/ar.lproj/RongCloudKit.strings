@@ -400,6 +400,17 @@
 "GroupActionQuit"="الخروج من المجموعة";
 "GroupActionDismiss"="رفض المجموعة";
 "GroupCreateError"="فشل إنشاء المجموعة";
+"GroupCreateAppCountExceedLimit"="تم تجاوز الحد الأقصى لعدد المجموعات. فشل الإنشاء.";
+"GroupCreateMemberCountExceedLimit"="تم تجاوز الحد الأقصى لإجمالي أعضاء المجموعة. فشل الإنشاء.";
+"GroupInviteMemberCountExceedLimit"="تم تجاوز الحد الأقصى لإجمالي أعضاء المجموعة. فشلت الدعوة.";
+"GroupAcceptMemberCountExceedLimit"="تم تجاوز الحد الأقصى لإجمالي أعضاء المجموعة. فشل الانضمام.";
+"GroupCreateCurrentUserJoinCountExceedLimit"="تم بلوغ الحد الأقصى للمجموعات المنضم إليها.";
+"GroupInvitedUserJoinCountExceedLimitSingle"="بلغ %@ الحد الأقصى للانضمام إلى المجموعات، ولا يمكنه الانضمام إلى مجموعات أخرى.";
+"GroupInvitedUserJoinCountExceedLimit"="بلغ %@ الحد الأقصى للانضمام إلى المجموعات، ولا يمكنهم الانضمام إلى مجموعات أخرى.";
+"GroupJoinCountExceedLimit"="فشل الانضمام. بلغ %@ الحد الأقصى لعدد المجموعات.";
+"GroupUserNamesSeparator"="، ";
+"GroupUserNamesPairFormat"="%@ و%@";
+"GroupUserNamesMultipleFormat"="%@، و%@";
 "GroupNameEditPlaceholder"="املأ اسم المجموعة";
 "InputNickNamePlaceholder"="الرجاء إدخال الكنية";
 "FriendApplicationDefaultExtra"="طلب إضافتك كصديق";

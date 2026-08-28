@@ -67,12 +67,27 @@
                 [RCAlertView showAlertController:nil message:RCLocalizedString(@"CreateSuccessAndNeedInviteeAcceptTip") hiddenAfterDelay:2];
             }
         });
-    } errorBlock:^(RCErrorCode errorCode, NSArray<NSString *> * _Nullable errorKeys) {
+    } errorWithInfo:^(RCErrorCode errorCode, RCCreateGroupErrorInfo *errorInfo) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self stopLoading];
             NSString *tips = RCLocalizedString(@"GroupCreateError");
             if (errorCode == RC_SERVICE_INFORMATION_AUDIT_FAILED) {
                 tips = RCLocalizedString(@"Content_Contains_Sensitive");
+            } else if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                tips = RCLocalizedString(@"GroupCreateMemberCountExceedLimit");
+            } else if (errorCode == RC_GROUP_COUNT_EXCEED_LIMIT) {
+                tips = RCLocalizedString(@"GroupCreateAppCountExceedLimit");
+            } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT) {
+                if (errorInfo.failedUserInfos.count == 0) {
+                    tips = RCLocalizedString(@"GroupCreateCurrentUserJoinCountExceedLimit");
+                } else {
+                    NSString *formattedNames = [RCGroupManager groupLimitExceededMemberNames:errorInfo.failedUserInfos];
+                    if (formattedNames.length > 0) {
+                        NSString *key = errorInfo.failedUserInfos.count == 1 ? @"GroupInvitedUserJoinCountExceedLimitSingle"
+                                                                             : @"GroupInvitedUserJoinCountExceedLimit";
+                        tips = [NSString stringWithFormat:RCLocalizedString(key), formattedNames];
+                    }
+                }
             }
             [RCAlertView showAlertController:nil message:tips hiddenAfterDelay:2];
         });

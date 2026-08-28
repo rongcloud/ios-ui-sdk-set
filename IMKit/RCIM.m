@@ -64,7 +64,7 @@ NSString *const RCKitUserOnlineStatusChangedUserIdsKey = @"RCKitUserOnlineStatus
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.44.0_opensource";
+static NSString *const RCIMKitVersion = @"5.46.0_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {

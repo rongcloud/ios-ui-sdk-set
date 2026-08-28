@@ -319,6 +319,17 @@
 "MyProfileTitle"="个人信息";
 "GroupCreate"="创建群组";
 "GroupCreateError"="创建群组失败";
+"GroupCreateAppCountExceedLimit"="群组总数超过上限，创建失败";
+"GroupCreateMemberCountExceedLimit"="群成员总数超过上限，创建失败";
+"GroupInviteMemberCountExceedLimit"="群成员总数超过上限，邀请失败";
+"GroupAcceptMemberCountExceedLimit"="群成员总数超过上限，加入失败";
+"GroupCreateCurrentUserJoinCountExceedLimit"="加入的群组数超过上限";
+"GroupInvitedUserJoinCountExceedLimitSingle"="%@ 加入的群组数超过上限，无法加入新群组";
+"GroupInvitedUserJoinCountExceedLimit"="%@ 加入的群组数超过上限，无法加入新群组";
+"GroupJoinCountExceedLimit"="%@ 加入的群组数超过上限，加入失败";
+"GroupUserNamesSeparator"="、";
+"GroupUserNamesPairFormat"="%@、%@";
+"GroupUserNamesMultipleFormat"="%@、%@";
 "GroupMembers"="群成员";
 "GroupMembersKick"="移除群成员";
 "GroupMembersKickFailed"="移除群成员失败";

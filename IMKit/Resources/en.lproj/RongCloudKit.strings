@@ -391,6 +391,17 @@
 "GroupQuitSuccess"="Already quit the group";
 "GroupQuitFailed"="Failed to quit group";
 "GroupCreateError"="Failed to create group";
+"GroupCreateAppCountExceedLimit"="Group limit reached. Creation failed.";
+"GroupCreateMemberCountExceedLimit"="Total group member limit reached. Creation failed.";
+"GroupInviteMemberCountExceedLimit"="Total group member limit reached. Invitation failed.";
+"GroupAcceptMemberCountExceedLimit"="Total group member limit reached. Join failed.";
+"GroupCreateCurrentUserJoinCountExceedLimit"="Joined group limit reached.";
+"GroupInvitedUserJoinCountExceedLimitSingle"="%@ has reached the group join limit and is unable to join more groups.";
+"GroupInvitedUserJoinCountExceedLimit"="%@ have reached the group join limit and are unable to join more groups.";
+"GroupJoinCountExceedLimit"="Join failed. %@ has reached the group limit.";
+"GroupUserNamesSeparator"=", ";
+"GroupUserNamesPairFormat"="%@ and %@";
+"GroupUserNamesMultipleFormat"="%@, and %@";
 "FriendApplicationDefaultExtra"="Request to be added as a friend";
 
 //2024-11-14

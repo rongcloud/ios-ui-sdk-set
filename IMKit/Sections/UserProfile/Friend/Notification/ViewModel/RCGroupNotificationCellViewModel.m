@@ -122,7 +122,19 @@
             self.application.status = RCGroupApplicationStatusJoined;
             [self reloadCell];
         } error:^(RCErrorCode errorCode) {
-            [self showTips:RCLocalizedString(@"GroupInvitationAcceptFailed")];
+            NSString *tips = RCLocalizedString(@"GroupInvitationAcceptFailed");
+            if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                tips = RCLocalizedString(@"GroupAcceptMemberCountExceedLimit");
+            } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT) {
+                NSString *name = self.application.joinMemberInfo.name;
+                if (name.length == 0) {
+                    name = self.application.joinMemberInfo.userId;
+                }
+                if (name.length > 0) {
+                    tips = [NSString stringWithFormat:RCLocalizedString(@"GroupJoinCountExceedLimit"), name];
+                }
+            }
+            [self showTips:tips];
         }];
     } else if (self.application.direction == RCGroupApplicationDirectionApplicationReceived) {
         [[RCCoreClient sharedCoreClient] acceptGroupApplication:self.application.groupId inviterId:self.application.inviterInfo.userId applicantId:self.application.joinMemberInfo.userId success:^(RCErrorCode processCode) {
@@ -133,7 +145,19 @@
             }
             [self reloadCell];
             } error:^(RCErrorCode errorCode) {
-                [self showTips:RCLocalizedString(@"GroupOtherInvitationAcceptFailed")];
+                NSString *tips = RCLocalizedString(@"GroupOtherInvitationAcceptFailed");
+                if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                    tips = RCLocalizedString(@"GroupAcceptMemberCountExceedLimit");
+                } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT) {
+                    NSString *name = self.application.joinMemberInfo.name;
+                    if (name.length == 0) {
+                        name = self.application.joinMemberInfo.userId;
+                    }
+                    if (name.length > 0) {
+                        tips = [NSString stringWithFormat:RCLocalizedString(@"GroupJoinCountExceedLimit"), name];
+                    }
+                }
+                [self showTips:tips];
             }];
     }
 

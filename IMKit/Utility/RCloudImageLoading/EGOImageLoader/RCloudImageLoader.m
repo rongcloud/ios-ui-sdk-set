@@ -58,6 +58,9 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 #endif
 
 @interface RCloudImageLoader ()
+@property (nonatomic, strong) NSOperationQueue *diskCacheQueue;
+@property (nonatomic, strong) NSMutableSet *pendingDiskCacheKeys;
+
 #if __EGOIL_USE_BLOCKS
 - (void)handleCompletionsForConnection:(EGOImageLoadConnection *)connection
                                  image:(UIImage *)image
@@ -82,6 +85,10 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
     if ((self = [super init])) {
         connectionsLock = [[NSLock alloc] init];
         currentConnections = [[NSMutableDictionary alloc] init];
+        _diskCacheQueue = [[NSOperationQueue alloc] init];
+        _diskCacheQueue.maxConcurrentOperationCount = 1;
+        _diskCacheQueue.name = @"cn.rongcloud.imkit.image-loader.disk-cache";
+        _pendingDiskCacheKeys = [[NSMutableSet alloc] init];
 
 #if __EGOIL_USE_BLOCKS
         _operationQueue = dispatch_queue_create("com.enormego.EGOImageLoader", NULL);
@@ -158,10 +165,7 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 }
 
 #if __EGOIL_USE_NOTIF
-- (void)loadImageForURL:(NSURL *)aURL observer:(id<RCloudImageLoaderObserver>)observer {
-    if (!aURL)
-        return;
-
+- (void)addObserver:(id<RCloudImageLoaderObserver>)observer forURL:(NSURL *)aURL {
     if ([observer respondsToSelector:@selector(imageLoaderDidLoad:)]) {
         [[NSNotificationCenter defaultCenter] addObserver:observer
                                                  selector:@selector(imageLoaderDidLoad:)
@@ -175,6 +179,13 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
                                                      name:kImageNotificationLoadFailed(aURL)
                                                    object:self];
     }
+}
+
+- (void)loadImageForURL:(NSURL *)aURL observer:(id<RCloudImageLoaderObserver>)observer {
+    if (!aURL)
+        return;
+
+    [self addObserver:observer forURL:aURL];
 
     [self loadImageForURL:aURL];
 }
@@ -182,20 +193,75 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 - (UIImage *)imageForURL:(NSURL *)aURL shouldLoadWithObserver:(id<RCloudImageLoaderObserver>)observer {
     if (!aURL)
         return nil;
-    if ([self hasLoadedImageURL:aURL]) {
-        UIImage *anImage = [[RCloudCache currentCache] imageForKey:keyForURL(aURL, nil)];
-        return anImage;
-    } else {
-        if (aURL.scheme == nil) {
-            UIImage *anImage = [UIImage imageNamed:[aURL absoluteString]];
-            if (anImage) {
-                [[RCloudCache currentCache] setImage:anImage forKey:keyForURL(aURL, nil)];
-                return anImage;
-            }
+
+    NSString *scheme = aURL.scheme.lowercaseString;
+    BOOL shouldLoadDiskCacheAsynchronously =
+        [NSThread isMainThread] && observer &&
+        ([scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"]);
+    if (shouldLoadDiskCacheAsynchronously) {
+        NSString *cacheKey = keyForURL(aURL, nil);
+        [self addObserver:observer forURL:aURL];
+        if ([self isLoadingImageURL:aURL]) {
+            return nil;
         }
-        [self loadImageForURL:aURL observer:observer];
+
+        // UI 图片加载必须避开主线程磁盘访问；相同 URL 只执行一次磁盘查询，结果通过原有通知分发。
+        BOOL shouldLoadDiskCache = NO;
+        [connectionsLock lock];
+        if (![self.pendingDiskCacheKeys containsObject:cacheKey]) {
+            [self.pendingDiskCacheKeys addObject:cacheKey];
+            shouldLoadDiskCache = YES;
+        }
+        [connectionsLock unlock];
+
+        if (shouldLoadDiskCache) {
+            __weak typeof(self) weakSelf = self;
+            [self.diskCacheQueue addOperationWithBlock:^{
+                __strong typeof(weakSelf) strongSelf = weakSelf;
+                if (!strongSelf) {
+                    return;
+                }
+                UIImage *cachedImage = nil;
+                if ([[RCloudCache currentCache] hasCacheForKey:cacheKey]) {
+                    cachedImage = [[RCloudCache currentCache] imageForKey:cacheKey];
+                }
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [connectionsLock lock];
+                    [strongSelf.pendingDiskCacheKeys removeObject:cacheKey];
+                    [connectionsLock unlock];
+
+                    if (cachedImage) {
+                        NSNotification *notification =
+                            [NSNotification notificationWithName:kImageNotificationLoaded(aURL)
+                                                          object:strongSelf
+                                                        userInfo:@{
+                                                            @"image" : cachedImage,
+                                                            @"imageURL" : aURL
+                                                        }];
+                        [[NSNotificationCenter defaultCenter] postNotification:notification];
+                    } else {
+                        [strongSelf loadImageForURL:aURL];
+                    }
+                }];
+            }];
+        }
         return nil;
     }
+
+    if ([self hasLoadedImageURL:aURL]) {
+        return [[RCloudCache currentCache] imageForKey:keyForURL(aURL, nil)];
+    }
+
+    if (aURL.scheme == nil) {
+        UIImage *anImage = [UIImage imageNamed:[aURL absoluteString]];
+        if (anImage) {
+            [[RCloudCache currentCache] setImage:anImage forKey:keyForURL(aURL, nil)];
+            return anImage;
+        }
+    }
+
+    [self loadImageForURL:aURL observer:observer];
+    return nil;
 }
 
 - (NSData *)getImageDataForURL:(NSURL *)aURL {
@@ -430,6 +496,8 @@ inline static NSString *keyForURL(NSURL *url, NSString *style) {
 #endif
 
     self.currentConnections = nil;
+    self.diskCacheQueue = nil;
+    self.pendingDiskCacheKeys = nil;
 
 #if !__has_feature(objc_arc)
     [currentConnections release];
