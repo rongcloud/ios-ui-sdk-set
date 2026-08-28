@@ -30,7 +30,7 @@
     [super viewDidLoad];
 
     self.definesPresentationContext = YES;
-    self.tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
+    self.tableView.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.tableHeaderView = self.searchController.searchBar;
     self.tableView.tableFooterView = [UIView new];
@@ -241,11 +241,11 @@
         //提醒字眼
         _searchController.searchBar.placeholder = RCLocalizedString(@"ToSearch");
         //设置顶部搜索栏的背景色
-        _searchController.searchBar.barTintColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
-        _searchController.searchBar.layer.borderColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000").CGColor;
+        _searchController.searchBar.barTintColor = RCDYCOLOR(0xffffff, 0x000000);
+        _searchController.searchBar.layer.borderColor = RCDYCOLOR(0xffffff, 0x000000).CGColor;
         _searchController.searchBar.layer.borderWidth = 1;
         if (@available(iOS 13.0, *)) {
-            _searchController.searchBar.searchTextField.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf9f9f9", @"0x1c1c1e99");
+            _searchController.searchBar.searchTextField.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xf9f9f9) darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.6]];;
         }
         _searchController.dimsBackgroundDuringPresentation = NO;
     }

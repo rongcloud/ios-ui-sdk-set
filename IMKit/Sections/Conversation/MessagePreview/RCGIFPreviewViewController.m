@@ -16,7 +16,6 @@
 #import "RCAlertView.h"
 #import "RCActionSheetView.h"
 #import "RCSemanticContext.h"
-#import "RCMBProgressHUD.h"
 
 @interface RCGIFPreviewViewController ()
 
@@ -25,15 +24,13 @@
 // 展示GIF的view
 @property (nonatomic, strong) RCGIFImageView *gifView;
 
-@property (nonatomic, strong) RCMBProgressHUD *progressHUD;
-
 @end
 
 @implementation RCGIFPreviewViewController
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xf0f0f6", @"0x000000");
+    self.view.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     [self setNav];
     [self addSubViews];
     [self configModel];
@@ -42,11 +39,12 @@
 
 #pragma mark - 数据处理
 - (void)configModel {
-    if (!self.messageModel && !self.messageModel.content) {
+    if (!self.messageModel) {
         return;
     }
-    RCGIFMessage *gifMessage = (RCGIFMessage *)self.messageModel.content;
-    if (gifMessage.localPath.length > 0) {
+    RCGIFMessage *gifMessage =
+        (RCGIFMessage *)[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId].content;
+    if (gifMessage && gifMessage.localPath.length > 0) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             self.gifData = [NSData dataWithContentsOfFile:gifMessage.localPath];
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -55,46 +53,13 @@
                 }
             });
         });
-    } else if (gifMessage.remoteUrl.length > 0) {
-        self.progressHUD =
-            [RCMBProgressHUD showHUDAddedTo:self.view animated:YES];
-        self.progressHUD.label.text = RCLocalizedString(@"FileIsDownloading");
-        self.progressHUD.bezelView.style = RCMBProgressHUDBackgroundStyleSolidColor;
-        self.progressHUD.bezelView.color = [UIColor clearColor];
-        
-        __weak typeof(self) weakSelf = self;
-        [[RCCoreClient sharedCoreClient] downloadMediaFile:[self getFileNameFromRemoteUrl]
-                                                  mediaUrl:gifMessage.remoteUrl
-                                                  progress:nil
-                                                   success:^(NSString * _Nonnull mediaPath) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            // 保存下载后的路径
-            gifMessage.localPath = mediaPath;
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                strongSelf.gifData = [NSData dataWithContentsOfFile:mediaPath];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [strongSelf.progressHUD hideAnimated:YES];
-                    strongSelf.progressHUD = nil;
-                    if (strongSelf.gifData) {
-                        strongSelf.gifView.animatedImage = [RCGIFImage animatedImageWithGIFData:strongSelf.gifData];
-                    }
-                });
-            });
-        } error:^(RCErrorCode errorCode) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                strongSelf.progressHUD.label.text = RCLocalizedString(@"FileDownloadFailed");
-                [strongSelf.progressHUD hideAnimated:YES afterDelay:1];
-                strongSelf.progressHUD = nil;
-            });
-        } cancel:nil];
     }
 }
 
 
 - (void)saveGIF {
     RCGIFMessage *gifMessage =
-        (RCGIFMessage *)self.messageModel.content;
+        (RCGIFMessage *)[[RCCoreClient sharedCoreClient] getMessage:self.messageModel.messageId].content;
     if (gifMessage.localPath.length > 0) {
         [RCAssetHelper savePhotosAlbumWithPath:gifMessage.localPath authorizationStatusBlock:^{
             [self showAlertController:RCLocalizedString(@"AccessRightTitle")
@@ -119,18 +84,6 @@
                           message:RCLocalizedString(@"SavePhotoFailed")
                       cancelTitle:RCLocalizedString(@"OK")];
     }
-}
-
-- (NSString *)getFileNameFromRemoteUrl {
-    RCGIFMessage *gifMessage =
-        (RCGIFMessage *)self.messageModel.content;
-    NSString *name = [NSString stringWithFormat:@"%@.gif", [RCFileUtility getFileKey:gifMessage.remoteUrl]];
-    
-    NSString *fileName = [RCFileUtility getFileName:name
-                                   conversationType:self.messageModel.conversationType
-                                          mediaType:MediaType_FILE
-                                           targetId:self.messageModel.targetId];
-    return fileName;
 }
 
 #pragma mark - Notification
@@ -165,7 +118,7 @@
 
 - (void)setNav {
     //设置左键
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
 }

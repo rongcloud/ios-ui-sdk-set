@@ -55,32 +55,8 @@
     self.opaque = NO;
     self.layer.contentsScale = [UIScreen mainScreen].scale;
     self.frame = frame;
-    [self addTapGestureRecognizer];
-
     return self;
 }
-
-- (void)addTapGestureRecognizer {
-    UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-    [self addGestureRecognizer:tapGestureRecognizer];
-}
-
-- (void)handleTap:(UITapGestureRecognizer *)gestureRecognizer {
-    if ([gestureRecognizer state] != UIGestureRecognizerStateEnded) {
-        return;
-    }
-    NSArray *results = [self.checkingResults copy];
-    if (!results.count) {// 没有URL和电话 直接跳过
-        return;
-    }
-    
-//    NSTextCheckingResult *result = [self linkAtPoint:[gestureRecognizer locationInView:self]];
-    CGPoint location =[gestureRecognizer locationInView:self];
-
-    //获得点击位置在CoreText坐标系上的坐标
-    [self userDidClickAt:location];
-}
-
 
 + (Class)layerClass {
     return RCYYAsyncLayer.class;
@@ -215,6 +191,20 @@
 }
 
 #pragma mark - Touch
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [super touchesBegan:touches withEvent:event];
+    NSArray *results = [self.checkingResults copy];
+    if (!results.count) {// 没有URL和电话 直接跳过
+        return;
+    }
+    
+    UITouch * touch = [touches anyObject];
+    CGPoint location = [touch locationInView:self];
+    
+    //获得点击位置在CoreText坐标系上的坐标
+    [self userDidClickAt:location];
+}
 
 - (void)userDidClickAt:(CGPoint)location {
     NSArray *results = [self.checkingResults copy];

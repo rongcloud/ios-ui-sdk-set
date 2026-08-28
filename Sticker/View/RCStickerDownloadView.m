@@ -35,7 +35,7 @@
     if (self) {
         self.layer.cornerRadius = 4.f;
         self.layer.masksToBounds = YES;
-        self.layer.borderColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff").CGColor;
+        self.layer.borderColor = HEXCOLOR(0x0099ff).CGColor;
         self.layer.borderWidth = 1.f;
 
         [self addSubview:self.progressView];
@@ -58,7 +58,7 @@
             self.progressView.hidden = YES;
             self.progressLabel.hidden = YES;
             self.progressView.frame = CGRectZero;
-            self.layer.borderColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff").CGColor;
+            self.layer.borderColor = HEXCOLOR(0x0099ff).CGColor;
             break;
         case RCStickerDownloadViewStstusDownloading:
             self.downloadBtn.hidden = YES;
@@ -66,7 +66,7 @@
             self.progressLabel.hidden = NO;
             self.progressView.frame =
                 CGRectMake(0, 0, self.bounds.size.width * progress / 100.0, self.bounds.size.height);
-            self.layer.borderColor = RCDynamicColor(@"primary_color", @"0x6DC4FF", @"0x6DC4FF").CGColor;
+            self.layer.borderColor = HEXCOLOR(0x6DC4FF).CGColor;
 
             break;
         default:
@@ -86,8 +86,8 @@
         _downloadBtn = [[RCBaseButton alloc] init];
         _downloadBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         [_downloadBtn setTitle:RongStickerString(@"begin_download") forState:UIControlStateNormal];
-        _downloadBtn.backgroundColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
-        [_downloadBtn setTitleColor:RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff") forState:UIControlStateNormal];
+        _downloadBtn.backgroundColor = HEXCOLOR(0x0099FF);
+        [_downloadBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         _downloadBtn.titleLabel.font = [UIFont systemFontOfSize:15];
         [_downloadBtn addTarget:self action:@selector(beginDownload) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -97,7 +97,7 @@
 - (UIView *)progressView {
     if (_progressView == nil) {
         _progressView = [[UIView alloc] init];
-        _progressView.backgroundColor = RCDynamicColor(@"primary_color", @"0x6DC4FF", @"0x6DC4FF");
+        _progressView.backgroundColor = HEXCOLOR(0x6DC4FF);
     }
     return _progressView;
 }
@@ -106,7 +106,7 @@
     if (_progressLabel == nil) {
         _progressLabel = [[UILabel alloc] init];
         _progressLabel.textAlignment = NSTextAlignmentCenter;
-        _progressLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x333333", @"0x9f9f9f");
+        _progressLabel.textColor = RCDYCOLOR(0x333333, 0x9f9f9f);
         _progressLabel.alpha = 0.33f;
         _progressLabel.font = [UIFont systemFontOfSize:15];
     }

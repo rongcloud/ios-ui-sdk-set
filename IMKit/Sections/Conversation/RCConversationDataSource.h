@@ -9,16 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-@protocol RCMessagesLoadProtocol <NSObject>
-- (void)noMoreMessageToFetch;
-@end
-
-
-@class RCConversationViewController,RCMessageModel,RCMessage,RCConversationViewLayout,RCConversation,RCMessageResult;
+@class RCConversationViewController,RCMessageModel,RCMessage,RCConversationViewLayout,RCConversation;
 
 @interface RCConversationDataSource : NSObject
 
-@property (nonatomic, weak) id<RCMessagesLoadProtocol> loadDelegate;
 - (instancetype)init:(RCConversationViewController *)chatVC;
 //是否所有消息都已经加载完成
 @property (nonatomic, assign, readonly) BOOL allMessagesAreLoaded;
@@ -36,16 +30,6 @@
 @property (nonatomic, strong) NSMutableArray *unreadMentionedMessages;
 
 @property (nonatomic, strong) NSMutableArray *cachedReloadMessages;
-
-@property (nonatomic, assign, readonly) BOOL isMentionedEnabled;
-
-// 用于合并本地和远程回调的相关属性
-@property (nonatomic, strong) NSArray<RCMessageResult *> *pendingRemoteResults;
-@property (nonatomic, strong) NSArray<RCMessage *> *pendingLocalMessages;
-@property (nonatomic, copy) void (^pendingCompleteBlock)(NSArray<RCMessage *> *);
-@property (nonatomic, assign) BOOL isWaitingForRemoteResults;
-@property (nonatomic, strong) dispatch_source_t combineTimer;
-
 
 //进入聊天页面初次加载的消息
 - (void)getInitialMessage:(RCConversation *)conversation;

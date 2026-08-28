@@ -13,7 +13,6 @@
 #import "RCKitUtility.h"
 #import "RCCombineMessageUtility.h"
 #import "RCCombineMsgFilePreviewViewController.h"
-#import "RCGIFPreviewViewController.h"
 #import <objc/runtime.h>
 #import "RCImageSlideController.h"
 #import "RCSightSlideViewController.h"
@@ -22,7 +21,6 @@
 #import "RCSemanticContext.h"
 #import "RCBaseImageView.h"
 #import "RCBaseNavigationController.h"
-#import "RCDownloadHelper.h"
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
 
@@ -53,8 +51,6 @@
 @property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
-//显示撤回消息对话框
-@property (nonatomic, assign) BOOL displayRecallDialog;
 
 @end
 
@@ -88,7 +84,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    self.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x2D2D32");
+    self.view.backgroundColor = [UIColor whiteColor];
     [self setNav];
     [self addSubViews];
     if (self.ifWebViewPush) {
@@ -103,14 +99,6 @@
     [super viewWillAppear:animated];
     [self.combineMsgWebView.configuration.userContentController addScriptMessageHandler:self name:FUNCTIONNAME];
     [self registerObserver];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    if (self.displayRecallDialog) {
-        self.displayRecallDialog = NO;
-        [self showRecallDialog];
-    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -138,30 +126,22 @@
                                                object:nil];
 }
 
-- (void)showRecallDialog {
-    UIAlertController *alertController = [UIAlertController
-        alertControllerWithTitle:nil
-                         message:RCLocalizedString(@"MessageRecallAlert")
-                  preferredStyle:UIAlertControllerStyleAlert];
-    [alertController
-        addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                           style:UIAlertActionStyleDefault
-                                         handler:^(UIAlertAction *_Nonnull action) {
-                                             [self.navigationController popViewControllerAnimated:YES];
-                                         }]];
-    [self.navigationController presentViewController:alertController animated:YES completion:nil];
-}
-
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            if ([self isViewLoaded] && self.view.window != nil) {
-                [self showRecallDialog];
-            } else {
-                self.displayRecallDialog = YES;
-            }
+            UIAlertController *alertController = [UIAlertController
+                alertControllerWithTitle:nil
+                                 message:RCLocalizedString(@"MessageRecallAlert")
+                          preferredStyle:UIAlertControllerStyleAlert];
+            [alertController
+                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                                   style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *_Nonnull action) {
+                                                     [self.navigationController popViewControllerAnimated:YES];
+                                                 }]];
+            [self.navigationController presentViewController:alertController animated:YES completion:nil];
         }
     });
 }
@@ -235,8 +215,6 @@
                       [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
                   }
             }
-        } else if ([templateType isEqualToString:RCGIFMessageTypeIdentifier]) {
-            [self presentGIFPreviewViewController:dict];
         }
     }
 }
@@ -272,7 +250,7 @@
 
 #pragma mark - Private Methods
 - (void)setNav {
-    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     self.navigationItem.title = self.navTitle;
@@ -323,25 +301,15 @@
         return;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self stopAnimation];
-        self.loadingTipView.hidden = YES;
-        self.loadFailedTipView.hidden = YES;
-        self.combineMsgWebView.hidden = NO;
-        
-        NSURL *url = [NSURL fileURLWithPath:localPath];
-        NSString *html = [[NSString alloc] initWithContentsOfFile:localPath encoding:NSUTF8StringEncoding error:nil];
-        
-        if (html && url) {
-            NSURL *targetUrl = url;
-            // 获取私有云当前环境的域名，并将域名拼接在 url 参数上。目的是为了实现头像内外网域名的替换
-            NSString *minioOSSAddr = [RCDownloadHelper getMinioOSSAddr];
-            if (minioOSSAddr.length > 0) {
-                NSString *target = [NSString stringWithFormat:@"%@?target=%@", url.absoluteURL, minioOSSAddr];
-                targetUrl = [NSURL URLWithString:target];
-            }
-            
-            [self.combineMsgWebView loadHTMLString:html baseURL:targetUrl];
-        }
+    [self stopAnimation];
+    self.loadingTipView.hidden = YES;
+    self.loadFailedTipView.hidden = YES;
+    self.combineMsgWebView.hidden = NO;
+    NSURL *url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]];
+    NSString *html = [[NSString alloc] initWithContentsOfFile:localPath encoding:NSUTF8StringEncoding error:nil];
+    if (html && url) {
+        [self.combineMsgWebView loadHTMLString:html baseURL:url];
+    }
     });
 }
 
@@ -465,21 +433,6 @@
     }
 }
 
-- (void)presentGIFPreviewViewController:(NSDictionary *)dict {
-    NSString *imageUrl = [dict objectForKey:@"fileUrl"];
-    RCGIFMessage *msgContent = [[RCGIFMessage alloc] init];
-    msgContent.remoteUrl = imageUrl;
-    RCMessage *message = [[RCMessage alloc] initWithType:self.conversationType
-                                                targetId:self.targetId
-                                               direction:MessageDirection_SEND
-                                                 content:msgContent];
-    RCMessageModel *model = [RCMessageModel modelWithMessage:message];
-    
-    RCGIFPreviewViewController *gifPreviewVC = [[RCGIFPreviewViewController alloc] init];
-    gifPreviewVC.messageModel = model;
-    [self.navigationController pushViewController:gifPreviewVC animated:NO];
-}
-
 - (void)startAnimation {
     CABasicAnimation *rotationAnimation;
     rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
@@ -529,109 +482,19 @@
 #pragma mark subViews
 - (WKWebView *)combineMsgWebView {
     if (!_combineMsgWebView) {
-        WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
-        WKUserContentController *userContentController = [[WKUserContentController alloc] init];
-        
-        // 在文档开始时注入深色模式 CSS，避免闪屏
-        NSString *darkModeScript = [self darkModeInjectionScript];
-        if (darkModeScript.length > 0) {
-            WKUserScript *darkModeUserScript = [[WKUserScript alloc] initWithSource:darkModeScript
-                                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
-                                                                   forMainFrameOnly:YES];
-            [userContentController addUserScript:darkModeUserScript];
+        CGFloat navBarHeight = 64;
+        CGFloat homeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
+        if (homeBarHeight > 0) {
+            navBarHeight = 88;
         }
-        
-        config.userContentController = userContentController;
-        
-        _combineMsgWebView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
+        _combineMsgWebView =
+            [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width,
+                                                        self.view.bounds.size.height - navBarHeight - homeBarHeight)];
         _combineMsgWebView.UIDelegate = self;
         _combineMsgWebView.navigationDelegate = self;
-        _combineMsgWebView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x2D2D32");
-        _combineMsgWebView.opaque = NO;
+        _combineMsgWebView.backgroundColor = [UIColor whiteColor];
     }
     return _combineMsgWebView;
-}
-
-- (NSString *)darkModeInjectionScript {
-    BOOL isDarkMode = NO;
-    if (@available(iOS 13.0, *)) {
-        isDarkMode = (UITraitCollection.currentTraitCollection.userInterfaceStyle == UIUserInterfaceStyleDark);
-    }
-    
-    if (!isDarkMode) {
-        return nil;
-    }
-    
-    return [self darkModeCSSScript];
-}
-
-- (NSString *)darkModeCSSScript {
-    // 深色模式 CSS 样式
-    NSString *script = @"(function() {"
-        "var style = document.getElementById('rc-dark-mode-style');"
-        "if (!style) {"
-        "  style = document.createElement('style');"
-        "  style.id = 'rc-dark-mode-style';"
-        "  document.documentElement.appendChild(style);"
-        "}"
-        "style.innerHTML = '"
-        "html, body { background-color: #2D2D32 !important; color: #E5E5E5 !important; }"
-        ".rong-link-site { color: #58a6ff !important; }"
-        ".rong-pc { border-left-color: #3A3A3A !important; border-right-color: #3A3A3A !important; }"
-        ".rong-time { color: #8E8E93 !important; }"
-        ".rong-hr { border-bottom-color: #3A3A3A !important; }"
-        ".rong-time-value { background: #2D2D32 !important; }"
-        ".rong-message { border-bottom-color: #3A3A3A !important; color: #8E8E93 !important; }"
-        ".rong-message-user-bg { background: #3A3A3A !important; }"
-        ".rongcloud-message-user-name { color: #E5E5E5 !important; }"
-        ".rong-message-time { color: #8E8E93 !important; }"
-        ".rongcloud-message-combinemsg { border-top-color: #3A3A3A !important; }"
-        ".rong-message-combine { border-color: #3A3A3A !important; }"
-        "a { color: #8E8E93 !important; }"
-        ".rong-combine-title { color: #E5E5E5 !important; }"
-        ".rong-conbine-foot { border-top-color: #3A3A3A !important; }"
-        ".rong-big-img { background: #2D2D32 !important; }"
-        ".rong-big-video { background: #2D2D32 !important; }"
-        "';"
-        "})();";
-    
-    return script;
-}
-
-- (NSString *)lightModeCSSScript {
-    // 移除深色模式样式，恢复浅色模式
-    NSString *script = @"(function() {"
-        "var style = document.getElementById('rc-dark-mode-style');"
-        "if (style) {"
-        "  style.innerHTML = '';"
-        "}"
-        "})();";
-    
-    return script;
-}
-
-- (void)updateWebViewColorScheme {
-    if (!_combineMsgWebView) {
-        return;
-    }
-    
-    BOOL isDarkMode = NO;
-    if (@available(iOS 13.0, *)) {
-        isDarkMode = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark);
-    }
-    
-    NSString *script = isDarkMode ? [self darkModeCSSScript] : [self lightModeCSSScript];
-    [self.combineMsgWebView evaluateJavaScript:script completionHandler:nil];
-}
-
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
-    [super traitCollectionDidChange:previousTraitCollection];
-    
-    if (@available(iOS 13.0, *)) {
-        if ([self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-            [self updateWebViewColorScheme];
-        }
-    }
 }
 
 - (UIView *)loadingTipView {
@@ -645,7 +508,7 @@
 - (RCBaseImageView *)loadingImageView {
     if (!_loadingImageView) {
         _loadingImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 27) / 2, 0, 27, 27)];
-        _loadingImageView.image = RCDynamicImage(@"conversation_msg_combine_loading_img", @"combine_loading");
+        _loadingImageView.image = RCResourceImage(@"combine_loading");
     }
     return _loadingImageView;
 }
@@ -657,7 +520,7 @@
         _loadingLabel.numberOfLines = 1;
         _loadingLabel.textAlignment = NSTextAlignmentCenter;
         _loadingLabel.backgroundColor = [UIColor clearColor];
-        _loadingLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x666666", @"0x666666");
+        _loadingLabel.textColor = [UIColor colorWithRed:102 / 255.0 green:102 / 255.0 blue:102 / 255.0 alpha:1 / 1.0];
         _loadingLabel.text = RCLocalizedString(@"CombineMessageLoading");
     }
     return _loadingLabel;
@@ -674,7 +537,7 @@
 - (RCBaseImageView *)loadFailedImageView {
     if (!_loadFailedImageView) {
         _loadFailedImageView = [[RCBaseImageView alloc] initWithFrame:CGRectMake((TIPVIEWWIDTH - 45) / 2, 0, 45, 54)];
-        _loadFailedImageView.image = RCDynamicImage(@"combine_msg_preview_failed_img", @"combine_failed");
+        _loadFailedImageView.image = RCResourceImage(@"combine_failed");
         _loadFailedImageView.userInteractionEnabled = NO;
     }
     return _loadFailedImageView;
@@ -687,7 +550,8 @@
         _loadFailedLabel.numberOfLines = 1;
         _loadFailedLabel.textAlignment = NSTextAlignmentCenter;
         _loadFailedLabel.backgroundColor = [UIColor clearColor];
-        _loadFailedLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x666666", @"0x666666");
+        _loadFailedLabel.textColor =
+            [UIColor colorWithRed:102 / 255.0 green:102 / 255.0 blue:102 / 255.0 alpha:1 / 1.0];
         _loadFailedLabel.text = RCLocalizedString(@"CombineMessageLoadFailed");
     }
     return _loadFailedLabel;

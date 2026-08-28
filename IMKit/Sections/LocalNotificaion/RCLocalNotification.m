@@ -40,9 +40,9 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     @synchronized(self) {
         if (nil == __rc__LocalNotification) {
             __rc__LocalNotification = [[[self class] alloc] init];
-            NSString *bundlePath = [RCKitUtility bundlePathWithName:@"RongCloud"];
 
-            NSString *soundPath = [bundlePath stringByAppendingPathComponent:@"sms-received.caf"];
+            NSString *soundPath =
+                [[NSBundle mainBundle] pathForResource:@"RongCloud.bundle/sms-received" ofType:@"caf"];
             if (soundPath.length > 0) {
                 __rc__LocalNotification.haveLocationSound = YES;
             }
@@ -121,7 +121,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
             pushContent = [pushContent stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
         }
     } else {
-        pushContent = RCLocalizedString(@"receive_new_message");
+        pushContent = NSLocalizedStringFromTable(@"receive_new_message", @"RongCloudKit", nil);
     }
     
     if (@available(iOS 10.0, *)) {
@@ -155,7 +155,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         if (nil == _localNotification) {
             _localNotification = [[UILocalNotification alloc] init];
         }
-        _localNotification.alertAction = RCLocalizedString(@"LocalNotificationShow");
+        _localNotification.alertAction = NSLocalizedStringFromTable(@"LocalNotificationShow", @"RongCloudKit", nil);
         if (@available(iOS 8.2, *)) {
             if (!message.messagePushConfig.disablePushTitle) {
                 _localNotification.alertTitle = title;
@@ -179,9 +179,8 @@ static RCLocalNotification *__rc__LocalNotification = nil;
                      result:(void (^)(NSString *senderName, NSString *pushContent))resultBlock
                  errorBlock:(void (^)(NSString *errorDescription))errorBlock {
     __block NSString *showMessage = nil;
-    BOOL isUnknown = (!message.content || [message.content isKindOfClass:[RCUnknownMessage class]]);
-    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.objectName && isUnknown) {
-        showMessage = RCLocalizedString(@"unknown_message_notification_tip");
+    if (RCKitConfigCenter.message.showUnkownMessageNotificaiton && message.objectName && !message.content) {
+        showMessage = NSLocalizedStringFromTable(@"unknown_message_notification_tip", @"RongCloudKit", nil);
     } else if (message.content.mentionedInfo.isMentionedMe) {
         if (!message.content.mentionedInfo.mentionedContent) {
             showMessage = [RCKitUtility formatLocalNotification:message];
@@ -217,7 +216,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
             if (!message.content.mentionedInfo.mentionedContent) {
                 showMessage = [NSString
                     stringWithFormat:@"%@%@:%@",
-                               RCLocalizedString(@"HaveMentionedForNotification"),
+                                     NSLocalizedStringFromTable(@"HaveMentionedForNotification", @"RongCloudKit", nil),
                                      [RCKitUtility getDisplayName:userInfo], showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
@@ -230,7 +229,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
             if (!message.content.mentionedInfo.mentionedContent) {
                 showMessage = [NSString
                     stringWithFormat:@"%@%@(%@):%@",
-                               RCLocalizedString(@"HaveMentionedForNotification"),
+                                     NSLocalizedStringFromTable(@"HaveMentionedForNotification", @"RongCloudKit", nil),
                                [RCKitUtility getDisplayName:userInfo], groupInfo.groupName, showMessage];
             }
         } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
@@ -250,7 +249,7 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         if (!message.content.mentionedInfo.mentionedContent) {
             showMessage = [NSString
                 stringWithFormat:@"%@%@:%@",
-                           RCLocalizedString(@"HaveMentionedForNotification"),
+                                 NSLocalizedStringFromTable(@"HaveMentionedForNotification", @"RongCloudKit", nil),
                                  discussion.discussionName, showMessage];
         }
     } else if ([message.objectName isEqualToString:@"RC:RcNtf"]) {
@@ -283,10 +282,10 @@ static RCLocalNotification *__rc__LocalNotification = nil;
     NSString *operator= recallMessage.operatorId;
     if (recallMessage.isAdmin) {
         return
-        [NSString stringWithFormat:RCLocalizedString(@"OtherHasRecalled"),
-         RCLocalizedString(@"AdminWithMessageRecalled")];
+        [NSString stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil),
+         NSLocalizedStringFromTable(@"AdminWithMessageRecalled", @"RongCloudKit", nil)];
     }else if ([operator isEqualToString:currentUserId]) {
-        return [NSString stringWithFormat:@"%@", RCLocalizedString(@"SelfHaveRecalled")];
+        return [NSString stringWithFormat:@"%@", NSLocalizedStringFromTable(@"SelfHaveRecalled", @"RongCloudKit", nil)];
     } else {
         NSString *operatorName;
         if ([name length]) {
@@ -296,10 +295,10 @@ static RCLocalNotification *__rc__LocalNotification = nil;
         }
         if (message.conversationType == ConversationType_GROUP) {
             return [NSString
-                    stringWithFormat:RCLocalizedString(@"OtherHasRecalled"), operatorName];
+                    stringWithFormat:NSLocalizedStringFromTable(@"OtherHasRecalled", @"RongCloudKit", nil), operatorName];
         } else {
             return [NSString
-                    stringWithFormat:@"%@", RCLocalizedString(@"MessageHasRecalled")];
+                    stringWithFormat:NSLocalizedStringFromTable(@"MessageHasRecalled", @"RongCloudKit", nil)];
         }
     }
     return nil;

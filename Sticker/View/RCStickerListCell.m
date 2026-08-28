@@ -29,7 +29,8 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x1c1c1e66");
+        self.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
+                                                        darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
         [self.contentView addSubview:self.headImage];
         [self.contentView addSubview:self.nameLabel];
         [self.contentView addSubview:self.deleteBtn];
@@ -84,7 +85,7 @@
     if (_nameLabel == nil) {
         _nameLabel = [[RCBaseLabel alloc] init];
         _nameLabel.font = [UIFont systemFontOfSize:18];
-        _nameLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
+        _nameLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
     }
     return _nameLabel;
 }
@@ -94,12 +95,14 @@
         _deleteBtn = [[RCBaseButton alloc] init];
         _deleteBtn.layer.borderWidth = 0.5f;
         _deleteBtn.layer.borderColor =
-        RCDynamicColor(@"disabled_color", @"0xCECECE", @"0x8080804c").CGColor;
-        _deleteBtn.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF8F8F8", @"0x1a1a1a");
+            [RCKitUtility generateDynamicColor:HEXCOLOR(0xCECECE)
+                                     darkColor:[HEXCOLOR(0x808080) colorWithAlphaComponent:0.3]]
+                .CGColor;
+        _deleteBtn.backgroundColor = RCDYCOLOR(0xF8F8F8, 0x1a1a1a);
         _deleteBtn.layer.cornerRadius = 4.f;
         _deleteBtn.layer.masksToBounds = YES;
         _deleteBtn.titleLabel.font = [UIFont systemFontOfSize:13];
-        [_deleteBtn setTitleColor:RCDynamicColor(@"text_primary_color", @"0x333333", @"0x999999") forState:UIControlStateNormal];
+        [_deleteBtn setTitleColor:RCDYCOLOR(0x333333, 0x999999) forState:UIControlStateNormal];
         [_deleteBtn setTitle:RongStickerString(@"delete_title") forState:UIControlStateNormal];
         [_deleteBtn addTarget:self action:@selector(deletePackage) forControlEvents:UIControlEventTouchUpInside];
     }

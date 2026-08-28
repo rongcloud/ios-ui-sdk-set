@@ -241,7 +241,7 @@
 
     self.bubbleTipAlignment = kDefaultbubbleTipAlignment;
 
-    self.bubbleTipBackgroundColor = RCDynamicColor(@"hint_color", @"0xFF0000", @"0xFF0000");
+    self.bubbleTipBackgroundColor = kDefaultbubbleTipBackgroundColor;
     self.bubbleTipTextColor = kDefaultbubbleTipTextColor;
     self.bubbleTipTextShadowColor = kDefaultbubbleTipShadowColor;
     self.bubbleTipTextFont = kDefaultbubbleTipTextFont;

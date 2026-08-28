@@ -181,7 +181,7 @@
 
     [_selectbutton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-2-[_selectbutton(44)]"
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[_selectbutton(44)]-2-|"
                                                                  options:kNilOptions
                                                                  metrics:nil
                                                                    views:NSDictionaryOfVariableBindings(_selectbutton)]];  
@@ -222,13 +222,13 @@
         [_selectbutton addTarget:self
                           action:@selector(onSelectButtonClick:)
                 forControlEvents:UIControlEventTouchUpInside];
-        [_selectbutton setImage:RCDynamicImage(@"media_file_state_uncheck_img", @"photopicker_state_normal") forState:UIControlStateNormal];
-        [_selectbutton setImage:RCDynamicImage(@"media_file_state_check_img",@"photopicker_state_selected")
+        [_selectbutton setImage:RCResourceImage(@"photopicker_state_normal") forState:UIControlStateNormal];
+        [_selectbutton setImage:RCResourceImage(@"photopicker_state_selected")
                        forState:UIControlStateSelected];
         if ([RCKitUtility isRTL]) {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(0, 0 , 28, 28);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 0 , 0, 28);
         } else {
-            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(0, 28 , 28, 0);
+            _selectbutton.contentEdgeInsets = UIEdgeInsetsMake(28, 28 , 0, 0);
         }
     }
     return _selectbutton;
