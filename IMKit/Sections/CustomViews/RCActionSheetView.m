@@ -130,6 +130,7 @@
         _tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x2f2f2f);
         _tableView.rowHeight = 56.0;
         _tableView.bounces = NO;
+        _tableView.scrollEnabled = NO;
         [_tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"OneCell"];
     }
     return _tableView;
@@ -148,12 +149,13 @@
     RCBaseTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OneCell"];
     if (indexPath.section == 0) {
         cell.textLabel.text = _cellArray[indexPath.row];
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     } else {
         cell.textLabel.text = _cancelTitle;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
     cell.contentView.backgroundColor = RCDYCOLOR(0xffffff, 0x1d1d1d);
     cell.textLabel.textAlignment = NSTextAlignmentCenter;
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.font = [[RCKitConfig defaultConfig].font fontOfSize:17];
     cell.textLabel.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x333333) darkColor:[HEXCOLOR(0xffffff) colorWithAlphaComponent:0.9]];
     return cell;

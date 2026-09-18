@@ -14,6 +14,7 @@
 @property (nonatomic, strong, readonly) RCConversationCollectionViewHeader *collectionViewHeader;
 @property (nonatomic, assign, readonly) BOOL isConversationAppear;
 @property (nonatomic, assign) BOOL sendMsgAndNeedScrollToBottom;
+@property (nonatomic, assign) BOOL isTouchScrolled;
 
 - (void)updateUnreadMsgCountLabel;
 - (void)updateForMessageSendSuccess:(RCMessage *)message;

@@ -95,18 +95,6 @@ static NSString *const reuseIdentifier = @"Cell";
     }
     self.collectionView.alpha = self.disableFirstAppear?1:0;
     [self.collectionView reloadData];
-    if (!self.disableFirstAppear) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            CGSize size = self.collectionView.frame.size;
-            CGSize contentSize = self.collectionView.contentSize;
-            CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
-            [self.collectionView scrollRectToVisible:frame animated:NO];
-            [UIView animateWithDuration:0.1 animations:^{
-                self.collectionView.alpha = 1;
-            }];
-        });
-        self.disableFirstAppear = YES;
-    }
 }
 
 - (void)viewDidLoad {
@@ -139,6 +127,19 @@ static NSString *const reuseIdentifier = @"Cell";
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self updateCachedAssets];
+    
+    if (!self.disableFirstAppear) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            CGSize size = self.collectionView.frame.size;
+            CGSize contentSize = self.collectionView.contentSize;
+            CGRect frame = CGRectMake(0, MAX(contentSize.height - size.height, 0), size.width, size.height);
+            [self.collectionView scrollRectToVisible:frame animated:NO];
+            [UIView animateWithDuration:0.1 animations:^{
+                self.collectionView.alpha = 1;
+            }];
+        });
+        self.disableFirstAppear = YES;
+    }
 }
 
 - (void)viewDidDisappear:(BOOL)animated {

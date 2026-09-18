@@ -474,7 +474,7 @@
         _inputTextView = [[RCTextView alloc] initWithFrame:CGRectZero];
         _inputTextView.delegate = self;
         _inputTextView.textChangeDelegate = self;
-        UIEdgeInsets textEdge = self.inputTextView.textContainerInset;
+        UIEdgeInsets textEdge = _inputTextView.textContainerInset;
         textEdge.left = 5;
         textEdge.right = 5;
         _inputTextView.textContainerInset = textEdge;

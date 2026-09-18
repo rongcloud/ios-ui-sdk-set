@@ -17,7 +17,6 @@
 static NSTimer *hq_previousAnimationTimer = nil;
 static UIImageView *hq_previousPlayVoiceImageView = nil;
 static RCMessageDirection hq_previousMessageDirection;
-static long hq_messageId = 0;
 
 #define Voice_Height 40
 #define voice_Unread_View_Width 8
@@ -86,23 +85,10 @@ static long hq_messageId = 0;
 
 #pragma mark - Public API
 - (void)playVoice {
-
-    RCHQVoiceMessage *voiceMessage = (RCHQVoiceMessage *)self.model.content;
-
-    if (self.voiceUnreadTagView) {
-        self.voiceUnreadTagView.hidden = YES;
-        [self.voiceUnreadTagView removeFromSuperview];
-        self.voiceUnreadTagView = nil;
-    }
-    if (voiceMessage.localPath.length > 0) {
-        [self.model.receivedStatusInfo markAsListened];
-        [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:self.model.messageId
-                                               receivedStatusInfo:self.model.receivedStatusInfo
-                                                       completion:nil];
-    }
+    [self removeUnreadTagView];
     [self disablePreviousAnimationTimer];
 
-    if (self.model.messageId == hq_messageId) {
+    if (self.model.messageId == self.voicePlayer.messageId) {
         if (self.voicePlayer.isPlaying) {
             [self.voicePlayer stopPlayVoice];
             [self startDestruct];
@@ -117,7 +103,7 @@ static long hq_messageId = 0;
 }
 
 - (void)stopPlayingVoice {
-    if (self.model.messageId == hq_messageId) {
+    if (self.model.messageId == self.voicePlayer.messageId) {
         if (self.voicePlayer.isPlaying) {
             [self stopPlayingVoiceData];
             [self disableCurrentAnimationTimer];
@@ -169,20 +155,21 @@ static long hq_messageId = 0;
                                                  name:@"RCKitExtensionModelResetVoicePlayingNotification"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(voiceWillPlay:)
+                                                 name:kNotificationVoiceWillPlayNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(voiceDidPlay:)
+                                                 name:kNotificationPlayVoice
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(stopPlayingVoiceDataIfNeed:)
-                                                 name:@"kNotificationStopVoicePlayer"
+                                                 name:kNotificationStopVoicePlayer
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateDownloadStatus:)
                                                  name:RCHQDownloadStatusChangeNotify
                                                object:nil];
-}
-
-- (void)playVoiceNotification:(NSNotification *)notification {
-    long messageId = [notification.object longValue];
-    if (messageId == self.model.messageId) {
-        [self playVoice];
-    }
 }
 
 - (void)updateDownloadStatus:(NSNotification *)noti {
@@ -208,6 +195,22 @@ static long hq_messageId = 0;
         }
     }
 }
+
+- (void)voiceWillPlay:(NSNotification *)notification {
+    NSNumber *msgIdNum = notification.object;
+    if (msgIdNum && [msgIdNum longLongValue] == self.model.messageId) {
+        [self removeUnreadTagView];
+    }
+}
+
+- (void)voiceDidPlay:(NSNotification *)notification {
+    long messageId = [notification.object longValue];
+    if (messageId == self.model.messageId) {
+        [self disableCurrentAnimationTimer];
+        [self enableCurrentAnimationTimer];
+    }
+}
+
 
 #pragma mark - Private Methods
 
@@ -239,7 +242,7 @@ static long hq_messageId = 0;
 }
 
 - (void)resetAnimationTimer{
-    if (hq_messageId == self.model.messageId) {
+    if (self.voicePlayer.messageId == self.model.messageId) {
         if ((self.voicePlayer.isPlaying)) {
             [self disableCurrentAnimationTimer];
             [self enableCurrentAnimationTimer];
@@ -362,6 +365,14 @@ static long hq_messageId = 0;
     }
 }
 
+- (void)removeUnreadTagView {
+    if (self.voiceUnreadTagView) {
+        self.voiceUnreadTagView.hidden = YES;
+        [self.voiceUnreadTagView removeFromSuperview];
+        self.voiceUnreadTagView = nil;
+    }
+}
+
 #pragma mark - Overwrite
 - (void)messageContentViewFrameDidChanged {
     [super messageContentViewFrameDidChanged];
@@ -393,8 +404,6 @@ static long hq_messageId = 0;
         [self startDestruct];
     }
 }
-
-
 
 - (NSString *)getCorrectedPath:(NSString *)localPath {
     if (localPath.length > 0) {
@@ -442,7 +451,6 @@ static long hq_messageId = 0;
         BOOL bPlay = [self.voicePlayer playVoice:self.model.conversationType
                                         targetId:self.model.targetId
                                        messageId:self.model.messageId
-                                       direction:self.model.messageDirection
                                        voiceData:wavAudioData
                                         observer:self];
         // if failed to play the voice message, reset all indicator.
@@ -451,7 +459,6 @@ static long hq_messageId = 0;
         } else {
             [self enableCurrentAnimationTimer];
         }
-        hq_messageId = self.model.messageId;
     } else {
         self.model.receivedStatusInfo = [[RCReceivedStatusInfo alloc] initWithReceivedStatus:0];
         self.statusContentView.hidden = NO;

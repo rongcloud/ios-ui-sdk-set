@@ -7,8 +7,8 @@
 //
 
 #import "RCUserInfoUpdateMessage.h"
-#import "NSMutableDictionary+safeoperation.h"
-#import "NSDictionary+safeaccessor.h"
+#import "NSMutableDictionary+RCOperation.h"
+#import "NSDictionary+RCAccessor.h"
 
 @implementation RCUserInfoUpdateMessage
 

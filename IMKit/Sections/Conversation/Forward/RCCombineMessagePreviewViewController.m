@@ -13,6 +13,7 @@
 #import "RCKitUtility.h"
 #import "RCCombineMessageUtility.h"
 #import "RCCombineMsgFilePreviewViewController.h"
+#import "RCGIFPreviewViewController.h"
 #import <objc/runtime.h>
 #import "RCImageSlideController.h"
 #import "RCSightSlideViewController.h"
@@ -21,6 +22,7 @@
 #import "RCSemanticContext.h"
 #import "RCBaseImageView.h"
 #import "RCBaseNavigationController.h"
+#import "RCDownloadHelper.h"
 #define FUNCTIONNAME @"buttonClick"
 #define TIPVIEWWIDTH 140.0f
 
@@ -51,6 +53,8 @@
 @property (nonatomic, strong) RCBaseImageView *loadFailedImageView;
 
 @property (nonatomic, strong) UILabel *loadFailedLabel;
+//显示撤回消息对话框
+@property (nonatomic, assign) BOOL displayRecallDialog;
 
 @end
 
@@ -101,6 +105,14 @@
     [self registerObserver];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if (self.displayRecallDialog) {
+        self.displayRecallDialog = NO;
+        [self showRecallDialog];
+    }
+}
+
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [self.combineMsgWebView.configuration.userContentController removeScriptMessageHandlerForName:FUNCTIONNAME];
@@ -126,22 +138,30 @@
                                                object:nil];
 }
 
+- (void)showRecallDialog {
+    UIAlertController *alertController = [UIAlertController
+        alertControllerWithTitle:nil
+                         message:RCLocalizedString(@"MessageRecallAlert")
+                  preferredStyle:UIAlertControllerStyleAlert];
+    [alertController
+        addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
+                                           style:UIAlertActionStyleDefault
+                                         handler:^(UIAlertAction *_Nonnull action) {
+                                             [self.navigationController popViewControllerAnimated:YES];
+                                         }]];
+    [self.navigationController presentViewController:alertController animated:YES completion:nil];
+}
+
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
         //产品需求：当前正在查看的图片被撤回，dismiss 预览页面，否则不做处理
         if (recalledMsgId == self.messageModel.messageId) {
-            UIAlertController *alertController = [UIAlertController
-                alertControllerWithTitle:nil
-                                 message:RCLocalizedString(@"MessageRecallAlert")
-                          preferredStyle:UIAlertControllerStyleAlert];
-            [alertController
-                addAction:[UIAlertAction actionWithTitle:RCLocalizedString(@"Confirm")
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *_Nonnull action) {
-                                                     [self.navigationController popViewControllerAnimated:YES];
-                                                 }]];
-            [self.navigationController presentViewController:alertController animated:YES completion:nil];
+            if ([self isViewLoaded] && self.view.window != nil) {
+                [self showRecallDialog];
+            } else {
+                self.displayRecallDialog = YES;
+            }
         }
     });
 }
@@ -215,6 +235,8 @@
                       [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
                   }
             }
+        } else if ([templateType isEqualToString:RCGIFMessageTypeIdentifier]) {
+            [self presentGIFPreviewViewController:dict];
         }
     }
 }
@@ -301,15 +323,25 @@
         return;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-    [self stopAnimation];
-    self.loadingTipView.hidden = YES;
-    self.loadFailedTipView.hidden = YES;
-    self.combineMsgWebView.hidden = NO;
-    NSURL *url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]];
-    NSString *html = [[NSString alloc] initWithContentsOfFile:localPath encoding:NSUTF8StringEncoding error:nil];
-    if (html && url) {
-        [self.combineMsgWebView loadHTMLString:html baseURL:url];
-    }
+        [self stopAnimation];
+        self.loadingTipView.hidden = YES;
+        self.loadFailedTipView.hidden = YES;
+        self.combineMsgWebView.hidden = NO;
+        
+        NSURL *url = [NSURL fileURLWithPath:localPath];
+        NSString *html = [[NSString alloc] initWithContentsOfFile:localPath encoding:NSUTF8StringEncoding error:nil];
+        
+        if (html && url) {
+            NSURL *targetUrl = url;
+            // 获取私有云当前环境的域名，并将域名拼接在 url 参数上。目的是为了实现头像内外网域名的替换
+            NSString *minioOSSAddr = [RCDownloadHelper getMinioOSSAddr];
+            if (minioOSSAddr.length > 0) {
+                NSString *target = [NSString stringWithFormat:@"%@?target=%@", url.absoluteURL, minioOSSAddr];
+                targetUrl = [NSURL URLWithString:target];
+            }
+            
+            [self.combineMsgWebView loadHTMLString:html baseURL:targetUrl];
+        }
     });
 }
 
@@ -431,6 +463,21 @@
         navc.modalPresentationStyle = UIModalPresentationFullScreen;
         [self presentViewController:navc animated:YES completion:NULL];
     }
+}
+
+- (void)presentGIFPreviewViewController:(NSDictionary *)dict {
+    NSString *imageUrl = [dict objectForKey:@"fileUrl"];
+    RCGIFMessage *msgContent = [[RCGIFMessage alloc] init];
+    msgContent.remoteUrl = imageUrl;
+    RCMessage *message = [[RCMessage alloc] initWithType:self.conversationType
+                                                targetId:self.targetId
+                                               direction:MessageDirection_SEND
+                                                 content:msgContent];
+    RCMessageModel *model = [RCMessageModel modelWithMessage:message];
+    
+    RCGIFPreviewViewController *gifPreviewVC = [[RCGIFPreviewViewController alloc] init];
+    gifPreviewVC.messageModel = model;
+    [self.navigationController pushViewController:gifPreviewVC animated:NO];
 }
 
 - (void)startAnimation {

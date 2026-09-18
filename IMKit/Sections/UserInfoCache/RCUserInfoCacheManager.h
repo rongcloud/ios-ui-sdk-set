@@ -6,35 +6,14 @@
 //  Copyright © 2016年 RongCloud. All rights reserved.
 //
 
-#import "RCConversationInfoCache.h"
-#import "RCConversationUserInfoCache.h"
-#import "RCIM.h"
-#import "RCUserInfoCache.h"
-#import "RCUserInfoCacheDBHelper.h"
 #import <Foundation/Foundation.h>
 #import <RongIMLibCore/RongIMLibCore.h>
-
-//消息分发
-FOUNDATION_EXPORT NSString *const RCKitDispatchUserInfoUpdateNotification;
-FOUNDATION_EXPORT NSString *const RCKitDispatchGroupUserInfoUpdateNotification;
-FOUNDATION_EXPORT NSString *const RCKitDispatchGroupInfoUpdateNotification;
-FOUNDATION_EXPORT NSString *const RCKitDispatchPublicServiceInfoNotification;
-
-#define rcUserInfoWriteDBHelper ([RCUserInfoCacheManager sharedManager].writeDBHelper)
-#define rcUserInfoReadDBHelper ([RCUserInfoCacheManager sharedManager].readDBHelper)
-#define rcUserInfoDBQueue ([RCUserInfoCacheManager sharedManager].dbQueue)
+#import "RCInfoNotificationCenter.h"
+NS_ASSUME_NONNULL_BEGIN
 
 @interface RCUserInfoCacheManager : NSObject
 
-@property (nonatomic, strong) RCUserInfoCacheDBHelper *writeDBHelper;
-@property (nonatomic, strong) RCUserInfoCacheDBHelper *readDBHelper;
-@property (nonatomic, strong) dispatch_queue_t dbQueue;
-
 + (instancetype)sharedManager;
-
-// appkey, token, userId, 确定存储的DB路径
-@property (nonatomic, copy) NSString *appKey;
-@property (nonatomic, copy) NSString *currentUserId;
 
 #pragma mark - UserInfo
 
@@ -49,15 +28,11 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchPublicServiceInfoNotification;
 
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId;
 
-- (void)clearUserInfoNetworkCacheOnly:(NSString *)userId;
-
 - (void)clearUserInfo:(NSString *)userId;
 
 - (void)clearAllUserInfo;
 
 #pragma mark - GroupUserInfo (sugar for ConversationUserInfo)
-
-@property (nonatomic, assign) BOOL groupUserInfoEnabled;
 
 - (RCUserInfo *)getUserInfo:(NSString *)userId inGroupId:(NSString *)groupId;
 
@@ -68,8 +43,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchPublicServiceInfoNotification;
 - (RCUserInfo *)getUserInfoFromCacheOnly:(NSString *)userId inGroupId:(NSString *)groupId;
 
 - (void)updateUserInfo:(RCUserInfo *)userInfo forUserId:(NSString *)userId inGroup:(NSString *)groupId;
-
-- (void)clearGroupUserInfoNetworkCacheOnly:(NSString *)userId inGroup:(NSString *)groupId;
 
 - (void)clearGroupUserInfo:(NSString *)userId inGroup:(NSString *)groupId;
 
@@ -85,8 +58,6 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchPublicServiceInfoNotification;
 
 - (void)updateGroupInfo:(RCGroup *)groupInfo forGroupId:(NSString *)groupId;
 
-- (void)clearGroupInfoNetworkCacheOnly:(NSString *)groupId;
-
 - (void)clearGroupInfo:(NSString *)groupId;
 
 - (void)clearAllGroupInfo;
@@ -97,3 +68,5 @@ FOUNDATION_EXPORT NSString *const RCKitDispatchPublicServiceInfoNotification;
 - (void)updatePublicServiceProfileInfo:(RCPublicServiceProfile *)profileInfo forServiceId:(NSString *)serviceId;
 
 @end
+
+NS_ASSUME_NONNULL_END

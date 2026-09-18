@@ -315,7 +315,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     }
     message.messagePushConfig.pushTitle = pushTitle;
     message.messagePushConfig.pushContent = pushContent;
-    
+    message.needReceipt = YES;
     if (self.destructDuration > 0) {
         cardMessage.destructDuration = self.destructDuration;
     }

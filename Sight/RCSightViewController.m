@@ -269,7 +269,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     [RCSightExtensionModule sharedInstance].isSightCameraHolding = YES;
     [self registerNotification];
     // Do any additional setup after loading the view.
-    [self setAudioSessionCategory];
     [self.view addSubview:self.sightView];
     [self strechToSuperview:self.sightView];
 #if !(TARGET_OS_SIMULATOR)
@@ -611,20 +610,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     self.tipsLable.text = tipsText;
 }
 
-- (void)setAudioSessionCategory {
-    [[AVAudioSession sharedInstance] setActive:NO error:nil];
-    //保持后台音乐播放
-    if (@available(iOS 10.0, *)) {
-        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
-                                         withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                                               error:nil];
-    } else {
-        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
-                                         withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                                               error:nil];
-    }
-}
-
 - (void)resetCapture {
 #if !(TARGET_OS_SIMULATOR)
     if (self.capturer) {
@@ -642,7 +627,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
 #pragma mark - Target action
 - (void)switchCameraAction:(UIButton *)sender {
-    [self setAudioSessionCategory];
 #if !(TARGET_OS_SIMULATOR)
     [self.capturer switchCamera];
 #endif
@@ -678,7 +662,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
             [self.capturer resetAudioSession];
             [self.capturer resetSessionInput];
 #endif
-            [self setAudioSessionCategory];
             self.playerController.view.hidden = YES;
         }];
     

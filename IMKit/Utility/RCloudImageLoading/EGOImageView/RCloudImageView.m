@@ -30,10 +30,6 @@
 #import "RCloudImageLoader.h"
 #import "RCloudCache.h"
 
-@interface RCloudImageView ()
-@property (nonatomic, assign) NSUInteger imageRequestID;
-@end
-
 @implementation RCloudImageView
 @synthesize imageURL, placeholderImage, delegate;
 
@@ -59,7 +55,6 @@
 }
 - (void)setImageURL:(NSURL *)aURL {
     //    self.contentMode = UIViewContentModeScaleAspectFill;
-    self.imageRequestID++;
     if (imageURL) {
         [[RCloudImageLoader sharedImageLoader] removeObserver:self forURL:imageURL];
         imageURL = nil;
@@ -75,10 +70,8 @@
 }
 
 - (void)p_downloadImage{
-    NSURL *requestURL = self.imageURL;
-    NSUInteger requestID = self.imageRequestID;
-    if (!requestURL.scheme || [requestURL.scheme.lowercaseString isEqualToString:@"file"]) {
-        NSString *path = requestURL.absoluteString;
+    if (!imageURL.scheme || [imageURL.scheme.lowercaseString isEqualToString:@"file"]) {
+        NSString *path = imageURL.absoluteString;
         if ([path length] > 0) {
             path = [RCUtilities getCorrectedFilePath:path];
             UIImage *anImage = [[UIImage alloc] initWithContentsOfFile:path];
@@ -88,14 +81,9 @@
                     completionBlock:^(UIImage *image, BOOL doNothing) {
                         if (image) {
                             if ([NSThread isMainThread]) {
-                                if ([self p_isCurrentImageRequest:requestID URL:requestURL]) {
-                                    self.image = image;
-                                }
+                                self.image = image;
                             } else {
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                    if (![self p_isCurrentImageRequest:requestID URL:requestURL]) {
-                                        return;
-                                    }
                                     self.image = image;
                                     if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
                                         [self.delegate imageViewLoadedImage:self];
@@ -121,24 +109,19 @@
     }
 
     [[RCloudImageLoader sharedImageLoader] removeObserver:self];
-    UIImage *anImage = [[RCloudImageLoader sharedImageLoader] imageForURL:requestURL shouldLoadWithObserver:self];
+    UIImage *anImage = [[RCloudImageLoader sharedImageLoader] imageForURL:imageURL shouldLoadWithObserver:self];
 
     if (anImage) {
         [[RCloudMediaManager sharedManager] downsizeImage:anImage
             completionBlock:^(UIImage *image, BOOL doNothing) {
                 if (image) {
                     if ([NSThread isMainThread]) {
-                        if ([self p_isCurrentImageRequest:requestID URL:requestURL]) {
-                            self.image = image;
-                            if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
-                                [self.delegate imageViewLoadedImage:self];
-                            }
+                        self.image = image;
+                        if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
+                            [self.delegate imageViewLoadedImage:self];
                         }
                     } else {
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            if (![self p_isCurrentImageRequest:requestID URL:requestURL]) {
-                                return;
-                            }
                             self.image = image;
                             if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
                                 [self.delegate imageViewLoadedImage:self];
@@ -147,7 +130,7 @@
                     }
                     if (!doNothing) {
                         NSData *imageResource = UIImagePNGRepresentation(image);
-                        NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:requestURL];
+                        NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:imageURL];
                         [imageResource writeToFile:imagePath atomically:YES];
                     }
                 }
@@ -173,7 +156,6 @@
 #pragma mark Image loading
 
 - (void)cancelImageLoad {
-    self.imageRequestID++;
     [[RCloudImageLoader sharedImageLoader] cancelLoadForURL:self.imageURL];
     [[RCloudImageLoader sharedImageLoader] removeObserver:self forURL:self.imageURL];
 }
@@ -184,14 +166,10 @@
     if (![self.imageURL isEqual:notifyURL]) return;
     UIImage *anImage = [notification userInfo][@"image"];
     if (!anImage || ![anImage isKindOfClass:[UIImage class]]) return;
-    NSUInteger requestID = self.imageRequestID;
     [[RCloudMediaManager sharedManager] downsizeImage:anImage
                                       completionBlock:^(UIImage *image, BOOL doNothing) {
-        if (!image) return;
+        if (!image || ![self.imageURL isEqual:notifyURL]) return;
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (![self p_isCurrentImageRequest:requestID URL:notifyURL]) {
-                return;
-            }
             self.image = image;
             if ([self.delegate respondsToSelector:@selector(imageViewLoadedImage:)]) {
                 [self.delegate imageViewLoadedImage:self];
@@ -200,14 +178,10 @@
         });
         if (!doNothing) {
             NSData *imageResource = UIImagePNGRepresentation(image);
-            NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:notifyURL];
+            NSString *imagePath = [[RCloudImageLoader sharedImageLoader] cachePathForURL:self.imageURL];
             [imageResource writeToFile:imagePath atomically:YES];
         }
     } progressBlock:^(UIImage *image, BOOL doNothing){}];
-}
-
-- (BOOL)p_isCurrentImageRequest:(NSUInteger)requestID URL:(NSURL *)requestURL {
-    return self.imageRequestID == requestID && [self.imageURL isEqual:requestURL];
 }
 
 - (void)imageLoaderDidFailToLoad:(NSNotification *)notification {
