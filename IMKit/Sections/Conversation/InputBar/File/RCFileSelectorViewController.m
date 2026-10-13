@@ -18,8 +18,7 @@
 @property (nonatomic, strong) NSString *rootPath;
 @property (nonatomic, assign) int maxSelectedNumber;
 @property (nonatomic, strong) NSMutableArray *dataSource;
-@property (nonatomic, strong) UIBarButtonItem *rightItem;
-@property (nonatomic, strong) UILabel *doneTitleLabel;
+@property (nonatomic, strong) UIButton *doneButton;
 @end
 
 static NSString *const RCFileValue = @"File";
@@ -62,11 +61,17 @@ static NSString *const RCListValue = @"List";
     if (self.isSubDirectory) {
         self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
     } else {
-        UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithTitle:RCLocalizedString(@"Cancel")
-                                                                     style:UIBarButtonItemStylePlain
-                                                                    target:self
-                                                                    action:@selector(clickCancelBtn:)];
-        leftItem.tintColor = RCKitConfigCenter.ui.globalNavigationBarTintColor;
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+        [btn addTarget:self
+                action:@selector(clickCancelBtn:)
+      forControlEvents:UIControlEventTouchUpInside];
+        UIColor *color =  RCKitConfigCenter.ui.globalNavigationBarTintColor;
+        btn.tintColor = color;
+        [btn setTitleColor:color forState:UIControlStateNormal];
+        [btn setTitle:RCLocalizedString(@"Cancel") forState:UIControlStateNormal];
+        [btn sizeToFit];
+        UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:btn];
+
         self.navigationItem.leftBarButtonItem = leftItem;
     }
     [self getDataSourceList];
@@ -75,20 +80,23 @@ static NSString *const RCListValue = @"List";
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.tableView reloadData];
-    UIView *rightBarView = [[UIView alloc] init];
-    rightBarView.frame = CGRectMake(0, 0, 120, 40);
-    self.doneTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 120, 40)];
-    self.doneTitleLabel.text = RCLocalizedString(@"Confirm");
-    self.doneTitleLabel.textAlignment = [RCKitUtility isRTL] ? NSTextAlignmentLeft : NSTextAlignmentRight;
-    self.doneTitleLabel.textColor = [RCKitUtility
-        generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
-                   darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
-    [rightBarView addSubview:self.doneTitleLabel];
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(clickDoneBtn:)];
-    [rightBarView addGestureRecognizer:tap];
-
-    self.rightItem = [[UIBarButtonItem alloc] initWithCustomView:rightBarView];
-    [self.navigationItem setRightBarButtonItem:self.rightItem];
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+    UIColor *disabledColor = [RCKitUtility
+                              generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
+                                         darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
+    UIColor *enabledColor = RCResourceColor(@"confirm_text_enable", @"0x0099ff");
+    [btn setTitleColor:enabledColor forState:UIControlStateNormal];
+    [btn setTitleColor:disabledColor forState:UIControlStateDisabled];
+    [btn addTarget:self
+            action:@selector(clickDoneBtn:)
+  forControlEvents:UIControlEventTouchUpInside];
+    [btn setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
+    [btn setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateDisabled];
+    [btn sizeToFit];
+    UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    [self.navigationItem setRightBarButtonItem:rightItem];
+    self.doneButton = btn;
+    self.doneButton.enabled = NO;
     self.navigationItem.rightBarButtonItem.enabled = NO;
 }
 
@@ -265,19 +273,18 @@ static NSString *const RCListValue = @"List";
 
 - (void)updateRightButtonLayout {
     NSArray *indexPaths = [self.tableView indexPathsForSelectedRows];
+    BOOL hasSelection = indexPaths.count > 0;
+    NSString *title = RCLocalizedString(@"Confirm");
 
-    if (indexPaths.count > 0) {
-        self.navigationItem.rightBarButtonItem.enabled = YES;
-        self.doneTitleLabel.text = [RCLocalizedString(@"Confirm")
-            stringByAppendingString:[NSString stringWithFormat:@"(%ld/20)", (long)indexPaths.count]];
-        self.doneTitleLabel.textColor = RCResourceColor(@"confirm_text_enable", @"0x0099ff");
-    } else {
-        self.doneTitleLabel.textColor = [RCKitUtility
-            generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
-                       darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
-        self.navigationItem.rightBarButtonItem.enabled = NO;
-        self.doneTitleLabel.text = RCLocalizedString(@"Confirm");
+    if (hasSelection) {
+        title = [title stringByAppendingString:[NSString stringWithFormat:@"(%ld/20)", (long)indexPaths.count]];
     }
+
+    [self.doneButton setTitle:title forState:UIControlStateNormal];
+    [self.doneButton setTitle:title forState:UIControlStateDisabled];
+    [self.doneButton sizeToFit];
+    self.doneButton.enabled = hasSelection;
+    self.navigationItem.rightBarButtonItem.enabled = hasSelection;
 }
 
 - (BOOL)isOverMaximum:(NSString *)filePath {

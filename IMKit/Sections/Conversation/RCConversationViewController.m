@@ -456,21 +456,16 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)createConversationMessageCollectionView {
     if (!self.conversationMessageCollectionView) {
-
         CGRect _conversationViewFrame = self.view.bounds;
-
-        CGFloat _conversationViewFrameY = CGRectGetMaxY([UIApplication sharedApplication].statusBarFrame) +
-                                          CGRectGetMaxY(self.navigationController.navigationBar.bounds);
-
-        if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
-
-            _conversationViewFrame.origin.y = 0;
-        } else {
-            _conversationViewFrame.origin.y = _conversationViewFrameY;
+        CGFloat _conversationViewFrameY = [self conversationMessageCollectionViewTopOffset];
+        CGFloat _conversationViewFrameBottom = self.chatSessionInputBarControl
+                                                   ? CGRectGetMinY(self.chatSessionInputBarControl.frame)
+                                                   : CGRectGetHeight(self.view.bounds);
+        if (!isfinite(_conversationViewFrameBottom)) {
+            _conversationViewFrameBottom = CGRectGetHeight(self.view.bounds);
         }
-
-        _conversationViewFrame.size.height =
-            self.view.bounds.size.height - self.chatSessionInputBarControl.frame.size.height - _conversationViewFrameY;
+        _conversationViewFrame.origin.y = _conversationViewFrameY;
+        _conversationViewFrame.size.height = MAX(_conversationViewFrameBottom - _conversationViewFrameY, 0);
         self.dataSource.customFlowLayout.sectionInset = UIEdgeInsetsMake(20, 0, 0, 0);
         self.conversationMessageCollectionView =
             [[RCBaseCollectionView alloc] initWithFrame:_conversationViewFrame collectionViewLayout:self.dataSource.customFlowLayout];
@@ -483,6 +478,46 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         self.conversationMessageCollectionView.dataSource = self;
         self.conversationMessageCollectionView.delegate = self;
     }
+}
+
+- (CGFloat)conversationMessageCollectionViewTopOffset {
+    if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
+        return 0;
+    }
+
+    CGFloat topOffset = 0;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_10_3
+    if (@available(iOS 11.0, *)) {
+        CGFloat windowSafeAreaTop = [RCKitUtility getWindowSafeAreaInsets].top;
+        topOffset = MAX(self.view.safeAreaInsets.top, windowSafeAreaTop);
+
+        UINavigationBar *navigationBar = self.navigationController.navigationBar;
+        if (navigationBar && !self.navigationController.navigationBarHidden && !navigationBar.hidden) {
+            CGFloat navigationBarBottom = CGRectGetMaxY(navigationBar.frame);
+            CGFloat navigationBarBottomFromSafeArea = windowSafeAreaTop + CGRectGetHeight(navigationBar.bounds);
+            if (isfinite(navigationBarBottom)) {
+                topOffset = MAX(topOffset, navigationBarBottom);
+            }
+            if (isfinite(navigationBarBottomFromSafeArea)) {
+                topOffset = MAX(topOffset, navigationBarBottomFromSafeArea);
+            }
+        }
+    } else
+#endif
+    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        CGRect statusBarFrame = [UIApplication sharedApplication].statusBarFrame;
+#pragma clang diagnostic pop
+        if (!CGRectIsNull(statusBarFrame) && !CGRectIsInfinite(statusBarFrame)) {
+            topOffset = CGRectGetMaxY(statusBarFrame) + CGRectGetHeight(self.navigationController.navigationBar.bounds);
+        }
+    }
+
+    if (!isfinite(topOffset)) {
+        return 0;
+    }
+    return MIN(MAX(topOffset, 0), CGRectGetHeight(self.view.bounds));
 }
 
 //更新 ipad UI 布局
@@ -3781,9 +3816,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 - (UIToolbar *)messageSelectionToolbar {
     if (!_messageSelectionToolbar) {
         _messageSelectionToolbar = [[UIToolbar alloc] init];
+        [_messageSelectionToolbar setShadowImage:[UIImage new] forToolbarPosition:UIBarPositionAny];
+        _messageSelectionToolbar.backgroundColor =  RCDYCOLOR(0xf5f6f9, 0x090909);
         _messageSelectionToolbar.barTintColor = RCDYCOLOR(0xf5f6f9, 0x1c1c1c);
-        //解决UIToolbar 顶部的黑色线条问题
-        _messageSelectionToolbar.clipsToBounds = YES;
+
         RCButton *forwardBtn = [[RCButton alloc] initWithFrame:CGRectMake(0, 0, 32, 32)];
         [forwardBtn setImage:RCResourceImage(@"forward_message") forState:UIControlStateNormal];
         [forwardBtn addTarget:self action:@selector(forwardMessages) forControlEvents:UIControlEventTouchUpInside];
@@ -3808,6 +3844,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
         [_messageSelectionToolbar setItems:items animated:YES];
         _messageSelectionToolbar.translucent = NO;
+
     }
     return _messageSelectionToolbar;
 }

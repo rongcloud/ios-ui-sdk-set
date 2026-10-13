@@ -57,6 +57,9 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    if (!self.tableView.tableHeaderView) {
+        self.tableView.tableHeaderView = [self getTableViewHeader];
+    }
     self.tableView.tableFooterView = [UIView new];
     self.tableView.backgroundColor = RCDYCOLOR(0xf0f0f6, 0x000000);
     self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
@@ -82,7 +85,7 @@
     //    _serviceProfile.serviceTel=@"1234567891234";
     //    _serviceProfile.histroyMsgUrl=@"http://www.baidu.com";
     //    _serviceProfile.scope=@"互联网/软联网/软件开发";
-    self.tableView.tableHeaderView = [self getTableViewHeader];
+//    self.tableView.tableHeaderView = [self getTableViewHeader];
     //    if (_serviceProfile.followed) {
     //        UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:@"..." style:UIBarButtonItemStylePlain
     //        target:self action:@selector(onOptionButtonPressed)];
