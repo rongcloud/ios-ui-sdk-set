@@ -13,7 +13,6 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCIM.h"
-#import "RCEditedStateUtil.h"
 #define leftLine_width 2
 #define name_and_leftLine_space 4
 #define name_height 17
@@ -23,7 +22,6 @@
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) RCMessageContent *referedContent;
 @property (nonatomic, copy) NSString *referedSenderId;
-@property (nonatomic, assign) RCReferenceMessageStatus referMsgStatus;
 @end
 @implementation RCReferencedContentView
 - (instancetype)init {
@@ -34,7 +32,6 @@
 }
 
 - (void)setMessage:(RCMessageModel *)message contentSize:(CGSize)contentSize {
-    [self removeNotification];
     [self resetReferencedContentView];
     self.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
     self.referModel = message;
@@ -54,7 +51,6 @@
         RCReferenceMessage *content = (RCReferenceMessage *)self.referModel.content;
         self.referedContent = content.referMsg;
         self.referedSenderId = content.referMsgUserId;
-        self.referMsgStatus = content.referMsgStatus;
         return YES;
     } else if ([self.referModel.content isKindOfClass:[RCStreamMessage class]]) {
         RCStreamMessage *content = (RCStreamMessage *)self.referModel.content;
@@ -66,16 +62,6 @@
 }
 
 - (void)setContentInfo {
-    if (self.referMsgStatus == RCReferenceMessageStatusDeleted) {
-        self.textLabel.text = RCLocalizedString(@"ReferencedMessageDeleted");
-    }else if (self.referMsgStatus == RCReferenceMessageStatusRecalled) {
-        self.textLabel.text = RCLocalizedString(@"ReferencedMessageRecalled");
-    }
-    if (self.referMsgStatus == RCReferenceMessageStatusDeleted
-        || self.referMsgStatus == RCReferenceMessageStatusRecalled) {
-        self.textLabel.textColor = [RCEditedStateUtil editedTextColor];
-        return;
-    }
     NSString *messageInfo = @"";
     if ([self.referedContent isKindOfClass:[RCFileMessage class]]) {
         RCFileMessage *msg = (RCFileMessage *)self.referedContent;
@@ -139,43 +125,13 @@
         }
     }
     
-    if (([self.referedContent isKindOfClass:[RCTextMessage class]]
-         || [self.referedContent isKindOfClass:[RCReferenceMessage class]])
-        && self.textLabel.text.length > 0
-        && self.referMsgStatus == RCReferenceMessageStatusModified) {
-        NSString *originalText = self.textLabel.text;
-        UIColor *originalColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xa0a5ab) darkColor:HEXCOLOR(0x999999)];
-        UIColor *editedTextColor = [RCEditedStateUtil editedTextColor];
-        UIFont *font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
-        NSString *displayText = [RCEditedStateUtil displayTextForOriginalText:originalText isEdited:YES];
-        
-        if (displayText.length > originalText.length) {
-            
-            NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:displayText
-                                                                                               attributes:@{
-                NSFontAttributeName: font,
-                NSForegroundColorAttributeName: originalColor
-            }];
-            
-            NSRange originalRange = NSMakeRange(0, originalText.length);
-            NSRange editedRange = NSMakeRange(originalText.length, displayText.length - originalText.length);
-        
-            [attributedText addAttribute:NSForegroundColorAttributeName
-                                       value:[RCEditedStateUtil editedTextColor]
-                                       range:editedRange];
-            self.textLabel.attributedText = attributedText;
-        }
-    }
 }
 
 - (void)setupSubviews {
     [self addSubview:self.leftLimitLine];
     [self addSubview:self.nameLabel];
     [self addSubview:self.contentView];
-    BOOL isDeletedOrRecalled = (self.referMsgStatus == RCReferenceMessageStatusRecalled
-                                || self.referMsgStatus == RCReferenceMessageStatusDeleted);
-    // 删除撤回的图片显示 textLabel
-    if ([self.referedContent isKindOfClass:[RCImageMessage class]] && !isDeletedOrRecalled) {
+    if ([self.referedContent isKindOfClass:[RCImageMessage class]]) {
         [self.contentView addSubview:self.msgImageView];
     } else if ([self.referedContent isKindOfClass:[RCRichContentMessage class]] ||
                [self.referedContent isKindOfClass:[RCFileMessage class]]) {
@@ -244,15 +200,6 @@
                                                object:nil];
 }
 
-- (void)removeNotification {
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                      name:RCKitDispatchUserInfoUpdateNotification
-                                                    object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                      name:RCKitDispatchGroupUserInfoUpdateNotification
-                                                    object:nil];
-}
-
 - (void)didTapContentView:(id)sender {
     if ([self.delegate respondsToSelector:@selector(didTapReferencedContentView:)]) {
         [self.delegate didTapReferencedContentView:self.referModel];
@@ -261,33 +208,25 @@
 
 #pragma mark - UserInfo Update
 - (void)onUserInfoUpdate:(NSNotification *)notification {
-    dispatch_main_async_safe(^{
-        NSDictionary *userInfoDic = notification.object;
-        if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
-            if ([self.referedSenderId isEqualToString:userInfoDic[@"userId"]]) {
-                //重新取一下混合的用户信息
-                [self setUserDisplayName];
-            }
+    NSDictionary *userInfoDic = notification.object;
+    if ([self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        if ([self.referedSenderId isEqualToString:userInfoDic[@"userId"]]) {
+            //重新取一下混合的用户信息
+            [self setUserDisplayName];
         }
-    });
+    }
 }
 
 - (void)onGroupUserInfoUpdate:(NSNotification *)notification {
-    dispatch_main_async_safe(^{
-        if (self.referModel.conversationType == ConversationType_GROUP &&
-            [self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
-            NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
-            if ([self.referModel.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
-                [self.referedSenderId isEqualToString:groupUserInfoDic[@"userId"]]) {
-                //重新取一下混合的用户信息
-                [self setUserDisplayName];
-            }
+    if (self.referModel.conversationType == ConversationType_GROUP &&
+        [self.referModel.content isKindOfClass:[RCReferenceMessage class]]) {
+        NSDictionary *groupUserInfoDic = (NSDictionary *)notification.object;
+        if ([self.referModel.targetId isEqualToString:groupUserInfoDic[@"inGroupId"]] &&
+            [self.referedSenderId isEqualToString:groupUserInfoDic[@"userId"]]) {
+            //重新取一下混合的用户信息
+            [self setUserDisplayName];
         }
-    });
-}
-
-- (void)dealloc {
-    [self removeNotification];
+    }
 }
 
 #pragma mark - Getters and Setters

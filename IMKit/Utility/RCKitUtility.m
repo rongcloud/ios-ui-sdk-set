@@ -320,20 +320,16 @@
 }
 
 + (BOOL)isVisibleMessage:(RCMessage *)message {
-    BOOL isUnkownMessage = [self isUnkownMessage:message.messageId content:message.content];
-    if (isUnkownMessage && RCKitConfigCenter.message.showUnkownMessage) {
+    if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
         return YES;
-    } else  if ([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED) {
+    } else if (!message.content && message.messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;
 }
 
 + (BOOL)isUnkownMessage:(long)messageId content:(RCMessageContent *)content {
-    if([content isKindOfClass:[RCUnknownMessage class]]) {
-        return YES;
-    }
-    if (!content && messageId > 0) {
+    if (!content && messageId > 0 && RCKitConfigCenter.message.showUnkownMessage) {
         return YES;
     }
     return NO;
@@ -596,18 +592,11 @@
                conversation.conversationType == ConversationType_PUBLICSERVICE ||
                conversation.conversationType == ConversationType_Encrypted ||
                conversation.conversationType == ConversationType_SYSTEM) {
-        
-        if ([RCCoreClient sharedCoreClient].getAppSettings.serverSaveUnreadEnabled) {
-            RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc] initWithConversationIdentifier:conversation.conversationType targetId:conversation.targetId channelId:conversation.channelId];
-            
-            [[RCCoreClient sharedCoreClient] markRemoteConversationAsRead:identifier success:nil error:nil];
-        } else {
-            [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
-                                                               targetId:conversation.targetId
-                                                                   time:conversation.sentTime
-                                                                success:nil
-                                                                  error:nil];
-        }
+        [[RCCoreClient sharedCoreClient] syncConversationReadStatus:conversation.conversationType
+                                                         targetId:conversation.targetId
+                                                             time:conversation.sentTime
+                                                          success:nil
+                                                            error:nil];
     }
 }
 

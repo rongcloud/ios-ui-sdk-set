@@ -54,8 +54,6 @@
         }
         self.notificationLevel = conversation.notificationLevel;
         self.firstUnreadMsgSendTime = conversation.firstUnreadMsgSendTime;
-        self.latestMessageUId = conversation.latestMessageUId;
-        self.needReceipt = conversation.latestRCMessage.needReceipt;
     }
     return self;
 }
@@ -84,9 +82,6 @@
             }
         }
     }
-    self.latestMessageUId = message.messageUId;
-    self.needReceipt = message.needReceipt;
-
 }
 
 - (BOOL)hasUnreadMentioned {

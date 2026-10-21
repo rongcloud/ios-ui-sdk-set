@@ -378,9 +378,6 @@
 - (void)didReceiveRecallMessageNotification:(NSNotification *)notification {
     dispatch_async(dispatch_get_main_queue(), ^{
         long recalledMsgId = [notification.object longValue];
-        if (self.currentIndex < 0 || self.currentIndex >= self.messageModelArray.count) {
-            return;
-        }
         RCSightModel *currentModel = self.messageModelArray[self.currentIndex];
         if (recalledMsgId == currentModel.message.messageId) {
             [self didSightMessageRemoveWithCurrentIndex];
@@ -419,9 +416,6 @@
 - (void)didSightMessageRemove:(NSInteger)index {
     if (index >= self.messageModelArray.count) return;
     [self.messageModelArray removeObjectAtIndex:index];
-    if (index < self.currentIndex) {
-        self.currentIndex -= 1;
-    }
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     [self.collectionView performBatchUpdates:^{
         [self.collectionView deleteItemsAtIndexPaths:@[indexPath]];

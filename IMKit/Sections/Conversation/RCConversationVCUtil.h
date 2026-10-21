@@ -10,7 +10,7 @@
 #import "RCMessageCellNotificationModel.h"
 #import <RongIMLibCore/RongIMLibCore.h>
 
-@class RCConversationViewController,RCMessageModel,RCEditInputBarConfig;
+@class RCConversationViewController,RCMessageModel;
 
 @interface RCConversationVCUtil : NSObject
 - (instancetype)init:(RCConversationViewController *)chatVC;
@@ -62,12 +62,8 @@
 
 
 /// 根据消息ID获取model
-/// - Parameter messageID
+/// - Parameter messageID: <#messageID description#>
 - (RCMessageModel *)modelByMessageID:(NSInteger)messageID;
-
-/// 根据消息 UId 获取页面中的 model
-- (RCMessageModel *)modelByMessageUId:(NSString *)messageUId;
-
 #pragma mark - Util
 //保存草稿
 - (void)saveDraftIfNeed;
@@ -77,30 +73,5 @@
 - (RCInformationNotificationMessage *)getInfoNotificationMessageByErrorCode:(RCErrorCode)errorCode;
 
 + (CGFloat)incrementOfTimeLabelBy:(RCMessageModel *)model;
-
-#pragma mark - Edit
-
-/**
- * 判断消息是否可以编辑
- * @param model 消息模型
- * @return 是否可以编辑
- */
-- (BOOL)isMessageEditable:(RCMessageModel *)model;
-
-/// 判断消息编辑时间是否过期
-- (BOOL)isEditTimeValid:(long long)sentTime;
-
-/// 保存编辑状态
-/// @param stateData 状态数据
-/// @param model 编辑的消息模型
-- (void)saveEditingStateWithEditConfig:(RCEditInputBarConfig *)config;
-
-/// 获取编辑状态
-/// @param completion 完成回调，包含消息模型和状态数据
-- (RCEditInputBarConfig *)getCacheEditConfig;
-
-/// 清理编辑状态
-- (void)clearEditingState;
-
 @end
 

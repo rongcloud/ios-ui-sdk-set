@@ -45,7 +45,6 @@ NSString *const RCKitDispatchConversationStatusChangeNotification =
     @"RCKitDispatchConversationStatusChangeNotification";
 NSString *const RCKitDispatchConversationDraftUpdateNotification =
     @"RCKitDispatchConversationDraftUpdateNotification";
-NSString *const RCKitDispatchMessagesModifiedNotification = @"RCKitDispatchMessagesModifiedNotification";
 
 @interface RCIM () <RCIMClientReceiveMessageDelegate, RCConnectionStatusChangeDelegate, RCMessageDestructDelegate,
                     RCConversationStatusChangeDelegate>
@@ -58,7 +57,7 @@ NSString *const RCKitDispatchMessagesModifiedNotification = @"RCKitDispatchMessa
 @end
 
 static RCIM *__rongUIKit = nil;
-static NSString *const RCIMKitVersion = @"5.20.0.111_opensource";
+static NSString *const RCIMKitVersion = @"5.21.4_opensource";
 @implementation RCIM
 
 + (instancetype)sharedRCIM {
@@ -467,7 +466,6 @@ static NSString *const RCIMKitVersion = @"5.20.0.111_opensource";
     if (!([[message.content class] persistentFlag] & MessagePersistent_ISPERSISTED)) {
         return YES;
     }
-    
     BOOL isUnkownMessage = [RCKitUtility isUnkownMessage:message.messageId content:message.content];
     // 未知消息不展示通知时，不提醒
     if (!RCKitConfigCenter.message.showUnkownMessageNotificaiton && isUnkownMessage) {
@@ -840,7 +838,7 @@ static NSString *const RCIMKitVersion = @"5.20.0.111_opensource";
     [self attachCurrentUserInfo:content];
 
     RCMessage *message = [[RCMessage alloc] initWithType:conversationType targetId:targetId direction:MessageDirection_SEND content:content];
-    message.needReceipt = YES;
+    
     // 查看是否拦截发送
     if ([self beforeInterceptSendMessage:message]) {
         return nil;
@@ -1474,15 +1472,6 @@ static NSString *const RCIMKitVersion = @"5.20.0.111_opensource";
             [self.messageInterceptor interceptDidSendMessage:fullMessage];
         });
     }
-}
-
-#pragma mark - 消息编辑
-
-- (void)onMessagesModified:(NSArray<RCMessage *> *)messages {
-    // 发送通知
-    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchMessagesModifiedNotification
-                                                        object:messages
-                                                      userInfo:nil];
 }
 
 #pragma mark - 消息阅后即焚

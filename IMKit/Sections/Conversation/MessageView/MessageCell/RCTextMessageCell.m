@@ -14,8 +14,6 @@
 #import "RCMessageCellTool.h"
 #import "RCKitConfig.h"
 #import "RCCoreClient+Destructing.h"
-#import "RCAttributedLabel+EditedState.h"
-#import "RCMessageCell+EditStatus.h"
 #define TEXT_SPACE_LEFT 12
 #define TEXT_SPACE_RIGHT 12
 #define TEXT_SPACE_TOP 9.5
@@ -57,7 +55,7 @@
          referenceExtraHeight:(CGFloat)extraHeight {
     CGFloat __messagecontentview_height = [self getMessageContentHeight:model];
     __messagecontentview_height += extraHeight;
-    __messagecontentview_height += [self edit_editStatusBarHeightWithModel:model];
+
     return CGSizeMake(collectionViewWidth, __messagecontentview_height);
 }
 
@@ -171,11 +169,10 @@
     }
     
     if (textMessage.destructDuration > 0 && self.model.messageDirection == MessageDirection_RECEIVE && !numDuration) {
-        // 统一调用 edit_setTextWithEditedState 设置文本，防止重复出现问题
-        [self.textLabel edit_setTextWithEditedState:RCLocalizedString(@"ClickToView") isEdited:NO];
-    } else if (textMessage){
-        [self.textLabel edit_setTextWithEditedState:textMessage.content isEdited:self.model.hasChanged];
-    } else {
+        self.textLabel.text = RCLocalizedString(@"ClickToView");
+    }else if(textMessage){
+        self.textLabel.text = textMessage.content;
+    }else{
         DebugLog(@"[RongIMKit]: RCMessageModel.content is NOT RCTextMessage object");
     }
 }
@@ -288,8 +285,9 @@
                              constrainedSize:CGSizeMake(textMaxWidth, 80000)];
         textMessageSize.width += 20;
     } else {
-        UIFont *font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-        textMessageSize = [RCEditedStateUtil sizeForText:textMessage.content isEdited:model.hasChanged font:font constrainedSize:CGSizeMake(textMaxWidth, 80000)];
+        textMessageSize = [RCKitUtility getTextDrawingSize:textMessage.content
+                                                       font:[[RCKitConfig defaultConfig].font fontOfSecondLevel]
+                                            constrainedSize:CGSizeMake(textMaxWidth, 80000)];
     }
     if (textMessageSize.width > textMaxWidth) {
         textMessageSize.width = textMaxWidth;
