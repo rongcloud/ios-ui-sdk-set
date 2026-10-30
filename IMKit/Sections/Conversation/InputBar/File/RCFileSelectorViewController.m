@@ -46,8 +46,9 @@ static NSString *const RCListValue = @"List";
     //控制多选
     self.tableView.allowsMultipleSelection = YES;
     //分割线的颜色
-    self.tableView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);
-    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
+    self.tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
+
 
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)]) {
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 45, 0, 0)];
@@ -57,7 +58,7 @@ static NSString *const RCListValue = @"List";
     }
 
     self.navigationItem.title = RCLocalizedString(@"SendFile");
-    UIImage *imgMirror = RCResourceImage(@"navigator_btn_back");
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
     if (self.isSubDirectory) {
         self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
@@ -82,9 +83,15 @@ static NSString *const RCListValue = @"List";
     [super viewWillAppear:animated];
     [self.tableView reloadData];
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    UIColor *color = [RCKitUtility
-                      generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
-                                 darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
+    UIColor *color = nil;
+    if ([RCKitUtility isTraditionInnerThemes]) {
+        color = [RCKitUtility
+                          generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
+                                     darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
+    } else {
+        color = RCDynamicColor(@"primary_color", @"0x9fcdfd", @"0x666666");
+    }
+
     [btn setTitleColor:color forState:UIControlStateNormal];
     [btn addTarget:self
             action:@selector(clickDoneBtn:)
@@ -275,14 +282,19 @@ static NSString *const RCListValue = @"List";
         self.navigationItem.rightBarButtonItem.enabled = YES;
         NSString *title = [RCLocalizedString(@"Confirm")
             stringByAppendingString:[NSString stringWithFormat:@"(%ld/20)", (long)indexPaths.count]];
-        UIColor *color = RCResourceColor(@"confirm_text_enable", @"0x0099ff");
+        UIColor *color = RCDynamicResourceColor(@"primary_color", @"confirm_text_enable", @"0x0099ff");
         [self.buttonDone setTitleColor:color forState:UIControlStateNormal];
         [self.buttonDone setTitle: title forState:UIControlStateNormal];
         
     } else {
-        UIColor *color = [RCKitUtility
-            generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
-                       darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
+        UIColor *color = nil;
+        if ([RCKitUtility isTraditionInnerThemes]) {
+            color = [RCKitUtility
+                              generateDynamicColor:RCResourceColor(@"fileSelect_confirm_text", @"0x9fcdfd")
+                                         darkColor:RCResourceColor(@"fileSelect_confirm_text_dark", @"0x666666")];
+        } else {
+            color = RCDynamicColor(@"primary_color", @"0x9fcdfd", @"0x666666");
+        }
         self.navigationItem.rightBarButtonItem.enabled = NO;
         [self.buttonDone setTitleColor:color forState:UIControlStateNormal];
         [self.buttonDone setTitle: RCLocalizedString(@"Confirm") forState:UIControlStateNormal];

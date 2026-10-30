@@ -75,9 +75,7 @@ static NSString *const cellReuseIdentifier = @"cell";
 - (void)setNavigationItem{
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
     btn.titleLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-    UIColor *color = [RCKitUtility
-                       generateDynamicColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")
-                       darkColor:RCResourceColor(@"photoPicker_cancel", @"0x0099ff")];
+    UIColor *color = RCDynamicResourceColor(@"primary_color", @"photoPicker_cancel", @"0x0099ff");
     [btn setTitleColor:color forState:UIControlStateNormal];
     [btn addTarget:self
             action:@selector(dismissCurrentModelViewController)
@@ -93,8 +91,8 @@ static NSString *const cellReuseIdentifier = @"cell";
     self.tableView.tableFooterView = [[UIView alloc] init];
     self.tableView.rowHeight = 65.0f;
     self.tableView.tableFooterView = [UIView new];
-    self.tableView.backgroundColor = RCDYCOLOR(0xf5f6f9, 0x111111);
-    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
+    self.tableView.separatorColor = RCDynamicColor(@"line_background_color", @"0xE3E5E6", @"0x272727");
     self.tableView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)]) {
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
@@ -339,7 +337,7 @@ static NSString *const cellReuseIdentifier = @"cell";
         _tipsLabel.textAlignment = NSTextAlignmentCenter;
         _tipsLabel.numberOfLines = 0;
         _tipsLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
-        _tipsLabel.textColor = [UIColor blackColor];
+        _tipsLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x000000");
         _tipsLabel.text = RCLocalizedString(@"PhotoAccessRight");
         [self.view addSubview:_tipsLabel];
         _tipsLabel.hidden = YES;

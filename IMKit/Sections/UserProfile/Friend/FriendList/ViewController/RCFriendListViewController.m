@@ -9,7 +9,7 @@
 #import "RCFriendListView.h"
 #import "RCKitCommonDefine.h"
 #import "RCAlertView.h"
-
+#import "RCPaddingTableViewCell.h"
 @interface RCFriendListViewController ()<UITableViewDelegate, UITableViewDataSource,RCListViewModelResponder>
 
 @property (nonatomic, strong) RCFriendListViewModel *viewModel;
@@ -95,13 +95,17 @@
     return [self.viewModel numberOfRowsInSection:section];
 }
 
-
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return  [self.viewModel tableView:tableView cellForRowAtIndexPath:indexPath];
+    UITableViewCell *cell =  [self.viewModel tableView:tableView cellForRowAtIndexPath:indexPath];
+    if ([cell isKindOfClass:[RCPaddingTableViewCell class]]) {
+        RCPaddingTableViewCell *paddingCell = (RCPaddingTableViewCell *)cell;
+        [paddingCell updatePaddingContainer:RCUserManagementPadding trailing:-1];
+    }
+    return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 56;
+    return RCUserManagementCellHeight;
 }
 
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {

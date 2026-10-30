@@ -45,11 +45,15 @@
 #import <RongIMKit/RCVoiceMessageCell.h>
 #import <RongIMKit/RCReferenceMessageCell.h>
 #import <RongIMKit/RCReferencedContentView.h>
+#import <RongIMKit/RCReferenceInputBarView.h>
 #import <RongIMKit/RCReferencingView.h>
+#import <RongIMKit/RCMessageCellReferenceContentView.h>
 #import <RongIMKit/RCMessageCellTool.h>
 #import <RongIMKit/RCHQVoiceMessageCell.h>
 #import <RongIMKit/RCComplexTextMessageCell.h>
 #import <RongIMKit/RCStreamMessageCell.h>
+#import <RongIMKit/RCMessageReactionManager.h>
+#import <RongIMKit/RCMessageReactionUsageInfo.h>
 
 /// 工具类
 #import <RongIMKit/RCKitUtility.h>
@@ -177,6 +181,34 @@
 #import <RongIMKit/RCSearchGroupsViewController.h>
 #import <RongIMKit/RCMyGroupsView.h>
 
+// STT
+#import <RongIMKit/RCSTTContentViewModel.h>
+
+// RRS
+#import <RongIMKit/RCMessageReadDetailViewController.h>
+#import <RongIMKit/RCMessageReadDetailViewConfig.h>
+#import <RongIMKit/RCMessageReadDetailViewModel.h>
+#import <RongIMKit/RCMessageReadDetailCellViewModel.h>
+#import <RongIMKit/RCMessageReadDetailView.h>
+#import <RongIMKit/RCMessageReadDetailTabView.h>
+#import <RongIMKit/RCMessageReadDetailDefine.h>
+
+//New Skin
+#import <RongIMKit/RCIMKitTheme.h>
+#import <RongIMKit/RCIMKitThemeManager.h>
+#import <RongIMKit/RCMenuItem.h>
+
+#import <RongIMKit/RCOnlineStatusView.h>
+
+#import <RongIMKit/RCGroupMemberAdditionalCellViewModel.h>
+#import <RongIMKit/RCGroupMemberAdditionalCell.h>
+#import <RongIMKit/RCPaddingTableViewCell.h>
+#import <RongIMKit/RCSizeCalculateLabel.h>
+#import <RongIMKit/RCSearchBarListView.h>
+#import <RongIMKit/RCSelectUserView.h>
+#import <RongIMKit/RCGroupMentionViewModel.h>
+#import <RongIMKit/RCGroupMentionViewController.h>
+#import <RongIMKit/RCStackTableViewCell.h>
 #else
 /// IMKit核心类
 #import "RCIM.h"
@@ -213,11 +245,15 @@
 #import "RCVoiceMessageCell.h"
 #import "RCReferenceMessageCell.h"
 #import "RCReferencedContentView.h"
+#import "RCReferenceInputBarView.h"
 #import "RCReferencingView.h"
+#import "RCMessageCellReferenceContentView.h"
 #import "RCMessageCellTool.h"
 #import "RCHQVoiceMessageCell.h"
 #import "RCComplexTextMessageCell.h"
 #import "RCStreamMessageCell.h"
+#import "RCMessageReactionManager.h"
+#import "RCMessageReactionUsageInfo.h"
 
 
 /// 工具类
@@ -350,4 +386,32 @@
 #import "RCSearchGroupsViewController.h"
 #import "RCMyGroupsView.h"
 
+// STT
+#import "RCSTTContentViewModel.h"
+
+// RRS
+#import "RCMessageReadDetailViewController.h"
+#import "RCMessageReadDetailViewConfig.h"
+#import "RCMessageReadDetailViewModel.h"
+#import "RCMessageReadDetailCellViewModel.h"
+#import "RCMessageReadDetailView.h"
+#import "RCMessageReadDetailTabView.h"
+#import "RCMessageReadDetailDefine.h"
+
+// New Skin
+#import "RCIMKitTheme.h"
+#import "RCIMKitThemeManager.h"
+#import "RCMenuItem.h"
+
+#import "RCOnlineStatusView.h"
+
+#import "RCGroupMemberAdditionalCellViewModel.h"
+#import "RCGroupMemberAdditionalCell.h"
+#import "RCPaddingTableViewCell.h"
+#import "RCSizeCalculateLabel.h"
+#import "RCSearchBarListView.h"
+#import "RCSelectUserView.h"
+#import "RCGroupMentionViewModel.h"
+#import "RCGroupMentionViewController.h"
+#import "RCStackTableViewCell.h"
 #endif

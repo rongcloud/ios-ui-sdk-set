@@ -8,6 +8,11 @@
 
 #ifndef RCConversationViewController_internal_h
 #define RCConversationViewController_internal_h
+
+@class RCConversationVCUtil;
+@class RCConversationCSUtil;
+@class RCConversationCollectionViewHeader;
+
 @interface RCConversationViewController ()
 @property (nonatomic, strong, readonly) RCConversationVCUtil *util;
 @property (nonatomic, strong, readonly) RCConversationCSUtil *csUtil;
@@ -20,6 +25,7 @@
 - (void)updateForMessageSendSuccess:(RCMessage *)message;
 - (void)fetchPublicServiceProfile;
 - (void)setupUnReadMessageView;
+- (void)updateMessageReactionSummaries:(NSDictionary<NSString *, NSArray<RCMessageReaction *> *> *)reactionsMap;
 @end
 
 #endif /* RCConversationViewController_internal_h */

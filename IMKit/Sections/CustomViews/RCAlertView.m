@@ -105,7 +105,7 @@
         }
         if (confirmTitle.length > 0) {
             UIAlertAction *action = [UIAlertAction actionWithTitle:confirmTitle
-              style:UIAlertActionStyleDefault
+              style:UIAlertActionStyleDestructive
             handler:^(UIAlertAction *_Nonnull action) {
                 if (confirmBlock) {
                     confirmBlock();

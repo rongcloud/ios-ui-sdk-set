@@ -82,7 +82,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.navigationController.view.backgroundColor = RCDYCOLOR(0xffffff, 0x191919);
+    self.navigationController.view.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x191919");
     self.navigationController.navigationBar.translucent = NO;
     if (!self.mapViewContainer) {
         [self loadMapViewContainer];
@@ -92,7 +92,7 @@
         self.title = RCLocalizedString(@"PickLocation");
     }
     self.mapView = [self.dataSource mapView];
-    self.mapView.layer.shadowColor = [UIColor colorWithWhite:0.0f alpha:0.6f].CGColor;
+    self.mapView.layer.shadowColor = RCDynamicColor(@"mask_color", @"0x00000099", @"0x00000099").CGColor;
     self.mapView.layer.shadowRadius = 3.0f;
     self.mapView.clipsToBounds = NO;
     self.mapView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -115,8 +115,9 @@
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
-    self.tableView.backgroundColor = RCDYCOLOR(0xffffff, 0x000000);
-    self.tableView.separatorColor = RCDYCOLOR(0xE3E5E6, 0x272727);
+    self.tableView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x000000");
+    self.tableView.separatorColor =
+    RCDynamicColor(@"line_background_color", @"0xe3e5e6", @"0x272727");
     self.tableView.tableFooterView = [UIView new];
     [self.view addSubview:self.tableView];
 
@@ -213,15 +214,14 @@
     }
     id placeMark = [self.pois objectAtIndex:indexPath.row];
     cell.textLabel.text = [self.dataSource titleOfPlaceMark:placeMark];
-    cell.textLabel.textColor = RCDYCOLOR(0x000000, 0x9f9f9f);
+    cell.textLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x000000", @"0x9f9f9f");
     cell.textLabel.adjustsFontSizeToFitWidth = YES;
     if (indexPath.row == self.currentSelectedPoi) {
         cell.accessoryType = UITableViewCellAccessoryCheckmark;
     } else {
         cell.accessoryType = UITableViewCellAccessoryNone;
     }
-    cell.backgroundColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0xffffff)
-                                                          darkColor:[HEXCOLOR(0x1c1c1e) colorWithAlphaComponent:0.4]];
+    cell.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x1c1c1c66");
     if([RCKitUtility isRTL]){
         cell.textLabel.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
     }else{

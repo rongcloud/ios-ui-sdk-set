@@ -44,6 +44,12 @@
     }
     [self configureSearchBar];
     [self configureRightNaviItems];
+    UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(leftBarButtonItemPressed)];
+}
+
+- (void)leftBarButtonItemPressed {
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 - (void)configureSearchBar {
@@ -93,7 +99,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 56;
+    return RCUserManagementCellHeight;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {

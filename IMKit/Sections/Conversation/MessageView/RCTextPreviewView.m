@@ -11,11 +11,14 @@
 #import "RCKitCommonDefine.h"
 #import "RCMessageCellTool.h"
 #import "RCAlertView.h"
+#import "RCTextPreviewView+Edit.h"
+#import "RCMenuItem.h"
 
 @interface RCTextPreviewView()<RCAttributedLabelDelegate>
 @property (nonatomic, strong) RCAttributedLabel *label;
 @property (nonatomic, weak) id<RCTextPreviewViewDelegate> textPreviewDelegate;
 @property (nonatomic, assign) long messageId;
+@property (nonatomic, copy) NSString *originalText;
 @end
 @implementation RCTextPreviewView
 + (void)showText:(NSString *)text messageId:(long)messageId delegate:(nonnull id<RCTextPreviewViewDelegate>)delegate{
@@ -26,7 +29,7 @@
 
 - (instancetype)initWithFrame:(CGRect)frame text:(NSString *)text  messageId:(long)messageId {
     if (self = [super initWithFrame:frame]) {
-        self.backgroundColor = RCDYCOLOR(0xffffff, 0x111111);
+        self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x111111");
         CGFloat textHeight = [RCKitUtility getTextDrawingSize:text font:[UIFont systemFontOfSize:20] constrainedSize:CGSizeMake(SCREEN_WIDTH-20, MAXFLOAT)].height;
         textHeight = ceilf(textHeight)+20;
         self.contentSize = CGSizeMake(SCREEN_WIDTH, textHeight);
@@ -113,7 +116,8 @@
             [label becomeFirstResponder];
             
             // 创建和显示 menu
-            UIMenuItem *copyItem = [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Copy") action:@selector(copyAction)];
+            UIMenuItem *copyItem = [[UIMenuItem alloc] initWithTitle:RCLocalizedString(@"Copy")
+                                                              action:@selector(copyAction)];
             [[UIMenuController sharedMenuController] setMenuItems:[NSArray arrayWithObject:copyItem]];
             // 设置frame和添加到的视图
             [[UIMenuController sharedMenuController] setTargetRect:label.frame inView:self];
@@ -126,7 +130,13 @@
 // copy 按钮点击事件
 - (void)copyAction {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = self.label.text;
+    NSString *labelText = self.label.text;
+    NSString *copyText = [self edit_copyText];
+    if (copyText.length > 0 && ![copyText isEqualToString:labelText]) {
+        pasteboard.string = copyText;
+    } else {
+        pasteboard.string = labelText;
+    }
     [self.label resignFirstResponder];
 }
 
@@ -135,7 +145,7 @@
         CGFloat textY = self.contentSize.height < SCREEN_HEIGHT ? (SCREEN_HEIGHT - self.contentSize.height )/2 : 0;
         _label = [[RCAttributedLabel alloc] initWithFrame:CGRectMake(10, textY, SCREEN_WIDTH-20, self.contentSize.height)];
         _label.numberOfLines = 0;
-        _label.textColor = [RCKitUtility generateDynamicColor:HEXCOLOR(0x111f2c) darkColor:RCMASKCOLOR(0xffffff, 0.8)];
+        _label.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
         _label.font = [UIFont systemFontOfSize:20];
         _label.textAlignment = NSTextAlignmentCenter;
         _label.attributeDictionary = [RCMessageCellTool getTextLinkOrPhoneNumberAttributeDictionary:MessageDirection_RECEIVE   ];

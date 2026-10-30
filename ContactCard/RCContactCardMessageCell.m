@@ -68,22 +68,20 @@
     } else {
         self.portraitView.layer.cornerRadius = 5.f;
     }
-    [self.portraitView
-        setPlaceholderImage:[RCCCUtilities imageNamed:@"default_portrait_msg" ofBundle:@"RongCloud.bundle"]];
+    [self.portraitView setPlaceholderImage:RCDynamicImage(@"conversation-list_cell_portrait_msg_img",@"default_portrait_msg")];
+
 
     //昵称label
     self.nameLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     [self.nameLabel setFont:[UIFont systemFontOfSize:17.f]];
     [self.messageContentView addSubview:self.nameLabel];
     self.nameLabel.translatesAutoresizingMaskIntoConstraints = YES;
-    self.nameLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"262626" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.8]];
+    self.nameLabel.textColor =  RCDynamicColor(@"text_primary_color", @"0x262626", @"0xffffffcc");
     self.nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
 
     //分割线
     self.separationView = [[UIView alloc] initWithFrame:CGRectZero];
-    self.separationView.backgroundColor =
-        [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"ededed" alpha:1]
-                                 darkColor:[UIColor colorWithHexString:@"373737" alpha:1]];
+    self.separationView.backgroundColor = RCDynamicColor(@"line_background_color", @"0xededed", @"0x373737");
     self.separationView.translatesAutoresizingMaskIntoConstraints = YES;
     [self.messageContentView addSubview:self.separationView];
 
@@ -91,7 +89,7 @@
     self.typeLabel = [[RCBaseLabel alloc] initWithFrame:CGRectZero];
     self.typeLabel.text = RCLocalizedString(@"ContactCard");
     self.typeLabel.font = [UIFont systemFontOfSize:12.f];
-    self.typeLabel.textColor = [RCKitUtility generateDynamicColor:[UIColor colorWithHexString:@"939393" alpha:1] darkColor:[UIColor colorWithHexString:@"ffffff" alpha:0.4]];
+    self.typeLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x939393", @"0xffffff66");
     [self.messageContentView addSubview:self.typeLabel];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
