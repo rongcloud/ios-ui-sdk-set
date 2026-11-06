@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCCommonPhrasesCell : RCBaseTableViewCell
 
-+ (CGFloat)heightForCommonPhrasesCell:(NSString *)text;
++ (CGFloat)heightForCommonPhrasesCell:(NSString *)text width:(CGFloat)width;
 
 - (void)setLableText:(NSString *)lableText;
 

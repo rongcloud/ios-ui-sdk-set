@@ -23,6 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable RCFriendInfo *)friendWithUserId:(NSString *)userId
                               inFriendInfos:(NSArray<RCFriendInfo *> *)friendInfos;
 
+/// 格式化群操作失败用户名称，按当前语言处理连接符。
++ (nullable NSString *)groupLimitExceededMemberNames:(nullable NSArray<RCGroupMemberInfo *> *)members;
+
 @end
 
 NS_ASSUME_NONNULL_END

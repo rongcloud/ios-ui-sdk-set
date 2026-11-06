@@ -15,8 +15,6 @@
 #import "RCPhotoPickImageView.h"
 #import "RCAlertView.h"
 #import "RCBaseButton.h"
-#define WIDTH (([UIScreen mainScreen].bounds.size.width - 20) / 4)
-#define SIZE CGSizeMake(WIDTH, WIDTH)
 
 @interface RCPhotoPickerCollectCell ()
 @property (nonatomic, strong) RCAssetModel *assetModel;
@@ -70,9 +68,10 @@
     self.representedAssetIdentifier = modelIdentifier;
     
     // 获取缩略图
+    CGFloat scale = self.traitCollection.displayScale;
     [[RCAssetHelper shareAssetHelper]
         getThumbnailWithAsset:model.asset
-                         size:CGSizeMake((WIDTH * SCREEN_SCALE), (WIDTH * SCREEN_SCALE))
+                         size:CGSizeMake(self.bounds.size.width * scale, self.bounds.size.height * scale)
                        result:^(UIImage *thumbnailImage) {
         dispatch_main_async_safe(^{
             self.thumbnailImage = thumbnailImage;
@@ -204,6 +203,7 @@
 - (RCPhotoPickImageView *)photoImageView{
     if (!_photoImageView) {
         _photoImageView = [[RCPhotoPickImageView alloc] initWithFrame:self.bounds];
+        _photoImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _photoImageView.contentMode = UIViewContentModeScaleAspectFill;
         UITapGestureRecognizer *tap =
                     [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapPhotoImageView)];

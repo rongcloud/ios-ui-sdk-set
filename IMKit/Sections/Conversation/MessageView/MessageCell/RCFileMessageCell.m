@@ -68,8 +68,7 @@ static CGFloat RCFileMessageBodyCardWidth(RCMessageModel *model, CGFloat maxWidt
     return MIN(MAX(width, MIN(FILE_CONTENT_MIN_WIDTH, maxWidth)), maxWidth);
 }
 
-static CGFloat RCFileMessageQuoteBubbleWidth(RCMessageModel *model) {
-    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+static CGFloat RCFileMessageQuoteBubbleWidth(RCMessageModel *model, CGFloat maxBubbleWidth) {
     CGFloat maxContentWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
     CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model
                                                                                maxWidth:maxContentWidth];
@@ -131,6 +130,12 @@ static UIImage *RCFileMessageResizableBubbleImage(UIImage *image) {
     // 有引用卡片时增加内容体与卡片之间的间距
     if (showsQuoteCard) {
         __messagecontentview_height += RCFileMessageQuoteBodyTopSpacing() + QUOTE_BODY_BOTTOM_SPACING;
+        CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:collectionViewWidth];
+        CGFloat bubbleWidth = RCFileMessageQuoteBubbleWidth(model, maxBubbleWidth);
+        CGFloat originalQuoteHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model
+                                                                                   maxWidth:[RCMessageCellTool getMessageContentViewMaxWidth]];
+        // extraHeight 中的引用高度按屏幕宽度计算，替换为当前消息列宽下的高度。
+        extraHeight += RCFileMessageQuoteContentOffset(model, bubbleWidth) - originalQuoteHeight - RCQuoteCardTopMargin;
     } else if ([model rc_hasVisibleReactions]) {
         __messagecontentview_height += FILE_REACTION_CARD_VERTICAL_INSET * 2;
     }
@@ -263,7 +268,9 @@ static UIImage *RCFileMessageResizableBubbleImage(UIImage *image) {
     BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
     BOOL usesReactionContainer = !showsQuoteCard && [self.model rc_hasVisibleReactions];
     BOOL usesInnerFileCard = showsQuoteCard || usesReactionContainer;
-    CGFloat bubbleWidth = showsQuoteCard ? RCFileMessageQuoteBubbleWidth(self.model) : [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat containerWidth = self.hostCollectionView ? CGRectGetWidth(self.hostCollectionView.bounds) : CGRectGetWidth(self.bounds);
+    CGFloat maxBubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:containerWidth];
+    CGFloat bubbleWidth = showsQuoteCard ? RCFileMessageQuoteBubbleWidth(self.model, maxBubbleWidth) : maxBubbleWidth;
     CGFloat quoteOffset = showsQuoteCard ? RCFileMessageQuoteContentOffset(self.model, bubbleWidth) : 0;
     CGFloat bodyOffset = showsQuoteCard ? RCFileMessageQuoteBodyTopSpacing() : 0;
     CGFloat verticalInset = usesReactionContainer ? FILE_REACTION_CARD_VERTICAL_INSET : 0;
@@ -427,7 +434,8 @@ static UIImage *RCFileMessageResizableBubbleImage(UIImage *image) {
 - (void)updateFileContainerLayoutIfNeeded {
     BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
     BOOL usesReactionContainer = !showsQuoteCard && [self.model rc_hasVisibleReactions];
-    if (!usesReactionContainer || CGRectIsEmpty(self.fileContainerView.frame)) {
+    BOOL usesInnerFileCard = showsQuoteCard || usesReactionContainer;
+    if (CGRectIsEmpty(self.fileContainerView.frame)) {
         return;
     }
     CGFloat contentWidth = CGRectGetWidth(self.messageContentView.bounds);
@@ -435,10 +443,8 @@ static UIImage *RCFileMessageResizableBubbleImage(UIImage *image) {
         return;
     }
     CGRect frame = self.fileContainerView.frame;
-    frame.origin.x = FILE_CONTENT_HORIZONTAL_INSET;
-    frame.origin.y = FILE_REACTION_CARD_VERTICAL_INSET;
-    frame.size.width = MAX(contentWidth - FILE_CONTENT_HORIZONTAL_INSET * 2, 0);
-    frame.size.height = FILE_CONTENT_HEIGHT;
+    frame.origin.x = usesInnerFileCard ? FILE_CONTENT_HORIZONTAL_INSET : 0;
+    frame.size.width = MAX(contentWidth - frame.origin.x * 2, 0);
     self.fileContainerView.frame = frame;
 }
 

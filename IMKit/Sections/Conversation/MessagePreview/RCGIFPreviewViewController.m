@@ -40,6 +40,16 @@
     [self registerNotificationCenter];
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    CGRect contentRect = self.view.bounds;
+    if (@available(iOS 11.0, *)) {
+        contentRect = UIEdgeInsetsInsetRect(contentRect, self.view.safeAreaInsets);
+    }
+    self.gifView.frame = contentRect;
+}
+
 #pragma mark - 数据处理
 - (void)configModel {
     if (!self.messageModel && !self.messageModel.content) {
@@ -200,22 +210,10 @@
     [RCAlertView showAlertController:title message:message cancelTitle:cancelTitle inViewController:self];
 }
 
-- (CGFloat)getSafeAreaExtraBottomHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].bottom;
-}
-
-- (CGFloat)getDeviceNavBarHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].top;
-}
-
 #pragma mark - Getter & Setter
 - (RCGIFImageView *)gifView {
     if (!_gifView) {
-        CGRect viewFrame = self.view.bounds;
-        CGFloat homeBarHeight = [self getSafeAreaExtraBottomHeight];
-        CGFloat NavBarHeight = [self getDeviceNavBarHeight];
-        _gifView = [[RCGIFImageView alloc]
-            initWithFrame:CGRectMake(0, 0, viewFrame.size.width, viewFrame.size.height - NavBarHeight - homeBarHeight)];
+        _gifView = [[RCGIFImageView alloc] initWithFrame:CGRectZero];
         _gifView.userInteractionEnabled = YES;
         _gifView.contentMode = UIViewContentModeScaleAspectFit;
     }

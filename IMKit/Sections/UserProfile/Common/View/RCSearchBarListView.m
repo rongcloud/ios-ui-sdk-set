@@ -39,10 +39,16 @@
     [outer addSubview:inner];
     [inner addSubview:bar];
     // 创建水平约束并降低优先级，避免在 tableFooterView 中宽度为 0 时冲突
-    NSLayoutConstraint *leadingConstraint = [inner.leadingAnchor constraintEqualToAnchor:outer.leadingAnchor constant:RCUserManagementViewPadding];
+    NSLayoutXAxisAnchor *leadingAnchor = outer.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = outer.trailingAnchor;
+    if (@available(iOS 11.0, *)) {
+        leadingAnchor = outer.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = outer.safeAreaLayoutGuide.trailingAnchor;
+    }
+    NSLayoutConstraint *leadingConstraint = [inner.leadingAnchor constraintEqualToAnchor:leadingAnchor constant:RCUserManagementViewPadding];
     leadingConstraint.priority = UILayoutPriorityDefaultHigh; // 750
     
-    NSLayoutConstraint *trailingConstraint = [inner.trailingAnchor constraintEqualToAnchor:outer.trailingAnchor constant:-RCUserManagementViewPadding];
+    NSLayoutConstraint *trailingConstraint = [inner.trailingAnchor constraintEqualToAnchor:trailingAnchor constant:-RCUserManagementViewPadding];
     trailingConstraint.priority = UILayoutPriorityDefaultHigh; // 750
 
     NSLayoutConstraint *heightConstraint = [inner.heightAnchor constraintEqualToConstant:barHeight];
@@ -79,9 +85,11 @@
 - (void)setupConstraints {
     [super setupConstraints];
     
-    NSLayoutAnchor *topAnchor;
+    NSLayoutYAxisAnchor *topAnchor;
+    NSLayoutXAxisAnchor *emptyCenterXAnchor = self.centerXAnchor;
     if (@available(iOS 11.0, *)) {
         topAnchor = self.safeAreaLayoutGuide.topAnchor;
+        emptyCenterXAnchor = self.safeAreaLayoutGuide.centerXAnchor;
     } else {
         topAnchor = self.topAnchor;
     }
@@ -93,7 +101,7 @@
         [self.contentStackView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
         
         [self.labEmpty.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-        [self.labEmpty.centerXAnchor constraintEqualToAnchor:self.centerXAnchor]
+        [self.labEmpty.centerXAnchor constraintEqualToAnchor:emptyCenterXAnchor]
     ]];
 }
 

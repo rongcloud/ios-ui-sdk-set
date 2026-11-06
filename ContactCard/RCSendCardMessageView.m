@@ -36,6 +36,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 
 @property (nonatomic, assign) NSInteger destructDuration;
 @property (nonatomic, strong) RCBaseImageView *arrow;
+@property (nonatomic, assign) CGRect keyboardFrame;
 @end
 
 @implementation RCSendCardMessageView
@@ -52,12 +53,14 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     self = [super initWithFrame:frame];
     if (self) {
         self.backgroundColor = [UIColor colorWithHexString:@"000000" alpha:0.4];
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        self.keyboardFrame = CGRectNull;
 
         [self setSubViews];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(keyboardWillShow:)
-                                                     name:UIKeyboardWillShowNotification
+                                                 selector:@selector(keyboardWillChangeFrame:)
+                                                     name:UIKeyboardWillChangeFrameNotification
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -71,7 +74,7 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
 
 - (void)setSubViews {
     _contentView = [[RCBaseView alloc] initWithFrame:CGRectMake(0, 0, 280, 280)];
-    _contentView.center = self.center;
+    _contentView.center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
     _contentView.backgroundColor =  RCDynamicColor(@"auxiliary_background_1_color", @"0xffffff", @"0x2c2c2c"); 
     _contentView.layer.masksToBounds = YES;
     _contentView.layer.cornerRadius = 8;
@@ -469,44 +472,54 @@ NSString *const RCCC_CardMessageSend = @"RCCC_CardMessageSend";
     }
 }
 
-//键盘将要弹起时，修改subviews的坐标
-- (void)keyboardWillShow:(NSNotification *)notif {
-    if (self.hidden == YES) {
-        return;
-    }
-
-    CGRect rect = [[notif.userInfo objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    CGFloat y = rect.origin.y;
-    [UIView beginAnimations:nil context:nil];
-    [UIView setAnimationDuration:0.25];
-    NSArray *subviews = [self subviews];
-    for (UIView *sub in subviews) {
-
-        CGFloat maxY = CGRectGetMaxY(sub.frame);
-        if (maxY > y - 2) {
-            sub.center = CGPointMake(CGRectGetWidth(self.frame) / 2.0, sub.center.y - maxY + y - 2);
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGPoint center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
+    CGRect contentFrame = CGRectMake(center.x - CGRectGetWidth(self.contentView.bounds) / 2,
+                                     center.y - CGRectGetHeight(self.contentView.bounds) / 2,
+                                     CGRectGetWidth(self.contentView.bounds),
+                                     CGRectGetHeight(self.contentView.bounds));
+    if (self.window && !CGRectIsNull(self.keyboardFrame)) {
+        CGRect keyboardFrame = [self.window convertRect:self.keyboardFrame fromWindow:nil];
+        if (@available(iOS 13.0, *)) {
+            if (self.window.windowScene) {
+                keyboardFrame = [self.window convertRect:self.keyboardFrame
+                                    fromCoordinateSpace:self.window.windowScene.screen.coordinateSpace];
+            }
+        }
+        keyboardFrame = [self convertRect:keyboardFrame fromView:self.window];
+        if (CGRectIntersectsRect(contentFrame, keyboardFrame)) {
+            CGFloat top = CGRectGetMinY(self.bounds);
+            if (@available(iOS 11.0, *)) {
+                top += self.safeAreaInsets.top;
+            }
+            CGFloat offset = CGRectGetMaxY(contentFrame) - CGRectGetMinY(keyboardFrame) + 2;
+            center.y -= MIN(offset, MAX(0, CGRectGetMinY(contentFrame) - top));
         }
     }
-    [UIView commitAnimations];
-
-    //为黑色背景添加点击收起键盘的手势
-    [self addTapGestureForSelf];
+    self.contentView.center = center;
 }
 
-//键盘将要收起时，修改subviews的坐标
+- (void)keyboardWillChangeFrame:(NSNotification *)notif {
+    self.keyboardFrame = [notif.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    [self updateLayoutForKeyboardNotification:notif];
+    if (self.gestureRecognizers.count == 0) {
+        [self addTapGestureForSelf];
+    }
+}
+
 - (void)keyboardWillHide:(NSNotification *)notif {
-    if (self.hidden == YES) {
-        return;
-    }
-    [UIView beginAnimations:nil context:nil];
-    [UIView setAnimationDuration:0.25];
-    NSArray *subviews = [self subviews];
-    for (UIView *sub in subviews) {
-        if (sub.center.y < CGRectGetHeight(self.frame) / 2.0) {
-            sub.center = CGPointMake(CGRectGetWidth(self.frame) / 2.0, CGRectGetHeight(self.frame) / 2.0);
-        }
-    }
-    [UIView commitAnimations];
+    self.keyboardFrame = CGRectNull;
+    [self updateLayoutForKeyboardNotification:notif];
+}
+
+- (void)updateLayoutForKeyboardNotification:(NSNotification *)notif {
+    NSTimeInterval duration = [notif.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationOptions options = [notif.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue] << 16;
+    [self setNeedsLayout];
+    [UIView animateWithDuration:duration delay:0 options:options animations:^{
+        [self layoutIfNeeded];
+    } completion:nil];
 }
 
 - (UIImage *)imageflippedForRTL:(UIImage *)image{

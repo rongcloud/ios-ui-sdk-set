@@ -26,7 +26,9 @@
 
 @property (nonatomic, strong) UIView *headView; //标题头视图
 
-@property (nonatomic, assign) CGSize viewSize; //父view的大小
+@property (nonatomic, strong) UILabel *titleLabel;
+
+@property (nonatomic, assign) BOOL hasShown;
 
 @property (nonatomic, copy) void (^selectedBlock)(NSInteger index); //选择单元格block
 
@@ -51,9 +53,9 @@
                   cancelTitle:(NSString *)cancelTitle
                 selectedBlock:(void (^)(NSInteger index))selectedBlock
                   cancelBlock:(void (^)(void))cancelBlock{
-    self = [super init];
+    self = [super initWithFrame:CGRectMake(0, 0, viewSize.width, viewSize.height)];
     if (self) {
-        _viewSize = viewSize;
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         if (title.length > 0) {
             _title = title;
             [self addTitleView];
@@ -89,27 +91,25 @@
 
 #pragma mark------ 创建UI视图
 - (void)addTitleView{
-    CGFloat height = [RCKitUtility getTextDrawingSize:self.title font:[UIFont systemFontOfSize:15] constrainedSize:CGSizeMake(self.viewSize.width-20, MAXFLOAT)].height;
-    self.headView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.viewSize.width, height + 30)];
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, self.headView.frame.size.width - 20, self.headView.frame.size.height)];
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont systemFontOfSize:14];
-    titleLabel.numberOfLines = 0;
-    titleLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x8b8b8b", @"0x878787");
-    titleLabel.text = self.title;
-    [self.headView addSubview:titleLabel];
+    self.headView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.titleLabel.textAlignment = NSTextAlignmentCenter;
+    self.titleLabel.font = [UIFont systemFontOfSize:14];
+    self.titleLabel.numberOfLines = 0;
+    self.titleLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0x8b8b8b", @"0x878787");
+    self.titleLabel.text = self.title;
+    [self.headView addSubview:self.titleLabel];
     self.tableView.tableHeaderView = self.headView;
 }
 
 - (void)createUI {
-    self.frame = [UIScreen mainScreen].bounds;
     [self addSubview:self.maskCoverView];
     [self addSubview:self.tableView];
 }
 
 - (UIView *)maskCoverView {
     if (!_maskCoverView) {
-        _maskCoverView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        _maskCoverView = [[UIView alloc] initWithFrame:self.bounds];
         _maskCoverView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
         _maskCoverView.alpha = 0.4;
         _maskCoverView.userInteractionEnabled = YES;
@@ -208,15 +208,36 @@
 
 //滑动弹出
 - (void)show {
-    _tableView.frame =
-        CGRectMake(0, self.viewSize.height, self.viewSize.width,
-                   _tableView.rowHeight * (_cellArray.count + 1) + _headView.bounds.size.height + (Space_Line * 2) + [RCKitUtility getWindowSafeAreaInsets].bottom);
-    [UIView animateWithDuration:.2
-                     animations:^{
-                         CGRect rect = _tableView.frame;
-                         rect.origin.y -= _tableView.bounds.size.height;
-                         _tableView.frame = rect;
-                     }];
+    self.maskCoverView.frame = self.bounds;
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        insets = self.safeAreaInsets;
+    }
+    // 面板整体避让左右安全区，表头和单元格在面板内部统一布局。
+    CGFloat width = MAX(0, CGRectGetWidth(self.bounds) - insets.left - insets.right);
+    if (self.headView) {
+        CGFloat titleWidth = MAX(0, width - 20);
+        CGFloat titleHeight = [RCKitUtility getTextDrawingSize:self.title
+                                                       font:self.titleLabel.font
+                                            constrainedSize:CGSizeMake(titleWidth, MAXFLOAT)].height + 30;
+        CGFloat previousHeight = CGRectGetHeight(self.headView.bounds);
+        self.headView.frame = CGRectMake(0, 0, width, titleHeight);
+        self.titleLabel.frame = CGRectMake(10, 0, titleWidth, titleHeight);
+        if (self.tableView.tableHeaderView != self.headView ||
+            previousHeight != titleHeight) {
+            self.tableView.tableHeaderView = self.headView;
+        }
+    }
+    CGFloat height = self.tableView.rowHeight * (self.cellArray.count + 1) +
+        CGRectGetHeight(self.headView.bounds) + Space_Line * 2 + insets.bottom;
+    self.tableView.frame = CGRectMake(insets.left, CGRectGetHeight(self.bounds) - height, width, height);
+    if (!self.hasShown) {
+        self.hasShown = YES;
+        self.tableView.transform = CGAffineTransformMakeTranslation(0, height);
+        [UIView animateWithDuration:.2 animations:^{
+            self.tableView.transform = CGAffineTransformIdentity;
+        }];
+    }
 }
 
 //滑动消失

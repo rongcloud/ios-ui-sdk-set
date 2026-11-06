@@ -19,6 +19,7 @@
 #import "RCUserInfoCacheManager.h"
 #import "NSMutableArray+RCOperation.h"
 #import "NSMutableDictionary+RCOperation.h"
+#import "RCInfoNotificationCenter.h"
 
 #define PagingCount 100
 
@@ -256,6 +257,20 @@
 
 #pragma mark - Notification
 
+- (void)conversationReadStatusDidChange:(NSNotification *)notification {
+    RCConversationIdentifier *identifier = notification.object;
+    if (![identifier isKindOfClass:RCConversationIdentifier.class] ||
+        ![self.displayConversationTypeArray containsObject:@(identifier.type)]) {
+        return;
+    }
+    dispatch_async(self.updateEventQueue, ^{
+        // 单栏返回时会重新加载；双栏列表持续可见，必须主动刷新本地已读结果。
+        if (self.isConverstaionListAppear) {
+            self.throttleReloadAction();
+        }
+    });
+}
+
 - (void)didReceiveMessageNotification:(NSNotification *)notification {
     dispatch_async(self.updateEventQueue, ^{
         if (self.isConverstaionListAppear) {
@@ -487,6 +502,10 @@
 }
 
 - (void)registerNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(conversationReadStatusDidChange:)
+                                                 name:RCKitConversationReadStatusDidChangeNotification
+                                               object:nil];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onMessageSentStatusUpdate:)
@@ -515,8 +534,46 @@
                                              selector:@selector(onUserOnlineStatusChangedNotification:)
                                                  name:RCKitUserOnlineStatusChangedNotification
                                                object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onGroupInfoUpdate:)
+                                                 name:RCKitDispatchGroupInfoUpdateNotification
+                                               object:nil];
     
     [[RCCoreClient sharedCoreClient] addReadReceiptV5Delegate:self];
+}
+
+- (void)onGroupInfoUpdate:(NSNotification *)notification {
+    RCGroup *groupInfo = notification.object[@"groupInfo"];
+    if (groupInfo.groupId.length == 0) {
+        return;
+    }
+    [[RCCoreClient sharedCoreClient] getConversation:ConversationType_GROUP
+                                          targetId:groupInfo.groupId
+                                        completion:^(RCConversation *conversation) {
+        if (!conversation.dataMgmtInfo) {
+            return;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSMutableArray<NSIndexPath *> *indexPaths = [NSMutableArray array];
+            for (NSUInteger index = 0; index < self.dataList.count; index++) {
+                RCConversationModel *model = self.dataList[index];
+                if (model.conversationType != ConversationType_GROUP ||
+                    ![model.targetId isEqualToString:groupInfo.groupId]) {
+                    continue;
+                }
+                model.dataMgmtInfo = conversation.dataMgmtInfo;
+                if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_NORMAL) {
+                    model.conversationTitle = conversation.dataMgmtInfo.name;
+                }
+                [indexPaths addObject:[NSIndexPath indexPathForRow:index inSection:0]];
+            }
+            if (indexPaths.count > 0 &&
+                [self.delegate respondsToSelector:@selector(dataSource:willReloadAtIndexPaths:)]) {
+                [self.delegate dataSource:self willReloadAtIndexPaths:indexPaths];
+            }
+        });
+    }];
 }
 
 #pragma mark - helper

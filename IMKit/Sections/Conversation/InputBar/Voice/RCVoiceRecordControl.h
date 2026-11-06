@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <RongIMLibCore/RongIMLibCore.h>
 
 @protocol RCVoiceRecordControlDelegate;
@@ -28,6 +29,8 @@
 @end
 
 @protocol RCVoiceRecordControlDelegate <NSObject>
+
+- (UIView *)presentationViewForVoiceRecordControl:(RCVoiceRecordControl *)voiceRecordControl;
 
 - (BOOL)recordWillBegin;
 /// 开始录制语音消息

@@ -28,6 +28,16 @@
     return self;
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    BOOL widthChanged = CGRectGetWidth(self.commmonPhrasesTableView.bounds) != CGRectGetWidth(self.bounds);
+    self.commmonPhrasesTableView.frame = self.bounds;
+    if (widthChanged) {
+        // 可用宽度变化后，长常用语的换行和行高必须同步重算。
+        [self.commmonPhrasesTableView reloadData];
+    }
+}
+
 #pragma mark - tableViewDelegate
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (self.dataSource.count <= indexPath.row) {
@@ -62,7 +72,8 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return [RCCommonPhrasesCell heightForCommonPhrasesCell:[self.dataSource objectAtIndex:indexPath.row]];
+    return [RCCommonPhrasesCell heightForCommonPhrasesCell:[self.dataSource objectAtIndex:indexPath.row]
+                                                   width:CGRectGetWidth(tableView.bounds)];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{

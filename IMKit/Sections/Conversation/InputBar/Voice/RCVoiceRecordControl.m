@@ -59,10 +59,22 @@
     }
 
     [self checkRecordPermission:^{
+        UIView *presentationView = [self.delegate presentationViewForVoiceRecordControl:self];
+        if (!presentationView.window) {
+            return;
+        }
         self.voiceCaptureControl =
-            [[RCVoiceCaptureControl alloc] initWithFrame:CGRectMake(0, 20, [UIScreen mainScreen].bounds.size.width,
-                                                                    [UIScreen mainScreen].bounds.size.height)
+            [[RCVoiceCaptureControl alloc] initWithFrame:presentationView.bounds
                                         conversationType:self.conversationType];
+        self.voiceCaptureControl.translatesAutoresizingMaskIntoConstraints = NO;
+        self.voiceCaptureControl.userInteractionEnabled = NO;
+        [presentationView addSubview:self.voiceCaptureControl];
+        [NSLayoutConstraint activateConstraints:@[
+            [self.voiceCaptureControl.leadingAnchor constraintEqualToAnchor:presentationView.leadingAnchor],
+            [self.voiceCaptureControl.trailingAnchor constraintEqualToAnchor:presentationView.trailingAnchor],
+            [self.voiceCaptureControl.topAnchor constraintEqualToAnchor:presentationView.topAnchor],
+            [self.voiceCaptureControl.bottomAnchor constraintEqualToAnchor:presentationView.bottomAnchor]
+        ]];
         self.voiceCaptureControl.delegate = self;
         if ([RCVoicePlayer defaultPlayer].isPlaying) {
             [[RCVoicePlayer defaultPlayer] resetPlayer];

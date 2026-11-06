@@ -849,6 +849,11 @@
         backBtn.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
     }
     UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithCustomView:backBtn];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 270100
+    if (@available(iOS 27.1, *)) {
+        leftButton.axisBehavior = UIBarButtonItemAxisBehaviorVerticalPreferred;
+    }
+#endif
     return @[leftButton];
 }
 

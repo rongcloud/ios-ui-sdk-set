@@ -22,6 +22,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 
 @property (nonatomic, strong) UIView *maskCoverView;
 @property (nonatomic, strong) UIView *typeBackgroundView;
+@property (nonatomic, strong) CAGradientLayer *typeGradientLayer;
 
 @property (nonatomic, strong) UILabel *gifLabel;
 
@@ -30,6 +31,13 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
 @end
 
 @implementation RCPhotoPickImageView
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    _maskCoverView.frame = self.bounds;
+    _typeBackgroundView.frame = CGRectMake(0, self.bounds.size.height - 28, self.bounds.size.width, 28);
+    _typeGradientLayer.frame = _typeBackgroundView.bounds;
+}
 
 - (void)setPhotoModel:(RCAssetModel *)model{
     if (model.mediaType == PHAssetMediaTypeVideo && NSClassFromString(@"RCSightCapturer")) {
@@ -95,6 +103,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
         _typeBackgroundView.hidden = YES;
         //初始化CAGradientlayer对象，使它的大小为UIView的大小
         CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+        self.typeGradientLayer = gradientLayer;
         gradientLayer.frame = _typeBackgroundView.bounds;
         //将CAGradientlayer对象添加在我们要设置背景色的视图的layer层
         [_typeBackgroundView.layer addSublayer:gradientLayer];
@@ -122,6 +131,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame = CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-33, 14);
         }
         _durationLabel = [[RCBaseLabel alloc] initWithFrame:frame];
+        _durationLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _durationLabel.textColor = RCDynamicColor(@"control_title_white_color", @"0xffffff", @"0xffffff");
         _durationLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
         [self.typeBackgroundView addSubview:_durationLabel];
@@ -137,6 +147,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame =(CGRect){self.typeBackgroundView.frame.size.width - 6-19, self.typeBackgroundView.frame.size.height-21, 19, 19};
         }
         _videoIcon = [[RCBaseImageView alloc] initWithFrame:frame];
+        _videoIcon.autoresizingMask = [RCKitUtility isRTL] ? UIViewAutoresizingFlexibleLeftMargin : UIViewAutoresizingFlexibleRightMargin;
         _videoIcon.image = [RCSemanticContext imageflippedForRTL:image];
         [self.typeBackgroundView addSubview:_videoIcon];
     }
@@ -150,6 +161,7 @@ typedef NS_ENUM(NSUInteger, RCPotoPickStatus) {
             frame =CGRectMake(0, 9.5, self.typeBackgroundView.frame.size.width-6, 14);
         }
         _gifLabel = [[RCBaseLabel alloc] initWithFrame:frame];
+        _gifLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         _gifLabel.textColor = RCDynamicColor(@"pop_layer_background_color", @"0xffffff", @"0xffffff");
         _gifLabel.font = [[RCKitConfig defaultConfig].font fontOfAssistantLevel];
         _gifLabel.text = @"GIF";

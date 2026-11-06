@@ -1137,12 +1137,7 @@ static BOOL msgRoamingServiceAvailable = YES;
     if (self.chatVC.unReadMessage > 0) {
         [self.chatVC.util syncReadStatus];
         [self.chatVC.util sendReadReceipt];
-        [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.chatVC.conversationType targetId:self.chatVC.targetId completion:^(BOOL ret) {
-            /// 清除完未读数需要通知更新UI
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.chatVC notifyUpdateUnreadMessageCount];
-            });
-        }];
+        [self.chatVC clearConversationUnreadStatus];
     }
 
     if (self.chatVC.conversationDataRepository.count == 0 && self.chatVC.unReadButton != nil) {
@@ -1244,7 +1239,17 @@ static BOOL msgRoamingServiceAvailable = YES;
             [message.receivedStatusInfo markAsRead];
             [[RCCoreClient sharedCoreClient] setMessageReceivedStatus:message.messageId
                                                    receivedStatusInfo:message.receivedStatusInfo
-                                                           completion:nil];
+                                                           completion:^(BOOL ret) {
+                if (!ret) {
+                    return;
+                }
+                RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc]
+                    initWithConversationIdentifier:message.conversationType targetId:message.targetId channelId:message.channelId];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitConversationReadStatusDidChangeNotification
+                                                                        object:identifier];
+                });
+            }];
         }
     }
 }

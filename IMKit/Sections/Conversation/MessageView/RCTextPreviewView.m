@@ -21,8 +21,20 @@
 @property (nonatomic, copy) NSString *originalText;
 @end
 @implementation RCTextPreviewView
++ (instancetype)previewForDelegate:(id<RCTextPreviewViewDelegate>)delegate inView:(UIView *)view {
+    for (UIView *subview in view.subviews) {
+        if ([subview isKindOfClass:self]) {
+            RCTextPreviewView *preview = (RCTextPreviewView *)subview;
+            if (preview.textPreviewDelegate == delegate) {
+                return preview;
+            }
+        }
+    }
+    return nil;
+}
+
 + (void)showText:(NSString *)text messageId:(long)messageId delegate:(nonnull id<RCTextPreviewViewDelegate>)delegate{
-    RCTextPreviewView *textPreviewView = [[RCTextPreviewView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT) text:text messageId:messageId];
+    RCTextPreviewView *textPreviewView = [[RCTextPreviewView alloc] initWithFrame:CGRectZero text:text messageId:messageId];
     textPreviewView.textPreviewDelegate = delegate;
     [textPreviewView showTextPreviewView];
 }
@@ -30,13 +42,8 @@
 - (instancetype)initWithFrame:(CGRect)frame text:(NSString *)text  messageId:(long)messageId {
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x111111");
-        CGFloat textHeight = [RCKitUtility getTextDrawingSize:text font:[UIFont systemFontOfSize:20] constrainedSize:CGSizeMake(SCREEN_WIDTH-20, MAXFLOAT)].height;
-        textHeight = ceilf(textHeight)+20;
-        self.contentSize = CGSizeMake(SCREEN_WIDTH, textHeight);
-        if (textHeight <= SCREEN_HEIGHT) {
-            self.scrollEnabled = NO;
-        }else{
-            self.scrollEnabled = YES;
+        if (@available(iOS 11.0, *)) {
+            self.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
         }
         
         self.label.text = text;
@@ -100,8 +107,99 @@
 
 #pragma mark - Privite
 
+- (UIView *)previewContentContainerView {
+    if ([self.textPreviewDelegate isKindOfClass:UIViewController.class]) {
+        UIViewController *viewController = (UIViewController *)self.textPreviewDelegate;
+        UINavigationController *navigationController = viewController.navigationController;
+        // 折叠后的详情导航栈可能嵌在列表导航栈中，可见导航栏属于外层。
+        while ([navigationController.parentViewController isKindOfClass:UINavigationController.class]) {
+            navigationController = (UINavigationController *)navigationController.parentViewController;
+        }
+        return navigationController.view ?: viewController.view;
+    }
+    return nil;
+}
+
+- (CGRect)previewFrameInView:(UIView *)containerView {
+    UIView *contentContainerView = [self previewContentContainerView];
+    CGRect frame = contentContainerView ? [contentContainerView convertRect:contentContainerView.bounds toView:containerView] : containerView.bounds;
+    if ([self.textPreviewDelegate isKindOfClass:UIViewController.class]) {
+        UIViewController *viewController = (UIViewController *)self.textPreviewDelegate;
+        UIView *conversationView = viewController.view;
+        CGRect conversationBounds = conversationView.bounds;
+        UISplitViewController *splitViewController = viewController.splitViewController;
+        if (splitViewController && !splitViewController.isCollapsed) {
+            // 分栏内容可通过安全区和祖先裁剪限定，控制器 bounds 不一定是可见列宽。
+            if (@available(iOS 11.0, *)) {
+                conversationBounds = conversationView.safeAreaLayoutGuide.layoutFrame;
+            }
+        }
+        CGRect conversationFrame = [conversationView convertRect:conversationBounds toView:containerView];
+        if (splitViewController && !splitViewController.isCollapsed) {
+            for (UIView *ancestor = conversationView.superview; ancestor && ancestor != containerView;
+                 ancestor = ancestor.superview) {
+                if (ancestor.clipsToBounds) {
+                    CGRect visibleFrame = [ancestor convertRect:ancestor.bounds toView:containerView];
+                    CGFloat left = MAX(CGRectGetMinX(conversationFrame), CGRectGetMinX(visibleFrame));
+                    CGFloat right = MIN(CGRectGetMaxX(conversationFrame), CGRectGetMaxX(visibleFrame));
+                    conversationFrame.origin.x = left;
+                    conversationFrame.size.width = MAX(0, right - left);
+                }
+            }
+        }
+        frame.origin.x = CGRectGetMinX(conversationFrame);
+        frame.size.width = CGRectGetWidth(conversationFrame);
+    }
+    return frame;
+}
+
 - (void)showTextPreviewView {
-    [[UIApplication sharedApplication].keyWindow addSubview:self];
+    UIView *contentContainerView = [self previewContentContainerView];
+    UIView *containerView = contentContainerView.window ?: contentContainerView;
+    if (!containerView) {
+        containerView = [UIApplication sharedApplication].keyWindow;
+    }
+    self.frame = [self previewFrameInView:containerView];
+    self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [containerView addSubview:self];
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
+}
+
+- (void)layoutSubviews {
+    UIView *contentContainerView = [self previewContentContainerView];
+    if (contentContainerView && self.superview &&
+        (contentContainerView.window == self.superview || contentContainerView == self.superview)) {
+        CGRect frame = [self previewFrameInView:self.superview];
+        if (!CGRectEqualToRect(self.frame, frame)) {
+            self.frame = frame;
+        }
+    }
+    [super layoutSubviews];
+
+    CGSize size = self.bounds.size;
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        insets = self.safeAreaInsets;
+    }
+    CGFloat textWidth = MAX(0, size.width - insets.left - insets.right - 20);
+    if (textWidth <= 0 || size.height <= 0) {
+        return;
+    }
+    CGFloat textHeight = ceil([self.label sizeThatFits:CGSizeMake(textWidth, CGFLOAT_MAX)].height);
+    CGFloat availableHeight = MAX(0, size.height - insets.top - insets.bottom);
+    CGFloat textY = insets.top + 10 + MAX(0, (availableHeight - textHeight - 20) / 2);
+    self.label.frame = CGRectMake(insets.left + 10, textY, textWidth, textHeight);
+    CGFloat contentHeight = MAX(size.height, insets.top + textHeight + 20 + insets.bottom);
+    self.contentSize = CGSizeMake(size.width, contentHeight);
+    self.scrollEnabled = contentHeight > size.height;
+}
+
+- (void)safeAreaInsetsDidChange {
+    if (@available(iOS 11.0, *)) {
+        [super safeAreaInsetsDidChange];
+    }
+    [self setNeedsLayout];
 }
 
 - (void)didTapCurrentView{
@@ -142,8 +240,7 @@
 
 - (UILabel *)label{
     if (!_label) {
-        CGFloat textY = self.contentSize.height < SCREEN_HEIGHT ? (SCREEN_HEIGHT - self.contentSize.height )/2 : 0;
-        _label = [[RCAttributedLabel alloc] initWithFrame:CGRectMake(10, textY, SCREEN_WIDTH-20, self.contentSize.height)];
+        _label = [[RCAttributedLabel alloc] initWithFrame:CGRectZero];
         _label.numberOfLines = 0;
         _label.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xffffffcc");
         _label.font = [UIFont systemFontOfSize:20];

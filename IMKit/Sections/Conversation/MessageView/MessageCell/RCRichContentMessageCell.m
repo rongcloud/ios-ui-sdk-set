@@ -62,8 +62,8 @@
 - (void)setDataModel:(RCMessageModel *)model {
     [super setDataModel:model];
     RCRichContentMessage *richContentMsg = (RCRichContentMessage *)model.content;
-    self.titleLabel.text = richContentMsg.title;
-    self.digestLabel.text = richContentMsg.digest;
+    [self.titleLabel setText:richContentMsg.title dataDetectorEnabled:NO];
+    [self.digestLabel setText:richContentMsg.digest dataDetectorEnabled:NO];
     [self.richContentImageView setImageURL:[NSURL URLWithString:richContentMsg.imageURL]];
     
     CGSize titleLabelSize = [RCRichContentMessageCell getTitleContentSize:model];

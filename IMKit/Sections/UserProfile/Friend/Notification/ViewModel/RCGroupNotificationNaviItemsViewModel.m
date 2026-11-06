@@ -8,7 +8,6 @@
 
 #import "RCGroupNotificationNaviItemsViewModel.h"
 #import "RCKitCommonDefine.h"
-#import "RCKitUtility.h"
 #import "RCButton.h"
 
 @interface RCGroupNotificationNaviItemsViewModel()
@@ -26,6 +25,11 @@
     UIImage *image = RCDynamicImage(@"friend_apply_more_img", @"friend_apply_more");
     [btn setImage:image forState:UIControlStateNormal];
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
+#if defined(__IPHONE_27_1)
+    if (@available(iOS 27.1, *)) {
+        item.axisBehavior = UIBarButtonItemAxisBehaviorVerticalPreferred;
+    }
+#endif
     return @[item];
 }
 
@@ -37,8 +41,12 @@
 }
 
 - (void)showCoverViewBy:(UIView *)item {
-    UIWindow *window = [RCKitUtility getKeyWindow];
+    UIWindow *window = item.window;
+    if (!window || self.coverView.superview) {
+        return;
+    }
     [window addSubview:self.coverView];
+    [self configureSheetView:self.coverView];
     [NSLayoutConstraint activateConstraints:@[
         [self.coverView.leadingAnchor constraintEqualToAnchor:window.leadingAnchor],
         [self.coverView.trailingAnchor constraintEqualToAnchor:window.trailingAnchor],
@@ -51,6 +59,7 @@
 
 - (void)removeCoverView {
     [self.coverView removeFromSuperview];
+    self.coverView = nil;
 }
 
 - (void)btnClick:(UIButton *)btn {
@@ -96,7 +105,11 @@
 - (void)configureSheetView:(UIView *)containerView {
     CGFloat width = 160;
     CGFloat height = 201;
-    CGFloat yOffset = CGRectGetMaxY(self.responder.navigationController.navigationBar.frame);
+    // 使用当前页面的安全区，随导航栏、系统侧栏和窗口尺寸变化自动更新。
+    UILayoutGuide *contentGuide = self.responder.view.layoutMarginsGuide;
+    if (@available(iOS 11.0, *)) {
+        contentGuide = self.responder.view.safeAreaLayoutGuide;
+    }
     UIView *panel = [[UIView alloc] init];;
     panel.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFAFAFA", @"0x2c2c2c");
     panel.layer.cornerRadius = 6;
@@ -112,8 +125,8 @@
     [panel addSubview:stackView];
     
     [NSLayoutConstraint activateConstraints:@[
-        [panel.trailingAnchor constraintEqualToAnchor:containerView.trailingAnchor constant:-16],
-        [panel.topAnchor constraintEqualToAnchor:containerView.topAnchor constant:yOffset],
+        [panel.trailingAnchor constraintEqualToAnchor:contentGuide.trailingAnchor constant:-16],
+        [panel.topAnchor constraintEqualToAnchor:contentGuide.topAnchor],
         [panel.widthAnchor constraintEqualToConstant:width],
         [panel.heightAnchor constraintEqualToConstant:height],
 
@@ -137,14 +150,12 @@
 
 - (UIView *)coverView {
     if (!_coverView) {
-        UIWindow *window = [RCKitUtility getKeyWindow];
-        UIView *view = [[UIView alloc] initWithFrame:window.bounds];
+        UIView *view = [[UIView alloc] init];
         view.translatesAutoresizingMaskIntoConstraints = NO;
         view.backgroundColor = RCDynamicColor(@"mask_color", @"0x0000003f", @"0x0000003f");
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self
                                                                               action:@selector(removeCoverView)];
         [view addGestureRecognizer:tap];
-        [self configureSheetView:view];
         _coverView = view;
     }
     return _coverView;

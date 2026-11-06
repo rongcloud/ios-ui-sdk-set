@@ -41,9 +41,11 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     [super viewDidLoad];
     self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
     self.title = RCLocalizedString(@"PreviewFile");
-    // self.view.frame是从navigationBar下面开始计算
-    self.edgesForExtendedLayout = UIRectEdgeNone;
-
+#if defined(__IPHONE_27_0)
+    if (@available(iOS 27.0, *)) {
+        self.navigationItem.navigationBarMinimization.minimizationBehavior = UIBarMinimizationBehaviorNever;
+    }
+#endif
     [self registerNotificationCenter];
     
     [self setNavigationItems];
@@ -53,6 +55,32 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     } else {
         [self layoutForShowFileInfo];
     }
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    CGRect contentRect = self.view.bounds;
+    if (@available(iOS 11.0, *)) {
+        contentRect = UIEdgeInsetsInsetRect(contentRect, self.view.safeAreaInsets);
+    }
+    CGFloat contentX = CGRectGetMinX(contentRect);
+    CGFloat contentWidth = CGRectGetWidth(contentRect);
+    CGFloat insetWidth = MAX(0, contentWidth - 20);
+
+    _webView.frame = contentRect;
+    _typeIconView.frame = CGRectMake(CGRectGetMidX(contentRect) - 75 / 2.0,
+                                    CGRectGetMinY(contentRect) + 64, 75, 75);
+    _nameLabel.frame = CGRectMake(contentX + 10, CGRectGetMaxY(_typeIconView.frame) + 16,
+                                 insetWidth, 21);
+    _sizeLabel.frame = CGRectMake(contentX, CGRectGetMaxY(_nameLabel.frame) + 12, contentWidth, 16);
+    _progressLabel.frame = CGRectMake(contentX + 10, CGRectGetMaxY(_nameLabel.frame) + 12,
+                                     insetWidth, 16);
+    CGRect buttonFrame = CGRectMake(contentX + 10, CGRectGetMaxY(_sizeLabel.frame) + 12,
+                                    insetWidth, 40);
+    _downloadButton.frame = buttonFrame;
+    _cancelButton.frame = buttonFrame;
+    _openInOtherAppButton.frame = buttonFrame;
 }
 
 - (void)dealloc {
@@ -362,26 +390,16 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     //设置左键
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems.firstObject.customView.accessibilityLabel = RCLocalizedString(@"Back");
 }
 
 #pragma mark - Getters and Setters
 
 - (WKWebView *)webView {
     if (!_webView) {
-        //获取状态栏的rect
-        CGRect statusRect = [[UIApplication sharedApplication] statusBarFrame];
-        //获取导航栏的rect
-        CGRect navRect = self.navigationController.navigationBar.frame;
-        //那么导航栏+状态栏的高度
-        CGFloat totalHeight = statusRect.size.height + navRect.size.height;
-        CGRect webViewRect = self.view.bounds;
-        if (webViewRect.size.height > ([UIScreen mainScreen].bounds.size.height - totalHeight)) {
-            webViewRect.size.height -= totalHeight;
-        }
-        _webView = [[WKWebView alloc] initWithFrame:webViewRect];
+        _webView = [[WKWebView alloc] initWithFrame:CGRectZero];
         _webView.scrollView.contentInset = (UIEdgeInsets){8, 8, 8, 8};
-        [_webView sizeToFit];
         _webView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf2f2f3", @"0xf2f2f3");
         [_webView setOpaque:NO];
     }
@@ -390,8 +408,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseImageView *)typeIconView {
     if (!_typeIconView) {
-        _typeIconView =
-            [[RCBaseImageView alloc] initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 64, 75, 75)];
+        _typeIconView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileMessage.type];
     }
 
@@ -400,7 +417,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
-        _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.typeIconView.frame)+16, self.view.bounds.size.width - 10 * 2, 21)];
+        _nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         _nameLabel.text = self.fileMessage.name;
         _nameLabel.textAlignment = NSTextAlignmentCenter;
@@ -412,7 +429,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)sizeLabel {
     if (!_sizeLabel) {
-        _sizeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(self.nameLabel.frame)+12, self.view.bounds.size.width, 16)];
+        _sizeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _sizeLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
         _sizeLabel.text = [RCKitUtility getReadableStringForFileSize:self.fileMessage.size];
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
@@ -423,7 +440,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)progressLabel {
     if (!_progressLabel) {
-        _progressLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.nameLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 16)];
+        _progressLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _progressLabel.textColor = RCDynamicColor(@"primary_color", @"0xa8a8a8", @"0xa8a8a8");
         _progressLabel.textAlignment = NSTextAlignmentCenter;
         _progressLabel.font = [[RCKitConfig defaultConfig].font fontOfAnnotationLevel];
@@ -433,7 +450,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)cancelButton {
     if (!_cancelButton) {
-        _cancelButton = [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
+        _cancelButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         [_cancelButton setTitle:RCLocalizedString(@"Close") forState:(UIControlStateNormal)];
         [_cancelButton addTarget:self
                           action:@selector(cancelFileDownload)
@@ -448,8 +465,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)downloadButton {
     if (!_downloadButton) {
-        _downloadButton =
-            [[RCBaseButton alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(self.sizeLabel.frame)+12, self.view.bounds.size.width - 10 * 2, 40)];
+        _downloadButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         _downloadButton.backgroundColor =RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _downloadButton.layer.cornerRadius = 5.0f;
 //        _downloadButton.layer.borderWidth = 0.5f;
@@ -465,8 +481,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)openInOtherAppButton {
     if (!_openInOtherAppButton) {
-        _openInOtherAppButton =
-            [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
+        _openInOtherAppButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         _openInOtherAppButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _openInOtherAppButton.layer.cornerRadius = 5.0f;
 //        _openInOtherAppButton.layer.borderWidth = 0.5f;

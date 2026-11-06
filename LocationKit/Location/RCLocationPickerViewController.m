@@ -24,6 +24,7 @@
 @property (nonatomic, strong) UILabel *moreLabel;
 @property (nonatomic, strong) UIActivityIndicatorView *busyIndicator;
 @property (nonatomic, assign) BOOL hasMore;
+@property (nonatomic, assign) BOOL completingSelection;
 /// 当前会话的会话类型
 @property (nonatomic) RCConversationType conversationType;
 
@@ -375,6 +376,34 @@
 }
 
 - (void)rightBarButtonItemPressed:(id)sender {
+    if (self.completingSelection) {
+        return;
+    }
+    id<RCLocationPickerViewControllerDelegate> delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(locationPickerDidDismiss:withSelectedLocation:locationName:mapScreenShot:)]) {
+        self.completingSelection = YES;
+        CLLocationCoordinate2D location = [self currentLocationCoordinate2D];
+        NSString *locationName = [[self currentLocationName] copy];
+        UIImage *mapScreenShot = [self currentMapScreenShot];
+        void (^completion)(void) = ^{
+            [delegate locationPickerDidDismiss:self withSelectedLocation:location
+                                  locationName:locationName mapScreenShot:mapScreenShot];
+            self.completingSelection = NO;
+        };
+        UIViewController *presentedController = self.navigationController ?: self;
+        UIViewController *presenter = presentedController.presentingViewController;
+        if (!presenter) {
+            completion();
+            return;
+        }
+        BOOL animated = YES;
+        if (presentedController.modalPresentationStyle == UIModalPresentationFullScreen && presenter.isViewLoaded) {
+            // 底层尺寸未更新时同步结束转场，回调不与双栏导航恢复交叉。
+            animated = CGSizeEqualToSize(presenter.view.bounds.size, presentedController.view.bounds.size);
+        }
+        [self dismissViewControllerAnimated:animated completion:completion];
+        return;
+    }
     if (self.delegate && [self.delegate respondsToSelector:@selector(locationPicker:didSelectLocation:locationName:mapScreenShot:)]) {
         [self.delegate locationPicker:self
                     didSelectLocation:[self currentLocationCoordinate2D]

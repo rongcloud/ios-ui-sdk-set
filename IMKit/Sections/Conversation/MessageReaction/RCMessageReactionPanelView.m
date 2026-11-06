@@ -185,7 +185,12 @@ static NSString *const RCMessageReactionPanelHeaderIdentifier = @"RCMessageReact
     if (self.dismissing) {
         return;
     }
-    CGFloat safeBottom = [RCKitUtility getWindowSafeAreaInsets].bottom;
+    CGFloat safeBottom = 0;
+    if (@available(iOS 11.0, *)) {
+        safeBottom = self.safeAreaInsets.bottom;
+    }
+    self.currentPanelHeight = MIN(MAX(self.currentPanelHeight, [self minimumPanelHeight]),
+                                  [self maximumPanelHeight]);
     self.contentView.frame = CGRectMake(0,
                                         self.bounds.size.height - self.currentPanelHeight + self.panelTranslationY,
                                         self.bounds.size.width,
@@ -199,11 +204,23 @@ static NSString *const RCMessageReactionPanelHeaderIdentifier = @"RCMessageReact
     if (!view) {
         return;
     }
-    self.frame = view.bounds;
     self.currentPanelHeight = [self initialHeightForContainerHeight:view.bounds.size.height];
     self.panelTranslationY = 0;
-    self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.translatesAutoresizingMaskIntoConstraints = NO;
     [view addSubview:self];
+    NSLayoutXAxisAnchor *leadingAnchor = view.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = view.trailingAnchor;
+    if (@available(iOS 11.0, *)) {
+        leadingAnchor = view.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = view.safeAreaLayoutGuide.trailingAnchor;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [self.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+        [self.trailingAnchor constraintEqualToAnchor:trailingAnchor],
+        [self.topAnchor constraintEqualToAnchor:view.topAnchor],
+        [self.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
+    ]];
+    [view layoutIfNeeded];
     [self setNeedsLayout];
     [self layoutIfNeeded];
     self.dismissing = NO;
@@ -258,7 +275,17 @@ static NSString *const RCMessageReactionPanelHeaderIdentifier = @"RCMessageReact
     if (self.topLimitInset > 0) {
         return self.topLimitInset;
     }
-    return [RCKitUtility getWindowSafeAreaInsets].top;
+    if (@available(iOS 11.0, *)) {
+        return self.safeAreaInsets.top;
+    }
+    return 0;
+}
+
+- (void)setTopLimitInset:(CGFloat)topLimitInset {
+    if (_topLimitInset != topLimitInset) {
+        _topLimitInset = topLimitInset;
+        [self setNeedsLayout];
+    }
 }
 
 - (CGFloat)minimumPanelHeight {

@@ -26,7 +26,12 @@
 #define AnimateDuration 0.2
 #define CommonBtnSize 44
 #define Marging 8
-#define YOffset ISX ? 28 : 8
+
+typedef NS_ENUM(NSUInteger, RCSightControlsLayoutState) {
+    RCSightControlsLayoutStateCapture,
+    RCSightControlsLayoutStatePreview,
+    RCSightControlsLayoutStateFailed
+};
 
 AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration acceleration) {
     AVCaptureVideoOrientation result;
@@ -67,6 +72,7 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 @property (nonatomic, assign) NSTimeInterval endTime;
 @property (nonatomic, assign) RCSightViewControllerCameraCaptureMode captureMode;
 @property (nonatomic, strong) CMMotionManager *motionManager;
+@property (nonatomic, assign) RCSightControlsLayoutState controlsLayoutState;
 @end
 
 @implementation RCSightViewController {
@@ -278,9 +284,6 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
         [self.sightView showFocusBoxAnimationAtPoint:CGPointMake(0.5, 0.5)];
     }
 #endif
-    CGSize screenSize = [UIScreen mainScreen].bounds.size;
-    self.switchCameraBtn.frame =
-        CGRectMake(screenSize.width - CommonBtnSize - Marging, YOffset, CommonBtnSize, CommonBtnSize);
     [self.view addSubview:self.switchCameraBtn];
 
     [self.view addSubview:self.playerController.view];
@@ -308,22 +311,16 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     [self.view addSubview:self.actionButton];
     [self.view addSubview:self.tipsLable];
 
-    self.actionButton.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
     self.actionButton.accessibilityLabel = @"actionButton";
     
-    self.cancelBtn.center = self.actionButton.center;
     self.cancelBtn.accessibilityLabel = @"cancelBtn";
 
-    self.okBtn.center = self.actionButton.center;
     self.okBtn.accessibilityLabel = @"okBtn";
 
-    self.playBtn.center = self.actionButton.center;
     self.playBtn.accessibilityLabel = @"playBtn";
 
-    self.dismissBtn.frame = CGRectMake(Marging, YOffset, CommonBtnSize, CommonBtnSize);
     self.dismissBtn.accessibilityLabel = @"dismissBtn";
 
-    self.tipsLable.center = CGPointMake(screenSize.width / 2, self.actionButton.frame.origin.y - 16);
     if (RCSightViewControllerCameraCaptureModeSight == self.captureMode) {
         [self performSelector:@selector(setStatusBarHidden:) withObject:@(YES) afterDelay:0.5];
     }
@@ -353,6 +350,11 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
     [self.motionManager startAccelerometerUpdates];
     [self setVideoOrientation];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self updateSubViewsAutolayout];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -411,19 +413,30 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 }
 
 - (void)updateSubViewsAutolayout {
-    CGSize screenSize = [UIScreen mainScreen].bounds.size;
-    self.switchCameraBtn.frame =
-        CGRectMake(screenSize.width - CommonBtnSize - Marging, YOffset, CommonBtnSize, CommonBtnSize);
-    self.actionButton.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
-    if (self.actionButton.hidden) {
-        self.cancelBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
-        self.okBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
-    } else {
-        self.cancelBtn.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
-        self.okBtn.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
+    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        safeAreaInsets = self.view.safeAreaInsets;
     }
-    self.playBtn.center = self.actionButton.center;
-    self.tipsLable.center = CGPointMake(screenSize.width / 2, self.actionButton.frame.origin.y - 16);
+    CGRect controlsRect = UIEdgeInsetsInsetRect(self.view.bounds, safeAreaInsets);
+    CGFloat top = CGRectGetMinY(controlsRect) + Marging;
+    self.dismissBtn.frame = CGRectMake(CGRectGetMinX(controlsRect) + Marging, top, CommonBtnSize, CommonBtnSize);
+    self.switchCameraBtn.frame = CGRectMake(CGRectGetMaxX(controlsRect) - CommonBtnSize - Marging,
+                                           top, CommonBtnSize, CommonBtnSize);
+    CGPoint captureCenter = CGPointMake(CGRectGetMidX(controlsRect),
+                                       CGRectGetMaxY(controlsRect) - ActionBtnSize - BottomSpace);
+    self.actionButton.center = captureCenter;
+    self.cancelBtn.center = captureCenter;
+    self.okBtn.center = captureCenter;
+    // 取消预览时拍摄按钮要等动画结束才显示，布局状态不能由 hidden 推断。
+    if (self.controlsLayoutState != RCSightControlsLayoutStateCapture) {
+        CGPoint leadingCenter = CGPointMake(CGRectGetMinX(controlsRect) + 65.5, captureCenter.y);
+        CGPoint trailingCenter = CGPointMake(CGRectGetMaxX(controlsRect) - 65.5, captureCenter.y);
+        BOOL reverseButtons = self.controlsLayoutState == RCSightControlsLayoutStatePreview && [RCKitUtility isRTL];
+        self.cancelBtn.center = reverseButtons ? trailingCenter : leadingCenter;
+        self.okBtn.center = reverseButtons ? leadingCenter : trailingCenter;
+    }
+    self.playBtn.center = captureCenter;
+    self.tipsLable.center = CGPointMake(captureCenter.x, CGRectGetMinY(self.actionButton.frame) - 16);
 }
 
 - (void)setVideoOrientation {
@@ -548,17 +561,11 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
 
 - (void)showOkCancelBtnWithAnimation:(BOOL)showPlayBtn {
     self.actionButton.hidden = YES;
+    self.controlsLayoutState = RCSightControlsLayoutStatePreview;
     [UIView animateWithDuration:AnimateDuration
                      animations:^{
-        CGSize screenSize = [UIScreen mainScreen].bounds.size;
-        if ([RCKitUtility isRTL]) {
-            self.okBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
-            self.cancelBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
-        } else {
-            self.cancelBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
-            self.okBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
-        }
-    }
+                         [self updateSubViewsAutolayout];
+                     }
         completion:^(BOOL finished) {
             self.playBtn.hidden = !showPlayBtn;
             self.cancelBtn.hidden = NO;
@@ -573,11 +580,10 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     self.actionButton.hidden = YES;
     self.okBtn.hidden = YES;
     self.playBtn.hidden = YES;
+    self.controlsLayoutState = RCSightControlsLayoutStateFailed;
     [UIView animateWithDuration:AnimateDuration
         animations:^{
-            CGSize screenSize = [UIScreen mainScreen].bounds.size;
-            self.cancelBtn.center = CGPointMake(65.5, screenSize.height - ActionBtnSize - BottomSpace);
-            self.okBtn.center = CGPointMake(screenSize.width - 65.5, screenSize.height - ActionBtnSize - BottomSpace);
+            [self updateSubViewsAutolayout];
         }
         completion:^(BOOL finished) {
             // 录制失败 只显示取消按钮
@@ -646,11 +652,10 @@ AVCaptureVideoOrientation orientationBaseOnAcceleration(CMAcceleration accelerat
     [self hideTipsLabel];
     self.cancelBtn.hidden = YES;
     self.okBtn.hidden = YES;
+    self.controlsLayoutState = RCSightControlsLayoutStateCapture;
     [UIView animateWithDuration:AnimateDuration
         animations:^{
-            CGSize screenSize = [UIScreen mainScreen].bounds.size;
-            self.cancelBtn.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
-            self.okBtn.center = CGPointMake(screenSize.width / 2, screenSize.height - ActionBtnSize - BottomSpace);
+            [self updateSubViewsAutolayout];
         }
         completion:^(BOOL finished) {
             self.playBtn.hidden = NO;

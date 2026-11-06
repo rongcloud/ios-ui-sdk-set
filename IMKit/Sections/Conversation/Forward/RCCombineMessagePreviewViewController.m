@@ -99,6 +99,24 @@
     [self registerNotificationCenter];
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    CGRect contentRect = self.view.bounds;
+    if (@available(iOS 11.0, *)) {
+        contentRect = UIEdgeInsetsInsetRect(contentRect, self.view.safeAreaInsets);
+    }
+    _combineMsgWebView.frame = contentRect;
+    CGPoint contentCenter = CGPointMake(CGRectGetMidX(contentRect), CGRectGetMidY(contentRect));
+    _loadingTipView.center = contentCenter;
+    _loadFailedTipView.center = contentCenter;
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+    [super viewSafeAreaInsetsDidChange];
+    [self.view setNeedsLayout];
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.combineMsgWebView.configuration.userContentController addScriptMessageHandler:self name:FUNCTIONNAME];
@@ -274,7 +292,8 @@
 - (void)setNav {
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems.firstObject.customView.accessibilityLabel = RCLocalizedString(@"Back");
     self.navigationItem.title = self.navTitle;
 }
 
@@ -544,6 +563,9 @@
         config.userContentController = userContentController;
         
         _combineMsgWebView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
+        if (@available(iOS 11.0, *)) {
+            _combineMsgWebView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+        }
         _combineMsgWebView.UIDelegate = self;
         _combineMsgWebView.navigationDelegate = self;
         _combineMsgWebView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xffffff", @"0x2D2D32");

@@ -174,6 +174,21 @@ typedef void (^OnPoiSearchResult)(NSArray *pois, BOOL clearPreviousResult, BOOL 
           locationName:(NSString *)locationName
          mapScreenShot:(UIImage *)mapScreenShot;
 
+/// 用户确认选择且模态页面关闭完成后的回调，取消时不调用。
+///
+/// 实现此方法时优先调用此方法，不再调用 locationPicker:didSelectLocation:locationName:mapScreenShot:。
+/// 仅实现旧方法时，仍在关闭页面前同步回调。未模态展示时，确认选择后立即回调，
+/// 不自动弹出导航栈中的页面。位置数据和截图在点击确认时获取。
+/// 全屏页面与底层页面尺寸不一致时，新回调路径不使用关闭动画。
+/// - Parameter locationPicker: 地理位置选取的 ViewController
+/// - Parameter location: 位置的二维坐标
+/// - Parameter locationName: 位置的名称
+/// - Parameter mapScreenShot: 位置在地图中的缩略图
+- (void)locationPickerDidDismiss:(RCLocationPickerViewController *)locationPicker
+           withSelectedLocation:(CLLocationCoordinate2D)location
+                   locationName:(NSString *)locationName
+                  mapScreenShot:(UIImage *)mapScreenShot;
+
 
 
 @end

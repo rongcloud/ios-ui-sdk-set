@@ -83,9 +83,13 @@
         }
     } else if ([self isAddItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
+        cell.nameLabel.text = nil;
+        cell.portraitImageView.imageURL = nil;
         cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_add_img",@"group_member_add");
     } else if ([self isRemoveItem:indexPath.row]) {
         cell.nameLabel.hidden = YES;
+        cell.nameLabel.text = nil;
+        cell.portraitImageView.imageURL = nil;
         cell.portraitImageView.placeholderImage = RCDynamicImage(@"group_member_remove_img",@"group_member_remove");
     }
     return cell;
@@ -173,9 +177,20 @@
                 [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupSuccess") hiddenAfterDelay:2];
             }
         });
-    } error:^(RCErrorCode errorCode) {
+    } errorWithInfo:^(RCErrorCode errorCode, RCInviteUsersToGroupErrorInfo *errorInfo) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [RCAlertView showAlertController:nil message:RCLocalizedString(@"inviteJoinGroupError") hiddenAfterDelay:2];
+            NSString *tips = RCLocalizedString(@"inviteJoinGroupError");
+            if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                tips = RCLocalizedString(@"GroupInviteMemberCountExceedLimit");
+            } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT && errorInfo.failedUserInfos.count > 0) {
+                NSString *formattedNames = [RCGroupManager groupLimitExceededMemberNames:errorInfo.failedUserInfos];
+                if (formattedNames.length > 0) {
+                    NSString *key = errorInfo.failedUserInfos.count == 1 ? @"GroupInvitedUserJoinCountExceedLimitSingle"
+                                                                         : @"GroupInvitedUserJoinCountExceedLimit";
+                    tips = [NSString stringWithFormat:RCLocalizedString(key), formattedNames];
+                }
+            }
+            [RCAlertView showAlertController:nil message:tips hiddenAfterDelay:2];
         });
     }];
 }

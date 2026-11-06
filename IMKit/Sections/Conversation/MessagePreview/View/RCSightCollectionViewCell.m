@@ -25,6 +25,8 @@
 
 @property (nonatomic, strong) UIActivityIndicatorView *indicatorView;
 
+@property (nonatomic, strong) UILongPressGestureRecognizer *longPressRecognizer;
+
 @end
 
 @implementation RCSightCollectionViewCell
@@ -35,14 +37,24 @@
     self.messageModel = model;
     Class playerType = NSClassFromString(@"RCSightPlayerController");
     if (playerType) {
+        if (self.playerController != model.playerController) {
+            if (self.playerController.view.superview == self.contentView) {
+                [self.playerController.view removeFromSuperview];
+            }
+            [self.longPressRecognizer.view removeGestureRecognizer:self.longPressRecognizer];
+        }
         self.playerController = model.playerController;
         self.playerController.delegate = self;
         self.playerController.autoPlay = YES;
-        [self.contentView addSubview:self.playerController.view];
-        [self strechToSuperview:self.playerController.view];
-        UILongPressGestureRecognizer *longPress =
-            [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressed:)];
-        [self.playerController.view addGestureRecognizer:longPress];
+        if (self.playerController.view.superview != self.contentView) {
+            [self.contentView addSubview:self.playerController.view];
+            [self strechToSuperview:self.playerController.view];
+        }
+        if (!self.longPressRecognizer) {
+            self.longPressRecognizer =
+                [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressed:)];
+        }
+        [self.playerController.view addGestureRecognizer:self.longPressRecognizer];
     }
     self.label.text = [NSString stringWithFormat:@"%ld", model.message.messageId];
 }
@@ -132,6 +144,9 @@
 }
 
 - (void)longPressed:(id)sender {
+    if (self.playerController.view.superview != self.contentView) {
+        return;
+    }
     RCSightMessage *sightMessage = (RCSightMessage *)self.messageModel.message.content;
     NSString *localPath = nil;
     if (sightMessage.localPath && [[NSFileManager defaultManager] fileExistsAtPath:sightMessage.localPath]) {

@@ -48,10 +48,6 @@
 #pragma mark - Public Methods
 
 - (void)startRecord {
-    //显示UI
-    UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
-    [keyWindow addSubview:self];
-
     [self stopTimer];
     self.timer = [NSTimer scheduledTimerWithTimeInterval:0.02
                                                   target:self
@@ -110,6 +106,19 @@
                                                  name:UIApplicationDidEnterBackgroundNotification
                                                object:nil];
     [self addSubview:self.contentView];
+    self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
+    NSLayoutXAxisAnchor *centerXAnchor = self.centerXAnchor;
+    NSLayoutYAxisAnchor *centerYAnchor = self.centerYAnchor;
+    if (@available(iOS 11.0, *)) {
+        centerXAnchor = self.safeAreaLayoutGuide.centerXAnchor;
+        centerYAnchor = self.safeAreaLayoutGuide.centerYAnchor;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [self.contentView.widthAnchor constraintEqualToConstant:160],
+        [self.contentView.heightAnchor constraintEqualToConstant:160],
+        [self.contentView.centerXAnchor constraintEqualToAnchor:centerXAnchor],
+        [self.contentView.centerYAnchor constraintEqualToAnchor:centerYAnchor]
+    ]];
     [self.contentView addSubview:self.recordStatusView];
     [self.contentView addSubview:self.escapeTimeLabel];
     [self.contentView addSubview:self.textLabel];
@@ -251,7 +260,6 @@
 - (UIView *)contentView{
     if (!_contentView) {
         _contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 160, 160)];
-        [_contentView setCenter:CGPointMake(self.bounds.size.width / 2, self.bounds.size.height / 2 - 34)];
         _contentView.backgroundColor = [RCKitUtility generateDynamicColor:RCMASKCOLOR(0x000000, 0.6) darkColor:RCMASKCOLOR(0x000000, 0.8)];;
         _contentView.layer.cornerRadius = 6;
         _contentView.layer.masksToBounds = YES;

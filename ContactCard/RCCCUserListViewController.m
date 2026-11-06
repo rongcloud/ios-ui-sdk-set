@@ -389,13 +389,14 @@
     if ([self.searchBar isFirstResponder]) {
         [self.searchBar resignFirstResponder];
     };
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:self.conversationType targetId:self.targetId];
+    UIWindow *window = self.view.window;
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:window.bounds ConversationType:self.conversationType targetId:self.targetId];
     RCUserInfo *cardUserInfo = [RCUserInfo new];
     cardUserInfo.userId = user.userId;
     cardUserInfo.name = user.name;
     cardUserInfo.portraitUri = user.portraitUri;
     sendCardView.cardUserInfo = cardUserInfo;
-    [[RCKitUtility getKeyWindow] addSubview:sendCardView];
+    [window addSubview:sendCardView];
 }
 
 - (void)didReceiveMemoryWarning {

@@ -7,6 +7,7 @@
 //
 
 #import "RCConversationViewController.h"
+#import "RCConversationContainerViewController+Internal.h"
 #import "RCCSPullLeaveMessageCell.h"
 #import "RCConversationCollectionViewHeader.h"
 #import "RCFilePreviewViewController.h"
@@ -122,6 +123,23 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
     return (text ?: @"").length <= RCKitMessageInputLimit();
 }
 
+@interface RCConversationLayoutScrollPosition : NSObject
+@property (nonatomic, assign) BOOL followsBottom;
+@property (nonatomic, strong) RCMessageModel *anchorMessage;
+@property (nonatomic, assign) CGFloat visibleOffset;
+@end
+
+@implementation RCConversationLayoutScrollPosition
+@end
+
+@interface RCEditInputBarControl (RCConversationLayout)
+- (void)containerViewSizeChanged;
+@end
+
+@interface RCTextPreviewView (RCConversationLayout)
++ (instancetype)previewForDelegate:(id<RCTextPreviewViewDelegate>)delegate inView:(UIView *)view;
+@end
+
 @interface RCConversationViewController () <
     UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RCMessageCellDelegate,
     RCChatSessionInputBarControlDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate,
@@ -142,6 +160,10 @@ RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCRefer
 @property (nonatomic, assign) BOOL isContinuousPlaying;     //是否正在连续播放语音消息
 @property (nonatomic, assign) BOOL isTouchScrolled; /// 表示是否是触摸滚动
 @property (nonatomic, assign) BOOL sendMsgAndNeedScrollToBottom;
+@property (nonatomic, assign) BOOL needsInputBarSafeAreaLayout;
+@property (nonatomic, assign) CGSize lastConversationLayoutSize;
+@property (nonatomic, assign) BOOL applyingConversationSizeLayout;
+@property (nonatomic, strong) RCConversationLayoutScrollPosition *transitionScrollPosition;
 
 #pragma mark data
 @property (nonatomic, strong) NSMutableArray *typingMessageArray;
@@ -163,6 +185,10 @@ RCChatSessionInputBarControlDataSource, RCMessagesMultiSelectedProtocol, RCRefer
 #pragma mark 通用
 @property (nonatomic, copy) NSString *navigationTitle;
 @property (nonatomic, strong) NSArray<UIBarButtonItem *> *leftBarButtonItems;
+@property (nonatomic, assign) BOOL hasMultiSelectNavigationItems;
+@property (nonatomic, strong) NSArray<UIBarButtonItem *> *splitConversationBackItems;
+@property (nonatomic, assign) BOOL splitConversationHidesBackButton;
+@property (nonatomic, assign) BOOL previousConversationHidesBackButton;
 @property (nonatomic, strong) NSArray<UIBarButtonItem *> *rightBarButtonItems;
 @property (nonatomic, strong) RCIMThreadLock *threadLock;
 @property (nonatomic, strong) RCBatchSubmitManager *readReceiptBatchManager; // 已读回执批量提交管理器
@@ -286,20 +312,88 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
+    UIEdgeInsets insets = [self conversationSafeAreaInsets];
     self.messageSelectionToolbar.frame =
-        CGRectMake(0, self.view.bounds.size.height - RC_ChatSessionInputBar_Height - [self getSafeAreaExtraBottomHeight],
-                   self.view.bounds.size.width, RC_ChatSessionInputBar_Height);
+        CGRectMake(insets.left,
+                   self.view.bounds.size.height - RC_ChatSessionInputBar_Height - insets.bottom,
+                   MAX(0, self.view.bounds.size.width - insets.left - insets.right),
+                   RC_ChatSessionInputBar_Height);
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+    if (@available(iOS 11.0, *)) {
+        [super viewSafeAreaInsetsDidChange];
+    }
+    self.needsInputBarSafeAreaLayout = YES;
+    [self.view setNeedsLayout];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self updateSplitConversationBackButton];
+    [self updateConversationSafeAreaLayout];
+    [self updateUnreadMessageIndicatorFrames];
+    RCTextPreviewView *textPreview = [RCTextPreviewView previewForDelegate:self inView:self.view.window];
+    [textPreview setNeedsLayout];
+    [textPreview layoutIfNeeded];
+    if (self.messageReactionPanelView.superview) {
+        self.messageReactionPanelView.topLimitInset =
+            [self messageReactionTopLimitInsetInView:self.messageReactionPanelView.superview];
+    }
+}
+
+- (void)updateSplitConversationBackButton {
+    RCConversationContainerViewController *container = [RCConversationContainerViewController containerForViewController:self];
+    BOOL hideBack = container.isExpanded && container.currentConversationViewController == self &&
+        self.navigationController.viewControllers.firstObject == self;
+    if (hideBack) {
+        if (!self.splitConversationHidesBackButton) {
+            self.previousConversationHidesBackButton = self.navigationItem.hidesBackButton;
+            self.splitConversationHidesBackButton = YES;
+        }
+        NSMutableArray *remaining = [NSMutableArray new];
+        NSMutableArray *backItems = [NSMutableArray new];
+        for (UIBarButtonItem *item in self.navigationItem.leftBarButtonItems) {
+            BOOL isBack = item.target == self && (item.action == @selector(leftBarButtonItemPressed:) ||
+                                                 item.action == @selector(customerServiceLeftCurrentViewController));
+            if ([item.customView isKindOfClass:UIControl.class]) {
+                NSArray *actions = [(UIControl *)item.customView actionsForTarget:self forControlEvent:UIControlEventTouchUpInside];
+                isBack = isBack || [actions containsObject:NSStringFromSelector(@selector(leftBarButtonItemPressed:))] ||
+                    [actions containsObject:NSStringFromSelector(@selector(customerServiceLeftCurrentViewController))];
+            }
+            if (isBack) {
+                [backItems addObject:item];
+            } else {
+                [remaining addObject:item];
+            }
+        }
+        if (backItems.count) {
+            self.splitConversationBackItems = backItems;
+            self.navigationItem.leftBarButtonItems = remaining;
+        }
+        self.navigationItem.hidesBackButton = YES;
+    } else if (self.splitConversationHidesBackButton) {
+        self.splitConversationHidesBackButton = NO;
+        self.navigationItem.hidesBackButton = self.previousConversationHidesBackButton;
+        if (!self.navigationItem.leftBarButtonItems.count) {
+            self.navigationItem.leftBarButtonItems = self.splitConversationBackItems;
+        }
+        self.splitConversationBackItems = nil;
+    }
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size
        withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
 
+    // 系统改变消息区尺寸后，原来的贴底状态和阅读锚点可能已无法恢复。
+    self.transitionScrollPosition = [self captureConversationScrollPosition];
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
 
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
     }
         completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-            [self layoutSubview:size];
+            [self layoutSubview:self.view.bounds.size];
+            self.transitionScrollPosition = nil;
         }];
 }
 
@@ -358,6 +452,10 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
+    if (self.isMovingFromParentViewController || self.isBeingDismissed || self.navigationController.isBeingDismissed) {
+        [[RCTextPreviewView previewForDelegate:self inView:self.view.window] removeFromSuperview];
+    }
+    [self dismissMessageReactionPanelsIfNeeded];
     [self.util syncReadStatus];
     [self restoreInteractivePopGestureRecognizerDelegateIfNeeded];
     
@@ -365,7 +463,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [[RCSystemSoundPlayer defaultPlayer] resetIgnoreConversation];
     [self stopPlayingVoiceMessage];
     self.isConversationAppear = NO;
-    [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId completion:nil];
+    [self clearConversationUnreadStatus];
 
     [self.chatSessionInputBarControl cancelVoiceRecord];
     [[RCCoreClient sharedCoreClient] setRCTypingStatusDelegate:nil];
@@ -561,21 +659,16 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
 - (void)createConversationMessageCollectionView {
     if (!self.conversationMessageCollectionView) {
-
         CGRect _conversationViewFrame = self.view.bounds;
-
-        CGFloat _conversationViewFrameY = CGRectGetMaxY([UIApplication sharedApplication].statusBarFrame) +
-                                          CGRectGetMaxY(self.navigationController.navigationBar.bounds);
-
-        if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
-
-            _conversationViewFrame.origin.y = 0;
-        } else {
-            _conversationViewFrame.origin.y = _conversationViewFrameY;
+        CGFloat _conversationViewFrameY = [self conversationMessageCollectionViewTopOffset];
+        CGFloat _conversationViewFrameBottom = self.chatSessionInputBarControl
+                                                   ? CGRectGetMinY(self.chatSessionInputBarControl.frame)
+                                                   : CGRectGetHeight(self.view.bounds);
+        if (!isfinite(_conversationViewFrameBottom)) {
+            _conversationViewFrameBottom = CGRectGetHeight(self.view.bounds);
         }
-
-        _conversationViewFrame.size.height =
-            self.view.bounds.size.height - self.chatSessionInputBarControl.frame.size.height - _conversationViewFrameY;
+        _conversationViewFrame.origin.y = _conversationViewFrameY;
+        _conversationViewFrame.size.height = MAX(_conversationViewFrameBottom - _conversationViewFrameY, 0);
         self.dataSource.customFlowLayout.sectionInset = UIEdgeInsetsMake(20, 0, 0, 0);
         self.conversationMessageCollectionView =
             [[RCBaseCollectionView alloc] initWithFrame:_conversationViewFrame collectionViewLayout:self.dataSource.customFlowLayout];
@@ -589,32 +682,211 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
-//更新 ipad UI 布局
+- (CGFloat)conversationMessageCollectionViewTopOffset {
+    if (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) {
+        return 0;
+    }
+
+    CGFloat topOffset = 0;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_10_3
+    if (@available(iOS 11.0, *)) {
+        CGFloat windowSafeAreaTop = [RCKitUtility getWindowSafeAreaInsets].top;
+        topOffset = MAX(self.view.safeAreaInsets.top, windowSafeAreaTop);
+
+        UINavigationBar *navigationBar = self.navigationController.navigationBar;
+        if (navigationBar && !self.navigationController.navigationBarHidden && !navigationBar.hidden) {
+            CGFloat navigationBarBottom = CGRectGetMaxY(navigationBar.frame);
+            CGFloat navigationBarBottomFromSafeArea = windowSafeAreaTop + CGRectGetHeight(navigationBar.bounds);
+            if (isfinite(navigationBarBottom)) {
+                topOffset = MAX(topOffset, navigationBarBottom);
+            }
+            if (isfinite(navigationBarBottomFromSafeArea)) {
+                topOffset = MAX(topOffset, navigationBarBottomFromSafeArea);
+            }
+        }
+    } else
+#endif
+    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        CGRect statusBarFrame = [UIApplication sharedApplication].statusBarFrame;
+#pragma clang diagnostic pop
+        if (!CGRectIsNull(statusBarFrame) && !CGRectIsInfinite(statusBarFrame)) {
+            topOffset = CGRectGetMaxY(statusBarFrame) + CGRectGetHeight(self.navigationController.navigationBar.bounds);
+        }
+    }
+
+    if (!isfinite(topOffset)) {
+        return 0;
+    }
+    return MIN(MAX(topOffset, 0), CGRectGetHeight(self.view.bounds));
+}
+
+// 更新会话容器布局
 - (void)layoutSubview:(CGSize)size {
-    if (![RCKitUtility currentDeviceIsIPad]) {
+    self.needsInputBarSafeAreaLayout = YES;
+    [self updateConversationSafeAreaLayout];
+}
+
+- (UIEdgeInsets)conversationSafeAreaInsets {
+    if (@available(iOS 11.0, *)) {
+        return self.view.safeAreaInsets;
+    }
+    return UIEdgeInsetsZero;
+}
+
+- (void)updateConversationSafeAreaLayout {
+    // 输入栏 frame 回调会调整消息区；整轮更新期间需防止重入及回调中的自动贴底。
+    if (self.applyingConversationSizeLayout) {
         return;
     }
-    CGRect frame = CGRectMake(0, 0, size.width, size.height);
-    frame.size.height = frame.size.height - self.chatSessionInputBarControl.frame.size.height;
-    self.conversationMessageCollectionView.frame = frame;
-    for (RCMessageModel *model in self.conversationDataRepository) {
-        model.cellSize = CGSizeZero;
+    CGSize size = self.view.bounds.size;
+    BOOL sizeChanged = !CGSizeEqualToSize(size, self.lastConversationLayoutSize);
+    UIEdgeInsets insets = [self conversationSafeAreaInsets];
+    CGFloat effectiveMessageWidth = MAX(0, size.width - insets.left - insets.right);
+    CGFloat widthMagnitude = MAX(1.0, MAX(fabs(effectiveMessageWidth),
+                                           CGRectGetWidth(self.conversationMessageCollectionView.bounds)));
+    CGFloat widthTolerance = 8.0 * CGFLOAT_EPSILON * widthMagnitude;
+    BOOL messageWidthChanged =
+        fabs(CGRectGetWidth(self.conversationMessageCollectionView.bounds) - effectiveMessageWidth) > widthTolerance;
+    self.lastConversationLayoutSize = size;
+    // 转场期间复用变化前的快照，直到输入栏和消息区的最终尺寸都已应用。
+    RCConversationLayoutScrollPosition *scrollPosition = self.transitionScrollPosition;
+    if (!scrollPosition && (sizeChanged || messageWidthChanged)) {
+        scrollPosition = [self captureConversationScrollPosition];
     }
-    [self.conversationMessageCollectionView reloadData];
-    self.collectionViewHeader.frame = CGRectMake(0, -40, size.width, 40);
 
-    CGRect controlFrame = self.chatSessionInputBarControl.frame;
-    controlFrame.size.width = self.view.frame.size.width;
-    controlFrame.origin.y =
-        self.conversationMessageCollectionView.frame.size.height - self.chatSessionInputBarControl.frame.size.height;
-    self.chatSessionInputBarControl.frame = controlFrame;
-    [self.chatSessionInputBarControl containerViewSizeChangedNoAnnimation];
-    
-    // 同步更新编辑控件位置
-    self.editInputBarControl.frame = controlFrame;
+    self.applyingConversationSizeLayout = YES;
+    // 避免消息重排和位置恢复继承转场动画，在转场结束后再次移动消息。
+    [UIView performWithoutAnimation:^{
+        [self updateConversationContentLayoutForSizeChange:sizeChanged];
+        if (scrollPosition) {
+            [self restoreConversationScrollPosition:scrollPosition];
+        }
+    }];
+    self.applyingConversationSizeLayout = NO;
+}
+
+- (RCConversationLayoutScrollPosition *)captureConversationScrollPosition {
+    // 宽度变化会重排消息，必须在布局失效前记录贴底状态和锚点在视口中的偏移。
+    UICollectionView *collection = self.conversationMessageCollectionView;
+    CGFloat maximumOffset = MAX(-collection.contentInset.top,
+        collection.contentSize.height - collection.bounds.size.height + collection.contentInset.bottom);
+    BOOL followsBottom = collection.contentOffset.y >= maximumOffset - 1.0;
+    NSIndexPath *anchorPath = [[collection indexPathsForVisibleItems] sortedArrayUsingSelector:@selector(compare:)].firstObject;
+    RCMessageModel *anchor = anchorPath && anchorPath.item < self.conversationDataRepository.count ?
+        self.conversationDataRepository[anchorPath.item] : nil;
+    UICollectionViewLayoutAttributes *anchorAttributes = anchorPath ?
+        [collection.collectionViewLayout layoutAttributesForItemAtIndexPath:anchorPath] : nil;
+    CGFloat anchorOffset = anchorAttributes.frame.origin.y - collection.contentOffset.y;
+    RCConversationLayoutScrollPosition *position = [RCConversationLayoutScrollPosition new];
+    position.followsBottom = followsBottom;
+    position.anchorMessage = anchorAttributes ? anchor : nil;
+    position.visibleOffset = anchorOffset;
+    return position;
+}
+
+- (void)updateConversationContentLayoutForSizeChange:(BOOL)sizeChanged {
+    UIEdgeInsets insets = [self conversationSafeAreaInsets];
+    CGFloat left = CGRectGetMinX(self.view.bounds) + insets.left;
+    CGFloat width = MAX(0, CGRectGetWidth(self.view.bounds) - insets.left - insets.right);
+    // frame、bounds 和 center 转换会产生舍入误差，坐标接近零时也需考虑布局数值的量级。
+    // 按量级缩放的少量浮点容差只忽略运算误差，保留真实的亚像素变化。
+    CGFloat layoutMagnitude = MAX(1.0, MAX(fabs(left), fabs(width)));
+    CGFloat layoutTolerance = 8.0 * CGFLOAT_EPSILON * layoutMagnitude;
+    [self updateConversationMessageLayoutWithLeft:left width:width tolerance:layoutTolerance];
+
+    // 底部安全区或容器高度变化时，横向 frame 不变也需要重算输入栏和面板的纵向位置。
+    BOOL needsLayout = self.needsInputBarSafeAreaLayout || sizeChanged;
+    self.needsInputBarSafeAreaLayout = NO;
+    [self updateConversationInputBarLayoutWithLeft:left width:width tolerance:layoutTolerance needsLayout:needsLayout];
+
+    CGRect headerFrame = self.collectionViewHeader.frame;
+    headerFrame.size.width = width;
+    self.collectionViewHeader.frame = headerFrame;
+}
+
+- (void)updateConversationMessageLayoutWithLeft:(CGFloat)left
+                                         width:(CGFloat)width
+                                     tolerance:(CGFloat)tolerance {
+    CGRect messageFrame = self.conversationMessageCollectionView.frame;
+    BOOL widthChanged = fabs(messageFrame.size.width - width) > tolerance;
+    BOOL frameChanged = fabs(messageFrame.origin.x - left) > tolerance || widthChanged;
+    if (frameChanged) {
+        messageFrame.origin.x = left;
+        messageFrame.size.width = width;
+        self.conversationMessageCollectionView.frame = messageFrame;
+        if (widthChanged) {
+            // 消息和翻译内容的换行依赖可用宽度，不能沿用旧布局的尺寸缓存。
+            for (RCMessageModel *model in self.conversationDataRepository) {
+                model.cellSize = CGSizeZero;
+                model.translationSize = CGSizeZero;
+                model.translatingSize = CGSizeZero;
+                model.finalSize = CGSizeZero;
+            }
+            [self.conversationMessageCollectionView.collectionViewLayout invalidateLayout];
+            // invalidateLayout 只更新 cell 外框；内部布局在 setDataModel: 中计算，需要重新配置。
+            [self.conversationMessageCollectionView reloadData];
+        }
+    }
+}
+
+- (void)updateConversationInputBarLayoutWithLeft:(CGFloat)left
+                                          width:(CGFloat)width
+                                      tolerance:(CGFloat)tolerance
+                                    needsLayout:(BOOL)needsLayout {
+    CGRect inputFrame = self.chatSessionInputBarControl.frame;
+    BOOL inputFrameChanged = fabs(inputFrame.origin.x - left) > tolerance || fabs(inputFrame.size.width - width) > tolerance;
+    if (self.chatSessionInputBarControl && (inputFrameChanged || needsLayout)) {
+        inputFrame.origin.x = left;
+        inputFrame.size.width = width;
+        self.chatSessionInputBarControl.frame = inputFrame;
+        [self.chatSessionInputBarControl containerViewSizeChangedNoAnnimation];
+    }
+
+    CGRect editFrame = self.editInputBarControl.frame;
+    BOOL editFrameChanged = fabs(editFrame.origin.x - left) > tolerance || fabs(editFrame.size.width - width) > tolerance;
+    if (self.editInputBarControl && (editFrameChanged || needsLayout)) {
+        editFrame.origin.x = left;
+        editFrame.size.width = width;
+        self.editInputBarControl.frame = editFrame;
+        [self.editInputBarControl containerViewSizeChanged];
+    }
+}
+
+- (void)restoreConversationScrollPosition:(RCConversationLayoutScrollPosition *)position {
+    UICollectionView *collection = self.conversationMessageCollectionView;
+    // 先完成消息重排，才能用新布局恢复原来的阅读位置。
+    [collection layoutIfNeeded];
+    CGFloat targetOffset = collection.contentOffset.y;
+    if (position.followsBottom) {
+        targetOffset = collection.contentSize.height - collection.bounds.size.height + collection.contentInset.bottom;
+    } else if (position.anchorMessage) {
+        // 消息可能在重布局期间插入或删除，按对象重新定位，避免沿用过期的 indexPath。
+        NSUInteger index = [self.conversationDataRepository indexOfObjectIdenticalTo:position.anchorMessage];
+        if (index != NSNotFound && index < [collection numberOfItemsInSection:0]) {
+            UICollectionViewLayoutAttributes *attributes = [collection.collectionViewLayout
+                layoutAttributesForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+            if (attributes) {
+                targetOffset = attributes.frame.origin.y - position.visibleOffset;
+            }
+        }
+    }
+    // 内容变短或锚点消失时，原偏移可能越界，需限制在新布局的可滚动范围内。
+    CGFloat minimumOffset = -collection.contentInset.top;
+    CGFloat newMaximumOffset = MAX(minimumOffset,
+        collection.contentSize.height - collection.bounds.size.height + collection.contentInset.bottom);
+    collection.contentOffset = CGPointMake(collection.contentOffset.x,
+        MIN(newMaximumOffset, MAX(minimumOffset, targetOffset)));
 }
 
 - (void)setNavigationItem{
+#if defined(__IPHONE_27_2)
+    if (@available(iOS 27.2, *)) {
+        // 自动对齐在部分导航形态下会靠左，会话标题需保持居中。
+        self.navigationItem.titleAlignment = UINavigationItemTitleAlignmentCenter;
+    }
+#endif
     if (ConversationType_APPSERVICE == self.conversationType ||
         ConversationType_PUBLICSERVICE == self.conversationType){
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:RCDynamicImage(@"conversation_setting_img",@"rc_setting")
@@ -660,22 +932,65 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     [self updateUnreadMsgCountLabelFrame];
 }
 
+- (CGRect)unreadMessageIndicatorLayoutFrame {
+    CGRect messageFrame = [self.conversationMessageCollectionView.superview
+        convertRect:self.conversationMessageCollectionView.frame toView:self.view];
+    CGRect layoutFrame = self.view.bounds;
+    if (@available(iOS 11.0, *)) {
+        layoutFrame = self.view.safeAreaLayoutGuide.layoutFrame;
+    }
+    return CGRectIntersection(messageFrame, layoutFrame);
+}
+
+- (void)updateUnreadMessageIndicatorFrames {
+    CGRect layoutFrame = [self unreadMessageIndicatorLayoutFrame];
+    if (CGRectIsNull(layoutFrame) || CGRectIsEmpty(layoutFrame)) {
+        return;
+    }
+    BOOL isRTL = [RCKitUtility isRTL];
+    CGFloat top = CGRectGetMinY(layoutFrame) + 14;
+    if (_unReadButton.superview == self.view) {
+        CGRect frame = _unReadButton.frame;
+        frame.origin.x = isRTL ? CGRectGetMinX(layoutFrame) : CGRectGetMaxX(layoutFrame) - CGRectGetWidth(frame);
+        frame.origin.y = top;
+        _unReadButton.frame = frame;
+        if (!_unReadButton.hidden) {
+            top = CGRectGetMaxY(frame) + 15;
+        }
+    }
+    if (_unReadMentionedButton.superview == self.view) {
+        CGRect frame = _unReadMentionedButton.frame;
+        frame.origin.x = isRTL ? CGRectGetMinX(layoutFrame) : CGRectGetMaxX(layoutFrame) - CGRectGetWidth(frame);
+        frame.origin.y = top;
+        _unReadMentionedButton.frame = frame;
+    }
+    [self updateUnreadMsgCountLabelFrame];
+}
+
 - (void)updateUnreadMsgCountLabelFrame {
-    if (!self.unreadRightBottomIcon.hidden) {
-        CGRect rect = self.unreadRightBottomIcon.frame;
-        if ([self edit_isMessageEditing]) {
-            rect.origin.y = self.editInputBarControl.frame.origin.y - 12 - 35;
-            [self.unreadRightBottomIcon setFrame:rect];
-            return;
+    if (!_unreadRightBottomIcon || _unreadRightBottomIcon.hidden) {
+        return;
+    }
+    CGRect layoutFrame = [self unreadMessageIndicatorLayoutFrame];
+    if (CGRectIsNull(layoutFrame) || CGRectIsEmpty(layoutFrame)) {
+        return;
+    }
+    CGFloat bottom = CGRectGetMaxY(layoutFrame);
+    if ([self edit_isMessageEditing]) {
+        bottom = MIN(bottom, CGRectGetMinY(self.editInputBarControl.frame));
+    } else {
+        if (self.chatSessionInputBarControl && !self.chatSessionInputBarControl.hidden) {
+            bottom = MIN(bottom, CGRectGetMinY(self.chatSessionInputBarControl.frame));
         }
         if (self.activeReferenceInputBarView) {
-            rect.origin.y =
-                self.chatSessionInputBarControl.frame.origin.y - 12 - 35 - self.activeReferenceInputBarView.frame.size.height;
-        } else {
-            rect.origin.y = self.chatSessionInputBarControl.frame.origin.y - 12 - 35;
+            bottom = MIN(bottom, CGRectGetMinY(self.activeReferenceInputBarView.frame));
         }
-        [self.unreadRightBottomIcon setFrame:rect];
     }
+    CGRect frame = _unreadRightBottomIcon.frame;
+    frame.origin.x = [RCKitUtility isRTL] ? CGRectGetMinX(layoutFrame) + 5.5
+                                        : CGRectGetMaxX(layoutFrame) - 5.5 - CGRectGetWidth(frame);
+    frame.origin.y = bottom - 12 - CGRectGetHeight(frame);
+    _unreadRightBottomIcon.frame = frame;
 }
 
 - (void)setupUnReadMessageView {
@@ -683,7 +998,6 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [self.unReadButton removeFromSuperview];
     }
     [self.view addSubview:self.unReadButton];
-    [self.unReadButton bringSubviewToFront:self.conversationMessageCollectionView];
     [self.util adaptUnreadButtonSize:self.unReadMessageLabel];
 }
 
@@ -744,6 +1058,23 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                 [self edit_showEditingMessage:editedMessageDraft];
             } else {
                 self.chatSessionInputBarControl.draft = conversation.draft;
+                if (self.chatSessionInputBarControl && conversation.draft.length > 0) {
+                    NSDictionary *userInfo = @{
+                        @"conversationType": @(self.conversationType),
+                        @"targetId": self.targetId ?: @"",
+                        @"channelId": self.channelId ?: @"",
+                        @"draft": @"",
+                    };
+                    [[RCChannelClient sharedChannelManager] clearTextMessageDraft:self.conversationType
+                                                                       targetId:self.targetId
+                                                                      channelId:self.channelId
+                                                                     completion:^(BOOL result) {
+                        if (result) {
+                            [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchConversationDraftUpdateNotification
+                                                                                object:nil userInfo:userInfo];
+                        }
+                    }];
+                }
             }
             if (completion) {
                 completion(editValid);
@@ -962,7 +1293,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
         [self.util sendReadReceipt];
         [self sendGroupReadReceiptResponseForCache];
     }
-    [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:self.conversationType targetId:self.targetId completion:nil];
+    [self clearConversationUnreadStatus];
 }
 
 - (void)sendGroupReadReceiptResponseForCache{
@@ -1466,7 +1797,7 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if (!RCKitConfigCenter.message.enableMessageReaction || model.messageReactions.count == 0) {
         return size;
     }
-    CGFloat maxWidth = MIN([RCMessageCellTool getMessageContentViewMaxWidth], collectionView.bounds.size.width - 80);
+    CGFloat maxWidth = MIN([RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:collectionView.bounds.size.width], collectionView.bounds.size.width - 80);
     CGFloat reactionHeight = [RCMessageReactionView heightForMessageModel:model maxWidth:maxWidth];
     if (reactionHeight > 0) {
         size.height += reactionHeight;
@@ -1929,13 +2260,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     if (!chatInputBar.hidden) {
         [self.conversationMessageCollectionView setFrame:collectionViewRect];
     }
-    if ([RCKitUtility isRTL]) {
-        [self.unreadRightBottomIcon setFrame:CGRectMake(5.5, self.chatSessionInputBarControl.frame.origin.y - 12 - 35, 35, 35)];
-    } else {
-        [self.unreadRightBottomIcon setFrame:CGRectMake(self.view.frame.size.width - 5.5 - 35, self.chatSessionInputBarControl.frame.origin.y - 12 - 35, 35, 35)];
-    }
+    [self updateUnreadMsgCountLabelFrame];
     
-    if (self.locatedMessageSentTime == 0 || self.isConversationAppear) {
+    if (!self.applyingConversationSizeLayout && (self.locatedMessageSentTime == 0 || self.isConversationAppear)) {
         //在viewwillapear和viewdidload之前，如果强制定位，则不滑动到底部
         if (self.dataSource.isLoadingHistoryMessage || [self isRemainMessageExisted]) {
             [self loadRemainMessageAndScrollToBottom:YES];
@@ -2436,6 +2763,9 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
                     // private method
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"RCEConversationUpdateNotification"
                                                                         object:nil];
+                    // 本地主动撤回不会触发接收回调，需要通知会话列表同步摘要。
+                    [[NSNotificationCenter defaultCenter] postNotificationName:RCKitDispatchRecallMessageNotification
+                                                                        object:@(recalledMessage.messageId)];
                 });
             } error:^(RCErrorCode errorCode) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -2597,14 +2927,38 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
     }
 }
 
+- (void)clearConversationUnreadStatus {
+    RCConversationIdentifier *identifier = [[RCConversationIdentifier alloc]
+        initWithConversationIdentifier:self.conversationType targetId:self.targetId channelId:@""];
+    __weak typeof(self) weakSelf = self;
+    [[RCCoreClient sharedCoreClient] clearMessagesUnreadStatus:identifier.type
+                                                     targetId:identifier.targetId
+                                                   completion:^(BOOL ret) {
+        if (!ret) {
+            return;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:RCKitConversationReadStatusDidChangeNotification
+                                                                object:identifier];
+            [weakSelf notifyUpdateUnreadMessageCount];
+        });
+    }];
+}
+
 - (void)notifyUpdateUnreadMessageCount {
     __weak typeof(self) __weakself = self;
-    //如果消息是选择状态，不更新leftBar
-    if (self.allowsMessageCellSelection) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            __strong typeof(__weakself) strongSelf = __weakself;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong typeof(__weakself) strongSelf = __weakself;
+        if (!strongSelf) {
+            return;
+        }
+        if (strongSelf.allowsMessageCellSelection) {
+            if (strongSelf.hasMultiSelectNavigationItems) {
+                return;
+            }
             strongSelf.rightBarButtonItems = strongSelf.navigationItem.rightBarButtonItems;
             strongSelf.leftBarButtonItems = strongSelf.navigationItem.leftBarButtonItems;
+            strongSelf.hasMultiSelectNavigationItems = YES;
             strongSelf.navigationItem.rightBarButtonItems = nil;
             strongSelf.navigationItem.leftBarButtonItems = nil;
             UIBarButtonItem *left =
@@ -2615,29 +2969,29 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 
             [left setTintColor:RCKitConfigCenter.ui.globalNavigationBarTintColor];
             strongSelf.navigationItem.leftBarButtonItem = left;
-        });
-    } else {
-        if(!self.displayConversationTypeArray) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                __strong typeof(__weakself) strongSelf = __weakself;
+        } else {
+            if(!strongSelf.displayConversationTypeArray) {
+                if (!strongSelf.hasMultiSelectNavigationItems) {
+                    return;
+                }
+                strongSelf.hasMultiSelectNavigationItems = NO;
                 strongSelf.navigationItem.leftBarButtonItems = strongSelf.leftBarButtonItems;
                 strongSelf.leftBarButtonItems = nil;
                 if (strongSelf.conversationType != ConversationType_Encrypted && strongSelf.rightBarButtonItems) {
                     strongSelf.navigationItem.rightBarButtonItems = strongSelf.rightBarButtonItems;
                     strongSelf.rightBarButtonItems = nil;
                 }
-            });
-            return;
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.navigationItem setLeftBarButtonItems:[self getLeftBackButton]];
-            self.leftBarButtonItems = nil;
-            if (self.rightBarButtonItems) {
-                self.navigationItem.rightBarButtonItems = self.rightBarButtonItems;
-                self.rightBarButtonItems = nil;
+                return;
             }
-        });
-    }
+            strongSelf.hasMultiSelectNavigationItems = NO;
+            [strongSelf.navigationItem setLeftBarButtonItems:[strongSelf getLeftBackButton]];
+            strongSelf.leftBarButtonItems = nil;
+            if (strongSelf.rightBarButtonItems) {
+                strongSelf.navigationItem.rightBarButtonItems = strongSelf.rightBarButtonItems;
+                strongSelf.rightBarButtonItems = nil;
+            }
+        }
+    });
 }
 
 
@@ -3142,7 +3496,17 @@ static NSString *const rcMessageBaseCellIndentifier = @"rcMessageBaseCellIndenti
 }
 
 - (CGFloat)messageReactionTopLimitInsetInView:(UIView *)presentationView {
-    CGFloat topLimitInset = [RCKitUtility getWindowSafeAreaInsets].top;
+    CGFloat topLimitInset;
+    if (@available(iOS 11.0, *)) {
+        topLimitInset = presentationView.safeAreaInsets.top;
+        if (presentationView) {
+            CGRect safeAreaFrame = [self.view convertRect:self.view.safeAreaLayoutGuide.layoutFrame
+                                                  toView:presentationView];
+            topLimitInset = MAX(topLimitInset, CGRectGetMinY(safeAreaFrame));
+        }
+    } else {
+        topLimitInset = [RCKitUtility getWindowSafeAreaInsets].top;
+    }
     UINavigationBar *navigationBar = self.navigationController.navigationBar;
     if (!presentationView || !navigationBar || !navigationBar.superview ||
         self.navigationController.navigationBarHidden || navigationBar.hidden) {
@@ -3658,6 +4022,12 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 }
 
 - (void)leftBarButtonItemPressed:(id)sender {
+    RCConversationContainerViewController *container =
+        [RCConversationContainerViewController containerForViewController:self];
+    if (container.currentConversationViewController == self) {
+        [container closeConversationAnimated:YES];
+        return;
+    }
     [self quitConversationViewAndClear];
     if (self.navigationController && [self.navigationController.viewControllers.lastObject isEqual:self]) {
         [self.navigationController popViewControllerAnimated:YES];
@@ -4236,6 +4606,11 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 #pragma mark - dark
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [super traitCollectionDidChange:previousTraitCollection];
+    if (@available(iOS 13.0, *)) {
+        if (![self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+            return;
+        }
+    }
     [self fitDarkMode];
 }
 
@@ -4285,7 +4660,8 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 }
 
 - (void)showReferenceInputBarView:(RCReferenceInputBarView *)referenceView size:(CGSize)size {
-    referenceView.frame = CGRectMake(0, CGRectGetHeight(self.view.frame), size.width, size.height);
+    referenceView.frame = CGRectMake(CGRectGetMinX(self.chatSessionInputBarControl.frame), CGRectGetMaxY(self.view.bounds),
+                                     MIN(size.width, CGRectGetWidth(self.chatSessionInputBarControl.bounds)), size.height);
     [self.view addSubview:referenceView];
     self.activeReferenceInputBarView = referenceView;
     [referenceView setOffsetY:CGRectGetMinY(self.chatSessionInputBarControl.frame) - CGRectGetHeight(referenceView.frame)];
@@ -4302,7 +4678,7 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 - (void)onReferenceMessageCellAndEditing:(BOOL)editing {
     [self removeReferencingView];
     RCMessageModel *messageModel = self.currentSelectedModel;
-    CGFloat maxWidth = MAX(CGRectGetWidth(self.view.frame), 0);
+    CGFloat maxWidth = MAX(CGRectGetWidth(self.chatSessionInputBarControl.bounds), 0);
     RCReferenceInputBarView *customView =
         maxWidth > 0 ? [self referenceInputBarViewForMessageModel:messageModel] : nil;
     BOOL didShowCustomView = NO;
@@ -4450,6 +4826,11 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
                 additionalBtn.state == UIControlStateNormal;
         }
         if (shouldKeepReferencingView) {
+            CGRect referenceFrame = referenceView.frame;
+            referenceFrame.origin.x = CGRectGetMinX(self.chatSessionInputBarControl.frame);
+            CGFloat availableWidth = CGRectGetWidth(self.chatSessionInputBarControl.bounds);
+            referenceFrame.size.width = referenceView == self.referencingView ? availableWidth : MIN(referenceFrame.size.width, availableWidth);
+            referenceView.frame = referenceFrame;
             [referenceView setOffsetY:CGRectGetMinY(self.chatSessionInputBarControl.frame) -
                                        referenceView.frame.size.height];
 
@@ -4700,7 +5081,7 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 }
 
 - (float)getSafeAreaExtraBottomHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].bottom;
+    return [self conversationSafeAreaInsets].bottom;
 }
 
 - (BOOL)isExtensionCell:(RCMessageContent *)messageContent {
@@ -4812,6 +5193,9 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 }
 
 #pragma mark - 钩子
+- (void)fullScreenEditStateDidChange:(BOOL)isFullScreenEdit {
+}
+
 - (RCMessageContent *)willSendMessage:(RCMessageContent *)message {
     DebugLog(@"super %s", __FUNCTION__);
     return message;
@@ -4862,11 +5246,7 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 - (RCBaseImageView *)unreadRightBottomIcon {
     if (!_unreadRightBottomIcon) {
         UIImage *msgCountIcon = RCDynamicImage(@"conversation_unread_button_bubble_img", @"bubble");
-        CGRect frame = CGRectMake(self.view.frame.size.width - 5.5 - 35, self.chatSessionInputBarControl.frame.origin.y - 12 - 35, 35, 35);
-        if ([RCKitUtility isRTL]) {
-            frame.origin.x = 5.5;
-        }
-        _unreadRightBottomIcon = [[RCBaseImageView alloc] initWithFrame:frame];
+        _unreadRightBottomIcon = [[RCBaseImageView alloc] initWithFrame:CGRectMake(0, 0, 35, 35)];
         _unreadRightBottomIcon.userInteractionEnabled = YES;
         _unreadRightBottomIcon.image = msgCountIcon;
         //        _unreadRightBottomIcon.translatesAutoresizingMaskIntoConstraints = NO;
@@ -4909,15 +5289,11 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
 - (RCBaseButton *)unReadButton {
     if (!_unReadButton) {
         _unReadButton = [RCBaseButton new];
-        CGFloat extraHeight = 0;
-        if ([self getSafeAreaExtraBottomHeight] > 0) {
-            extraHeight = 24; // 齐刘海屏的导航由20变成了44，需要额外加24
-        }
         CGFloat height = 48;
         if (![RCKitUtility isTraditionInnerThemes]) {
             height = 32;
         }
-        _unReadButton.frame = CGRectMake(0, [RCKitUtility getWindowSafeAreaInsets].top + self.navigationController.navigationBar.frame.size.height + 14, 0, height);
+        _unReadButton.frame = CGRectMake(0, 0, 0, height);
         [_unReadButton setBackgroundImage:RCDynamicImage(@"conversation_unread_button_bg_img", @"up") forState:UIControlStateNormal];
         [_unReadButton addSubview:self.unReadMessageLabel];
         [_unReadButton addTarget:self
@@ -4953,12 +5329,12 @@ referenceContentView:(RCMessageCellReferenceContentView *)referenceContentView
         if (![RCKitUtility isTraditionInnerThemes]) {
             height = 32;
         }
-        _unReadMentionedButton.frame = CGRectMake(0, CGRectGetMaxY(self.unReadButton.frame) + 15, 0, height);
+        _unReadMentionedButton.frame = CGRectMake(0, 0, 0, height);
         [_unReadMentionedButton setBackgroundImage:RCDynamicImage(@"conversation_unread_button_bg_img", @"up") forState:UIControlStateNormal];
         [_unReadMentionedButton addTarget:self action:@selector(tapRightTopUnReadMentionedButton:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:_unReadMentionedButton];
         [_unReadMentionedButton addSubview:self.unReadMentionedLabel];
-        [_unReadMentionedButton bringSubviewToFront:self.conversationMessageCollectionView];
+        [self.view setNeedsLayout];
     }
     return _unReadMentionedButton;
 }

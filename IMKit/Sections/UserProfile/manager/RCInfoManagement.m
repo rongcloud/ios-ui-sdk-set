@@ -360,7 +360,10 @@ static NSTimeInterval const RC_KIT_PRELOAD_INFO_MISS_RETRY_INTERVAL = 30.0;
 
 - (void)getGroupInfo:(NSString *)groupId complete:(void (^)(RCGroup * _Nullable))complete {
     [self p_getGroupInfo:groupId complete:^(RCGroup * _Nullable groupInfo) {
-        [self.cache cacheGroup:groupInfo];
+        if (groupInfo) {
+            [self.cache cacheGroup:groupInfo];
+            [RCInfoNotificationCenter postGroupUpdateNotification:groupInfo];
+        }
         if (complete) {
             complete(groupInfo);
         }

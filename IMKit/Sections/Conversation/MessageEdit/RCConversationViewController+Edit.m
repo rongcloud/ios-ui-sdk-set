@@ -58,6 +58,7 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
 - (void)insertReeditText:(RCMessageModel *)model;
 
 - (void)onReferenceMessageCellAndEditing:(BOOL)editing;
+- (void)updateUnreadMsgCountLabelFrame;
 
 @end
 
@@ -789,18 +790,7 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
     collectionViewRect.size.height = CGRectGetMinY(frame) - collectionViewRect.origin.y - extraHeight;
     [self.conversationMessageCollectionView setFrame:collectionViewRect];
     
-    CGFloat width = RC_KIT_UNREAD_BOTTOM_ICON_WIDTH;
-    CGFloat height = RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT;
-    CGFloat rightOrLeftPadding = 5.5;
-    CGFloat bottom = 12;
-    CGFloat editInputBarControlY = editInputBarControl.frame.origin.y;
-    CGFloat x = self.view.frame.size.width - rightOrLeftPadding - width;
-    CGFloat y = editInputBarControlY - bottom - height;
-    
-    if ([RCKitUtility isRTL]) {
-        x = rightOrLeftPadding;
-    }
-    [self.unreadRightBottomIcon setFrame:CGRectMake(x, y, width, height)];
+    [self updateUnreadMsgCountLabelFrame];
     
     if (self.locatedMessageSentTime == 0) {
         //在viewwillapear和viewdidload之前，如果强制定位，则不滑动到底部
@@ -857,13 +847,16 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
         
         [self edit_setupFullScreenEditView];
         
-        if (self.navigationController) {
-            [self.navigationController.view addSubview:self.fullScreenEditView];
-        } else {
-            // 降级方案：如果找不到导航控制器，仍然使用keyWindow
-            UIWindow *keyWindow = [self edit_keyWindow];
-            [keyWindow addSubview:self.fullScreenEditView];
+        UINavigationController *navigationController = self.navigationController;
+        // 折叠的分栏容器可能嵌套导航，编辑器需覆盖外层导航栏。
+        while (navigationController.navigationController) {
+            navigationController = navigationController.navigationController;
         }
+        UIView *containerView = navigationController ? navigationController.view : self.view;
+        self.fullScreenEditView.frame = containerView.bounds;
+        self.fullScreenEditView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [containerView addSubview:self.fullScreenEditView];
+        [self fullScreenEditStateDidChange:YES];
         
         [self.fullScreenEditView showWithConfig:editInputBarControl.inputBarConfig animation:YES];
         
@@ -930,10 +923,11 @@ static CGFloat RC_KIT_UNREAD_BOTTOM_ICON_HEIGHT = 35;
 
 - (void)edit_exitFullScreenEditView:(void(^)(void))completion {
     [self.fullScreenEditView hideWithAnimation:YES completion:^{
+        self.fullScreenEditView = nil;
+        [self fullScreenEditStateDidChange:NO];
         if (completion) {
             completion();
         }
-        self.fullScreenEditView = nil;
     }];
 }
 

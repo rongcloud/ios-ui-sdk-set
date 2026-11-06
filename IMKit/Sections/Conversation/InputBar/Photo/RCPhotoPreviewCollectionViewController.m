@@ -38,6 +38,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *selectedArr;
 @property (nonatomic, strong) NSMutableArray<RCAssetModel *> *selectedVideoArray;
 @property (nonatomic, assign) NSInteger currentIndex;
+@property (nonatomic, assign) BOOL updatingPreviewLayout;
 
 @property (nonatomic, copy) NSString *currentAssetIdentifier;
 
@@ -67,7 +68,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     self.collectionView.scrollsToTop = NO;
     self.collectionView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x000000", @"0x000000");
     self.collectionView.showsHorizontalScrollIndicator = NO;
-    self.collectionView.contentSize = CGSizeMake(SCREEN_WIDTH * self.previewPhotosArr.count, SCREEN_HEIGHT);
+    [self updatePreviewLayoutForSize:self.view.bounds.size];
     self.collectionView.pagingEnabled = YES;
     UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapAction:)];
     [self.collectionView addGestureRecognizer:gesture];
@@ -80,6 +81,19 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
 - (BOOL)prefersStatusBarHidden {
     return YES;
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self updatePreviewLayoutForSize:self.collectionView.bounds.size];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self updatePreviewLayoutForSize:size];
+    } completion:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -110,13 +124,32 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 + (instancetype)imagePickerViewController {
     RCPhotoPreviewCollectionViewFlowLayout *flowLayout = [[RCPhotoPreviewCollectionViewFlowLayout alloc] init];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
-    flowLayout.itemSize = CGSizeMake(SCREEN_WIDTH, SCREEN_HEIGHT);
+    flowLayout.itemSize = CGSizeZero;
     flowLayout.minimumInteritemSpacing = 0;
     flowLayout.minimumLineSpacing = 0;
     flowLayout.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0);
     RCPhotoPreviewCollectionViewController *previewViewController =
         [[RCPhotoPreviewCollectionViewController alloc] initWithCollectionViewLayout:flowLayout];
     return previewViewController;
+}
+
+- (void)updatePreviewLayoutForSize:(CGSize)size {
+    if (size.width <= 0 || size.height <= 0) {
+        return;
+    }
+    RCPhotoPreviewCollectionViewFlowLayout *flowLayout = (RCPhotoPreviewCollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+    // 普通布局回调保留手势产生的偏移，避免打断翻页。
+    if (CGSizeEqualToSize(flowLayout.itemSize, size)) {
+        return;
+    }
+    self.updatingPreviewLayout = YES;
+    flowLayout.itemSize = size;
+    [flowLayout invalidateLayout];
+    self.collectionView.contentSize = CGSizeMake(size.width * self.previewPhotosArr.count, size.height);
+    if (self.previewPhotosArr.count > self.currentIndex) {
+        self.collectionView.contentOffset = CGPointMake(size.width * self.currentIndex, 0);
+    }
+    self.updatingPreviewLayout = NO;
 }
 
 - (void)previewPhotosWithSelectArr:(NSMutableArray *)selectedArr
@@ -185,8 +218,14 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    UICollectionViewFlowLayout *flowLayout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+    // 尺寸切换期间的偏移仍属于旧分页，不能据此改变当前照片。
+    if (self.updatingPreviewLayout || !CGSizeEqualToSize(flowLayout.itemSize, scrollView.bounds.size) ||
+        flowLayout.itemSize.width <= 0) {
+        return;
+    }
     CGPoint offSet = scrollView.contentOffset;
-    int index = (int)roundf(offSet.x / self.view.frame.size.width);
+    int index = (int)roundf(offSet.x / flowLayout.itemSize.width);
     if (index != self.currentIndex){
         self.currentIndex = index;
         [self _updateTopBarStatus];
@@ -355,24 +394,33 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
 #pragma mark - Private Methods
 
 - (void)creatTopView {
-    CGFloat originY = RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0") ? 20 : 0;
-    if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
-        originY = 44;
-    }
-    self.topView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, originY + 44)];
+    self.topView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.topView.translatesAutoresizingMaskIntoConstraints = NO;
     _topView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x222222cc",  @"0x222222cc");
     [self.view addSubview:_topView];
+    NSLayoutYAxisAnchor *topAnchor = self.view.topAnchor;
+    NSLayoutYAxisAnchor *buttonTopAnchor = _topView.topAnchor;
+    NSLayoutXAxisAnchor *leftAnchor = _topView.leftAnchor;
+    NSLayoutXAxisAnchor *rightAnchor = _topView.rightAnchor;
+    if (@available(iOS 11.0, *)) {
+        topAnchor = self.view.safeAreaLayoutGuide.topAnchor;
+        buttonTopAnchor = _topView.safeAreaLayoutGuide.topAnchor;
+        leftAnchor = _topView.safeAreaLayoutGuide.leftAnchor;
+        rightAnchor = _topView.safeAreaLayoutGuide.rightAnchor;
+    }
+    // 工具栏背景铺满页面，交互控件跟随当前页面的安全区。
+    [NSLayoutConstraint activateConstraints:@[
+        [_topView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor],
+        [_topView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
+        [_topView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [_topView.bottomAnchor constraintEqualToAnchor:topAnchor constant:64]
+    ]];
     RCBaseButton *backButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     UIImage *img = RCDynamicImage(@"photo_preview_navigator_white_back_img", @"navigator_white_back");
     img = [RCSemanticContext imageflippedForRTL:img];
     [backButton setImage:img forState:UIControlStateNormal];
     [backButton setContentEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 6)];
-    [backButton sizeToFit];
-    if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
-        backButton.frame = CGRectMake(10, _topView.frame.size.height / 2, 44, 44);
-    } else {
-        backButton.frame = CGRectMake(10, _topView.frame.size.height / 2 - 44 / 2, 44, 44);
-    }
+    backButton.translatesAutoresizingMaskIntoConstraints = NO;
 
     [backButton addTarget:self action:@selector(backButtonAction) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:backButton];
@@ -380,28 +428,41 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
     RCBaseButton *stateButton = [RCBaseButton buttonWithType:UIButtonTypeCustom];
     [stateButton setImage:RCDynamicImage(@"photo_preview_uncheck_img", @"photo_preview_unselected") forState:UIControlStateNormal];
     [stateButton setImage:RCDynamicImage(@"photo_preview_check_img", @"photo_preview_selected") forState:UIControlStateSelected];
-    [stateButton sizeToFit];
+    stateButton.translatesAutoresizingMaskIntoConstraints = NO;
     stateButton.imageEdgeInsets = (UIEdgeInsets){12, 12, 12, 12};
-    if ([UIApplication sharedApplication].statusBarFrame.size.height > 25) {
-        stateButton.frame = CGRectMake(_topView.frame.size.width - 10 - 44, _topView.frame.size.height / 2, 44, 44);
-    } else {
-        stateButton.frame =
-            CGRectMake(_topView.frame.size.width - 10 - 44, _topView.frame.size.height / 2 - 44 / 2, 44, 44);
-    }
-    // RTL 切换
-    [RCSemanticContext swapFrameForRTL:backButton withView:stateButton];
-    
     [stateButton addTarget:self action:@selector(isSelectedButtonAction:) forControlEvents:UIControlEventTouchUpInside];
     [_topView addSubview:self.selectedButton = stateButton];
+    UIView *leftButton = [RCSemanticContext isRTL] ? stateButton : backButton;
+    UIView *rightButton = [RCSemanticContext isRTL] ? backButton : stateButton;
+    [NSLayoutConstraint activateConstraints:@[
+        [backButton.widthAnchor constraintEqualToConstant:44],
+        [backButton.heightAnchor constraintEqualToConstant:44],
+        [stateButton.widthAnchor constraintEqualToConstant:44],
+        [stateButton.heightAnchor constraintEqualToConstant:44],
+        [backButton.topAnchor constraintEqualToAnchor:buttonTopAnchor constant:10],
+        [stateButton.topAnchor constraintEqualToAnchor:backButton.topAnchor],
+        [leftButton.leftAnchor constraintEqualToAnchor:leftAnchor constant:10],
+        [rightButton.rightAnchor constraintEqualToAnchor:rightAnchor constant:-10]
+    ]];
 }
 
 - (void)createBottomView {
-    CGFloat safeAreaHomeBarHeight = [RCKitUtility getWindowSafeAreaInsets].bottom;
-    _bottomView = [[UIView alloc]
-        initWithFrame:CGRectMake(0, self.view.bounds.size.height - 49 - safeAreaHomeBarHeight,
-                                 self.view.bounds.size.width, 49 + safeAreaHomeBarHeight)];
+    _bottomView = [[UIView alloc] initWithFrame:CGRectZero];
+    _bottomView.translatesAutoresizingMaskIntoConstraints = NO;
     _bottomView.backgroundColor = RCDynamicColor(@"pop_layer_background_color", @"0x222222cc",  @"0x222222cc");
     [self.view addSubview:_bottomView];
+    NSLayoutYAxisAnchor *bottomAnchor = self.view.bottomAnchor;
+    id bottomLayoutItem = _bottomView;
+    if (@available(iOS 11.0, *)) {
+        bottomAnchor = self.view.safeAreaLayoutGuide.bottomAnchor;
+        bottomLayoutItem = _bottomView.safeAreaLayoutGuide;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [_bottomView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor],
+        [_bottomView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
+        [_bottomView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [_bottomView.topAnchor constraintEqualToAnchor:bottomAnchor constant:-49]
+    ]];
     // add button for bottom bar
     _sendButton = [[RCBaseButton alloc] init];
     _sendButton.layer.cornerRadius = 5.0f;
@@ -457,7 +518,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_fullButton
                                                                 attribute:NSLayoutAttributeRight
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeRight
                                                                multiplier:1
                                                                  constant:-10]];
@@ -465,7 +526,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_sendButton
                                                                 attribute:NSLayoutAttributeLeft
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeLeft
                                                                multiplier:1
                                                                  constant:10]];
@@ -473,7 +534,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_editButton
                                                                 attribute:NSLayoutAttributeCenterX
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeCenterX
                                                                multiplier:1
                                                                  constant:0]];
@@ -498,7 +559,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_sendButton
                                                                 attribute:NSLayoutAttributeRight
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeRight
                                                                multiplier:1
                                                                  constant:-10]];
@@ -506,7 +567,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_fullButton
                                                                 attribute:NSLayoutAttributeLeft
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeLeft
                                                                multiplier:1
                                                                  constant:10]];
@@ -514,7 +575,7 @@ static NSString *const videoCellReuseIdentifier = @"VideoPreviewCell";
         [_bottomView addConstraint:[NSLayoutConstraint constraintWithItem:_editButton
                                                                 attribute:NSLayoutAttributeCenterX
                                                                 relatedBy:NSLayoutRelationEqual
-                                                                   toItem:_bottomView
+                                                                   toItem:bottomLayoutItem
                                                                 attribute:NSLayoutAttributeCenterX
                                                                multiplier:1
                                                                  constant:0]];

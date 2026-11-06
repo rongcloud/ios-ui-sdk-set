@@ -19,6 +19,7 @@
 #import "RCImagePreviewCell.h"
 #import "RCPhotoPreviewCollectionViewFlowLayout.h"
 #import "RCBaseCollectionView.h"
+
 @interface RCImageSlideController () <UIScrollViewDelegate, RCImagePreviewCellDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 
 //当前图片消息的数据模型
@@ -40,21 +41,19 @@
 
 @property (nonatomic, assign) CGFloat viewWidth;
 
+@property (nonatomic, assign) CGSize previousLayoutSize;
+
+@property (nonatomic, assign) BOOL isSizeTransitioning;
+
 @end
 
 @implementation RCImageSlideController {
     BOOL _statusBarHidden;
-    BOOL _isNotchScreen;//是否是刘海屏
 }
 
 #pragma mark - Life Cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
-    if (@available(iOS 11.0, *)) {
-        if ([RCKitUtility getKeyWindow].safeAreaInsets.bottom > 0) {
-            _isNotchScreen = YES;
-        }
-    }
     ////设置导航条透明
     [self.view addSubview:self.collectionView];
     [self strechToSuperview:self.collectionView];
@@ -68,10 +67,37 @@
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    CGSize size = self.collectionView.bounds.size;
+    if (size.width <= 0 || size.height <= 0) {
+        return;
+    }
+    if (!CGSizeEqualToSize(size, self.previousLayoutSize)) {
+        self.previousLayoutSize = size;
+        // A resize must not turn the old page offset into a different message.
+        self.isTouchScroll = NO;
+        [self.collectionView.collectionViewLayout invalidateLayout];
+        [self.collectionView layoutIfNeeded];
+    }
     if (self.isTouchScroll) {
         return;
     }
     [self scrollToCurrentIndex];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    self.isSizeTransitioning = YES;
+    self.isTouchScroll = NO;
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+                                     // Page geometry and offset must participate in the same rotation animation.
+                                     [self.view setNeedsLayout];
+                                     [self.view layoutIfNeeded];
+                                     [self scrollToCurrentIndex];
+                                 }
+                                 completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+                                     self.isSizeTransitioning = NO;
+                                 }];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -218,24 +244,42 @@
 
 #pragma mark - UIScrollViewDelegate
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+    if (self.isSizeTransitioning) {
+        return;
+    }
     self.isTouchScroll = YES;
+    self.viewWidth = self.collectionView.bounds.size.width;
     if (self.onlyPreviewCurrentMessage) {
         return;
     }
-    self.viewWidth = self.view.bounds.size.width;
-    self.previousContentOffsetX = self.currentIndex * self.view.bounds.size.width;
+    self.previousContentOffsetX = self.currentIndex * self.viewWidth;
     self.previousMessageId = self.messageModelArray[self.currentIndex].messageId;
 }
 
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (!decelerate) {
+        [self scrollViewDidEndDecelerating:scrollView];
+    }
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    if (self.isSizeTransitioning) {
+        return;
+    }
+    CGFloat width = self.collectionView.bounds.size.width;
+    if (!self.isTouchScroll || width <= 0 || self.viewWidth != width) {
+        self.isTouchScroll = NO;
+        [self scrollToCurrentIndex];
+        return;
+    }
     self.isTouchScroll = NO;
     if (self.onlyPreviewCurrentMessage) {
         return;
     }
     NSInteger midIndex = self.messageModelArray.count / 2;
     
-    int index = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
-    if (index < self.messageModelArray.count && self.viewWidth == self.view.bounds.size.width) {
+    NSInteger index = (NSInteger)round(scrollView.contentOffset.x / width);
+    if (index >= 0 && index < self.messageModelArray.count) {
         self.currentIndex = index;
     }
     if (self.currentIndex >= midIndex && scrollView.contentOffset.x > self.previousContentOffsetX) {
@@ -280,12 +324,19 @@
         [self scrollToCurrentIndex];
     }
 
-    self.previousContentOffsetX = self.currentIndex * self.view.bounds.size.width;
+    self.previousContentOffsetX = self.currentIndex * width;
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    int index = (int)(scrollView.contentOffset.x / self.view.bounds.size.width);
-    if (index < self.messageModelArray.count && self.viewWidth == self.view.bounds.size.width && self.isTouchScroll) {
+    if (self.isSizeTransitioning) {
+        return;
+    }
+    CGFloat width = self.collectionView.bounds.size.width;
+    if (width <= 0) {
+        return;
+    }
+    NSInteger index = (NSInteger)round(scrollView.contentOffset.x / width);
+    if (index >= 0 && index < self.messageModelArray.count && self.viewWidth == width && self.isTouchScroll) {
         self.currentIndex = index;
     }
 }
@@ -376,20 +427,13 @@
 
 #pragma mark - helper
 - (void)scrollToCurrentIndex{
-    if (_isNotchScreen) {
-        [CATransaction begin];
-        [CATransaction disableActions];
-        self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
-        self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
-        [CATransaction commit];
-    }else{
-        [self.collectionView performBatchUpdates:^{
-            self.collectionView.contentSize = CGSizeMake(self.messageModelArray.count*self.view.frame.size.width, self.view.frame.size.height);
-            self.collectionView.contentOffset = CGPointMake(self.view.frame.size.width*self.currentIndex, 0);
-        } completion:^(BOOL finished) {
-            
-        }];
+    if (self.currentIndex < 0 || self.currentIndex >= self.messageModelArray.count ||
+        self.collectionView.bounds.size.width <= 0 || self.collectionView.bounds.size.height <= 0) {
+        return;
     }
+    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:self.currentIndex inSection:0]
+                              atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
+                                      animated:NO];
 }
 
 - (void)saveImage {
@@ -464,6 +508,8 @@
         self.flowLayout.minimumLineSpacing = 0;
         self.flowLayout.minimumInteritemSpacing = 0;
         _collectionView = [[RCBaseCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:self.flowLayout];
+        // Full-bounds pages must not acquire safe-area insets during rotation.
+        _collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
         [_collectionView registerClass:[RCImagePreviewCell class] forCellWithReuseIdentifier:@"RCImagePreviewCell"];
         _collectionView.dataSource = self;
         _collectionView.alwaysBounceHorizontal = YES;

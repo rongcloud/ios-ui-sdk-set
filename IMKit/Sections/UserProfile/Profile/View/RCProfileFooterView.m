@@ -25,7 +25,8 @@
     self = [super init];
     if (self) {
         self.items = items;
-        self.frame = CGRectMake(0, 0, SCREEN_WIDTH, (topSpace + RCProfileFooterViewButtonHeight + buttonSpace) * items.count);
+        self.frame = CGRectMake(0, 0, 0, (topSpace + RCProfileFooterViewButtonHeight + buttonSpace) * items.count);
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         [self setupButtonItems:topSpace buttonSpace:buttonSpace items:items];
     }
     return self;
@@ -100,9 +101,15 @@
     
     NSInteger count = items.count;
     CGFloat height = RCProfileFooterViewButtonHeight*count + buttonSpace*(count -1);
+    NSLayoutXAxisAnchor *leadingAnchor = self.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = self.trailingAnchor;
+    if (@available(iOS 11.0, *)) {
+        leadingAnchor = self.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = self.safeAreaLayoutGuide.trailingAnchor;
+    }
     [NSLayoutConstraint activateConstraints:@[
-          [self.buttonsStackView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:16],
-          [self.buttonsStackView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-16],
+          [self.buttonsStackView.leadingAnchor constraintEqualToAnchor:leadingAnchor constant:16],
+          [self.buttonsStackView.trailingAnchor constraintEqualToAnchor:trailingAnchor constant:-16],
           [self.buttonsStackView.heightAnchor constraintEqualToConstant:height],
           [self.buttonsStackView.topAnchor constraintEqualToAnchor:self.topAnchor constant:topSpace]
       ]];

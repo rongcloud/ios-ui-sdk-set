@@ -20,6 +20,8 @@
 
 @property (nonatomic, assign) RCStickerDownloadViewStstus currentStatus;
 
+@property (nonatomic, assign) float progress;
+
 @property (nonatomic, strong) RCBaseButton *downloadBtn;
 
 @property (nonatomic, strong) UIView *progressView;
@@ -46,33 +48,41 @@
 }
 
 - (void)setCurrentStstus:(RCStickerDownloadViewStstus)currentStatus progress:(float)progress {
-    _currentStatus = currentStatus;
     dispatch_main_async_safe(^{
+        self.currentStatus = currentStatus;
+        self.progress = progress;
         self.progressLabel.text = ([NSString stringWithFormat:@"%d%%", (int)(progress)]);
-        self.progressLabel.frame = self.bounds;
-        self.downloadBtn.frame = self.bounds;
 
         switch (currentStatus) {
         case RCStickerDownloadViewStstusUnDownload:
             self.downloadBtn.hidden = NO;
             self.progressView.hidden = YES;
             self.progressLabel.hidden = YES;
-            self.progressView.frame = CGRectZero;
             self.layer.borderColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff").CGColor;
             break;
         case RCStickerDownloadViewStstusDownloading:
             self.downloadBtn.hidden = YES;
             self.progressView.hidden = NO;
             self.progressLabel.hidden = NO;
-            self.progressView.frame =
-                CGRectMake(0, 0, self.bounds.size.width * progress / 100.0, self.bounds.size.height);
             self.layer.borderColor = RCDynamicColor(@"primary_color", @"0x6DC4FF", @"0x6DC4FF").CGColor;
 
             break;
         default:
             break;
         }
+        [self setNeedsLayout];
     });
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    self.progressLabel.frame = self.bounds;
+    self.downloadBtn.frame = self.bounds;
+    self.progressView.frame = self.currentStatus == RCStickerDownloadViewStstusDownloading
+                                 ? CGRectMake(0, 0, CGRectGetWidth(self.bounds) * self.progress / 100.0,
+                                              CGRectGetHeight(self.bounds))
+                                 : CGRectZero;
 }
 
 - (void)beginDownload {

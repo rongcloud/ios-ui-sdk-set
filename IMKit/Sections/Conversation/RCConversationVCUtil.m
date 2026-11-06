@@ -983,18 +983,13 @@ static NSUInteger const RCQuoteReferenceTerminalStatusCacheMaxCount = 50;
     CGFloat arrowAndTextSpace = 5;
     CGFloat textRight = 4;
     temBut.size.width = arrowLeft + arrowWidth + arrowAndTextSpace + rect.size.width + textRight;
-    temBut.origin.x = self.chatVC.view.frame.size.width - temBut.size.width;
     senderButton.frame = temBut;
     sender.frame = CGRectMake(temBut.size.width - textRight - rect.size.width, 0, rect.size.width, temBut.size.height);
     UIImage *image = [senderButton currentBackgroundImage]; 
     if ([RCKitUtility isRTL]) {
-        temBut.origin.x = 0;
-        senderButton.frame = temBut;
         sender.frame = CGRectMake(4, 0, rect.size.width, temBut.size.height);
         image = [image imageFlippedForRightToLeftLayoutDirection];
     } else {
-        temBut.origin.x = self.chatVC.view.frame.size.width - temBut.size.width;
-        senderButton.frame = temBut;
         sender.frame = CGRectMake(temBut.size.width - 4 - rect.size.width, 0, rect.size.width, temBut.size.height);
     }
     if ([RCKitUtility isTraditionInnerThemes]) {
@@ -1034,6 +1029,7 @@ static NSUInteger const RCQuoteReferenceTerminalStatusCacheMaxCount = 50;
         imageView.tag = 1010;
         [senderButton addSubview:imageView];
     }
+    [self.chatVC.view setNeedsLayout];
 }
 
 - (UIImage *)applyResizableCapInsets:(UIImage *)image {

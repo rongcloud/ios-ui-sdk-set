@@ -33,6 +33,13 @@
     if (messagecontentview_height < RCKitConfigCenter.ui.globalMessagePortraitSize.height) {
         messagecontentview_height = RCKitConfigCenter.ui.globalMessagePortraitSize.height;
     }
+    if ([RCReferencedContentView shouldShowQuoteCardForMessageModel:model]) {
+        CGFloat bubbleWidth = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:collectionViewWidth];
+        CGFloat quoteHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model maxWidth:MAX(bubbleWidth - 24, 0)];
+        CGFloat originalQuoteHeight = [RCReferencedContentView quoteCardHeightForMessageModel:model
+                                                                                   maxWidth:[RCMessageCellTool getMessageContentViewMaxWidth]];
+        extraHeight += quoteHeight - originalQuoteHeight;
+    }
     messagecontentview_height += extraHeight;
     return CGSizeMake(collectionViewWidth, messagecontentview_height);
 }
@@ -117,6 +124,11 @@
     [self setAutoLayout];
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [self updateCardContentLayout];
+}
+
 - (void)setAutoLayout {
     RCContactCardMessage *cardMessage = (RCContactCardMessage *)self.model.content;
     if (cardMessage) {
@@ -140,18 +152,26 @@
         }
     }
     CGSize size = [[self class] sizeOfMessageCell];
+    CGFloat containerWidth = self.hostCollectionView ? CGRectGetWidth(self.hostCollectionView.bounds) : CGRectGetWidth(self.bounds);
+    size.width = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:containerWidth];
     self.messageContentView.contentSize = size;
     self.typeLabel.accessibilityLabel = @"typeLabel";
     self.nameLabel.accessibilityLabel  = @"nameLabel";
     self.portraitView.accessibilityLabel  = @"portraitView";
+    [self updateCardContentLayout];
+}
+
+- (void)updateCardContentLayout {
+    CGSize size = self.messageContentView.bounds.size;
     if ([RCKitUtility isRTL]) {
         self.portraitView.frame = CGRectMake(size.width - Cart_Portrait_View_Width- 12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
-        self.nameLabel.frame = CGRectMake(12, 17.5,  self.portraitView.frame.origin.x - 24 , 25);
+        self.nameLabel.frame = CGRectMake(12, 17.5, MAX(self.portraitView.frame.origin.x - 24, 0), 25);
         self.separationView.frame = CGRectMake(CGRectGetMinX(self.nameLabel.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
         self.typeLabel.frame = CGRectMake(CGRectGetMinX(self.separationView.frame),CGRectGetMaxY(self.portraitView.frame)+16.5, self.separationView.frame.size.width, 16.5);
     } else {
         self.portraitView.frame = CGRectMake(12, 10, Cart_Portrait_View_Width, Cart_Portrait_View_Width);
-        self.nameLabel.frame = CGRectMake(CGRectGetMaxX(self.portraitView.frame)+12, 17.5, 100, 25);
+        CGFloat nameX = CGRectGetMaxX(self.portraitView.frame) + 12;
+        self.nameLabel.frame = CGRectMake(nameX, 17.5, MAX(size.width - nameX - 12, 0), 25);
         self.separationView.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+12, self.messageContentView.frame.size.width - 12 * 2, 0.5);
         self.typeLabel.frame = CGRectMake(CGRectGetMinX(self.portraitView.frame),CGRectGetMaxY(self.portraitView.frame)+16.5, self.separationView.frame.size.width, 16.5);
     }

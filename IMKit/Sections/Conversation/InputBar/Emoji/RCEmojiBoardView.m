@@ -110,11 +110,20 @@ static int rc_currentSelectIndexPage;
 
 - (void)setFrame:(CGRect)frame {
     [super setFrame:frame];
-    if (fabs(frame.size.width - lastFrameWith) >= 4) {
+    CGFloat widthTolerance = 8.0 * CGFLOAT_EPSILON * MAX(1.0, MAX(fabs(frame.size.width), fabs(lastFrameWith)));
+    if (fabs(frame.size.width - lastFrameWith) > widthTolerance) {
         lastFrameWith = frame.size.width;
     } else {
         return; //防止页面过度刷新
     }
+    CGRect scrollBounds = self.emojiBackgroundView.bounds;
+    scrollBounds.size.width = CGRectGetWidth(self.bounds);
+    self.emojiBackgroundView.bounds = scrollBounds;
+    self.emojiBackgroundView.center = CGPointMake(CGRectGetWidth(self.bounds) / 2.0,
+                                                  CGRectGetHeight(scrollBounds) / 2.0);
+    CGRect pageFrame = pageCtrl.frame;
+    pageFrame.size.width = CGRectGetWidth(self.bounds);
+    pageCtrl.frame = pageFrame;
     // 配置本页视图动态变化 ========================= 开始//
     if (_tabbarView) {
         CGRect tabbarViewFrame = _tabbarView.frame;
@@ -472,6 +481,8 @@ static int rc_currentSelectIndexPage;
         self.emojiColumn--;
         left = left + emojiSpanHorizontal;
     }
+    // Auto Layout 首次布局前宽度可能为零，分页容量必须保持为正才能推进加载页码。
+    self.emojiColumn = MAX(1, self.emojiColumn);
     self.emojiMaxCountPerPage = self.emojiColumn * emojiRow - 1;
     self.emojiMariginHorizontalMin = left / 2;
     self.emojiTotalPage =
@@ -588,8 +599,12 @@ static int rc_currentSelectIndexPage;
 }
 
 - (float)getBoardViewBottonOriginY {
-    float gap = (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) ? 64 : 0;
-    return [UIScreen mainScreen].bounds.size.height - gap;
+    UIView *container = self.superview;
+    CGFloat bottomInset = 0;
+    if (@available(iOS 11.0, *)) {
+        bottomInset = container.safeAreaInsets.bottom;
+    }
+    return container ? CGRectGetMaxY(container.bounds) - bottomInset : CGRectGetMaxY(self.frame);
 }
 
 - (void)needReloadEmoticonTabSource:(NSNotification *)notification {

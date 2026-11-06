@@ -18,6 +18,7 @@
 #import "RCConversationListDataSource.h"
 #import "RCKitConfig.h"
 #import "RCConversationViewController.h"
+#import "RCConversationContainerViewController+Internal.h"
 
 @interface RCConversationListViewController () <UITableViewDataSource, UITableViewDelegate, RCConversationCellDelegate,RCConversationListDataSourceDelegate>
 
@@ -74,7 +75,7 @@
         self.extendedLayoutIncludesOpaqueBars = YES;
     }
     self.conversationListTableView = [[RCBaseTableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
-    self.conversationListTableView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+    self.conversationListTableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.conversationListTableView.backgroundColor =
     RCDynamicColor(@"clear_color", @"0xffffff", @"0x000000");
     self.view.backgroundColor = RCDynamicColor(@"view_background_color", @"0xffffff00", @"0xffffff00");
@@ -91,6 +92,18 @@
     self.conversationListTableView.delegate = self;
     self.conversationListTableView.rcmj_footer = self.footer;
     [self.view addSubview:self.conversationListTableView];
+    // 水平方向约束整个列表，避免行背景和分隔线进入系统侧栏区域。
+    // 约束随容器和安全区更新，不依赖旋转回调中的中间尺寸。
+    id horizontalGuide = self.view;
+    if (@available(iOS 11.0, *)) {
+        horizontalGuide = self.view.safeAreaLayoutGuide;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [NSLayoutConstraint constraintWithItem:self.conversationListTableView attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:horizontalGuide attribute:NSLayoutAttributeLeading multiplier:1 constant:0],
+        [NSLayoutConstraint constraintWithItem:self.conversationListTableView attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:horizontalGuide attribute:NSLayoutAttributeTrailing multiplier:1 constant:0],
+        [NSLayoutConstraint constraintWithItem:self.conversationListTableView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1 constant:0],
+        [NSLayoutConstraint constraintWithItem:self.conversationListTableView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1 constant:0],
+    ]];
     [self registerObserver];
 }
 
@@ -174,11 +187,15 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    CGFloat defaultHeight = RCKitConfigCenter.ui.globalConversationPortraitSize.height + 24.f;
+    if (indexPath.row >= self.dataSource.dataList.count) {
+        return defaultHeight;
+    }
     RCConversationModel *model = self.dataSource.dataList[indexPath.row];
     if (model.conversationModelType == RC_CONVERSATION_MODEL_TYPE_CUSTOMIZATION) {
         return [self rcConversationListTableView:tableView heightForRowAtIndexPath:indexPath];
     } else {
-        return RCKitConfigCenter.ui.globalConversationPortraitSize.height + 24.f;
+        return defaultHeight;
     }
 }
 
@@ -262,6 +279,7 @@
 
 #pragma mark - Target action
 - (void)deleteAndReloadConversationCell:(RCConversationModel *)model{
+    [[RCConversationContainerViewController containerForViewController:self] conversationWasDeleted:model];
     [self didDeleteConversationCell:model];
     [self notifyUpdateUnreadMessageCount];
 
@@ -288,11 +306,12 @@
 }
 
 - (void)layoutSubview:(CGSize)size {
-    if (![RCKitUtility currentDeviceIsIPad]) {
+    if (size.width <= 0 || size.height <= 0) {
         return;
     }
-    self.conversationListTableView.frame = self.view.bounds;
-    [self.conversationListTableView reloadData];
+    // Recalculate custom row heights without rebinding cells during the size transition.
+    [self.conversationListTableView beginUpdates];
+    [self.conversationListTableView endUpdates];
 }
 
 - (void)refreshConversationTableViewIfNeeded {
@@ -449,6 +468,9 @@
 }
 
 - (void)updateEmptyConversationView {
+    RCConversationContainerViewController *container =
+        [RCConversationContainerViewController containerForViewController:self];
+    [container.view setNeedsLayout];
     if (self.dataSource.dataList.count == 0) {
         self.emptyConversationView.hidden = NO;
     } else {
@@ -720,6 +742,12 @@
 - (void)onSelectedTableRow:(RCConversationModelType)conversationModelType
          conversationModel:(RCConversationModel *)model
                atIndexPath:(NSIndexPath *)indexPath {
+    RCConversationContainerViewController *container =
+        [RCConversationContainerViewController containerForViewController:self];
+    if (container) {
+        [container showConversationModel:model animated:YES];
+        return;
+    }
     if (self.navigationController) {
         RCConversationViewController *conversationVC = [[RCConversationViewController alloc] initWithConversationType:model.conversationType targetId:model.targetId];
         conversationVC.conversationType = model.conversationType;
@@ -733,6 +761,15 @@
         [self.navigationController pushViewController:conversationVC animated:YES];
     }else{
         RCLogI(@"navigationController is nil , Please Rewrite `onSelectedTableRow:conversationModel:atIndexPath:` method to implement the conversation cell click to push RCConversationViewController vc");
+    }
+}
+- (void)showConversationViewController:(RCConversationViewController *)viewController animated:(BOOL)animated {
+    RCConversationContainerViewController *container =
+        [RCConversationContainerViewController containerForViewController:self];
+    if (container) {
+        [container presentConversationViewController:viewController animated:animated];
+    } else {
+        [self.navigationController pushViewController:viewController animated:animated];
     }
 }
 - (void)didDeleteConversationCell:(RCConversationModel *)model {

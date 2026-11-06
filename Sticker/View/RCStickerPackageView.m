@@ -11,7 +11,6 @@
 #import "RCStickerDataManager.h"
 #import "RCStickerUtility.h"
 #import "RongStickerAdaptiveHeader.h"
-#define ScreenWidth [UIScreen mainScreen].bounds.size.width
 
 @interface RCStickerPackageView () <RCStickerDownloadViewDelegate>
 
@@ -28,7 +27,7 @@
 @implementation RCStickerPackageView
 
 - (instancetype)initWithPackageConfig:(RCStickerPackageConfig *)packageConfig {
-    self = [super initWithFrame:CGRectMake(0, 0, ScreenWidth, 186)];
+    self = [super initWithFrame:CGRectZero];
     if (self) {
         self.packageConfig = packageConfig;
         [self initialize];
@@ -41,15 +40,6 @@
     [self addSubview:self.coverView];
     [self addSubview:self.nameLabel];
     [self addSubview:self.downloadView];
-    self.coverView.frame = CGRectMake(34, 23, 164, 140);
-    CGFloat originX = self.frame.size.width - 150;
-    if (self.frame.size.width < 375) {
-        originX = originX + 25;
-        self.coverView.frame = CGRectMake(17, 23, 164, 140);
-    }
-    self.nameLabel.frame = CGRectMake(originX, 48, 100, 34);
-    self.downloadView.frame = CGRectMake(originX, CGRectGetMaxY(self.nameLabel.frame) + 28, 100, 32);
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(packageDownloading:)
                                                  name:RCStickersDownloadingNotification
@@ -60,6 +50,21 @@
                                                object:nil];
 
     [self configSubView];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    CGFloat width = CGRectGetWidth(self.bounds);
+    BOOL compactLayout = width < 375;
+    self.coverView.frame = CGRectMake(compactLayout ? 17 : 34, 23, 164, 140);
+    CGFloat originX = width - (compactLayout ? 125 : 150);
+    CGRect nameFrame = CGRectMake(originX, 48, 100, 34);
+    CGRect downloadFrame = CGRectMake(originX, CGRectGetMaxY(nameFrame) + 28, 100, 32);
+    self.nameLabel.bounds = (CGRect){CGPointZero, nameFrame.size};
+    self.nameLabel.center = CGPointMake(CGRectGetMidX(nameFrame), CGRectGetMidY(nameFrame));
+    self.downloadView.bounds = (CGRect){CGPointZero, downloadFrame.size};
+    self.downloadView.center = CGPointMake(CGRectGetMidX(downloadFrame), CGRectGetMidY(downloadFrame));
 }
 
 - (void)configSubView {

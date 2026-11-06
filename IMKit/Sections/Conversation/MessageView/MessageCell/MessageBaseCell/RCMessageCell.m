@@ -119,6 +119,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
     [self edit_showEditStatusIfNeeded];
     [self updateReadReceiptViewV5];
     [self.messageReactionView updateWithMessageModel:model];
+    // 相同尺寸的 cell 重新配置后也需恢复引用卡片，不能依赖尺寸变化触发布局。
+    [self setNeedsLayout];
 }
 
 - (void)layoutSubviews {
@@ -507,7 +509,8 @@ NSString *const KNotificationMessageBaseCellUpdateCanReceiptStatus =
         self.messageReactionView.frame = CGRectZero;
         return NO;
     }
-    CGFloat maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat containerWidth = self.hostCollectionView ? CGRectGetWidth(self.hostCollectionView.bounds) : CGRectGetWidth(self.bounds);
+    CGFloat maxWidth = MIN([RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:containerWidth], containerWidth - 80);
     CGSize reactionSize = [RCMessageReactionView sizeForMessageModel:self.model maxWidth:maxWidth];
     if (reactionSize.height <= 0) {
         self.messageReactionView.frame = CGRectZero;

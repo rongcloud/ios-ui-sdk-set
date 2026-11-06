@@ -8,6 +8,7 @@
 
 #import "RCGroupManager.h"
 #import "NSMutableArray+RCOperation.h"
+#import "RCKitCommonDefine.h"
 
 @interface RCPagingQueryResult<T> ()
 
@@ -120,5 +121,28 @@
         }
     }
     return nil;
+}
+
++ (nullable NSString *)groupLimitExceededMemberNames:(nullable NSArray<RCGroupMemberInfo *> *)members {
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    for (RCGroupMemberInfo *member in members) {
+        NSString *name = member.name.length > 0 ? member.name : member.userId;
+        if (name.length > 0) {
+            [names addObject:name];
+        }
+    }
+    if (names.count == 0) {
+        return nil;
+    }
+    if (names.count == 1) {
+        return names.firstObject;
+    }
+    if (names.count == 2) {
+        return [NSString stringWithFormat:RCLocalizedString(@"GroupUserNamesPairFormat"),
+                                          names.firstObject, names.lastObject];
+    }
+    NSString *prefix = [[names subarrayWithRange:NSMakeRange(0, names.count - 1)]
+                        componentsJoinedByString:RCLocalizedString(@"GroupUserNamesSeparator")];
+    return [NSString stringWithFormat:RCLocalizedString(@"GroupUserNamesMultipleFormat"), prefix, names.lastObject];
 }
 @end

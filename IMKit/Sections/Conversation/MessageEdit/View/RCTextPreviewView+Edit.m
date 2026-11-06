@@ -26,7 +26,7 @@
 + (void)edit_showText:(NSString *)text messageId:(long)messageId edited:(BOOL)edited delegate:(id<RCTextPreviewViewDelegate>)delegate {
     NSString *originalText = text;
     NSString *displayText = [RCMessageEditUtil displayTextForOriginalText:originalText isEdited:edited];
-    RCTextPreviewView *textPreviewView = [[RCTextPreviewView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+    RCTextPreviewView *textPreviewView = [[RCTextPreviewView alloc] initWithFrame:CGRectZero
                                                                              text:displayText
                                                                         messageId:messageId];
     textPreviewView.originalText = originalText;

@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RCMessageModel (Txt)
 @property (nonatomic, assign) CGSize txt_textSize;
 
+- (CGSize)txt_textSizeWithMaxWidth:(CGFloat)maxWidth;
+
 @end
 
 NS_ASSUME_NONNULL_END

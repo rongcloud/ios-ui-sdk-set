@@ -18,9 +18,6 @@
 #import "RCMBProgressHUD.h"
 #import "RCBaseButton.h"
 
-#define WIDTH ((SCREEN_WIDTH - 20) / 4)
-#define SIZE CGSizeMake(WIDTH, WIDTH)
-
 static NSString *const reuseIdentifier = @"Cell";
 
 @interface RCPhotosPickerController () <UICollectionViewDelegateFlowLayout, PHPhotoLibraryChangeObserver,RCPhotoPickerCollectCellDelegate>
@@ -56,11 +53,12 @@ static NSString *const reuseIdentifier = @"Cell";
 + (instancetype)imagePickerViewController {
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     flowLayout.scrollDirection = UICollectionViewScrollDirectionVertical;
-    flowLayout.itemSize = CGSizeMake(WIDTH, WIDTH);
     flowLayout.minimumLineSpacing = 4;
     flowLayout.minimumInteritemSpacing = 4;
     flowLayout.sectionInset = UIEdgeInsetsMake(4, 4, 1, 4);
-    flowLayout.footerReferenceSize = CGSizeMake(SCREEN_WIDTH, 49);
+    if (@available(iOS 11.0, *)) {
+        flowLayout.sectionInsetReference = UICollectionViewFlowLayoutSectionInsetFromSafeArea;
+    }
     RCPhotosPickerController *pickerViewController =
     [[RCPhotosPickerController alloc] initWithCollectionViewLayout:flowLayout];
     return pickerViewController;
@@ -102,8 +100,6 @@ static NSString *const reuseIdentifier = @"Cell";
     self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF3F6F9", @"0x191A1F");
     self.collectionView.backgroundColor = RCDynamicColor(@"common_background_color", @"0xFFFFFF", @"0x2D2D32");
     self.previousPreheatRect = CGRectZero;
-    CGFloat scale = [UIScreen mainScreen].scale;
-    self.thumbnailSize = (CGSize){WIDTH * scale, WIDTH * scale};
     
     if (RC_IOS_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
         self.extendedLayoutIncludesOpaqueBars = YES;
@@ -114,15 +110,38 @@ static NSString *const reuseIdentifier = @"Cell";
     [self createTopView];
 }
 
-- (void)viewWillLayoutSubviews {
-    [super viewWillLayoutSubviews];
-    CGRect statusBarRect = [[UIApplication sharedApplication] statusBarFrame];
-    int shouldBeSubtractionHeight = 0;
-    if (statusBarRect.size.height == 40) {
-        shouldBeSubtractionHeight = 20;
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+    UIEdgeInsets safeInsets = UIEdgeInsetsZero;
+    UIEdgeInsets contentInsets = self.collectionView.contentInset;
+    if (@available(iOS 11.0, *)) {
+        safeInsets = self.collectionView.safeAreaInsets;
+        contentInsets = self.collectionView.adjustedContentInset;
     }
-    CGFloat height = 49 + [self getSafeAreaExtraBottomHeight];
-    _toolBar.frame = CGRectMake(0, SCREEN_HEIGHT - shouldBeSubtractionHeight - height, SCREEN_WIDTH, height);
+    // Flow layout 同时遵守安全区和内容边距，四列宽度使用相同的有效边界。
+    CGFloat leftInset = MAX(safeInsets.left + layout.sectionInset.left, contentInsets.left);
+    CGFloat rightInset = MAX(safeInsets.right + layout.sectionInset.right, contentInsets.right);
+    CGFloat width = self.collectionView.bounds.size.width - leftInset - rightInset;
+    CGFloat itemWidth = floor((width - layout.minimumInteritemSpacing * 3) / 4);
+    if (itemWidth <= 0) {
+        return;
+    }
+    CGSize itemSize = CGSizeMake(itemWidth, itemWidth);
+    CGSize footerSize = CGSizeMake(width, 49);
+    if (!CGSizeEqualToSize(layout.itemSize, itemSize) || !CGSizeEqualToSize(layout.footerReferenceSize, footerSize)) {
+        layout.itemSize = itemSize;
+        layout.footerReferenceSize = footerSize;
+        [layout invalidateLayout];
+    }
+    CGFloat scale = self.collectionView.traitCollection.displayScale;
+    CGSize thumbnailSize = CGSizeMake(itemWidth * scale, itemWidth * scale);
+    if (!CGSizeEqualToSize(self.thumbnailSize, thumbnailSize)) {
+        [self.cachingImageManager stopCachingImagesForAllAssets];
+        self.thumbnailSize = thumbnailSize;
+        self.previousPreheatRect = CGRectZero;
+        [self updateCachedAssets];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -391,10 +410,23 @@ static NSString *const reuseIdentifier = @"Cell";
 }
 
 - (void)createTopView {
-    CGFloat height = 49 + [self getSafeAreaExtraBottomHeight];
-    _toolBar = [[UIView alloc] initWithFrame:CGRectMake(0, SCREEN_HEIGHT - height, SCREEN_WIDTH, height)];
+    _toolBar = [[UIView alloc] initWithFrame:CGRectZero];
+    _toolBar.translatesAutoresizingMaskIntoConstraints = NO;
     _toolBar.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xF3F6F9", @"0x191A1F");
     [self.view addSubview:_toolBar];
+    NSLayoutYAxisAnchor *bottomAnchor = self.view.bottomAnchor;
+    id toolbarLayoutItem = _toolBar;
+    if (@available(iOS 11.0, *)) {
+        bottomAnchor = self.view.safeAreaLayoutGuide.bottomAnchor;
+        toolbarLayoutItem = _toolBar.safeAreaLayoutGuide;
+    }
+    // 背景延伸到底边，按钮区域保持在当前页面的安全区内。
+    [NSLayoutConstraint activateConstraints:@[
+        [_toolBar.leftAnchor constraintEqualToAnchor:self.view.leftAnchor],
+        [_toolBar.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
+        [_toolBar.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [_toolBar.topAnchor constraintEqualToAnchor:bottomAnchor constant:-49]
+    ]];
     
     // add button for bottom bar
     _btnSend = [[RCBaseButton alloc] init];
@@ -433,7 +465,7 @@ static NSString *const reuseIdentifier = @"Cell";
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_previewBtn
                                                              attribute:NSLayoutAttributeRight
                                                              relatedBy:NSLayoutRelationEqual
-                                                                toItem:_toolBar
+                                                                toItem:toolbarLayoutItem
                                                              attribute:NSLayoutAttributeRight
                                                             multiplier:1
                                                               constant:-10]];
@@ -441,7 +473,7 @@ static NSString *const reuseIdentifier = @"Cell";
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_btnSend
                                                              attribute:NSLayoutAttributeLeft
                                                              relatedBy:NSLayoutRelationEqual
-                                                                toItem:_toolBar
+                                                                toItem:toolbarLayoutItem
                                                              attribute:NSLayoutAttributeLeft
                                                             multiplier:1
                                                               constant:10]];
@@ -464,7 +496,7 @@ static NSString *const reuseIdentifier = @"Cell";
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_btnSend
                                                              attribute:NSLayoutAttributeRight
                                                              relatedBy:NSLayoutRelationEqual
-                                                                toItem:_toolBar
+                                                                toItem:toolbarLayoutItem
                                                              attribute:NSLayoutAttributeRight
                                                             multiplier:1
                                                               constant:-10]];
@@ -472,7 +504,7 @@ static NSString *const reuseIdentifier = @"Cell";
         [_toolBar addConstraint:[NSLayoutConstraint constraintWithItem:_previewBtn
                                                              attribute:NSLayoutAttributeLeft
                                                              relatedBy:NSLayoutRelationEqual
-                                                                toItem:_toolBar
+                                                                toItem:toolbarLayoutItem
                                                              attribute:NSLayoutAttributeLeft
                                                             multiplier:1
                                                               constant:10]];
@@ -565,10 +597,6 @@ static NSString *const reuseIdentifier = @"Cell";
     });
 }
 
-- (float)getSafeAreaExtraBottomHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].bottom;
-}
-
 #pragma mark - Helper
 - (void)updateCachedAssets {
     if (!self.isViewLoaded && !self.view.window) {
@@ -594,8 +622,10 @@ static NSString *const reuseIdentifier = @"Cell";
     imageRequestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
     imageRequestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
     
-    CGFloat screenScale = [UIScreen mainScreen].scale;
-    CGSize thumbnailSize = (CGSize){SIZE.width * screenScale, SIZE.height * screenScale};
+    CGSize thumbnailSize = self.thumbnailSize;
+    if (thumbnailSize.width <= 0 || thumbnailSize.height <= 0) {
+        return;
+    }
     [self.cachingImageManager startCachingImagesForAssets:addAssets
                                                targetSize:thumbnailSize
                                               contentMode:PHImageContentModeAspectFill

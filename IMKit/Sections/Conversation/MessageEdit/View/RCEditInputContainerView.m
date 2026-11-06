@@ -587,6 +587,13 @@
         _inputTextView = [[RCTextView alloc] init];
         _inputTextView.delegate = self;
         _inputTextView.textChangeDelegate = self;
+#if defined(__IPHONE_26_0)
+        if (@available(iOS 26.0, *)) {
+            // 编辑区域没有覆盖在文字上方的工具栏，不需要滚动边缘的模糊效果。
+            _inputTextView.topEdgeEffect.hidden = YES;
+            _inputTextView.bottomEdgeEffect.hidden = YES;
+        }
+#endif
         
         // 设置文本边距
         UIEdgeInsets textEdge = _inputTextView.textContainerInset;

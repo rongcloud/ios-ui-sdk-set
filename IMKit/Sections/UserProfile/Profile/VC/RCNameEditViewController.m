@@ -7,7 +7,6 @@
 
 #import "RCNameEditViewController.h"
 #import "RCNameEditView.h"
-#import "RCBaseButton.h"
 #import "RCKitCommonDefine.h"
 #import "RCAlertView.h"
 #define RCNameEditViewTop 15
@@ -17,7 +16,7 @@ RCNameEditViewModelDelegate,
 UITextFieldDelegate
 >
 
-@property (nonatomic, strong) RCBaseButton *confirmButton;
+@property (nonatomic, strong) UIBarButtonItem *confirmButton;
 
 @property (nonatomic, strong) RCNameEditView *nameEditView;
 
@@ -40,6 +39,12 @@ UITextFieldDelegate
     [super viewDidLoad];
     self.title = self.viewModel.title;
     self.edgesForExtendedLayout = UIRectEdgeNone;
+#if defined(__IPHONE_27_0)
+    if (@available(iOS 27.0, *)) {
+        self.edgesForExtendedLayout = UIRectEdgeAll;
+        self.navigationItem.navigationBarMinimization.minimizationBehavior = UIBarMinimizationBehaviorNever;
+    }
+#endif
     [self setupView];
     [self setNavigationBarItems];
     __weak typeof(self) weakSelf = self;
@@ -53,7 +58,17 @@ UITextFieldDelegate
 - (void)setupView {
     self.view.backgroundColor = self.nameEditView.backgroundColor;
     [self.view addSubview:self.nameEditView];
-    self.nameEditView.frame = CGRectOffset(self.view.bounds, 0, RCNameEditViewTop);
+    self.nameEditView.translatesAutoresizingMaskIntoConstraints = NO;
+    UILayoutGuide *contentGuide = self.view.layoutMarginsGuide;
+    if (@available(iOS 11.0, *)) {
+        contentGuide = self.view.safeAreaLayoutGuide;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [self.nameEditView.topAnchor constraintEqualToAnchor:contentGuide.topAnchor constant:RCNameEditViewTop],
+        [self.nameEditView.leadingAnchor constraintEqualToAnchor:contentGuide.leadingAnchor],
+        [self.nameEditView.trailingAnchor constraintEqualToAnchor:contentGuide.trailingAnchor],
+        [self.nameEditView.bottomAnchor constraintEqualToAnchor:contentGuide.bottomAnchor]
+    ]];
 }
 #pragma mark -- RCNameEditViewModelDelegate
 
@@ -91,7 +106,7 @@ UITextFieldDelegate
 #pragma mark -- private
 
 - (void)setNavigationBarItems {
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.confirmButton];
+    self.navigationItem.rightBarButtonItem = self.confirmButton;
     self.confirmButton.enabled = NO;
     
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
@@ -121,16 +136,18 @@ UITextFieldDelegate
     return _nameEditView;
 }
 
-- (RCBaseButton *)confirmButton {
+- (UIBarButtonItem *)confirmButton {
     if (!_confirmButton) {
-        _confirmButton = [[RCBaseButton alloc] init];
-        [_confirmButton setTitle:RCLocalizedString(@"Confirm") forState:UIControlStateNormal];
-        [_confirmButton setTitleColor:RCDynamicColor(@"primary_color",@"0x0099ff", @"0x007acc") forState:(UIControlStateNormal)];
-        [_confirmButton setTitleColor:RCDynamicColor(@"disabled_color",@"0xa0a5ab", @"0xa0a5ab") forState:(UIControlStateDisabled)];
-        [_confirmButton addTarget:self action:@selector(confirmButtonDidClick) forControlEvents:UIControlEventTouchUpInside];
-        [_confirmButton.titleLabel setFont:[UIFont systemFontOfSize:15]];
-        _confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-        [_confirmButton sizeToFit];
+        _confirmButton = [[UIBarButtonItem alloc] initWithTitle:RCLocalizedString(@"Confirm")
+                                                       style:UIBarButtonItemStylePlain
+                                                      target:self action:@selector(confirmButtonDidClick)];
+        _confirmButton.tintColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x007acc");
+        [_confirmButton setTitleTextAttributes:@{
+            NSForegroundColorAttributeName: _confirmButton.tintColor
+        } forState:UIControlStateNormal];
+        [_confirmButton setTitleTextAttributes:@{
+            NSForegroundColorAttributeName: RCDynamicColor(@"text_secondary_color", @"0xA0A5Ab", @"0x9f9f9f")
+        } forState:UIControlStateDisabled];
         _confirmButton.enabled = NO;
     }
     return _confirmButton;

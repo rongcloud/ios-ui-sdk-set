@@ -58,6 +58,8 @@
         self.backgroundColor = [UIColor clearColor];
         self.barTintColor = [UIColor clearColor];
         self.backgroundImage = [UIImage new];
+        // 圆角背景由外部容器绘制，通过搜索栏的外观接口移除输入框的系统背景。
+        [self setSearchFieldBackgroundImage:[UIImage new] forState:UIControlStateNormal];
         
         // 移除边框
         self.layer.borderWidth = 0;

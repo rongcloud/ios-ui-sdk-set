@@ -13,7 +13,6 @@
 #import "RCStickerUtility.h"
 #import "RCStickerPreviewView.h"
 #import "RongStickerAdaptiveHeader.h"
-#define ScreenWidth [UIScreen mainScreen].bounds.size.width
 #define CellIdentifier @"CellIdentifier"
 
 static CGFloat const RCStickerPreviewViewWidth = 150.0;
@@ -37,17 +36,20 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
 @implementation RCStickerCollectionView
 
 - (instancetype)initWithStickers:(NSArray *)stickers {
-    self = [super initWithFrame:CGRectMake(0, 0, ScreenWidth, 186)];
+    self = [super initWithFrame:CGRectZero];
     if (self) {
         self.stickers = stickers;
         [self initialize];
-        [self registerNotification];
     }
     return self;
 }
 
-- (void)dealloc{
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    if (!CGRectEqualToRect(self.collectionView.frame, self.bounds)) {
+        self.collectionView.frame = self.bounds;
+        [self.collectionView.collectionViewLayout invalidateLayout];
+    }
 }
 
 - (void)initialize {
@@ -206,31 +208,8 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
 - (CGFloat)collectionView:(UICollectionView *)collectionView
                                       layout:(UICollectionViewLayout *)collectionViewLayout
     minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
-    return  (self.frame.size.width - 4 * 60 - 27 * 2-1) / 3;
-}
-
-#pragma mark - Notification
-- (void)registerNotification{
-    [[NSNotificationCenter defaultCenter] addObserver:self
-    selector:@selector(didChangeStatusBarFrameNotification)
-        name:UIApplicationDidChangeStatusBarFrameNotification
-      object:nil];
-}
-
-- (void)didChangeStatusBarFrameNotification {
-    [self reloadCollectView];
-}
-
-#pragma mark - Private
-- (void)reloadCollectView {
-    if (self.collectionView.frame.size.width != ScreenWidth) {
-        [UIView animateWithDuration:0.25
-                         animations:^{
-                             self.frame = CGRectMake(0, 0, ScreenWidth, 186);
-                             self.collectionView.frame = self.frame;
-                             [self.collectionView reloadData];
-                         }];
-    }
+    // 为四列保留少量余量，避免浮点取整让最后一列换行。
+    return MAX(0, (CGRectGetWidth(collectionView.bounds) - 4 * 60 - 27 * 2 - 1) / 3);
 }
 
 #pragma mark - Lazy load
@@ -240,8 +219,7 @@ static CGFloat const RCStickerPreviewBottomInset = 4.0;
         flowLayout.itemSize = (CGSize){60, 60 + 22};
         flowLayout.sectionInset = UIEdgeInsetsMake(6, 27, 6, 27);
         flowLayout.minimumLineSpacing = 0;
-        // -1 是为了解决iphone 14 pro max的 间距问题
-        flowLayout.minimumInteritemSpacing = (self.frame.size.width - 4 * 60 - 27 * 2-1) / 3;
+        flowLayout.minimumInteritemSpacing = 0;
         _collectionView = [[RCBaseCollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
         _collectionView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x1c1c1c");
         _collectionView.dataSource = self;

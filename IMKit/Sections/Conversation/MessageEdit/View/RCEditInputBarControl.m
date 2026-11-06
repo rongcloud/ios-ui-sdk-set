@@ -204,7 +204,7 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
     if (hidden) {
         // 隐藏时：设置到屏幕底部，不占用空间
         CGRect frame = self.savedFrame;
-        frame.origin.y = [RCInputKeyboardManager screenBottomY];
+        frame.origin.y = CGRectGetMaxY(self.superview.bounds);
         return frame;
     } else {
         // 显示时：恢复到保存的frame
@@ -233,11 +233,20 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
 #pragma mark - 底部栏动画管理
 
 - (float)getBoardViewBottomOriginY {
-    return [RCInputKeyboardManager screenBottomY];
+    return CGRectGetMaxY(self.superview.bounds) - [self getSafeAreaExtraBottomHeight];
 }
 
 - (float)getSafeAreaExtraBottomHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].bottom;
+    if (@available(iOS 11.0, *)) {
+        return self.superview.safeAreaInsets.bottom;
+    }
+    return 0;
+}
+
+- (void)containerViewSizeChanged {
+    if (self.isVisible && !self.hidden) {
+        [self layoutBottomBarWithStatus:self.currentBottomBarStatus animated:NO forceUpdate:YES completion:nil];
+    }
 }
 
 - (void)layoutBottomBarWithStatus:(KBottomBarStatus)bottomBarStatus
@@ -300,7 +309,10 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
         case KBottomBarKeyboardStatus: {
             [self hiddenEmojiBoardView];
             [self.editInputContainer becomeInputViewFirstResponder];
-            changedHeight = self.keyboardManager.currentKeyboardHeight - [RCKitUtility getWindowSafeAreaInsets].bottom;
+            CGFloat occlusion = self.keyboardManager.isKeyboardVisible
+                ? [RCInputKeyboardManager bottomOcclusionForKeyboardFrame:self.keyboardManager.currentKeyboardFrame
+                                                                  inView:self.superview] : 0;
+            changedHeight = MAX(0, occlusion - [self getSafeAreaExtraBottomHeight]);
             break;
         }
         default:
@@ -323,29 +335,27 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
 
 - (void)showEmojiBoardView {
     // 重新设置表情面板的正确位置
-    if (self.bottomPanelsContainerView && self.emojiBoardView.superview != self.bottomPanelsContainerView) {
+    if (self.bottomPanelsContainerView) {
         self.emojiBoardView.hidden = NO;
         self.emojiBoardView.frame = CGRectMake(0, 0, self.bottomPanelsContainerView.bounds.size.width, Height_EmojiBoardView);
         
         [self.bottomPanelsContainerView addSubview:self.emojiBoardView];
-    } else if (self.emojiBoardView.superview != self.superview) {
+    } else {
         CGFloat bottomY = [self getBoardViewBottomOriginY];
         CGFloat topY = bottomY - Height_EmojiBoardView;
         self.emojiBoardView.hidden = NO;
-        self.emojiBoardView.frame = CGRectMake(0, topY, self.superview.bounds.size.width, Height_EmojiBoardView);
+        self.emojiBoardView.frame = CGRectMake(CGRectGetMinX(self.frame), topY, CGRectGetWidth(self.bounds), Height_EmojiBoardView);
         
         [self.superview addSubview:self.emojiBoardView];
     }
 }
 
 - (void)hiddenEmojiBoardView {
-    if (self.emojiBoardView.hidden) {
+    if (!_emojiBoardView || _emojiBoardView.hidden) {
         return;
     }
-    if (self.emojiBoardView) {
-        self.emojiBoardView.hidden = YES;
-        [self.emojiBoardView removeFromSuperview];
-    }
+    _emojiBoardView.hidden = YES;
+    [_emojiBoardView removeFromSuperview];
 }
 
 #pragma mark - RCInputKeyboardManagerDelegate
@@ -377,6 +387,19 @@ static BOOL RCKitIsTextWithinMessageInputLimit(NSString *text) {
         });
 
     }];
+}
+
+- (void)keyboardManager:(RCInputKeyboardManager *)manager
+       willChangeFrame:(CGRect)frame
+     animationDuration:(NSTimeInterval)duration
+        animationCurve:(UIViewAnimationCurve)curve {
+    if (self.currentBottomBarStatus != KBottomBarKeyboardStatus ||
+        !self.editInputContainer.inputTextView.isFirstResponder) {
+        return;
+    }
+    [UIView animateWithDuration:duration delay:0 options:(curve << 16) animations:^{
+        [self layoutBottomBarWithStatus:KBottomBarKeyboardStatus animated:NO forceUpdate:YES completion:nil];
+    } completion:nil];
 }
 
 - (void)keyboardManagerWillHide:(RCInputKeyboardManager *)manager {

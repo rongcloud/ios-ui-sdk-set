@@ -49,7 +49,7 @@
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
-    float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat maxWidth = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:collectionViewWidth];
     CGFloat contentMaxWidth = MAX(maxWidth - content_space_left - content_space_right, 0);
     RCReferenceMessage *refenceMessage = (RCReferenceMessage *)model.content;
     NSString *displayText = [RCMessageEditUtil displayTextForOriginalText:refenceMessage.content isEdited:model.hasChanged];
@@ -152,7 +152,7 @@
     if (refenceMessage) {
         [self.contentLabel edit_setTextWithEditedState:refenceMessage.content isEdited:self.model.hasChanged];
     }
-    float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
+    CGFloat maxWidth = [RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:CGRectGetWidth(self.bounds)];
     CGFloat contentMaxWidth = MAX(maxWidth - content_space_left - content_space_right, 0);
     CGSize textLabelSize = [[self class] getTextLabelSize:self.contentLabel.text
                                                  maxWidth:contentMaxWidth

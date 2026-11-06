@@ -67,6 +67,10 @@
                                                  name:UIKeyboardWillHideNotification
                                                object:nil];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillChangeFrameNotification:)
+                                                 name:UIKeyboardWillChangeFrameNotification
+                                               object:nil];
     self.isMonitoring = YES;
 }
 
@@ -79,6 +83,7 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
     
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillChangeFrameNotification object:nil];
     self.isMonitoring = NO;
     [self resetKeyboardState];
 }
@@ -124,6 +129,27 @@
     }
 }
 
+- (void)keyboardWillChangeFrameNotification:(NSNotification *)notification {
+    if (!self.isKeyboardVisible) {
+        return;
+    }
+    if ([self.delegate respondsToSelector:@selector(keyboardManagerShouldHandleKeyboardEvent:)] &&
+        ![self.delegate keyboardManagerShouldHandleKeyboardEvent:self]) {
+        return;
+    }
+    CGRect frame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    if (CGRectEqualToRect(self.currentKeyboardFrame, frame)) {
+        return;
+    }
+    self.currentKeyboardFrame = frame;
+    self.currentKeyboardHeight = CGRectGetHeight(frame);
+    if ([self.delegate respondsToSelector:@selector(keyboardManager:willChangeFrame:animationDuration:animationCurve:)]) {
+        [self.delegate keyboardManager:self willChangeFrame:frame
+                     animationDuration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]
+                        animationCurve:[notification.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue]];
+    }
+}
+
 - (void)keyboardWillHideNotification:(NSNotification *)notification {
     // 询问代理是否应该处理键盘事件
     if ([self.delegate respondsToSelector:@selector(keyboardManagerShouldHandleKeyboardEvent:)]) {
@@ -143,6 +169,21 @@
 }
 
 #pragma mark - 工具方法（类方法）
+
++ (CGFloat)bottomOcclusionForKeyboardFrame:(CGRect)keyboardFrame inView:(UIView *)view {
+    UIWindow *window = view.window;
+    if (!window || CGRectIsNull(keyboardFrame) || CGRectIsInfinite(keyboardFrame) || CGRectIsEmpty(keyboardFrame)) {
+        return 0;
+    }
+    CGRect localFrame = [view convertRect:keyboardFrame fromCoordinateSpace:window.screen.coordinateSpace];
+    CGRect overlap = CGRectIntersection(view.bounds, localFrame);
+    if (CGRectIsNull(overlap) || CGRectIsEmpty(overlap) ||
+        CGRectGetMaxY(overlap) < CGRectGetMaxY(view.bounds) - 0.5) {
+        return 0;
+    }
+    return CGRectGetHeight(overlap);
+}
+
 
 + (CGFloat)screenBottomY {
     CGFloat gap = (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) ? 64 : 0;

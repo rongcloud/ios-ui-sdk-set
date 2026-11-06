@@ -75,15 +75,19 @@
     [self addSubview:view];
     self.searchBar = bar;
     self.barContainerView = view;
-    NSLayoutAnchor *topAnchor;
+    NSLayoutXAxisAnchor *leadingAnchor = self.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = self.trailingAnchor;
+    NSLayoutYAxisAnchor *topAnchor;
     if (@available(iOS 11.0, *)) {
+        leadingAnchor = self.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = self.safeAreaLayoutGuide.trailingAnchor;
         topAnchor = self.safeAreaLayoutGuide.topAnchor;
     } else {
         topAnchor = self.topAnchor;
     }
     [NSLayoutConstraint activateConstraints:@[
-          [view.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
-          [view.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+          [view.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+          [view.trailingAnchor constraintEqualToAnchor:trailingAnchor],
           [view.topAnchor constraintEqualToAnchor:topAnchor],
       ]];
     [self setNeedsLayout];

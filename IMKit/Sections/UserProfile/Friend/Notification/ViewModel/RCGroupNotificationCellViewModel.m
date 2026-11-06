@@ -13,13 +13,14 @@
 
 @interface RCGroupNotificationCellViewModel()
 @property (nonatomic, copy) NSString *groupName;
+@property (nonatomic, assign) BOOL fetchingGroupName;
 @property (nonatomic, weak) RCGroupNotificationCell *cell;
 @property (nonatomic, strong) RCIMThreadLock *lock;
-@property (nonatomic, weak) UITableView *tableView;
-@property (nonatomic, strong)  NSIndexPath *indexPath;
 @property (nonatomic, weak) UIViewController <RCListViewModelResponder> *responder;
 @property (nonatomic, assign) CGFloat cellHeight;
 
+- (UITableView *)tableViewForCell:(UITableViewCell *)cell;
+- (CGFloat)contentHeightForCell:(UITableViewCell *)cell;
 @end
 
 @implementation RCGroupNotificationCellViewModel
@@ -47,55 +48,43 @@
 - (void)fetchGroupNameIfNeed {
     __block RCGroupNotificationCell *cell = nil;
     __block NSString *groupName = nil;
-    [self.lock performReadLockBlock:^{
+    __block BOOL shouldFetch = NO;
+    NSString *groupId = self.application.groupId;
+    [self.lock performWriteLockBlock:^{
         groupName = self.groupName;
         cell = self.cell;
+        if (!groupName && groupId.length > 0 && !self.fetchingGroupName) {
+            self.fetchingGroupName = YES;
+            shouldFetch = YES;
+        }
     }];
 
-    if (groupName) {
-        cell.labName.text = groupName;
+    cell.labName.text = groupName;
+    if (!shouldFetch) {
         return;
     }
-    
-    if (self.application.groupId) {
-        [[RCCoreClient sharedCoreClient] getGroupsInfo:@[self.application.groupId]
-                                               success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
-            NSString *name = nil;
-            if (groupInfos.count) {
-                RCGroupInfo *info = [groupInfos firstObject];
-                name = info.groupName;
-            }
-            [self.lock performWriteLockBlock:^{
-                self.groupName = name;
-            }];
-        
-            __block RCGroupNotificationCell *cell2 = nil;
 
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.lock performReadLockBlock:^{
-                    cell2 = self.cell;
-                }];
-                if (cell2 != cell) {// cell 已复用, 更新逻辑取消
-                    return;
-                }
-                cell.labName.text = name;
-                [self reloadCell];
-            });
+    [[RCCoreClient sharedCoreClient] getGroupsInfo:@[groupId]
+                                         success:^(NSArray<RCGroupInfo *> * _Nonnull groupInfos) {
+        NSString *name = nil;
+        if (groupInfos.count) {
+            RCGroupInfo *info = [groupInfos firstObject];
+            name = info.groupName;
         }
-                                                 error:^(RCErrorCode errorCode) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                cell.labName.text = nil;
-            });
+        [self.lock performWriteLockBlock:^{
+            self.groupName = name;
+            self.fetchingGroupName = NO;
         }];
-    } else {
-        cell.labName.text = nil;
-    }
+        [self reloadCell];
+    } error:^(RCErrorCode errorCode) {
+        [self.lock performWriteLockBlock:^{
+            self.fetchingGroupName = NO;
+        }];
+    }];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    self.tableView = tableView;
-    self.indexPath = indexPath;
     RCGroupNotificationCell *cell = [tableView dequeueReusableCellWithIdentifier:RCGroupNotificationCellIdentifier
                                                                           forIndexPath:indexPath];
     self.cell = cell;
@@ -122,7 +111,19 @@
             self.application.status = RCGroupApplicationStatusJoined;
             [self reloadCell];
         } error:^(RCErrorCode errorCode) {
-            [self showTips:RCLocalizedString(@"GroupInvitationAcceptFailed")];
+            NSString *tips = RCLocalizedString(@"GroupInvitationAcceptFailed");
+            if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                tips = RCLocalizedString(@"GroupAcceptMemberCountExceedLimit");
+            } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT) {
+                NSString *name = self.application.joinMemberInfo.name;
+                if (name.length == 0) {
+                    name = self.application.joinMemberInfo.userId;
+                }
+                if (name.length > 0) {
+                    tips = [NSString stringWithFormat:RCLocalizedString(@"GroupJoinCountExceedLimit"), name];
+                }
+            }
+            [self showTips:tips];
         }];
     } else if (self.application.direction == RCGroupApplicationDirectionApplicationReceived) {
         [[RCCoreClient sharedCoreClient] acceptGroupApplication:self.application.groupId inviterId:self.application.inviterInfo.userId applicantId:self.application.joinMemberInfo.userId success:^(RCErrorCode processCode) {
@@ -133,7 +134,19 @@
             }
             [self reloadCell];
             } error:^(RCErrorCode errorCode) {
-                [self showTips:RCLocalizedString(@"GroupOtherInvitationAcceptFailed")];
+                NSString *tips = RCLocalizedString(@"GroupOtherInvitationAcceptFailed");
+                if (errorCode == RC_GROUP_MEMBERS_COUNT_EXCEED_LIMIT) {
+                    tips = RCLocalizedString(@"GroupAcceptMemberCountExceedLimit");
+                } else if (errorCode == RC_GROUP_JOIN_COUNT_EXCEED_LIMIT) {
+                    NSString *name = self.application.joinMemberInfo.name;
+                    if (name.length == 0) {
+                        name = self.application.joinMemberInfo.userId;
+                    }
+                    if (name.length > 0) {
+                        tips = [NSString stringWithFormat:RCLocalizedString(@"GroupJoinCountExceedLimit"), name];
+                    }
+                }
+                [self showTips:tips];
             }];
     }
 
@@ -176,13 +189,48 @@
 }
 
 - (void)reloadCell {
-    if (self.indexPath) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.tableView reloadRowsAtIndexPaths:@[self.indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView setNeedsLayout];
-            [self.tableView layoutIfNeeded];
-        });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        RCGroupNotificationCell *cell = self.cell;
+        if (!cell || cell.viewModel != self) {
+            return;
+        }
+        UITableView *tableView = [self tableViewForCell:cell];
+        CGFloat previousContentHeight = [self contentHeightForCell:cell];
+        // Only the cell content changes. An async callback can outlive a
+        // data-source reset, so do not address a cached row here.
+        [cell updateWithViewModel:self];
+        __block NSString *groupName = nil;
+        [self.lock performReadLockBlock:^{
+            groupName = self.groupName;
+        }];
+        cell.labName.text = groupName;
+        cell.labTips.text = [self tipsOfOperator:self.application];
+        [cell setNeedsLayout];
+        [cell layoutIfNeeded];
+        // A cell layout does not invalidate UITableView's cached self-sizing height.
+        // Reload only when its fitted height changes; unlike a row/batch update,
+        // reloadData also tolerates a data-source reset while the callback was queued.
+        CGFloat contentHeight = [self contentHeightForCell:cell];
+        if (tableView && fabs(contentHeight - previousContentHeight) > 0.5 &&
+            [tableView indexPathForCell:cell]) {
+            [tableView reloadData];
+            [tableView layoutIfNeeded];
+        }
+    });
+}
+
+- (UITableView *)tableViewForCell:(UITableViewCell *)cell {
+    UIView *view = cell.superview;
+    while (view && ![view isKindOfClass:[UITableView class]]) {
+        view = view.superview;
     }
+    return (UITableView *)view;
+}
+
+- (CGFloat)contentHeightForCell:(UITableViewCell *)cell {
+    return [cell.contentView systemLayoutSizeFittingSize:CGSizeMake(CGRectGetWidth(cell.contentView.bounds), 0)
+                        withHorizontalFittingPriority:UILayoutPriorityRequired
+                              verticalFittingPriority:UILayoutPriorityFittingSizeLevel].height;
 }
 #pragma mark - Private
 

@@ -29,7 +29,7 @@
     self.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf5f6f9", @"0x111111");
     [self addSubview:self.editView];
     [self addSubview:self.tipLabel];
-    [self.editView addSubview:self.contentLabel];
+    [self addSubview:self.contentLabel];
     [self.editView addSubview:self.textField];
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap)];
     // 设置点击次数（默认为1）

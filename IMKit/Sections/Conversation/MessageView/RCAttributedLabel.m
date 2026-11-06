@@ -248,7 +248,8 @@
         return;
     }
     NSMutableAttributedString *attributedString =
-        [[NSMutableAttributedString alloc] initWithString:self.originalString];
+        [[NSMutableAttributedString alloc] initWithString:self.originalString
+                                              attributes:@{NSUnderlineStyleAttributeName : @(NSUnderlineStyleNone)}];
     for (NSTextCheckingResult *textCheckingResult in self.attributedStrings) {
         for (int i = 0; i < textCheckingResult.numberOfRanges; i++) {
             NSRange range = [textCheckingResult rangeAtIndex:i];
@@ -435,6 +436,8 @@
 }
 
 - (void)setText:(NSString *)text dataDetectorEnabled:(BOOL)dataDetectorEnabled {
+    // UILabel 会沿用上一段富文本的默认样式，复用前需清除链接下划线等属性。
+    [super setAttributedText:nil];
     self.dataDetectorEnabled = dataDetectorEnabled;
     if (self.dataDetectorEnabled == NO) {
         [super setText:text];

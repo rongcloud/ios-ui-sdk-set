@@ -11,6 +11,10 @@
 #import "RCKitCommonDefine.h"
 #import "RCEmojiBoardView.h"
 
+@interface RCEditInputBarControl (RCFullScreenLayout)
+- (void)containerViewSizeChanged;
+@end
+
 #define Height_EmojiBoardView 223.5f
 
 @interface RCFullScreenEditView ()<RCEditInputBarControlDelegate, RCEditInputBarControlDataSource>
@@ -32,6 +36,9 @@
 
 /// 底部占位视图高度约束
 @property (nonatomic, strong) NSLayoutConstraint *bottomPlaceholderHeightConstraint;
+
+@property (nonatomic, assign) CGSize lastLayoutSize;
+@property (nonatomic, assign) UIEdgeInsets lastSafeAreaInsets;
 
 @end
 
@@ -72,24 +79,31 @@
 }
 
 - (void)setupViewConstraints {
-    CGFloat safeAreaTop = [RCKitUtility getWindowSafeAreaInsets].top;
-    CGFloat safeAreaBottom = [RCKitUtility getWindowSafeAreaInsets].bottom;
-    CGFloat topOffset = safeAreaTop;
-    
+    NSLayoutXAxisAnchor *leadingAnchor = self.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = self.trailingAnchor;
+    NSLayoutYAxisAnchor *topAnchor = self.topAnchor;
+    NSLayoutYAxisAnchor *bottomAnchor = self.bottomAnchor;
+    if (@available(iOS 11.0, *)) {
+        leadingAnchor = self.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = self.safeAreaLayoutGuide.trailingAnchor;
+        topAnchor = self.safeAreaLayoutGuide.topAnchor;
+        bottomAnchor = self.safeAreaLayoutGuide.bottomAnchor;
+    }
+
     // 背景视图约束
     [NSLayoutConstraint activateConstraints:@[
-        [self.backgroundView.topAnchor constraintEqualToAnchor:self.topAnchor constant:topOffset],
+        [self.backgroundView.topAnchor constraintEqualToAnchor:topAnchor],
         [self.backgroundView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
         [self.backgroundView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
         [self.backgroundView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
     ]];
     
     // 底部占位视图约束
-    self.bottomPlaceholderConstraint = [self.bottomPlaceholderView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-safeAreaBottom];
+    self.bottomPlaceholderConstraint = [self.bottomPlaceholderView.bottomAnchor constraintEqualToAnchor:bottomAnchor];
     self.bottomPlaceholderHeightConstraint = [self.bottomPlaceholderView.heightAnchor constraintEqualToConstant:0];
     [NSLayoutConstraint activateConstraints:@[
-        [self.bottomPlaceholderView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
-        [self.bottomPlaceholderView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+        [self.bottomPlaceholderView.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+        [self.bottomPlaceholderView.trailingAnchor constraintEqualToAnchor:trailingAnchor],
         self.bottomPlaceholderConstraint,
         self.bottomPlaceholderHeightConstraint,
     ]];
@@ -107,13 +121,34 @@
     
     self.editInputBarControlBottomConstraint = [self.editInputBarControl.bottomAnchor 
                                                constraintEqualToAnchor:self.bottomPlaceholderView.topAnchor];
-    
+    NSLayoutXAxisAnchor *leadingAnchor = self.backgroundView.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = self.backgroundView.trailingAnchor;
+    if (@available(iOS 11.0, *)) {
+        leadingAnchor = self.backgroundView.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = self.backgroundView.safeAreaLayoutGuide.trailingAnchor;
+    }
+
     [NSLayoutConstraint activateConstraints:@[
         [self.editInputBarControl.topAnchor constraintEqualToAnchor:self.backgroundView.topAnchor],
-        [self.editInputBarControl.leadingAnchor constraintEqualToAnchor:self.backgroundView.leadingAnchor],
-        [self.editInputBarControl.trailingAnchor constraintEqualToAnchor:self.backgroundView.trailingAnchor],
+        [self.editInputBarControl.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+        [self.editInputBarControl.trailingAnchor constraintEqualToAnchor:trailingAnchor],
         self.editInputBarControlBottomConstraint
     ]];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGSize size = self.bounds.size;
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        insets = self.safeAreaInsets;
+    }
+    if (CGSizeEqualToSize(size, self.lastLayoutSize) && UIEdgeInsetsEqualToEdgeInsets(insets, self.lastSafeAreaInsets)) {
+        return;
+    }
+    self.lastLayoutSize = size;
+    self.lastSafeAreaInsets = insets;
+    [self.editInputBarControl containerViewSizeChanged];
 }
 
 #pragma mark - 显示/隐藏方法

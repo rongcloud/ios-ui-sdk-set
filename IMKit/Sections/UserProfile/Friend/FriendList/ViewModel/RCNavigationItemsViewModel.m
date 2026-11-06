@@ -31,6 +31,11 @@
     UIImage *image = RCDynamicImage(@"friend_list_add_new_img", @"friend_list_add_new");
     [btn setImage:image forState:UIControlStateNormal];
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 270100
+    if (@available(iOS 27.1, *)) {
+        item.axisBehavior = UIBarButtonItemAxisBehaviorVerticalPreferred;
+    }
+#endif
     return @[item];
 }
 

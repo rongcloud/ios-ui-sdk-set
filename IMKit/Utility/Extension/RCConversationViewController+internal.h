@@ -22,6 +22,7 @@
 @property (nonatomic, assign) BOOL isTouchScrolled;
 
 - (void)updateUnreadMsgCountLabel;
+- (void)clearConversationUnreadStatus;
 - (void)updateForMessageSendSuccess:(RCMessage *)message;
 - (void)fetchPublicServiceProfile;
 - (void)setupUnReadMessageView;

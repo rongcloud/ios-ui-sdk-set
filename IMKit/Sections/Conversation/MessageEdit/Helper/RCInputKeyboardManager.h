@@ -36,6 +36,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
+/// 已显示键盘的 frame 即将变化。
+- (void)keyboardManager:(RCInputKeyboardManager *)manager
+    willChangeFrame:(CGRect)frame
+    animationDuration:(NSTimeInterval)duration
+    animationCurve:(UIViewAnimationCurve)curve;
+
 /// 询问是否应该处理键盘事件
 /// - Parameter manager 键盘管理器实例
 /// - Returns YES-处理键盘事件，NO-忽略键盘事件
@@ -78,6 +84,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)stopMonitoring;
 
 #pragma mark - 工具方法（纯函数）
+
+/// 将屏幕键盘 frame 转换为当前容器底部的遮挡高度。
++ (CGFloat)bottomOcclusionForKeyboardFrame:(CGRect)keyboardFrame inView:(UIView *)view;
 
 /// 获取屏幕底部Y坐标（考虑安全区域和热点）
 /// - Returns 屏幕底部Y坐标

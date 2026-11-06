@@ -19,6 +19,7 @@
 @property (nonatomic, assign) int32_t imageRequestID;
 @property (nonatomic, strong) RCAssetModel *model;
 @property (nonatomic, copy) NSString *representedAssetIdentifier;
+@property (nonatomic, assign) CGSize lastViewportSize;
 @end
 #define ImageMaximumZoomScale 2.0
 @implementation RCPhotoPreviewCollectCell
@@ -28,6 +29,19 @@
         [self creatPreviewCollectionCell];
     }
     return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    self.scrollView.frame = self.contentView.bounds;
+    CGSize viewportSize = self.scrollView.bounds.size;
+    if (viewportSize.width <= 0 || viewportSize.height <= 0 ||
+        CGSizeEqualToSize(viewportSize, self.lastViewportSize)) {
+        return;
+    }
+    // 仅在容器尺寸变化时恢复基础缩放，避免普通布局回调打断缩放手势。
+    self.lastViewportSize = viewportSize;
+    [self resetSubviews];
 }
 
 #pragma mark - Public Methods
@@ -148,13 +162,17 @@
 }
 
 - (void)resizeSubviews {
+    CGSize viewportSize = self.scrollView.bounds.size;
+    if (viewportSize.width <= 0 || viewportSize.height <= 0) {
+        return;
+    }
     UIImage *image = self.previewImageView.image;
     if (image) {
-        CGRect frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+        CGRect frame = CGRectMake(0, 0, viewportSize.width, viewportSize.height);
         CGFloat imageWidth = image.size.width;
         CGFloat imageHeight = image.size.height;
-        CGFloat scrollViewWidth = self.scrollView.frame.size.width;
-        CGFloat scrollViewHeight = self.scrollView.frame.size.height;
+        CGFloat scrollViewWidth = viewportSize.width;
+        CGFloat scrollViewHeight = viewportSize.height;
         CGPoint center = CGPointMake(scrollViewWidth / 2, scrollViewHeight / 2);
 
         if (imageHeight / imageWidth > scrollViewHeight / scrollViewWidth) {
@@ -171,8 +189,8 @@
         self.previewImageView.frame = frame;
         self.previewImageView.center = center;
         self.scrollView.contentSize =
-            CGSizeMake(self.frame.size.width, MAX(self.frame.size.height, self.previewImageView.frame.size.height));
-        [self.scrollView scrollRectToVisible:self.bounds animated:NO];
+            CGSizeMake(viewportSize.width, MAX(viewportSize.height, self.previewImageView.frame.size.height));
+        [self.scrollView scrollRectToVisible:CGRectMake(0, 0, viewportSize.width, viewportSize.height) animated:NO];
         self.scrollView.alwaysBounceVertical = self.previewImageView.frame.size.height > scrollViewHeight;
         //如果图片高度按默认的最大放大比例放大后仍不能充满屏幕，最大缩放比例就改为图片显示高度和屏幕高度比例，使其放大后可以充满屏幕
         self.scrollView.maximumZoomScale = frame.size.height * ImageMaximumZoomScale < scrollViewHeight

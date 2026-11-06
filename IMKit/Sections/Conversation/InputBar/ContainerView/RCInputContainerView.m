@@ -24,6 +24,7 @@
 @property (nonatomic, strong) NSMutableArray *inputContainerSubViewConstraints;
 @property (nonatomic, assign) BOOL textViewBeginEditing;
 @property (nonatomic, assign) RCChatSessionInputBarControlStyle style;
+@property (nonatomic, assign) CGFloat lastInputTextViewWidth;
 @end
 @implementation RCInputContainerView
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -36,6 +37,15 @@
 
 - (void)rcinit {
     self.maxInputLines = 4;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGFloat width = _inputTextView.bounds.size.width;
+    if (width > 0 && width != self.lastInputTextViewWidth) {
+        self.lastInputTextViewWidth = width;
+        [self layoutInputBoxUIIfNeed];
+    }
 }
 
 - (BOOL)hideEmojiButton {
@@ -326,12 +336,17 @@
 }
 
 - (CGRect)getInputTextViewFrame {
+    // Measure at the laid-out width; contentSize may still reflect the previous width.
+    CGFloat width = self.inputTextView.bounds.size.width;
+    CGFloat contentHeight = width > 0
+        ? [self.inputTextView sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)].height
+        : self.inputTextView.contentSize.height;
     CGFloat inputTextview_height = [self getTextViewHeightWithLines:1];
-    if (self.inputTextView.contentSize.height > [self getTextViewHeightWithLines:1] &&
-        self.inputTextView.contentSize.height <= [self getTextViewHeightWithLines:self.maxInputLines - 1]) {
-        inputTextview_height = self.inputTextView.contentSize.height;
+    if (contentHeight > [self getTextViewHeightWithLines:1] &&
+        contentHeight <= [self getTextViewHeightWithLines:self.maxInputLines - 1]) {
+        inputTextview_height = contentHeight;
     }
-    if (self.inputTextView.contentSize.height > [self getTextViewHeightWithLines:self.maxInputLines - 1]) {
+    if (contentHeight > [self getTextViewHeightWithLines:self.maxInputLines - 1]) {
         inputTextview_height = [self getTextViewHeightWithLines:self.maxInputLines];
     }
     CGRect inputTextRect = self.inputTextView.frame;

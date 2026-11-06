@@ -44,11 +44,15 @@
 }
 
 + (CGFloat)getMessageContentViewMaxWidth{
+    return [self getMessageContentViewMaxWidthWithContainerWidth:SCREEN_WIDTH];
+}
+
++ (CGFloat)getMessageContentViewMaxWidthWithContainerWidth:(CGFloat)containerWidth {
     float screenRatio = 0.637;
-    if (SCREEN_WIDTH <= 320) {
+    if (containerWidth <= 320) {
         screenRatio = 0.6;
     }
-    float maxWidth = (int)(SCREEN_WIDTH * screenRatio) + 7;
+    float maxWidth = (int)(containerWidth * screenRatio) + 7;
     return maxWidth;
 }
 

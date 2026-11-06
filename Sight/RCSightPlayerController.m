@@ -28,6 +28,7 @@
 @property (strong, nonatomic) RCSightPlayerView *playerView;
 @property (strong, nonatomic) UILabel *errorTipsLabel;
 @property (strong, nonatomic) RCSightProgressView *progressView;
+@property (nonatomic, assign) BOOL hasCustomLoadingCenter;
 
 @property (weak, nonatomic) id<RCSightPlayerTransport, RCSightPlayerOverlay> transport;
 
@@ -229,12 +230,15 @@
 - (RCSightProgressView *)progressView {
     if (!_progressView) {
         _progressView = [[RCSightProgressView alloc] initWithFrame:CGRectMake(0, 0, 63, 63)];
-        CGRect bounds = [UIScreen mainScreen].bounds;
+        CGRect bounds = self.view.bounds;
         _progressView.center = CGPointMake(CGRectGetMidX(bounds), CGRectGetMidY(bounds));
+        _progressView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
+                                         UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
     return _progressView;
 }
 - (void)setLoadingCenter:(CGPoint)center {
+    self.hasCustomLoadingCenter = YES;
     self.progressView.center = center;
 }
 - (AVAsset *)asset {
@@ -475,8 +479,15 @@
          queryUrl:[self.rcSightURL absoluteString]
          completeBlock:^(NSString *_Nullable token, NSString *_Nullable authInfo) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [weakSelf.view addSubview:weakSelf.progressView];
-                [weakSelf.progressView startIndeterminateAnimation];
+                UIView *playerView = weakSelf.view;
+                RCSightProgressView *progressView = weakSelf.progressView;
+                if (!weakSelf.hasCustomLoadingCenter) {
+                    // The player may finish layout while the progress view is detached.
+                    CGRect bounds = playerView.bounds;
+                    progressView.center = CGPointMake(CGRectGetMidX(bounds), CGRectGetMidY(bounds));
+                }
+                [playerView addSubview:progressView];
+                [progressView startIndeterminateAnimation];
             });
             NSMutableURLRequest *urlRequest =
             [NSMutableURLRequest requestWithURL:weakSelf.rcSightURL
@@ -740,7 +751,7 @@
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
     UIDeviceOrientation interfaceOrientation = [UIDevice currentDevice].orientation;
     if (interfaceOrientation == UIDeviceOrientationLandscapeLeft || interfaceOrientation == UIDeviceOrientationLandscapeRight || interfaceOrientation == UIDeviceOrientationPortrait){
-        CGRect bounds = [UIScreen mainScreen].bounds;
+        CGRect bounds = self.view.bounds;
         self.progressView.center = CGPointMake(CGRectGetMidX(bounds), CGRectGetMidY(bounds));
         self.errorTipsLabel.center =
             CGPointMake(self.progressView.center.x, self.progressView.center.y + 47);

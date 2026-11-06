@@ -19,6 +19,7 @@
 @property (nonatomic, strong) RCImageMessageProgressView *progressView;
 @property(nonatomic, strong) UILabel *labFailed;
 @property(nonatomic, strong) UIImageView *imgFailed;
+@property(nonatomic, assign) CGSize previousLayoutSize;
 @end
 
 @implementation RCImagePreviewCell
@@ -33,9 +34,10 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
     self.scrollView.frame = self.bounds;
-    [self resetSubviews];
-    [self.scrollView setContentSize:CGSizeMake(self.previewImageView.frame.size.width, self.previewImageView.frame.size.height)];
-    [self.progressView setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
+    if (!CGSizeEqualToSize(self.bounds.size, self.previousLayoutSize)) {
+        [self resetSubviews];
+    }
+    [self.progressView setCenter:CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds))];
 }
 
 #pragma mark - Public Methods
@@ -71,8 +73,10 @@
 }
 
 - (void)resetSubviews {
+    self.previousLayoutSize = self.bounds.size;
     [self.scrollView setZoomScale:1.0 animated:NO];
     [self resizeSubviews];
+    self.scrollView.contentSize = self.previewImageView.frame.size;
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -199,8 +203,8 @@
 }
 
 - (void)resizeSubviews {
-    CGFloat width = self.frame.size.width;
-    CGFloat height = self.frame.size.height;
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat height = CGRectGetHeight(self.bounds);
     UIImage *image = self.previewImageView.image;
     CGFloat imageWidth = image.size.width;
     CGFloat imageHeight = image.size.height;

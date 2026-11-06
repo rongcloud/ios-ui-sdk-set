@@ -49,6 +49,11 @@ RCListViewModelResponder
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+#if defined(__IPHONE_27_0)
+    if (@available(iOS 27.0, *)) {
+        self.navigationItem.navigationBarMinimization.minimizationBehavior = UIBarMinimizationBehaviorNever;
+    }
+#endif
     [self setNavigationBarItems];
     [self.viewModel registerCellForTableView:self.profileView];
 }

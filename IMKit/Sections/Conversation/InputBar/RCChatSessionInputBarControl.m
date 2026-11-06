@@ -23,9 +23,13 @@
 #import "RCInputContainerView+internal.h"
 #import "RCSightViewController+imkit.h"
 #import "RCLocationPickerViewController+imkit.h"
+#import "RCConversationContainerViewController.h"
+#import <CoreLocation/CoreLocation.h>
+#import <objc/runtime.h>
 #import "RCSemanticContext.h"
 #import "RCBaseButton.h"
 #import "RCMenuController.h"
+#import "RCInputKeyboardManager.h"
 //单个cell的高度是70（RCPlaginBoardCellSize）*2 + 上下padding的高度14*2 ＋
 //上下两个图标之间的padding
 #define Height_EmojBoardView 223.5f
@@ -62,6 +66,28 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
     return updatedText.length <= RCKitMessageInputLimit();
 }
 
+@protocol RCInputLocationSelectionReceiver <NSObject>
+- (void)locationPicker:(id)picker didSelectLocation:(CLLocationCoordinate2D)location
+          locationName:(NSString *)locationName mapScreenShot:(UIImage *)mapScreenShot;
+@end
+
+@interface RCInputLocationSelectionDelegate : NSObject
+@property (nonatomic, weak) id<RCInputLocationSelectionReceiver> receiver;
+@end
+
+@implementation RCInputLocationSelectionDelegate
+- (void)locationPickerDidDismiss:(id)picker withSelectedLocation:(CLLocationCoordinate2D)location
+                   locationName:(NSString *)locationName mapScreenShot:(UIImage *)mapScreenShot {
+    [self.receiver locationPicker:picker didSelectLocation:location locationName:locationName mapScreenShot:mapScreenShot];
+}
+
+// 兼容尚未提供关闭完成回调的 LocationKit。
+- (void)locationPicker:(id)picker didSelectLocation:(CLLocationCoordinate2D)location
+          locationName:(NSString *)locationName mapScreenShot:(UIImage *)mapScreenShot {
+    [self.receiver locationPicker:picker didSelectLocation:location locationName:locationName mapScreenShot:mapScreenShot];
+}
+@end
+
 @interface RCChatSessionInputBarControl () <RCEmojiViewDelegate, RCPluginBoardViewDelegate, UINavigationControllerDelegate,
     UIImagePickerControllerDelegate, RCAlbumListViewControllerDelegate,
     RCFileSelectorViewControllerDelegate, RCSelectingUserDataSource,
@@ -69,6 +95,7 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
     RCMenuContainerViewDelegate>
 
 @property (nonatomic) CGRect keyboardFrame;
+@property (nonatomic, strong) RCInputLocationSelectionDelegate *locationSelectionDelegate;
 
 @property (nonatomic) BOOL isContainViewAppeared;
 
@@ -269,6 +296,23 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
         SEL locationPickerSelector = NSSelectorFromString(@"locationPicker:didSelectLocation:locationName:mapScreenShot:");
         if ([self.delegate respondsToSelector:locationPickerSelector] &&
             [picker respondsToSelector:@selector(setDelegate:)]) {
+            id selectionDelegate = self.delegate;
+            Class conversationClass = NSClassFromString(@"RCConversationViewController");
+            SEL dismissedSelector = NSSelectorFromString(@"locationPickerDidDismiss:withSelectedLocation:locationName:mapScreenShot:");
+            // 仅为容器中的默认实现接入新回调，客户重写的旧回调仍保持关闭前执行。
+            if ([selectionDelegate isKindOfClass:conversationClass] &&
+                [RCConversationContainerViewController containerForViewController:selectionDelegate] &&
+                ![selectionDelegate respondsToSelector:dismissedSelector] &&
+                class_getMethodImplementation([selectionDelegate class], locationPickerSelector) ==
+                    class_getMethodImplementation(conversationClass, locationPickerSelector)) {
+                RCInputLocationSelectionDelegate *adapter = [RCInputLocationSelectionDelegate new];
+                adapter.receiver = selectionDelegate;
+                self.locationSelectionDelegate = adapter;
+                selectionDelegate = adapter;
+            }
+            [(id)picker setDelegate:selectionDelegate];
+        } else if ([self.delegate respondsToSelector:NSSelectorFromString(@"locationPickerDidDismiss:withSelectedLocation:locationName:mapScreenShot:")] &&
+                   [picker respondsToSelector:@selector(setDelegate:)]) {
             [(id)picker setDelegate:(id)self.delegate];
         }
         RCBaseNavigationController *rootVC = [[RCBaseNavigationController alloc] initWithRootViewController:picker];
@@ -403,6 +447,15 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
 }
 
 #pragma mark - RCVoiceRecordControlDelegate
+- (UIView *)presentationViewForVoiceRecordControl:(RCVoiceRecordControl *)voiceRecordControl {
+    for (UIResponder *responder = self.nextResponder; responder; responder = responder.nextResponder) {
+        if ([responder isKindOfClass:UIViewController.class]) {
+            return ((UIViewController *)responder).view;
+        }
+    }
+    return self.superview;
+}
+
 - (BOOL)recordWillBegin{
     if ([self.delegate respondsToSelector:@selector(recordWillBegin)]) {
         RCLogF(@"recordWillBegin:==============> %d", [self.delegate recordWillBegin]);
@@ -745,6 +798,11 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
                                                object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(rcInputBar_didReceiveKeyboardWillChangeFrameNotification:)
+                                                 name:UIKeyboardWillChangeFrameNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(rcInputBar_didReceiveKeyboardWillHideNotification:)
                                                  name:UIKeyboardWillHideNotification
                                                object:nil];
@@ -815,6 +873,23 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
     }
     [[RCMenuController sharedMenuController] hideMenuAnimated:NO];
 
+}
+
+- (void)rcInputBar_didReceiveKeyboardWillChangeFrameNotification:(NSNotification *)notification {
+    if (self.isHidden || !self.inputTextView.isFirstResponder ||
+        !self.inputContainerView.textViewBeginEditing || self.currentBottomBarStatus != KBottomBarKeyboardStatus) {
+        return;
+    }
+    CGRect frame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    if (CGRectEqualToRect(self.keyboardFrame, frame)) {
+        return;
+    }
+    self.keyboardFrame = frame;
+    UIViewAnimationCurve curve = [notification.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    NSTimeInterval duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    [UIView animateWithDuration:duration delay:0 options:(curve << 16) animations:^{
+        [self animationLayoutBottomBarWithStatus:KBottomBarKeyboardStatus animated:NO];
+    } completion:nil];
 }
 
 - (void)rcInputBar_didReceiveKeyboardWillHideNotification:(NSNotification *)notification {
@@ -1117,19 +1192,16 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
 }
 
 - (float)getBoardViewBottomOriginY {
-    float gap = (RC_IOS_SYSTEM_VERSION_LESS_THAN(@"7.0")) ? 64 : 0;
-    float bottom = [self getSafeAreaExtraBottomHeight];
-    gap += bottom;
-    if (bottom > 0) {// 刘海屏的热点栏不影响statusBar高度
-        return [UIScreen mainScreen].bounds.size.height - gap;
-    } else {
-        return IS_HOTSPOT_CONNECTED ? [UIScreen mainScreen].bounds.size.height - gap - 20
-        : [UIScreen mainScreen].bounds.size.height - gap;
-    }
+    UIView *containerView = self.containerView ?: self.superview;
+    return CGRectGetMaxY(containerView.bounds) - [self getSafeAreaExtraBottomHeight];
 }
 
 - (float)getSafeAreaExtraBottomHeight {
-    return [RCKitUtility getWindowSafeAreaInsets].bottom;
+    if (@available(iOS 11.0, *)) {
+        UIView *containerView = self.containerView ?: self.superview;
+        return containerView.safeAreaInsets.bottom;
+    }
+    return 0;
 }
 
 - (void)openDestructAlbum {
@@ -1179,20 +1251,17 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
     CGRect chatInputBarRect = self.frame;
     float bottomY = [self getBoardViewBottomOriginY];
     switch (bottomBarStatus) {
+        case KBottomBarDestructStatus:
         case KBottomBarDefaultStatus: {
             [self hiddenEmojiBoardView:YES pluginBoardView:YES commonPhrasesListView:YES];
             chatInputBarRect.origin.y = bottomY - self.bounds.size.height;
         } break;
         case KBottomBarKeyboardStatus: {
             [self hiddenEmojiBoardView:YES pluginBoardView:YES commonPhrasesListView:YES];
-            //bottomY里面已经去掉了屏幕底部安全距离
-            if (self.keyboardFrame.size.height > 0) {
-                //手机系统键盘弹起时，键盘的高度也包含了屏幕底部安全距离，相当于减掉了两次屏幕底部安全距离，需要再加回去
-                chatInputBarRect.origin.y = bottomY - self.bounds.size.height - self.keyboardFrame.size.height + [self getSafeAreaExtraBottomHeight];
-            }else{
-               //使用外接键盘时手机系统键盘并未弹起
-                chatInputBarRect.origin.y = bottomY - self.bounds.size.height;
-            }
+            CGFloat occlusion = [RCInputKeyboardManager bottomOcclusionForKeyboardFrame:self.keyboardFrame
+                                                                                inView:self.containerView];
+            CGFloat displacement = MAX(0, occlusion - [self getSafeAreaExtraBottomHeight]);
+            chatInputBarRect.origin.y = bottomY - self.bounds.size.height - displacement;
         } break;
         case KBottomBarPluginStatus: {
             [self pluginBoardView];
@@ -1232,21 +1301,21 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
         if (self.emojiBoardView) {
         [self.emojiBoardView setHidden:hiddenEmojiBoardView];
         if (!hiddenEmojiBoardView) {
-            self.emojiBoardView.frame = CGRectMake(0, [self getBoardViewBottomOriginY] - Height_EmojBoardView, self.containerView.bounds.size.width, Height_EmojBoardView);
+            self.emojiBoardView.frame = CGRectMake(CGRectGetMinX(self.frame), [self getBoardViewBottomOriginY] - Height_EmojBoardView, CGRectGetWidth(self.bounds), Height_EmojBoardView);
         }
     }
     if (self.commonPhrasesListView) {
         [self.commonPhrasesListView setHidden:hiddenCommonPhrasesListView];
         if (!hiddenCommonPhrasesListView) {
-            self.commonPhrasesListView.frame = CGRectMake(0, [self getBoardViewBottomOriginY] - Height_CommonPhrasesView,
-                                                          self.containerView.bounds.size.width, Height_CommonPhrasesView);
+            self.commonPhrasesListView.frame = CGRectMake(CGRectGetMinX(self.frame), [self getBoardViewBottomOriginY] - Height_CommonPhrasesView,
+                                                          CGRectGetWidth(self.bounds), Height_CommonPhrasesView);
         }
     }
     if (self.pluginBoardView) {
         [self.pluginBoardView setHidden:hiddenPluginBoardView];
         if (!hiddenPluginBoardView) {
-            self.pluginBoardView.frame = CGRectMake(0, [self getBoardViewBottomOriginY] - Height_PluginBoardView,
-                                                    self.containerView.bounds.size.width, Height_PluginBoardView);
+            self.pluginBoardView.frame = CGRectMake(CGRectGetMinX(self.frame), [self getBoardViewBottomOriginY] - Height_PluginBoardView,
+                                                    CGRectGetWidth(self.bounds), Height_PluginBoardView);
         }
     }
 
@@ -1302,6 +1371,9 @@ static BOOL RCKitCanApplyTextChange(UITextView *textView, NSRange range, NSStrin
 }
 
 - (void)updateSubviewsLayout{
+    CGFloat bottom = [self getSafeAreaExtraBottomHeight];
+    self.safeAreaView.frame = CGRectMake(0, CGRectGetMaxY(self.containerView.bounds) - bottom,
+                                        CGRectGetWidth(self.containerView.bounds), bottom);
     CGRect containerViewFrame;
     if (self.commonPhrasesSource.count > 0 && (self.conversationType == ConversationType_PRIVATE || self.conversationType == ConversationType_GROUP)) {
         containerViewFrame = CGRectMake(0, RC_CommonPhrasesView_Height, self.bounds.size.width,

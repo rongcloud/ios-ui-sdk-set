@@ -10,8 +10,6 @@
 #import "RCKitCommonDefine.h"
 #import "RCKitConfig.h"
 #define CPLeadingEdges 22
-#define CPLableHeight 44
-#define CPScreenSize [UIScreen mainScreen].bounds.size
 
 @interface RCCommonPhrasesCell ()
 
@@ -21,8 +19,8 @@
 
 @implementation RCCommonPhrasesCell
 
-+ (CGFloat)heightForCommonPhrasesCell:(NSString *)text{
-    return [self sizeToLabel:text].height + 30;
++ (CGFloat)heightForCommonPhrasesCell:(NSString *)text width:(CGFloat)width {
+    return [self sizeToLabel:text width:width].height + 30;
 }
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
@@ -40,26 +38,24 @@
     if (!lableText) {
         return;
     }
-    self.commonPhrasesLable.text = nil;
     self.commonPhrasesLable.text = lableText;
-    CGSize textSize = [RCCommonPhrasesCell sizeToLabel:lableText];
-    self.commonPhrasesLable.bounds =
-        CGRectMake(0, 0, CPScreenSize.width-CPLeadingEdges * 2, textSize.height);
-    
+    [self setNeedsLayout];
 }
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.containerView.frame = UIEdgeInsetsInsetRect(self.bounds, UIEdgeInsetsMake(4, 16, 4, 16));
+    CGFloat width = CGRectGetWidth(self.contentView.bounds);
+    CGSize textSize = [RCCommonPhrasesCell sizeToLabel:self.commonPhrasesLable.text width:width];
+    self.containerView.frame = UIEdgeInsetsInsetRect(self.contentView.bounds, UIEdgeInsetsMake(4, 16, 4, 16));
     self.commonPhrasesLable.frame =
         CGRectMake(CPLeadingEdges,
                    15,
-                   self.commonPhrasesLable.bounds.size.width,
-                   self.commonPhrasesLable.bounds.size.height);
+                   MAX(0, width - CPLeadingEdges * 2),
+                   textSize.height);
 }
-+ (CGSize)sizeToLabel:(NSString *)lableText {
++ (CGSize)sizeToLabel:(NSString *)lableText width:(CGFloat)width {
     NSMutableDictionary *attrs = [NSMutableDictionary dictionary];
-    attrs[NSFontAttributeName] = [UIFont systemFontOfSize:15];
-    CGSize size = [lableText boundingRectWithSize:CGSizeMake(CPScreenSize.width - CPLeadingEdges * 2,8000)
+    attrs[NSFontAttributeName] = [[RCKitConfig defaultConfig].font fontOfThirdLevel];
+    CGSize size = [lableText boundingRectWithSize:CGSizeMake(MAX(0, width - CPLeadingEdges * 2), CGFLOAT_MAX)
                                           options:NSStringDrawingUsesLineFragmentOrigin
                                        attributes:attrs
                                           context:nil].size;
@@ -68,8 +64,7 @@
 
 - (UILabel *)commonPhrasesLable {
     if (!_commonPhrasesLable) {
-        _commonPhrasesLable = [[UILabel alloc]
-            initWithFrame:CGRectMake(CPLeadingEdges, 0, CPScreenSize.width - CPLeadingEdges * 2, CPLableHeight)];
+        _commonPhrasesLable = [[UILabel alloc] initWithFrame:CGRectZero];
         _commonPhrasesLable.font = [[RCKitConfig defaultConfig].font fontOfThirdLevel];
         UIColor *textColor = RCDynamicColor(@"text_primary_color", @"0x333333", @"0x9f9f9f");
         _commonPhrasesLable.textColor = textColor;

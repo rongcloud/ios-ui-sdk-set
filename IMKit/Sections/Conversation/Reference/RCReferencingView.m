@@ -39,19 +39,28 @@
 #pragma mark - Private Methods
 
 - (void)setupSubviews {
-    self.frame = CGRectMake(0, self.inView.frame.size.height, self.inView.frame.size.width, referencing_default_height);
-    if ([RCKitUtility isRTL]) {
-        self.dismissButton.frame = CGRectMake(dismiss_right_space, (self.frame.size.height - dismiss_width)/2, dismiss_width, dismiss_width);
-        self.nameLabel.frame = CGRectMake(textlabel_left_space, 10, self.frame.size.width - self.dismissButton.frame.origin.x - textlabel_left_space - textlabel_and_dismiss_space, 20);
-        self.textLabel.frame = CGRectMake(textlabel_left_space, CGRectGetMaxY(self.nameLabel.frame), self.frame.size.width - self.dismissButton.frame.origin.x - textlabel_left_space - textlabel_and_dismiss_space, 20);
-    } else {
-        self.dismissButton.frame = CGRectMake(self.frame.size.width - dismiss_width - dismiss_right_space, 10, dismiss_width, dismiss_width);
-        self.nameLabel.frame = CGRectMake(textlabel_left_space, 10, self.dismissButton.frame.origin.x - textlabel_left_space - textlabel_and_dismiss_space, 20);
-        self.textLabel.frame = CGRectMake(textlabel_left_space, CGRectGetMaxY(self.nameLabel.frame), self.dismissButton.frame.origin.x - textlabel_left_space - textlabel_and_dismiss_space, 20);
-    }
+    self.frame = CGRectMake(0, CGRectGetMaxY(self.inView.bounds), CGRectGetWidth(self.inView.bounds), referencing_default_height);
     [self addSubview:self.dismissButton];
     [self addSubview:self.nameLabel];
     [self addSubview:self.textLabel];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat textLeft;
+    CGFloat textRight;
+    if ([RCKitUtility isRTL]) {
+        self.dismissButton.frame = CGRectMake(dismiss_right_space, (CGRectGetHeight(self.bounds) - dismiss_width)/2, dismiss_width, dismiss_width);
+        textLeft = CGRectGetMaxX(self.dismissButton.frame) + textlabel_and_dismiss_space;
+        textRight = width - textlabel_left_space;
+    } else {
+        self.dismissButton.frame = CGRectMake(width - dismiss_width - dismiss_right_space, 10, dismiss_width, dismiss_width);
+        textLeft = textlabel_left_space;
+        textRight = CGRectGetMinX(self.dismissButton.frame) - textlabel_and_dismiss_space;
+    }
+    self.nameLabel.frame = CGRectMake(textLeft, 10, MAX(0, textRight - textLeft), 20);
+    self.textLabel.frame = CGRectMake(textLeft, CGRectGetMaxY(self.nameLabel.frame), MAX(0, textRight - textLeft), 20);
 }
 
 - (void)setContentInfo {

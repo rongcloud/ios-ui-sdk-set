@@ -64,6 +64,12 @@ RCListViewModelResponder
 
 - (void)setNavigationBarItems {
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.confirmButton];
+#if defined(__IPHONE_26_0)
+    if (@available(iOS 26.0, *)) {
+        // 保留自定义按钮的主题色，避免玻璃背景将禁用文字处理成近白色。
+        self.navigationItem.rightBarButtonItem.hidesSharedBackground = YES;
+    }
+#endif
     self.confirmButton.enabled = NO;
     
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");

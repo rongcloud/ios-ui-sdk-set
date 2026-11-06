@@ -39,8 +39,6 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 @property (nonatomic, strong) RCBaseButton *openInOtherAppButton;
 @property (nonatomic, strong) RCBaseButton *cancelButton;
 
-@property (nonatomic, assign) int extentLayoutForY;
-
 @end
 
 @implementation RCCombineMsgFilePreviewViewController
@@ -67,13 +65,12 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     self.view.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf0f0f6", @"0x000000");
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.title = RCLocalizedString(@"PreviewFile");
-
-    //根据导航栏透明度来设置布局
-    if (self.navigationController.navigationBar.translucent) {
-        self.extentLayoutForY = 64;
-    } else {
-        self.extentLayoutForY = 0;
+#if defined(__IPHONE_27_0)
+    if (@available(iOS 27.0, *)) {
+        self.navigationItem.navigationBarMinimization.minimizationBehavior = UIBarMinimizationBehaviorNever;
     }
+#endif
+
     //设置右键
     RCButton *rightBtn = [RCButton buttonWithType:UIButtonTypeCustom];
     rightBtn.imageView.contentMode = UIViewContentModeScaleAspectFit;
@@ -85,7 +82,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
     //设置左键
     UIImage *imgMirror = RCDynamicImage(@"navigation_bar_btn_back_img", @"navigator_btn_back");
     imgMirror = [RCSemanticContext imageflippedForRTL:imgMirror];
-    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:RCLocalizedString(@"Back") target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems = [RCKitUtility getLeftNavigationItems:imgMirror title:@"" target:self action:@selector(clickBackBtn:)];
+    self.navigationItem.leftBarButtonItems.firstObject.customView.accessibilityLabel = RCLocalizedString(@"Back");
 
     [self registerNotificationCenter];
     [self setupSubviews];
@@ -144,16 +142,73 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 
 - (void)setupSubviews {
-    [self.view addSubview:self.webView];
-    [self.view addSubview:self.typeIconView];
-    [self.view addSubview:self.nameLabel];
-    [self.view addSubview:self.sizeLabel];
-    [self.view addSubview:self.progressLabel];
-    [self.view addSubview:self.progressView];
-    [self.view addSubview:self.downloadButton];
-    [self.view addSubview:self.openInOtherAppButton];
-    [self.view addSubview:self.cancelButton];
-    [self.view bringSubviewToFront:self.cancelButton];
+    UIView *contentView = [[UIView alloc] initWithFrame:CGRectZero];
+    contentView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:contentView];
+    if (@available(iOS 11.0, *)) {
+        UILayoutGuide *safeArea = self.view.safeAreaLayoutGuide;
+        [NSLayoutConstraint activateConstraints:@[
+            [contentView.leadingAnchor constraintEqualToAnchor:safeArea.leadingAnchor],
+            [contentView.trailingAnchor constraintEqualToAnchor:safeArea.trailingAnchor],
+            [contentView.topAnchor constraintEqualToAnchor:safeArea.topAnchor],
+            [contentView.bottomAnchor constraintEqualToAnchor:safeArea.bottomAnchor]
+        ]];
+    } else {
+        [NSLayoutConstraint activateConstraints:@[
+            [contentView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+            [contentView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+            [contentView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+            [contentView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+        ]];
+    }
+
+    NSArray<UIView *> *subviews = @[self.webView, self.typeIconView, self.nameLabel, self.sizeLabel,
+                                   self.progressLabel, self.progressView, self.downloadButton,
+                                   self.openInOtherAppButton, self.cancelButton];
+    for (UIView *subview in subviews) {
+        subview.translatesAutoresizingMaskIntoConstraints = NO;
+        [contentView addSubview:subview];
+    }
+
+    [NSLayoutConstraint activateConstraints:@[
+        [self.webView.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor],
+        [self.webView.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor],
+        [self.webView.topAnchor constraintEqualToAnchor:contentView.topAnchor],
+        [self.webView.bottomAnchor constraintEqualToAnchor:contentView.bottomAnchor],
+
+        [self.typeIconView.centerXAnchor constraintEqualToAnchor:contentView.centerXAnchor],
+        [self.typeIconView.topAnchor constraintEqualToAnchor:contentView.topAnchor constant:30],
+        [self.typeIconView.widthAnchor constraintEqualToConstant:75],
+        [self.typeIconView.heightAnchor constraintEqualToConstant:75],
+
+        [self.nameLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:10],
+        [self.nameLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-10],
+        [self.nameLabel.topAnchor constraintEqualToAnchor:self.typeIconView.bottomAnchor constant:17],
+        [self.nameLabel.heightAnchor constraintEqualToConstant:21],
+
+        [self.sizeLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor],
+        [self.sizeLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor],
+        [self.sizeLabel.topAnchor constraintEqualToAnchor:self.nameLabel.bottomAnchor constant:8],
+        [self.sizeLabel.heightAnchor constraintEqualToConstant:12],
+
+        [self.progressLabel.leadingAnchor constraintEqualToAnchor:self.nameLabel.leadingAnchor],
+        [self.progressLabel.trailingAnchor constraintEqualToAnchor:self.nameLabel.trailingAnchor],
+        [self.progressLabel.topAnchor constraintEqualToAnchor:self.sizeLabel.topAnchor],
+        [self.progressLabel.heightAnchor constraintEqualToConstant:21],
+
+        [self.progressView.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:10],
+        [self.progressView.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-20],
+        [self.progressView.topAnchor constraintEqualToAnchor:self.sizeLabel.bottomAnchor constant:21],
+        [self.progressView.heightAnchor constraintEqualToConstant:2]
+    ]];
+    for (UIView *button in @[self.downloadButton, self.openInOtherAppButton, self.cancelButton]) {
+        [NSLayoutConstraint activateConstraints:@[
+            [button.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:10],
+            [button.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-10],
+            [button.topAnchor constraintEqualToAnchor:self.sizeLabel.bottomAnchor constant:34],
+            [button.heightAnchor constraintEqualToConstant:40]
+        ]];
+    }
 }
 
 - (void)startFileDownLoad {
@@ -329,9 +384,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 #pragma mark - Getters and Setters
 - (WKWebView *)webView {
     if (!_webView) {
-        _webView = [[WKWebView alloc]
-            initWithFrame:CGRectMake(0, self.extentLayoutForY, [UIScreen mainScreen].bounds.size.width,
-                                     [UIScreen mainScreen].bounds.size.height - self.extentLayoutForY)];
+        _webView = [[WKWebView alloc] initWithFrame:CGRectZero];
         _webView.scrollView.contentInset = (UIEdgeInsets){8, 8, 8, 8};
         _webView.backgroundColor = RCDynamicColor(@"auxiliary_background_1_color", @"0xf2f2f3", @"0xf2f2f3");
         
@@ -341,8 +394,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseImageView *)typeIconView {
     if (!_typeIconView) {
-        _typeIconView = [[RCBaseImageView alloc]
-            initWithFrame:CGRectMake((self.view.bounds.size.width - 75) / 2, 30 + self.extentLayoutForY, 75, 75)];
+        _typeIconView = [[RCBaseImageView alloc] initWithFrame:CGRectZero];
         _typeIconView.image = [RCKitUtility imageWithFileSuffix:self.fileType];
     }
 
@@ -351,8 +403,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)nameLabel {
     if (!_nameLabel) {
-        _nameLabel = [[UILabel alloc]
-            initWithFrame:CGRectMake(10, 122 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 21)];
+        _nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _nameLabel.font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         _nameLabel.text = self.fileName;
         _nameLabel.textAlignment = NSTextAlignmentCenter;
@@ -364,8 +415,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)sizeLabel {
     if (!_sizeLabel) {
-        _sizeLabel =
-            [[UILabel alloc] initWithFrame:CGRectMake(0, 151 + self.extentLayoutForY, self.view.bounds.size.width, 12)];
+        _sizeLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _sizeLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
         _sizeLabel.text = [RCKitUtility getReadableStringForFileSize:self.fileSize];
         _sizeLabel.textAlignment = NSTextAlignmentCenter;
@@ -376,8 +426,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UILabel *)progressLabel {
     if (!_progressLabel) {
-        _progressLabel = [[UILabel alloc]
-            initWithFrame:CGRectMake(10, 151 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 21)];
+        _progressLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _progressLabel.textColor = RCDynamicColor(@"text_secondary_color", @"0xa8a8a8", @"0xa8a8a8");
         _progressLabel.textAlignment = NSTextAlignmentCenter;
         _progressLabel.font = [[RCKitConfig defaultConfig].font fontOfGuideLevel];
@@ -387,10 +436,8 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (UIProgressView *)progressView {
     if (!_progressView) {
-        _progressView = [[UIProgressView alloc]
-            initWithFrame:CGRectMake(10, 184 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 3, 8)];
+        _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
         _progressView.transform = CGAffineTransformMakeScale(1.0f, 4.0f);
-        _progressView.progressViewStyle = UIProgressViewStyleDefault;
         _progressView.progressTintColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
     }
     return _progressView;
@@ -398,8 +445,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)downloadButton {
     if (!_downloadButton) {
-        _downloadButton = [[RCBaseButton alloc]
-            initWithFrame:CGRectMake(10, 197 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 40)];
+        _downloadButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         _downloadButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _downloadButton.layer.cornerRadius = 5.0f;
 //        _downloadButton.layer.borderWidth = 0.5f;
@@ -415,8 +461,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)openInOtherAppButton {
     if (!_openInOtherAppButton) {
-        _openInOtherAppButton = [[RCBaseButton alloc]
-            initWithFrame:CGRectMake(10, 197 + self.extentLayoutForY, self.view.bounds.size.width - 10 * 2, 40)];
+        _openInOtherAppButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         _openInOtherAppButton.backgroundColor = RCDynamicColor(@"primary_color", @"0x0099ff", @"0x0099ff");
         _openInOtherAppButton.layer.cornerRadius = 5.0f;
 //        _openInOtherAppButton.layer.borderWidth = 0.5f;
@@ -432,7 +477,7 @@ extern NSString *const RCKitDispatchDownloadMediaNotification;
 
 - (RCBaseButton *)cancelButton {
     if (!_cancelButton) {
-        _cancelButton = [[RCBaseButton alloc] initWithFrame:self.downloadButton.frame];
+        _cancelButton = [[RCBaseButton alloc] initWithFrame:CGRectZero];
         [_cancelButton setTitle:RCLocalizedString(@"Close") forState:(UIControlStateNormal)];
         [_cancelButton addTarget:self
                           action:@selector(cancelFileDownload)

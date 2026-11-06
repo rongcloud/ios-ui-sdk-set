@@ -23,14 +23,15 @@
 }
 
 - (void)popupSendContactCardView:(RCCCUserInfo *)cardUserInfo targetUserInfo:(RCCCUserInfo *)targetUserInfo {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:ConversationType_PRIVATE targetId:targetUserInfo.userId];
+    UIWindow *window = [RCKitUtility getKeyWindow];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:window.bounds ConversationType:ConversationType_PRIVATE targetId:targetUserInfo.userId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;
     userInfo.portraitUri = cardUserInfo.portraitUri;
     sendCardView.cardUserInfo = userInfo;
     sendCardView.targetUserInfo = targetUserInfo;
-    [[RCKitUtility getKeyWindow] addSubview:sendCardView];
+    [window addSubview:sendCardView];
 }
 
 /**
@@ -47,7 +48,8 @@
                         targetId:(NSString *)targetId
                 conversationType:(RCConversationType)conversationType
                 destructDuration:(NSInteger)destructDuration {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:conversationType targetId:targetId];
+    UIWindow *window = [RCKitUtility getKeyWindow];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:window.bounds ConversationType:conversationType targetId:targetId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;
@@ -57,18 +59,19 @@
     sendCardView.targetId = targetId;
     sendCardView.conversationType = conversationType;
     sendCardView.destructDuration = destructDuration;
-    [[RCKitUtility getKeyWindow] addSubview:sendCardView];
+    [window addSubview:sendCardView];
 }
 
 - (void)popupSendContactCardView:(RCCCUserInfo *)cardUserInfo targetGroupInfo:(RCCCGroupInfo *)targetGroupInfo {
-    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:[[UIScreen mainScreen] bounds] ConversationType:ConversationType_GROUP targetId:targetGroupInfo.groupId];
+    UIWindow *window = [RCKitUtility getKeyWindow];
+    RCSendCardMessageView *sendCardView = [[RCSendCardMessageView alloc] initWithFrame:window.bounds ConversationType:ConversationType_GROUP targetId:targetGroupInfo.groupId];
     RCUserInfo *userInfo = [RCUserInfo new];
     userInfo.userId = cardUserInfo.userId;
     userInfo.name = cardUserInfo.name;
     userInfo.portraitUri = cardUserInfo.portraitUri;
     sendCardView.cardUserInfo = userInfo;
     sendCardView.targetgroupInfo = targetGroupInfo;
-    [[RCKitUtility getKeyWindow] addSubview:sendCardView];
+    [window addSubview:sendCardView];
 }
 
 @end

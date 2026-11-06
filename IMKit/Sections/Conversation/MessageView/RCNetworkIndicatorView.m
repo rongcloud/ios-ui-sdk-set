@@ -23,6 +23,7 @@
         self.networkUnreachableDescriptionLabel.textColor = RCDynamicColor(@"text_primary_color", @"0x111f2c", @"0xBE9393");
         self.networkUnreachableDescriptionLabel.font = [[RCKitConfig defaultConfig].font fontOfFourthLevel];
         self.networkUnreachableDescriptionLabel.text = text;
+        self.networkUnreachableDescriptionLabel.numberOfLines = 2;
         self.networkUnreachableDescriptionLabel.backgroundColor = [UIColor clearColor];
 
         [self addSubview:self.networkUnreachableImageView];
@@ -38,7 +39,7 @@
 
         [self addConstraints:[NSLayoutConstraint
                                  constraintsWithVisualFormat:@"H:|-19-[_networkUnreachableImageView(24)]-12-[_"
-                                                             @"networkUnreachableDescriptionLabel]"
+                                                             @"networkUnreachableDescriptionLabel]-19-|"
                                                      options:0
                                                      metrics:nil
                                                        views:bindingViews]];

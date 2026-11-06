@@ -19,24 +19,33 @@ NSInteger const RCComplexTextSpaceRight = 12;
 - (void)setTxt_textSize:(CGSize)txt_textSize {
     NSValue *value = [NSValue valueWithCGSize:txt_textSize];
     objc_setAssociatedObject(self, @selector(txt_textSize), value, OBJC_ASSOCIATION_RETAIN);
+    objc_setAssociatedObject(self, @selector(txt_textSizeWithMaxWidth:), nil, OBJC_ASSOCIATION_RETAIN);
 }
 
 - (CGSize)txt_textSize {
+    CGFloat textMaxWidth = [RCMessageCellTool getMessageContentViewMaxWidth] - RCComplexTextSpaceLeft - RCComplexTextSpaceRight;
+    return [self txt_textSizeWithMaxWidth:textMaxWidth];
+}
+
+- (CGSize)txt_textSizeWithMaxWidth:(CGFloat)maxWidth {
     if (![self.content isKindOfClass:[RCTextMessage class]]) {
+        return CGSizeZero;
+    }
+    if (maxWidth <= 0) {
         return CGSizeZero;
     }
     RCTextMessage *msg = (RCTextMessage *)self.content;
     NSValue *value = objc_getAssociatedObject(self, @selector(txt_textSize));
-    if (value) {
+    NSNumber *cachedWidth = objc_getAssociatedObject(self, @selector(txt_textSizeWithMaxWidth:));
+    if (value && cachedWidth && cachedWidth.doubleValue == maxWidth) {
         return [value CGSizeValue];
     } else {
-        CGFloat textMaxWidth = [RCMessageCellTool getMessageContentViewMaxWidth] - RCComplexTextSpaceLeft - RCComplexTextSpaceRight;
-        
         UIFont *font = [[RCKitConfig defaultConfig].font fontOfSecondLevel];
         CGSize size = [self coreText:msg.content
                                 font:font
-                     constrainedSize:CGSizeMake(textMaxWidth, 80000)];
+                     constrainedSize:CGSizeMake(maxWidth, 80000)];
         [self setTxt_textSize:size];
+        objc_setAssociatedObject(self, @selector(txt_textSizeWithMaxWidth:), @(maxWidth), OBJC_ASSOCIATION_RETAIN);
         return size;
     }
 }

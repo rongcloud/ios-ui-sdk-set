@@ -33,20 +33,15 @@
 #define QUOTE_BODY_TRAILING_PADDING 14
 #define QUOTE_TEXT_HORIZONTAL_PADDING 26
 
-static CGFloat RCTextMessageQuoteMaxBubbleWidth(void) {
-    return MAX([RCMessageCellTool getMessageContentViewMaxWidth], 0);
-}
-
-static CGFloat RCTextMessageQuoteMaxTextWidth(void) {
-    return MAX(RCTextMessageQuoteMaxBubbleWidth() - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
+static CGFloat RCTextMessageQuoteMaxTextWidth(CGFloat maxBubbleWidth) {
+    return MAX(maxBubbleWidth - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
 }
 
 static CGFloat RCTextMessageQuoteTextWidth(CGFloat bubbleWidth) {
     return MAX(bubbleWidth - QUOTE_TEXT_HORIZONTAL_PADDING, 0);
 }
 
-static CGFloat RCTextMessageQuoteBubbleWidth(RCMessageModel *model, CGSize labelSize) {
-    CGFloat maxBubbleWidth = RCTextMessageQuoteMaxBubbleWidth();
+static CGFloat RCTextMessageQuoteBubbleWidth(RCMessageModel *model, CGSize labelSize, CGFloat maxBubbleWidth) {
     CGFloat maxCardWidth = MAX(maxBubbleWidth - QUOTE_CARD_HORIZONTAL_INSET * 2, 0);
     CGSize quoteCardSize = [RCReferencedContentView quoteCardContentSizeForMessageModel:model maxWidth:maxCardWidth];
     CGFloat quoteWidth = quoteCardSize.width + QUOTE_CARD_HORIZONTAL_INSET * 2;
@@ -82,6 +77,7 @@ static CGFloat RCTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelS
 @property (nonatomic, strong) UILabel *tipLablel;
 + (CGSize)getQuoteTextSize:(RCMessageModel *)model;
 + (CGSize)getTextSize:(RCMessageModel *)model maxWidth:(CGFloat)textMaxWidth;
++ (CGFloat)getMessageContentHeight:(RCMessageModel *)model maxBubbleWidth:(CGFloat)maxBubbleWidth;
 @end
 
 @implementation RCTextMessageCell
@@ -108,11 +104,12 @@ static CGFloat RCTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelS
 + (CGSize)sizeForMessageModel:(RCMessageModel *)model
       withCollectionViewWidth:(CGFloat)collectionViewWidth
          referenceExtraHeight:(CGFloat)extraHeight {
+    CGFloat maxBubbleWidth = MAX([RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:collectionViewWidth], 0);
     BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:model];
-    CGFloat __messagecontentview_height = [self getMessageContentHeight:model];
+    CGFloat __messagecontentview_height = [self getMessageContentHeight:model maxBubbleWidth:maxBubbleWidth];
     if (showsQuoteCard) {
-        CGSize labelSize = [self getQuoteTextSize:model];
-        CGFloat bubbleWidth = RCTextMessageQuoteBubbleWidth(model, labelSize);
+        CGSize labelSize = [self getTextSize:model maxWidth:RCTextMessageQuoteMaxTextWidth(maxBubbleWidth)];
+        CGFloat bubbleWidth = RCTextMessageQuoteBubbleWidth(model, labelSize, maxBubbleWidth);
         CGFloat quoteOffset = RCTextMessageQuoteContentOffset(model, bubbleWidth);
         __messagecontentview_height = quoteOffset + RCTextMessageQuoteBodyHeight(model, labelSize);
         // 文本消息使用 top layout，引用卡片高度已包含在上方计算中；
@@ -212,11 +209,13 @@ static CGFloat RCTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelS
 
 - (void)setAutoLayout {
     BOOL showsQuoteCard = [RCReferencedContentView shouldShowQuoteCardForMessageModel:self.model];
-    CGSize labelSize = showsQuoteCard ? [RCTextMessageCell getQuoteTextSize:self.model] : [RCTextMessageCell getTextSize:self.model];
-    
-    float maxWidth = [RCMessageCellTool getMessageContentViewMaxWidth];
-    CGFloat bubbleHeight = [RCTextMessageCell getMessageContentHeight:self.model];
-    CGFloat quoteBubbleWidth = showsQuoteCard ? RCTextMessageQuoteBubbleWidth(self.model, labelSize) : 0;
+    CGFloat containerWidth = CGRectGetWidth(self.bounds);
+    CGFloat maxWidth = MAX([RCMessageCellTool getMessageContentViewMaxWidthWithContainerWidth:containerWidth], 0);
+    CGSize labelSize = showsQuoteCard
+        ? [RCTextMessageCell getTextSize:self.model maxWidth:RCTextMessageQuoteMaxTextWidth(maxWidth)]
+        : [RCTextMessageCell getTextSize:self.model maxWidth:MAX(maxWidth - TEXT_SPACE_LEFT - TEXT_SPACE_RIGHT, 0)];
+    CGFloat bubbleHeight = [RCTextMessageCell getMessageContentHeight:self.model maxBubbleWidth:maxWidth];
+    CGFloat quoteBubbleWidth = showsQuoteCard ? RCTextMessageQuoteBubbleWidth(self.model, labelSize, maxWidth) : 0;
     CGFloat quoteOffset = showsQuoteCard ? RCTextMessageQuoteContentOffset(self.model, quoteBubbleWidth) : 0;
     CGFloat contentHeight = bubbleHeight + quoteOffset;
     CGFloat textOriginY = quoteOffset + (bubbleHeight - labelSize.height) / 2;
@@ -382,7 +381,12 @@ static CGFloat RCTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelS
 }
 
 + (CGFloat)getMessageContentHeight:(RCMessageModel *)model{
-    CGSize textMessageSize = [self getTextSize:model];
+    return [self getMessageContentHeight:model maxBubbleWidth:[RCMessageCellTool getMessageContentViewMaxWidth]];
+}
+
++ (CGFloat)getMessageContentHeight:(RCMessageModel *)model maxBubbleWidth:(CGFloat)maxBubbleWidth {
+    CGFloat textMaxWidth = MAX(maxBubbleWidth - TEXT_SPACE_LEFT - TEXT_SPACE_RIGHT, 0);
+    CGSize textMessageSize = [self getTextSize:model maxWidth:textMaxWidth];
     //背景图的最小高度
     CGFloat messagecontentview_height = textMessageSize.height + TEXT_SPACE_TOP + TEXT_SPACE_BOTTOM;
 
@@ -402,7 +406,7 @@ static CGFloat RCTextMessageQuoteBodyHeight(RCMessageModel *model, CGSize labelS
 }
 
 + (CGSize)getQuoteTextSize:(RCMessageModel *)model {
-    return [self getTextSize:model maxWidth:RCTextMessageQuoteMaxTextWidth()];
+    return [self getTextSize:model maxWidth:RCTextMessageQuoteMaxTextWidth([RCMessageCellTool getMessageContentViewMaxWidth])];
 }
 
 + (CGSize)getTextSize:(RCMessageModel *)model maxWidth:(CGFloat)textMaxWidth{

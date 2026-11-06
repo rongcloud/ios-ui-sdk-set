@@ -77,8 +77,12 @@
 
 - (void)setupViewConstraints {
     NSLayoutAnchor *topAnchor;
+    NSLayoutXAxisAnchor *leadingAnchor = self.view.leadingAnchor;
+    NSLayoutXAxisAnchor *trailingAnchor = self.view.trailingAnchor;
     if (@available(iOS 11.0, *)) {
         topAnchor = self.view.safeAreaLayoutGuide.topAnchor;
+        leadingAnchor = self.view.safeAreaLayoutGuide.leadingAnchor;
+        trailingAnchor = self.view.safeAreaLayoutGuide.trailingAnchor;
     } else {
         topAnchor = self.view.topAnchor;
     }
@@ -87,8 +91,8 @@
     if (self.headerView) {
         [NSLayoutConstraint activateConstraints:@[
             [self.headerView.topAnchor constraintEqualToAnchor:topAnchor],
-            [self.headerView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-            [self.headerView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor]
+            [self.headerView.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+            [self.headerView.trailingAnchor constraintEqualToAnchor:trailingAnchor]
         ]];
         topAnchor = self.headerView.bottomAnchor;
     }
@@ -96,8 +100,8 @@
     // 主视图约束
     [NSLayoutConstraint activateConstraints:@[
         [self.mainView.topAnchor constraintEqualToAnchor:topAnchor],
-        [self.mainView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.mainView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.mainView.leadingAnchor constraintEqualToAnchor:leadingAnchor],
+        [self.mainView.trailingAnchor constraintEqualToAnchor:trailingAnchor],
         [self.mainView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
     ]];
 }
